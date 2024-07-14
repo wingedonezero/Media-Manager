@@ -43,6 +43,8 @@ import org.tinymediamanager.core.movie.MovieScraperMetadataConfig;
 import org.tinymediamanager.core.movie.MovieSearchAndScrapeOptions;
 import org.tinymediamanager.core.movie.MovieSettings;
 import org.tinymediamanager.core.movie.entities.Movie;
+import org.tinymediamanager.core.movie.tasks.MovieFetchRatingsTask;
+import org.tinymediamanager.core.movie.tasks.MovieMissingArtworkDownloadTask;
 import org.tinymediamanager.core.movie.tasks.MovieRenameTask;
 import org.tinymediamanager.core.movie.tasks.MovieScrapeTask;
 import org.tinymediamanager.core.movie.tasks.MovieSubtitleSearchAndDownloadTask;
@@ -55,6 +57,7 @@ import org.tinymediamanager.core.threading.TmmThreadPool;
 import org.tinymediamanager.scraper.MediaScraper;
 import org.tinymediamanager.scraper.ScraperType;
 import org.tinymediamanager.scraper.entities.MediaLanguages;
+import org.tinymediamanager.scraper.rating.RatingProvider;
 import org.tinymediamanager.scraper.util.ListUtils;
 
 /**
@@ -91,10 +94,13 @@ class MovieCommandTask extends TmmThreadPool {
     // 4. download subtitles
     downloadSubtitles();
 
-    // 5. rename
+    // 5. download missing artwork
+    downloadMissingArtwork();
+
+    // 6. rename
     rename();
 
-    // 6. export
+    // 7. export
     export();
   }
 
@@ -161,7 +167,9 @@ class MovieCommandTask extends TmmThreadPool {
 
   private void scrape() {
     for (AbstractCommandHandler.Command command : commands) {
+
       if ("scrape".equals(command.action)) {
+        // scrape
         List<Movie> moviesToScrape = getMoviesForScope(command.scope);
 
         if (!moviesToScrape.isEmpty()) {
@@ -185,6 +193,32 @@ class MovieCommandTask extends TmmThreadPool {
           movieScrapeParams.setOverwriteExistingItems(!movieSettings.isDoNotOverwriteExistingData());
           MovieScrapeTask task = new MovieScrapeTask(movieScrapeParams);
           task.setRunInBackground(true); // to avoid smart scrape dialog
+
+          activeTask = task;
+          activeTask.run(); // blocking
+
+          // wait for other tmm threads (artwork download et all)
+          while (TmmTaskManager.getInstance().poolRunning()) {
+            try {
+              Thread.sleep(2000);
+            }
+            catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
+            }
+          }
+
+          // done
+          activeTask = null;
+        }
+      }
+      else if ("fetchRatings".equals(command.action)) {
+        // fetchRatings
+        List<Movie> moviesToScrape = getMoviesForScope(command.scope);
+        if (!moviesToScrape.isEmpty()) {
+          setTaskName(TmmResourceBundle.getString("movie.fetchratings"));
+          publishState(TmmResourceBundle.getString("movie.fetchratings"), getProgressDone());
+
+          MovieFetchRatingsTask task = new MovieFetchRatingsTask(moviesToScrape, RatingProvider.RatingSource.getRatingSourcesForMovies());
 
           activeTask = task;
           activeTask.run(); // blocking
@@ -309,6 +343,45 @@ class MovieCommandTask extends TmmThreadPool {
 
           // done
           activeTask = null;
+        }
+      }
+    }
+  }
+
+  private void downloadMissingArtwork() {
+    for (AbstractCommandHandler.Command command : commands) {
+      if ("downloadMissingArtwork".equals(command.action)) {
+        setTaskName(TmmResourceBundle.getString("movie.downloadmissingartwork"));
+        publishState(TmmResourceBundle.getString("movie.downloadmissingartwork"), getProgressDone());
+
+        MovieSearchAndScrapeOptions movieSearchAndScrapeConfig = new MovieSearchAndScrapeOptions();
+        movieSearchAndScrapeConfig.setCertificationCountry(MovieModuleManager.getInstance().getSettings().getCertificationCountry());
+        movieSearchAndScrapeConfig.setReleaseDateCountry(MovieModuleManager.getInstance().getSettings().getReleaseDateCountry());
+
+        // artwork scrapers
+        List<MediaScraper> selectedArtworkScrapers = new ArrayList<>();
+        for (MediaScraper artworkScraper : MovieModuleManager.getInstance().getMovieList().getAvailableArtworkScrapers()) {
+          if (MovieModuleManager.getInstance().getSettings().getArtworkScrapers().contains(artworkScraper.getId())) {
+            selectedArtworkScrapers.add(artworkScraper);
+          }
+        }
+        movieSearchAndScrapeConfig.setArtworkScraper(selectedArtworkScrapers);
+
+        activeTask = new MovieMissingArtworkDownloadTask(getMoviesForScope(command.scope), movieSearchAndScrapeConfig,
+            MovieModuleManager.getInstance().getSettings().getScraperMetadataConfig());
+        activeTask.run();
+
+        // done
+        activeTask = null;
+
+        // wait for other tmm threads (artwork download)
+        while (TmmTaskManager.getInstance().poolRunning()) {
+          try {
+            Thread.sleep(2000);
+          }
+          catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
         }
       }
     }

@@ -1,3 +1,21 @@
+Version 5.0.8
+=======================
++ (Anime) greatly improve episode detection from file names
++ added the hotkey CTRL+S for direct saving/closing in the editors
++ (JMTE) Added a "split(x)" renderer for getting a single entry
+x (IMDB) fix trailer handling / download
+x (Linux) use "gio open" for opening paths/urls
+x (TV shows) added ${note} to the renamer preview #2616
+x (Specials) also replace the filename inside season folders #2629
+x (TVDB) do not abort scraping when the user entered API key/PIN is invalid
+x (movie/TV show) fixed choosing the right trailer for the NFO #2634
+x (HTTP API) added an action for downloading ratings #2623
+x (HTTP API) added an action for downloading missing artwork #2622
+x enhanced the SSL bypass to disable hostname verification #2638
+x (movie) fixed secondary sorting of the movie table (with CTRL) #2637
+x (movie/TV show) do not delete non tinyMediaManager NFO files on scrape
+
+
 Version 5.0.7
 =======================
 x major performance enhancement of upgrade tasks

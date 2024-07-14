@@ -54,6 +54,8 @@ import org.tinymediamanager.core.tvshow.TvShowSettings;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
 import org.tinymediamanager.core.tvshow.tasks.TvShowEpisodeScrapeTask;
+import org.tinymediamanager.core.tvshow.tasks.TvShowFetchRatingsTask;
+import org.tinymediamanager.core.tvshow.tasks.TvShowMissingArtworkDownloadTask;
 import org.tinymediamanager.core.tvshow.tasks.TvShowRenameTask;
 import org.tinymediamanager.core.tvshow.tasks.TvShowScrapeTask;
 import org.tinymediamanager.core.tvshow.tasks.TvShowSubtitleSearchAndDownloadTask;
@@ -62,6 +64,7 @@ import org.tinymediamanager.core.tvshow.tasks.TvShowUpdateDatasourceTask;
 import org.tinymediamanager.scraper.MediaScraper;
 import org.tinymediamanager.scraper.ScraperType;
 import org.tinymediamanager.scraper.entities.MediaLanguages;
+import org.tinymediamanager.scraper.rating.RatingProvider;
 import org.tinymediamanager.scraper.util.ListUtils;
 
 /**
@@ -93,16 +96,22 @@ class TvShowCommandTask extends TmmThreadPool {
     // 2. scrape commands
     scrape();
 
+    // 2.1 fetch ratings
+    fetchRatings();
+
     // 3. download trailer
     downloadTrailer();
 
     // 4. download subtitles
     downloadSubtitles();
 
-    // 5. rename
+    // 5. download missing artwork
+    downloadMissingArtwork();
+
+    // 6. rename
     rename();
 
-    // 6. export
+    // 7. export
     export();
   }
 
@@ -307,6 +316,38 @@ class TvShowCommandTask extends TmmThreadPool {
     }
   }
 
+  private void fetchRatings() {
+    Set<TvShow> tvShowsToScrape = new LinkedHashSet<>();
+    Set<TvShowEpisode> episodesToScrape = new LinkedHashSet<>();
+    for (AbstractCommandHandler.Command command : commands) {
+      if ("fetchRatings".equals(command.action)) {
+        tvShowsToScrape.addAll(getTvShowsForScope(command.scope));
+        episodesToScrape.addAll(getEpisodesForScope(command.scope));
+      }
+    }
+
+    if (!tvShowsToScrape.isEmpty() || !episodesToScrape.isEmpty()) {
+      setTaskName(TmmResourceBundle.getString("tvshow.fetchratings"));
+      publishState(TmmResourceBundle.getString("tvshow.fetchratings"), getProgressDone());
+
+      activeTask = new TvShowFetchRatingsTask(tvShowsToScrape, episodesToScrape, RatingProvider.RatingSource.getRatingSourcesForTvShows());
+      activeTask.run(); // blocking
+
+      // wait for other tmm threads (artwork download et all)
+      while (TmmTaskManager.getInstance().poolRunning()) {
+        try {
+          Thread.sleep(2000);
+        }
+        catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
+
+      // done
+      activeTask = null;
+    }
+  }
+
   private void downloadTrailer() {
     Set<TvShow> tvShowsToProcess = new LinkedHashSet<>();
 
@@ -410,6 +451,46 @@ class TvShowCommandTask extends TmmThreadPool {
 
           // done
           activeTask = null;
+        }
+      }
+    }
+  }
+
+  private void downloadMissingArtwork() {
+    for (AbstractCommandHandler.Command command : commands) {
+      if ("downloadMissingArtwork".equals(command.action)) {
+        setTaskName(TmmResourceBundle.getString("tvshow.downloadmissingartwork"));
+        publishState(TmmResourceBundle.getString("tvshow.downloadmissingartwork"), getProgressDone());
+
+        TvShowSearchAndScrapeOptions tvShowSearchAndScrapeConfig = new TvShowSearchAndScrapeOptions();
+        tvShowSearchAndScrapeConfig.setCertificationCountry(TvShowModuleManager.getInstance().getSettings().getCertificationCountry());
+        tvShowSearchAndScrapeConfig.setReleaseDateCountry(TvShowModuleManager.getInstance().getSettings().getReleaseDateCountry());
+
+        // artwork scrapers
+        List<MediaScraper> selectedArtworkScrapers = new ArrayList<>();
+        for (MediaScraper artworkScraper : TvShowModuleManager.getInstance().getTvShowList().getAvailableArtworkScrapers()) {
+          if (TvShowModuleManager.getInstance().getSettings().getArtworkScrapers().contains(artworkScraper.getId())) {
+            selectedArtworkScrapers.add(artworkScraper);
+          }
+        }
+        tvShowSearchAndScrapeConfig.setArtworkScraper(selectedArtworkScrapers);
+
+        activeTask = new TvShowMissingArtworkDownloadTask(getTvShowsForScope(command.scope), getEpisodesForScope(command.scope),
+            tvShowSearchAndScrapeConfig, TvShowModuleManager.getInstance().getSettings().getTvShowScraperMetadataConfig(),
+            TvShowModuleManager.getInstance().getSettings().getEpisodeScraperMetadataConfig());
+        activeTask.run();
+
+        // done
+        activeTask = null;
+
+        // wait for other tmm threads (artwork download)
+        while (TmmTaskManager.getInstance().poolRunning()) {
+          try {
+            Thread.sleep(2000);
+          }
+          catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
         }
       }
     }
