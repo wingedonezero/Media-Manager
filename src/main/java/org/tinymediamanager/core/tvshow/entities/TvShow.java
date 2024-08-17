@@ -2028,6 +2028,24 @@ public class TvShow extends MediaEntity implements IMediaInformation {
   }
 
   /**
+   * Gets the media files of all seasons.<br>
+   * (without the TV show MFs like poster/banner/...)
+   *
+   * @return the media files
+   */
+  public List<MediaFile> getSeasonMediaFiles() {
+    List<MediaFile> mediaFiles = new ArrayList<>();
+    for (TvShowSeason season : this.seasons) {
+      for (MediaFile mf : season.getMediaFiles()) {
+        if (!mediaFiles.contains(mf)) {
+          mediaFiles.add(mf);
+        }
+      }
+    }
+    return mediaFiles;
+  }
+
+  /**
    * Gets the images to cache.
    *
    * @return the images to cache
@@ -2432,7 +2450,7 @@ public class TvShow extends MediaEntity implements IMediaInformation {
         return getTags();
 
       case TRAILER:
-        return getMediaFiles(MediaFileType.TRAILER);
+        return getTrailer();
 
       case ACTORS:
         return getActors();

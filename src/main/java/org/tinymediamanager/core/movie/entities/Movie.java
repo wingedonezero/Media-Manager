@@ -979,7 +979,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
     }
 
     // create MovieSet
-    if (config.contains(MovieScraperMetadataConfig.COLLECTION) && (overwriteExistingItems || getIdAsInt(MediaMetadata.TMDB_SET) == 0)) {
+    if (config.contains(MovieScraperMetadataConfig.COLLECTION) && (overwriteExistingItems || getMovieSet() == null)) {
       int col = 0;
       try {
         col = (int) metadata.getId(MediaMetadata.TMDB_SET);
@@ -2972,7 +2972,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
         return getMovieSet();
 
       case TRAILER:
-        return getMediaFiles(MediaFileType.TRAILER);
+        return getTrailer();
 
       case ACTORS:
         return getActors();
