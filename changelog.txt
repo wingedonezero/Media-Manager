@@ -1,3 +1,15 @@
+Version 5.0.11
+=======================
++ [UI] able to sort TvShows by "dateAdded of episodes" #2677
++ [UI] added the hotkey CTRL+ENTER for direct saving/closing in the editors #2693
+x [UDS] fixed reading file creation date #2691
+x [UI] do not store the window size bigger than visible #2688
+x [NFO] do not write unset (-1) display episode/season tags
+x [IMDB] try second search on error
+x [MDBList] do not create empty rating entries
+x [macOS] added a fix for reading file/folder names with Umlauts #2687
+
+
 Version 5.0.10
 =======================
 + [TV shows] Treat episodes w/o season as "Season 1" upon importing!
