@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.tinymediamanager.scraper.http.TmmHttpClient;
+import org.tinymediamanager.scraper.tvmaze.entities.AlternateList;
 import org.tinymediamanager.scraper.tvmaze.entities.Episode;
 import org.tinymediamanager.scraper.tvmaze.entities.SearchResult;
 import org.tinymediamanager.scraper.tvmaze.entities.Show;
@@ -47,6 +48,7 @@ public class Controller {
   public Controller(String apiKey) {
     this.apiKey = apiKey;
     OkHttpClient.Builder builder = TmmHttpClient.newBuilderWithForcedCache(15, TimeUnit.MINUTES);
+    builder.addInterceptor(new TvMazeInterceptor(this));
     retrofit = buildRetrofitInstance(builder.build());
   }
 
@@ -93,8 +95,12 @@ public class Controller {
     return getService().show_main_information(showId).execute().body();
   }
 
-  public Show getAlternativeLists(int showId) throws IOException {
+  public List<AlternateList> getAlternativeLists(int showId) throws IOException {
     return getService().alternativeLists(showId).execute().body();
+  }
+
+  public List<Episode> getAlternativeEpisodes(int alternateId) throws IOException {
+    return getService().alternativeEpisodes(alternateId).execute().body();
   }
 
   public List<Episode> getEpisodes(int showId) throws IOException {
