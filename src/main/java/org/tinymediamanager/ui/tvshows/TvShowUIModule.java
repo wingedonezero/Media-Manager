@@ -95,10 +95,14 @@ import org.tinymediamanager.ui.tvshows.actions.TvShowSyncTraktTvAction;
 import org.tinymediamanager.ui.tvshows.actions.TvShowTitleToEntityMatcher;
 import org.tinymediamanager.ui.tvshows.actions.TvShowToggleWatchedFlagAction;
 import org.tinymediamanager.ui.tvshows.actions.TvShowTrailerDownloadAction;
+import org.tinymediamanager.ui.tvshows.actions.TvShowTraktTvRemoveFromCollectionAction;
+import org.tinymediamanager.ui.tvshows.actions.TvShowTraktTvRemoveFromWatchedAction;
+import org.tinymediamanager.ui.tvshows.actions.TvShowUndoRenameAction;
 import org.tinymediamanager.ui.tvshows.actions.TvShowUnlockAction;
 import org.tinymediamanager.ui.tvshows.actions.TvShowUpdateAction;
 import org.tinymediamanager.ui.tvshows.actions.TvShowUpdateDatasourcesAction;
 import org.tinymediamanager.ui.tvshows.actions.TvShowUpdateSingleDatasourceAction;
+import org.tinymediamanager.ui.tvshows.actions.TvshowChecksumsAction;
 import org.tinymediamanager.ui.tvshows.dialogs.TvShowFilterDialog;
 import org.tinymediamanager.ui.tvshows.panels.TvShowTreePanel;
 import org.tinymediamanager.ui.tvshows.panels.episode.TvShowEpisodeCastPanel;
@@ -358,6 +362,9 @@ public class TvShowUIModule extends AbstractTmmUIModule {
     traktMenu.add(createAndRegisterAction(TvShowSyncSelectedCollectionTraktTvAction.class));
     traktMenu.add(createAndRegisterAction(TvShowSyncSelectedWatchedTraktTvAction.class));
     traktMenu.add(createAndRegisterAction(TvShowSyncSelectedRatingTraktTvAction.class));
+    traktMenu.addSeparator();
+    traktMenu.add(createAndRegisterAction(TvShowTraktTvRemoveFromCollectionAction.class));
+    traktMenu.add(createAndRegisterAction(TvShowTraktTvRemoveFromWatchedAction.class));
     editPopupMenu.add(traktMenu);
 
     editPopupMenu.addSeparator();
@@ -368,6 +375,8 @@ public class TvShowUIModule extends AbstractTmmUIModule {
     renamePopupMenu.setToolTipText(TmmResourceBundle.getString("Toolbar.rename"));
     renamePopupMenu.add(createAndRegisterAction(TvShowRenameAction.class));
     renamePopupMenu.add(createAndRegisterAction(TvShowRenamePreviewAction.class));
+    renamePopupMenu.addSeparator();
+    renamePopupMenu.add(createAndRegisterAction(TvShowUndoRenameAction.class));
     renamePopupMenu.addSeparator();
     renamePopupMenu.add(createAndRegisterAction(TvShowCleanUpFilesAction.class));
     renamePopupMenu.add(createAndRegisterAction(TvShowClearImageCacheAction.class));
@@ -447,6 +456,7 @@ public class TvShowUIModule extends AbstractTmmUIModule {
     enhancededitPopupMenu.add(createAndRegisterAction(TvShowResetNewFlagAction.class));
     enhancededitPopupMenu.add(createAndRegisterAction(TvShowTitleToEntityMatcher.class));
     enhancededitPopupMenu.add(createAndRegisterAction(TvShowChangeToAbsoluteAction.class));
+    enhancededitPopupMenu.add(createAndRegisterAction(TvshowChecksumsAction.class));
     popupMenu.add(enhancededitPopupMenu);
 
     JMenu downloadMenu = new JMenu(TmmResourceBundle.getString("tmm.download"));
@@ -464,6 +474,8 @@ public class TvShowUIModule extends AbstractTmmUIModule {
     renamePopupMenu.add(createAndRegisterAction(TvShowRenameAction.class));
     renamePopupMenu.add(createAndRegisterAction(TvShowRenamePreviewAction.class));
     renamePopupMenu.addSeparator();
+    renamePopupMenu.add(createAndRegisterAction(TvShowUndoRenameAction.class));
+    renamePopupMenu.addSeparator();
     renamePopupMenu.add(createAndRegisterAction(TvShowCleanUpFilesAction.class));
     renamePopupMenu.add(createAndRegisterAction(TvShowClearImageCacheAction.class));
     popupMenu.add(renamePopupMenu);
@@ -479,7 +491,11 @@ public class TvShowUIModule extends AbstractTmmUIModule {
     traktMenu.add(createAndRegisterAction(TvShowSyncSelectedCollectionTraktTvAction.class));
     traktMenu.add(createAndRegisterAction(TvShowSyncSelectedWatchedTraktTvAction.class));
     traktMenu.add(createAndRegisterAction(TvShowSyncSelectedRatingTraktTvAction.class));
+    traktMenu.addSeparator();
+    traktMenu.add(createAndRegisterAction(TvShowTraktTvRemoveFromCollectionAction.class));
+    traktMenu.add(createAndRegisterAction(TvShowTraktTvRemoveFromWatchedAction.class));
     popupMenu.add(traktMenu);
+
     JMenu kodiRPCMenu = KodiRPCMenu.createMenuKodiMenuRightClickTvShows();
     popupMenu.add(kodiRPCMenu);
 

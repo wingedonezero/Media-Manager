@@ -1,28 +1,46 @@
 package org.tinymediamanager.scraper.imdb.entities;
 
-import java.util.HashMap;
-import java.util.Map;
+import org.tinymediamanager.scraper.entities.BaseJsonEntity;
+import org.tinymediamanager.scraper.entities.MediaType;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
+public class ImdbTitleType extends BaseJsonEntity {
+  public String  id              = "";
+  public String  text            = "";
+  public boolean canHaveEpisodes = false;
+  public boolean isEpisode       = false;
+  public boolean isSeries        = false;
 
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+  /**
+   * maps internal groups to our mediaTypes - if it must be parsed as movie or tvshow with episodes
+   * 
+   * @return MediaType or NULL if we cannot identify it
+   */
+  public MediaType getMediaType() {
+    // (slightly different than advanecSearch TitleTypes)
+    switch (id) {
+      case "movie":
+      case "tvMovie":
+      case "tvSpecial":
+      case "documentary":
+      case "short":
+      case "tvShort":
+      case "musicVideo":
+      case "video":
+        return MediaType.MOVIE;
 
-public class ImdbTitleType {
-  public String               id                   = "";
-  public boolean              canHaveEpisodes      = false;
-  public boolean              isEpisode            = false;
-  public boolean              isSeries             = false;
-  @JsonIgnore
-  private Map<String, Object> additionalProperties = new HashMap<>();
+      case "tvSeries":
+      case "tvMiniSeries":
+      case "podcastSeries":
+        return MediaType.TV_SHOW;
 
-  @JsonAnySetter
-  public void setAdditionalProperty(String name, Object value) {
-    this.additionalProperties.put(name, value);
-  }
+      case "tvEpisode":
+      case "podcastEpisode":
+        return MediaType.TV_EPISODE;
 
-  public String toString() {
-    return ToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
+      case "videoGame":
+      default:
+        break;
+    }
+    return null;
   }
 }

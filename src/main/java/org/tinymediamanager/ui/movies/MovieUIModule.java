@@ -35,6 +35,7 @@ import org.tinymediamanager.core.Settings;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.MoviePostProcessExecutor;
+import org.tinymediamanager.core.threading.NullTasksMenu;
 import org.tinymediamanager.license.License;
 import org.tinymediamanager.thirdparty.KodiRPC;
 import org.tinymediamanager.ui.AbstractTmmUIModule;
@@ -48,6 +49,7 @@ import org.tinymediamanager.ui.movies.actions.MovieAspectRatioDetectAction;
 import org.tinymediamanager.ui.movies.actions.MovieAssignMovieSetAction;
 import org.tinymediamanager.ui.movies.actions.MovieBulkEditAction;
 import org.tinymediamanager.ui.movies.actions.MovieChangeDatasourceAction;
+import org.tinymediamanager.ui.movies.actions.MovieChecksumAction;
 import org.tinymediamanager.ui.movies.actions.MovieCleanUpFilesAction;
 import org.tinymediamanager.ui.movies.actions.MovieClearImageCacheAction;
 import org.tinymediamanager.ui.movies.actions.MovieCreateOfflineAction;
@@ -83,6 +85,9 @@ import org.tinymediamanager.ui.movies.actions.MovieSyncSelectedWatchedTraktTvAct
 import org.tinymediamanager.ui.movies.actions.MovieSyncTraktTvAction;
 import org.tinymediamanager.ui.movies.actions.MovieToggleWatchedFlagAction;
 import org.tinymediamanager.ui.movies.actions.MovieTrailerDownloadAction;
+import org.tinymediamanager.ui.movies.actions.MovieTraktTvRemoveFromCollectionAction;
+import org.tinymediamanager.ui.movies.actions.MovieTraktTvRemoveFromWatchedAction;
+import org.tinymediamanager.ui.movies.actions.MovieUndoRenameAction;
 import org.tinymediamanager.ui.movies.actions.MovieUnlockAction;
 import org.tinymediamanager.ui.movies.actions.MovieUnscrapedScrapeAction;
 import org.tinymediamanager.ui.movies.actions.MovieUpdateAction;
@@ -270,6 +275,9 @@ public class MovieUIModule extends AbstractTmmUIModule {
     traktMenu.add(createAndRegisterAction(MovieSyncSelectedCollectionTraktTvAction.class));
     traktMenu.add(createAndRegisterAction(MovieSyncSelectedWatchedTraktTvAction.class));
     traktMenu.add(createAndRegisterAction(MovieSyncSelectedRatingTraktTvAction.class));
+    traktMenu.addSeparator();
+    traktMenu.add(createAndRegisterAction(MovieTraktTvRemoveFromCollectionAction.class));
+    traktMenu.add(createAndRegisterAction(MovieTraktTvRemoveFromWatchedAction.class));
     editPopupMenu.add(traktMenu);
 
     editPopupMenu.addSeparator();
@@ -280,6 +288,8 @@ public class MovieUIModule extends AbstractTmmUIModule {
     renamePopupMenu.setToolTipText(TmmResourceBundle.getString("Toolbar.rename"));
     renamePopupMenu.add(createAndRegisterAction(MovieRenameAction.class));
     renamePopupMenu.add(createAndRegisterAction(MovieRenamePreviewAction.class));
+    renamePopupMenu.addSeparator();
+    renamePopupMenu.add(createAndRegisterAction(MovieUndoRenameAction.class));
     renamePopupMenu.addSeparator();
     renamePopupMenu.add(createAndRegisterAction(MovieCleanUpFilesAction.class));
     renamePopupMenu.add(createAndRegisterAction(MovieClearImageCacheAction.class));
@@ -344,6 +354,7 @@ public class MovieUIModule extends AbstractTmmUIModule {
     enhancededitPopupMenu.addSeparator();
     enhancededitPopupMenu.add(createAndRegisterAction(MovieRebuildImageCacheAction.class));
     enhancededitPopupMenu.add(createAndRegisterAction(MovieResetNewFlagAction.class));
+    enhancededitPopupMenu.add(createAndRegisterAction(MovieChecksumAction.class));
     popupMenu.add(enhancededitPopupMenu);
 
     JMenu downloadMenu = new JMenu(TmmResourceBundle.getString("tmm.download"));
@@ -359,6 +370,8 @@ public class MovieUIModule extends AbstractTmmUIModule {
     renamePopupMenu.setIcon(IconManager.MENU);
     renamePopupMenu.add(createAndRegisterAction(MovieRenameAction.class));
     renamePopupMenu.add(createAndRegisterAction(MovieRenamePreviewAction.class));
+    renamePopupMenu.addSeparator();
+    renamePopupMenu.add(createAndRegisterAction(MovieUndoRenameAction.class));
     renamePopupMenu.addSeparator();
     renamePopupMenu.add(createAndRegisterAction(MovieCleanUpFilesAction.class));
     renamePopupMenu.add(createAndRegisterAction(MovieClearImageCacheAction.class));
@@ -378,6 +391,9 @@ public class MovieUIModule extends AbstractTmmUIModule {
     traktMenu.add(createAndRegisterAction(MovieSyncSelectedCollectionTraktTvAction.class));
     traktMenu.add(createAndRegisterAction(MovieSyncSelectedWatchedTraktTvAction.class));
     traktMenu.add(createAndRegisterAction(MovieSyncSelectedRatingTraktTvAction.class));
+    traktMenu.addSeparator();
+    traktMenu.add(createAndRegisterAction(MovieTraktTvRemoveFromCollectionAction.class));
+    traktMenu.add(createAndRegisterAction(MovieTraktTvRemoveFromWatchedAction.class));
     popupMenu.add(traktMenu);
 
     JMenu kodiRPCMenu = KodiRPCMenu.createMenuKodiMenuRightClickMovies();
@@ -394,6 +410,7 @@ public class MovieUIModule extends AbstractTmmUIModule {
     if (Globals.isDebug()) {
       final JMenu debugMenu = new JMenu("Debug");
       debugMenu.add(new DebugDumpMovieAction());
+      debugMenu.add(NullTasksMenu.createTaskManagerTestMenu());
       popupMenu.addSeparator();
       popupMenu.add(debugMenu);
     }

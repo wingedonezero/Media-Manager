@@ -132,7 +132,9 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
           if (first) {
             Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String dat = formatter.format(new Date());
-            document.appendChild(document.createComment("created on " + dat + " - tinyMediaManager " + Settings.getInstance().getVersion()));
+            TvShowConnectors conn = TvShowModuleManager.getInstance().getSettings().getTvShowConnector();
+            document.appendChild(
+                document.createComment("created on " + dat + " by tinyMediaManager " + Settings.getInstance().getVersion() + " for " + conn.name()));
           }
 
           root = document.createElement("episodedetails");
@@ -372,7 +374,14 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
 
     // the default rating
     Map<String, MediaRating> ratings = episode.getRatings();
-    MediaRating mainMediaRating = ratings.get(TvShowModuleManager.getInstance().getSettings().getPreferredRating());
+
+    MediaRating mainMediaRating = null;
+    for (String ratingSource : TvShowModuleManager.getInstance().getSettings().getRatingSources()) {
+      mainMediaRating = ratings.get(ratingSource);
+      if (mainMediaRating != null) {
+        break;
+      }
+    }
 
     // is there any rating which is not the user rating?
     if (mainMediaRating == null) {

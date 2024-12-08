@@ -54,6 +54,7 @@ import org.tinymediamanager.core.entities.MediaGenres;
 import org.tinymediamanager.core.entities.MediaRating;
 import org.tinymediamanager.core.entities.MediaTrailer;
 import org.tinymediamanager.core.entities.Person;
+import org.tinymediamanager.scraper.ArtworkSearchAndScrapeOptions;
 import org.tinymediamanager.scraper.MediaMetadata;
 import org.tinymediamanager.scraper.MediaSearchAndScrapeOptions;
 import org.tinymediamanager.scraper.MediaSearchResult;
@@ -86,6 +87,7 @@ import org.tinymediamanager.scraper.imdb.entities.ImdbPlaybackUrl;
 import org.tinymediamanager.scraper.imdb.entities.ImdbReleaseDate;
 import org.tinymediamanager.scraper.imdb.entities.ImdbSearchResult;
 import org.tinymediamanager.scraper.imdb.entities.ImdbSectionItem;
+import org.tinymediamanager.scraper.imdb.entities.ImdbShowEpisodes;
 import org.tinymediamanager.scraper.imdb.entities.ImdbTitleKeyword;
 import org.tinymediamanager.scraper.imdb.entities.ImdbTitleType;
 import org.tinymediamanager.scraper.imdb.entities.ImdbVideo;
@@ -362,16 +364,17 @@ public abstract class ImdbParser {
      *
      * Note: That even with exact matches there can be more than 1 hit, for example "Star Trek"
      */
-    String searchTerm = "";
 
-    if (StringUtils.isNotEmpty(options.getImdbId())) {
-      searchTerm = options.getImdbId();
+    // if we have already a valid ID, return directly
+    if (MediaIdUtil.isValidImdbId(options.getImdbId())) {
+      MediaMetadata result = getMetadata(options);
+      MediaSearchResult msr = result.toSearchResult(options.getMediaType());
+      results.add(msr);
+      return results;
     }
 
-    if (StringUtils.isEmpty(searchTerm)) {
-      searchTerm = options.getSearchQuery();
-    }
-
+    // when entering something in the searchbar, NO id is set, so we need to do a search
+    String searchTerm = options.getSearchQuery();
     if (StringUtils.isEmpty(searchTerm)) {
       return results;
     }
@@ -385,109 +388,84 @@ public abstract class ImdbParser {
     getLogger().debug("========= BEGIN IMDB Scraper Search for: {}", searchTerm);
     Document doc = null;
 
-    boolean advancedSearch = false;
-    if (isIncludeShortResults() || isIncludeTvMovieResults() || isIncludeVideogameResults() || isIncludeAdultResults()) {
-      advancedSearch = true;
+    // ADVANCED SEARCH titleTypes (slightly different than JSON TitleTypes!)
+    // MOVIES
+    // &title_type=feature # this are THE movies!!
+    // &title_type=short
+    // &title_type=tv_movie
+    // &title_type=tv_special
+    // &title_type=tv_short
+    // &title_type=video_game
+    // &title_type=video
+    // &title_type=music_video
+    // TV
+    // &title_type=tv_series
+    // &title_type=tv_episode
+    // &title_type=tv_miniseries
+    // &title_type=podcast_series
+    // &title_type=podcast_episode
+
+    // build advanced search parameters, skip episodes and some other types
+    String param = "";
+    if (options.getMediaType() == MediaType.MOVIE) {
+      param = "&title_type=feature";
+      if (isIncludeShortResults()) {
+        param += ",short,tv_short"; // tv shorts are "short movies played solely on tv, mostly ads, but also dinnerForOne"
+      }
+      if (isIncludeTvMovieResults()) {
+        param += ",tv_movie,tv_special";
+      }
+      if (isIncludeVideogameResults()) {
+        param += ",video_game";
+      }
     }
-    // if we enter just an ID as search term, this only works via basic find url!
-    if (MediaIdUtil.isValidImdbId(searchTerm)) {
-      advancedSearch = false;
+    else if (options.getMediaType() == MediaType.TV_SHOW) {
+      param = "&title_type=tv_series,tv_miniseries";
+      if (isIncludePodcastResults()) {
+        param += ",podcast_series";
+      }
+    }
+    if (isIncludeAdultResults()) {
+      param += "&adult=include";
     }
 
-    Url advUrl;
-    Url findUrl;
+    // first advanced search, normal as fallback
+    boolean advancedSearch = true;
     try {
-      String param = "";
-
-      // ADVANCED SEARCH
-      // build advanced search queries per entity
-      if (options.getMediaType() == MediaType.MOVIE) {
-        param = "&title_type=feature";
-        if (isIncludeShortResults()) {
-          param += ",short,tv_short"; // tv shorts are "short movies played solely on tv, mostly ads, but also dinnerForOne"
-        }
-        if (isIncludeTvMovieResults()) {
-          param += ",tv_movie,tv_special";
-        }
-        if (isIncludeVideogameResults()) {
-          param += ",video_game";
-        }
-      }
-      else if (options.getMediaType() == MediaType.TV_SHOW) {
-        param = "&title_type=tv_series,tv_miniseries";
-        if (isIncludePodcastResults()) {
-          param += ",podcast_series";
-        }
-      }
-      if (isIncludeAdultResults()) {
-        param += "&adult=include";
-      }
-      advUrl = new InMemoryCachedUrl(constructUrl("search/title/?title=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param));
+      Url advUrl = new InMemoryCachedUrl(constructUrl("search/title/?title=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param));
       advUrl.addHeader("Accept-Language", getAcceptLanguage(language, country));
+      InputStream is = advUrl.getInputStream();
+      doc = Jsoup.parse(is, UrlUtil.UTF_8, "");
+      doc.setBaseUri(metadataProvider.getApiKey());
+    }
+    catch (InterruptedException | InterruptedIOException e) {
+      // do not swallow these Exceptions
+      Thread.currentThread().interrupt();
+    }
+    catch (Exception e) {
+      getLogger().warn("tried to fetch advanced search response", e);
 
       // BASIC SEARCH
       param = "&s=tt&ttype=ft"; // movies
       if (options.getMediaType() == MediaType.TV_SHOW) {
-        param = "&s=tt&ttype=tv";
+        param = "&s=tt&ttype=tv"; // all TV related, even TVmovies (which cannot be parsed as TV) - but there is no other option in basic search
       }
-      findUrl = new InMemoryCachedUrl(constructUrl("find/?q=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param));
-      findUrl.addHeader("Accept-Language", getAcceptLanguage(language, country));
-    }
-    catch (Exception e) {
-      getLogger().debug("tried to fetch search response", e);
-      throw new ScrapeException(e);
-    }
 
-    if (advancedSearch) {
-      // first advanced search, normal as fallback
-      try (InputStream is = advUrl.getInputStream()) {
+      try {
+        Url findUrl = new InMemoryCachedUrl(constructUrl("find/?q=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param));
+        findUrl.addHeader("Accept-Language", getAcceptLanguage(language, country));
+        InputStream is = findUrl.getInputStream();
         doc = Jsoup.parse(is, UrlUtil.UTF_8, "");
         doc.setBaseUri(metadataProvider.getApiKey());
+        advancedSearch = false;
       }
-      catch (InterruptedException | InterruptedIOException e) {
+      catch (InterruptedException | InterruptedIOException e2) {
         // do not swallow these Exceptions
         Thread.currentThread().interrupt();
       }
-      catch (Exception e) {
-        getLogger().debug("tried to fetch search response", e);
-        try (InputStream is = findUrl.getInputStream()) {
-          doc = Jsoup.parse(is, UrlUtil.UTF_8, "");
-          doc.setBaseUri(metadataProvider.getApiKey());
-        }
-        catch (InterruptedException | InterruptedIOException e2) {
-          // do not swallow these Exceptions
-          Thread.currentThread().interrupt();
-        }
-        catch (Exception e2) {
-          getLogger().debug("tried to fetch search2 response", e2);
-          throw new ScrapeException(e2);
-        }
-      }
-    }
-    else {
-      // first normal search, advance as fallback
-      try (InputStream is = findUrl.getInputStream()) {
-        doc = Jsoup.parse(is, UrlUtil.UTF_8, "");
-        doc.setBaseUri(metadataProvider.getApiKey());
-      }
-      catch (InterruptedException | InterruptedIOException e) {
-        // do not swallow these Exceptions
-        Thread.currentThread().interrupt();
-      }
-      catch (Exception e) {
-        getLogger().debug("tried to fetch search response", e);
-        try (InputStream is = advUrl.getInputStream()) {
-          doc = Jsoup.parse(is, UrlUtil.UTF_8, "");
-          doc.setBaseUri(metadataProvider.getApiKey());
-        }
-        catch (InterruptedException | InterruptedIOException e2) {
-          // do not swallow these Exceptions
-          Thread.currentThread().interrupt();
-        }
-        catch (Exception e2) {
-          getLogger().debug("tried to fetch search2 response", e2);
-          throw new ScrapeException(e2);
-        }
+      catch (Exception e2) {
+        getLogger().debug("tried to fetch search2 response", e2);
+        throw new ScrapeException(e2);
       }
     }
 
@@ -515,11 +493,12 @@ public abstract class ImdbParser {
           results.add(sr);
         }
         else {
+          // TODO: check result classes / check parse; use found titleType, or "ours"?
           if (advancedSearch) {
             for (ImdbAdvancedSearchResult result : JsonUtils.parseList(mapper, resultsNode, ImdbAdvancedSearchResult.class)) {
               MediaSearchResult sr = parseJsonAdvancedSearchResults(result, options);
               // only add wanted ones
-              if (sr != null && options.getMediaType().equals(result.getMediaType())) {
+              if (sr != null && result.titleType != null && options.getMediaType().equals(result.titleType.getMediaType())) {
                 results.add(sr);
               }
             }
@@ -528,7 +507,7 @@ public abstract class ImdbParser {
             for (ImdbSearchResult result : JsonUtils.parseList(mapper, resultsNode, ImdbSearchResult.class)) {
               MediaSearchResult sr = parseJsonSearchResults(result, options);
               // only add wanted ones
-              if (sr != null && options.getMediaType().equals(result.getMediaType())) {
+              if (sr != null && result.imageType != null && options.getMediaType().equals(result.imageType.getMediaType())) {
                 results.add(sr);
               }
             }
@@ -539,9 +518,7 @@ public abstract class ImdbParser {
         }
       }
     }
-    catch (
-
-    Exception e) {
+    catch (Exception e) {
       getLogger().warn("Error parsing JSON - '{}'", e.getMessage());
     }
 
@@ -628,7 +605,7 @@ public abstract class ImdbParser {
   private MediaSearchResult parseJsonSearchResults(ImdbSearchResult result, MediaSearchAndScrapeOptions options) {
     MediaSearchResult sr = new MediaSearchResult(ImdbMetadataProvider.ID, options.getMediaType());
 
-    sr.setIMDBId(result.getId());
+    sr.setIMDBId(result.id);
     sr.setTitle(result.titleNameText);
     String year = result.titleReleaseText;
     if (!year.isEmpty()) {
@@ -659,7 +636,7 @@ public abstract class ImdbParser {
   private MediaSearchResult parseJsonAdvancedSearchResults(ImdbAdvancedSearchResult result, MediaSearchAndScrapeOptions options) {
     MediaSearchResult sr = new MediaSearchResult(ImdbMetadataProvider.ID, options.getMediaType());
 
-    sr.setIMDBId(result.getId());
+    sr.setIMDBId(result.titleId);
     sr.setTitle(result.titleText);
     sr.setYear(result.releaseYear);
     if (result.primaryImage != null) {
@@ -1093,7 +1070,6 @@ public abstract class ImdbParser {
 
       JsonNode ttype = JsonUtils.at(node, "/props/pageProps/aboveTheFoldData/titleType");
       ImdbTitleType type = JsonUtils.parseObject(mapper, ttype, ImdbTitleType.class);
-
       if (type != null && type.isEpisode) {
         JsonNode epNode = JsonUtils.at(node, "/props/pageProps/aboveTheFoldData/series/episodeNumber");
         ImdbEpisodeNumber ep = JsonUtils.parseObject(mapper, epNode, ImdbEpisodeNumber.class);
@@ -1103,24 +1079,26 @@ public abstract class ImdbParser {
       }
 
       // ***** MAIN column *****
-      JsonNode titleMainImages = JsonUtils.at(node, "/props/pageProps/mainColumnData/titleMainImages/edges");
-      for (JsonNode fanart : ListUtils.nullSafe(titleMainImages)) {
-        ImdbImage i = JsonUtils.parseObject(mapper, fanart.get("node"), ImdbImage.class);
-        // only parse landscape ones as fanarts
-        if (i != null && i.getWidth() > i.getHeight()) {
-          MediaArtwork mediaArtwork = new MediaArtwork(ImdbMetadataProvider.ID, MediaArtworkType.BACKGROUND);
-          mediaArtwork.setOriginalUrl(i.url);
-          mediaArtwork.setPreviewUrl(i.url); // well, yes
-          mediaArtwork.setImdbId(i.id);
 
-          // add original size
-          mediaArtwork.addImageSize(i.getWidth(), i.getHeight(), i.url, MediaArtwork.FanartSizes.getSizeOrder(i.getWidth()));
-          // add variants
-          adoptArtworkSizes(mediaArtwork, i.getWidth());
-
-          md.addMediaArt(mediaArtwork);
-        }
-      }
+      // weird/mixed images - use extra call for that!!s
+      // JsonNode titleMainImages = JsonUtils.at(node, "/props/pageProps/mainColumnData/titleMainImages/edges");
+      // for (JsonNode fanart : ListUtils.nullSafe(titleMainImages)) {
+      // ImdbImage i = JsonUtils.parseObject(mapper, fanart.get("node"), ImdbImage.class);
+      // // only parse landscape ones as fanarts
+      // if (i != null && i.getWidth() > i.getHeight()) {
+      // MediaArtwork mediaArtwork = new MediaArtwork(ImdbMetadataProvider.ID, MediaArtworkType.BACKGROUND);
+      // mediaArtwork.setOriginalUrl(i.url);
+      // mediaArtwork.setPreviewUrl(i.url); // well, yes
+      // mediaArtwork.setImdbId(i.id);
+      //
+      // // add original size
+      // mediaArtwork.addImageSize(i.getWidth(), i.getHeight(), i.url, MediaArtwork.FanartSizes.getSizeOrder(i.getWidth()));
+      // // add variants
+      // adoptArtworkSizes(mediaArtwork, i.getWidth());
+      //
+      // md.addMediaArt(mediaArtwork);
+      // }
+      // }
 
       JsonNode directorsNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/directors");
       for (ImdbCredits directors : JsonUtils.parseList(mapper, directorsNode, ImdbCredits.class)) {
@@ -1170,11 +1148,90 @@ public abstract class ImdbParser {
       for (JsonNode p : ListUtils.nullSafe(prods)) {
         md.addProductionCompany(p.at("/node/company/companyText/text").asText());
       }
+
+      // available episodes & seasons
+      JsonNode episodesNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/episodes");
+      ImdbShowEpisodes eps = JsonUtils.parseObject(mapper, episodesNode, ImdbShowEpisodes.class);
+      if (eps != null) {
+        md.addExtraData("episodeCount", eps.episodes.total);
+        md.addExtraData("seasons", eps.getSeasons());
+        md.addExtraData("years", eps.getYears());
+      }
+
     }
     catch (Exception e) {
       getLogger().warn("Error parsing JSON: '{}'", e);
       throw e;
     }
+  }
+
+  protected List<MediaArtwork> getMediaArt(ArtworkSearchAndScrapeOptions options) {
+    List<MediaArtwork> artworks = new ArrayList<>();
+    String imdbId = "";
+    // imdbId from searchResult
+    if (options.getSearchResult() != null) {
+      imdbId = options.getSearchResult().getIMDBId();
+    }
+    // imdbid from scraper option
+    if (!MediaIdUtil.isValidImdbId(imdbId)) {
+      imdbId = options.getImdbId();
+    }
+    if (imdbId.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    try {
+      Document doc = null;
+      Callable<Document> fanarts = new ImdbWorker(constructUrl("title/", imdbId, decode("L21lZGlhaW5kZXgvP2NvbnRlbnRUeXBlcz1zdGlsbF9mcmFtZQ==")),
+          options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), true);
+      Future<Document> futureFanarts = executor.submit(fanarts);
+
+      Callable<Document> posters = new ImdbWorker(constructUrl("title/", imdbId, decode("L21lZGlhaW5kZXgvP2NvbnRlbnRUeXBlcz1wb3N0ZXI=")),
+          options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), true);
+      Future<Document> futurePosters = executor.submit(posters);
+
+      // add posters
+      doc = futurePosters.get();
+      artworks.addAll(parseImagesPageJson(doc, MediaArtworkType.POSTER));
+      // add stills = fanarts
+      doc = futureFanarts.get();
+      artworks.addAll(parseImagesPageJson(doc, MediaArtworkType.BACKGROUND));
+    }
+    catch (Exception e) {
+      getLogger().warn("Could not get imagesfor id '{}' - '{}'", imdbId, e.getMessage());
+    }
+
+    return artworks;
+  }
+
+  private List<MediaArtwork> parseImagesPageJson(Document doc, MediaArtworkType type) {
+    List<MediaArtwork> images = new ArrayList<>();
+    try {
+      String json = doc.getElementById("__NEXT_DATA__").data();
+      // System.out.println(json);
+      JsonNode node = mapper.readTree(json);
+      JsonNode imgs = JsonUtils.at(node, "/props/pageProps/contentData/data/title/all_images/edges");
+      for (JsonNode fanart : ListUtils.nullSafe(imgs)) {
+        ImdbImage i = JsonUtils.parseObject(mapper, fanart.get("node"), ImdbImage.class);
+        if (i != null) {
+          MediaArtwork mediaArtwork = new MediaArtwork(ImdbMetadataProvider.ID, type);
+          mediaArtwork.setOriginalUrl(i.url);
+          mediaArtwork.setPreviewUrl(i.url); // well, yes
+          mediaArtwork.setImdbId(i.id);
+
+          // add original size
+          mediaArtwork.addImageSize(i.getWidth(), i.getHeight(), i.url, MediaArtwork.FanartSizes.getSizeOrder(i.getWidth()));
+          // add variants
+          adoptArtworkSizes(mediaArtwork, i.getWidth());
+
+          images.add(mediaArtwork);
+        }
+      }
+    }
+    catch (Exception e) {
+      getLogger().warn("Could not parse images page  - '{}'", e.getMessage());
+    }
+    return images;
   }
 
   /**

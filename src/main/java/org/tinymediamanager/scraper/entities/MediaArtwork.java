@@ -401,7 +401,10 @@ public class MediaArtwork {
    *          the sizeOrder - set with the right int when known, 0 otherwise
    */
   public void addImageSize(int width, int height, String url, int sizeOrder) {
-    imageSizes.add(new ImageSizeAndUrl(width, height, url, sizeOrder));
+    ImageSizeAndUrl imageSizeAndUrl = new ImageSizeAndUrl(width, height, url, sizeOrder);
+    if (!imageSizes.contains(imageSizeAndUrl)) {
+      imageSizes.add(imageSizeAndUrl);
+    }
   }
 
   /**
@@ -427,8 +430,7 @@ public class MediaArtwork {
    *          the preferred languages array
    * @return score
    */
-  public int getMatchingScoreAccordingPreferences(int wantedSize, List<MediaLanguages> preferredLanguages, boolean preferFanartWoText,
-      boolean otherResolutions) {
+  public int getMatchingScoreAccordingPreferences(int wantedSize, List<MediaLanguages> preferredLanguages, boolean preferFanartWoText) {
     // do not use likes here - just check against user preferences!
     int score = 0;
 
@@ -476,10 +478,6 @@ public class MediaArtwork {
       // well... not a single preference matched
     }
 
-    // consider the amount of images? Nah, not needed
-    // if (otherResolutions) {
-    // score += imageSizes.size() * 2;
-    // }
     if (isAnimated()) {
       score += 5; // why not ^^
     }

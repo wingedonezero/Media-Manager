@@ -68,7 +68,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -303,7 +302,7 @@ public class TvShow extends MediaEntity implements IMediaInformation {
     setRuntime(runtime == 0 || force ? other.runtime : runtime);
     setFirstAired(firstAired == null || force ? other.firstAired : firstAired);
     setStatus(status == MediaAiredStatus.UNKNOWN || force ? other.status : status);
-    setCertification(certification == MediaCertification.NOT_RATED || force ? other.certification : certification);
+    setCertification(certification == MediaCertification.UNKNOWN || force ? other.certification : certification);
     setCountry(StringUtils.isEmpty(country) || force ? other.country : country);
     setTop250(top250 == 0 || force ? other.top250 : top250);
 
@@ -690,6 +689,25 @@ public class TvShow extends MediaEntity implements IMediaInformation {
   }
 
   /**
+   * completely remove one dummy episode from this TV show
+   * 
+   * @param episode
+   *          the dummy episode
+   */
+  public void removeDummyEpisode(@NotNull TvShowEpisode episode) {
+    if (!episode.isDummy()) {
+      return;
+    }
+
+    // remove from UI
+    removeEpisode(episode);
+
+    // remove from DB
+    dummyEpisodes.remove(episode);
+    saveToDb();
+  }
+
+  /**
    * build a list of <br>
    * a) available episodes along with<br>
    * b) missing episodes <br>
@@ -709,12 +727,6 @@ public class TvShow extends MediaEntity implements IMediaInformation {
         if (episode.getSeason() > -1 && episode.getEpisode() > -1) {
           availableEpisodes.add("A" + episode.getSeason() + "." + episode.getEpisode());
         }
-        if (episode.getDvdSeason() > -1 && episode.getDvdEpisode() > -1) {
-          availableEpisodes.add("D" + episode.getSeason() + "." + episode.getEpisode());
-        }
-        if (episode.getAbsoluteNumber() > -1) {
-          availableEpisodes.add("ABS" + episode.getAbsoluteNumber());
-        }
       }
 
       // and now mix in unavailable ones
@@ -723,9 +735,7 @@ public class TvShow extends MediaEntity implements IMediaInformation {
           continue;
         }
 
-        if (!availableEpisodes.contains("A" + episode.getSeason() + "." + episode.getEpisode())
-            && !availableEpisodes.contains("D" + episode.getDvdSeason() + "." + episode.getDvdEpisode())
-            && !availableEpisodes.contains("ABS" + episode.getAbsoluteNumber())) {
+        if (!availableEpisodes.contains("A" + episode.getSeason() + "." + episode.getEpisode())) {
           episodes.add(episode);
         }
       }
@@ -1120,6 +1130,14 @@ public class TvShow extends MediaEntity implements IMediaInformation {
       }
     }
 
+    // when there are no ids, we must assume that this is the first scrape of the TV show - treat it like a matched one (to prevent existing/manually
+    // entered data from being overwritten)
+    boolean newEntity = false;
+    if (ids.isEmpty()) {
+      matchFound = true;
+      newEntity = true;
+    }
+
     if (!matchFound && overwriteExistingItems) {
       // clear the old ids to set only the new ones
       ids.clear();
@@ -1137,10 +1155,10 @@ public class TvShow extends MediaEntity implements IMediaInformation {
     }
 
     if (config.contains(TvShowScraperMetadataConfig.TITLE) && StringUtils.isNotBlank(metadata.getTitle())
-        && (overwriteExistingItems || StringUtils.isBlank(getTitle()))) {
+        && (overwriteExistingItems || newEntity || StringUtils.isBlank(getTitle()))) {
       // Capitalize first letter of original title if setting is set!
       if (TvShowModuleManager.getInstance().getSettings().getCapitalWordsInTitles()) {
-        setTitle(WordUtils.capitalize(metadata.getTitle()));
+        setTitle(StrgUtils.capitalize(metadata.getTitle()));
       }
       else {
         setTitle(metadata.getTitle());
@@ -1150,7 +1168,7 @@ public class TvShow extends MediaEntity implements IMediaInformation {
     if (config.contains(TvShowScraperMetadataConfig.ORIGINAL_TITLE) && (overwriteExistingItems || StringUtils.isBlank(getOriginalTitle()))) {
       // Capitalize first letter of original title if setting is set!
       if (TvShowModuleManager.getInstance().getSettings().getCapitalWordsInTitles()) {
-        setOriginalTitle(WordUtils.capitalize(metadata.getOriginalTitle()));
+        setOriginalTitle(StrgUtils.capitalize(metadata.getOriginalTitle()));
       }
       else {
         setOriginalTitle(metadata.getOriginalTitle());
@@ -2006,7 +2024,9 @@ public class TvShow extends MediaEntity implements IMediaInformation {
    */
   @JsonSetter
   public void setExtraFanartUrls(List<String> extraFanartUrls) {
-    ListUtils.mergeLists(this.extraFanartUrls, extraFanartUrls);
+    this.extraFanartUrls.clear();
+    this.extraFanartUrls.addAll(extraFanartUrls);
+    firePropertyChange("extraFanartUrls", null, this.extraFanartUrls);
   }
 
   /**

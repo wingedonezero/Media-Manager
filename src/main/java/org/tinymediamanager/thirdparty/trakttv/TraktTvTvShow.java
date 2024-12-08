@@ -24,6 +24,7 @@ import static org.tinymediamanager.thirdparty.trakttv.TraktTv.printStatus;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -138,41 +139,46 @@ class TraktTvTvShow {
       List<TvShow> matchingTmmTvShows = getTmmTvShowForTraktShow(tvShows, traktShow.show);
 
       for (TvShow tmmShow : matchingTmmTvShows) {
-        // update show IDs from trakt
-        boolean showDirty = updateIDs(tmmShow, traktShow.show);
+        if (!tmmShow.isLocked()) {
+          // update show IDs from trakt
+          boolean showDirty = updateIDs(tmmShow, traktShow.show);
 
-        // update collection date from trakt (show)
-        if (traktShow.last_collected_at != null) {
-          Date collectedAt = DateTimeUtils.toDate(traktShow.last_collected_at.toInstant());
-          if (!collectedAt.equals(tmmShow.getDateAdded())) {
-            // always set from trakt, if not matched (Trakt = master)
-            LOGGER.trace("Marking TvShow '{}' as collected on {} (was {})", tmmShow.getTitle(), collectedAt, tmmShow.getDateAddedAsString());
-            tmmShow.setDateAdded(collectedAt);
-            showDirty = true;
+          // update collection date from trakt (show)
+          if (traktShow.last_collected_at != null) {
+            Date collectedAt = DateTimeUtils.toDate(traktShow.last_collected_at.toInstant());
+            if (!collectedAt.equals(tmmShow.getDateAdded())) {
+              // always set from trakt, if not matched (Trakt = master)
+              LOGGER.trace("Marking TvShow '{}' as collected on {} (was {})", tmmShow.getTitle(), collectedAt, tmmShow.getDateAddedAsString());
+              tmmShow.setDateAdded(collectedAt);
+              showDirty = true;
+            }
           }
-        }
 
-        // update collection date from trakt (episodes)
-        for (BaseSeason bs : ListUtils.nullSafe(traktShow.seasons)) {
-          for (BaseEpisode be : ListUtils.nullSafe(bs.episodes)) {
-            List<TvShowEpisode> matchingEpisodes = tmmShow.getEpisode(MetadataUtil.unboxInteger(bs.number, -1),
-                MetadataUtil.unboxInteger(be.number, -1));
-            for (TvShowEpisode tmmEp : matchingEpisodes) {
-              if (be.collected_at != null) {
-                Date collectedAt = DateTimeUtils.toDate(be.collected_at.toInstant());
-                if (!collectedAt.equals(tmmEp.getDateAdded())) {
-                  tmmEp.setDateAdded(collectedAt);
-                  tmmEp.writeNFO();
-                  tmmEp.saveToDb();
+          // update collection date from trakt (episodes)
+          for (BaseSeason bs : ListUtils.nullSafe(traktShow.seasons)) {
+            for (BaseEpisode be : ListUtils.nullSafe(bs.episodes)) {
+              List<TvShowEpisode> matchingEpisodes = tmmShow.getEpisode(MetadataUtil.unboxInteger(bs.number, -1),
+                  MetadataUtil.unboxInteger(be.number, -1));
+              for (TvShowEpisode tmmEp : matchingEpisodes) {
+                if (be.collected_at != null) {
+                  Date collectedAt = DateTimeUtils.toDate(be.collected_at.toInstant());
+                  if (!collectedAt.equals(tmmEp.getDateAdded())) {
+                    tmmEp.setDateAdded(collectedAt);
+                    tmmEp.writeNFO();
+                    tmmEp.saveToDb();
+                  }
                 }
               }
             }
           }
-        }
 
-        if (showDirty) {
-          tmmShow.writeNFO();
-          tmmShow.saveToDb();
+          if (showDirty) {
+            tmmShow.writeNFO();
+            tmmShow.saveToDb();
+          }
+        }
+        else {
+          LOGGER.trace("Skipping show '{}' from Trak.tv collection sync, because it is locked!", tmmShow.getTitle());
         }
       }
     }
@@ -221,46 +227,51 @@ class TraktTvTvShow {
       List<TvShow> matchingTmmTvShows = getTmmTvShowForTraktShow(tvShows, traktShow.show);
 
       for (TvShow tmmShow : matchingTmmTvShows) {
-        // update show IDs from trakt
-        boolean showDirty = updateIDs(tmmShow, traktShow.show);
+        if (!tmmShow.isLocked()) {
+          // update show IDs from trakt
+          boolean showDirty = updateIDs(tmmShow, traktShow.show);
 
-        // update collection date from trakt (episodes)
-        for (BaseSeason bs : ListUtils.nullSafe(traktShow.seasons)) {
-          for (BaseEpisode be : ListUtils.nullSafe(bs.episodes)) {
-            List<TvShowEpisode> matchingEpisodes = tmmShow.getEpisode(MetadataUtil.unboxInteger(bs.number, -1),
-                MetadataUtil.unboxInteger(be.number, -1));
-            for (TvShowEpisode tmmEp : matchingEpisodes) {
-              boolean epDirty = false;
-              if (!tmmEp.isWatched()) {
-                LOGGER.trace("Marking episode '{}' as watched", tmmEp.getTitle());
-                tmmEp.setWatched(true);
-                epDirty = true;
-              }
-              if (tmmEp.getPlaycount() != MetadataUtil.unboxInteger(be.plays)) {
-                tmmEp.setPlaycount(MetadataUtil.unboxInteger(be.plays));
-                epDirty = true;
-              }
-
-              if (be.last_watched_at != null) {
-                Date lastWatchedAt = DateTimeUtils.toDate(be.last_watched_at.toInstant());
-                if (!lastWatchedAt.equals(tmmEp.getLastWatched())) {
-                  tmmEp.setLastWatched(lastWatchedAt);
+          // update collection date from trakt (episodes)
+          for (BaseSeason bs : ListUtils.nullSafe(traktShow.seasons)) {
+            for (BaseEpisode be : ListUtils.nullSafe(bs.episodes)) {
+              List<TvShowEpisode> matchingEpisodes = tmmShow.getEpisode(MetadataUtil.unboxInteger(bs.number, -1),
+                  MetadataUtil.unboxInteger(be.number, -1));
+              for (TvShowEpisode tmmEp : matchingEpisodes) {
+                boolean epDirty = false;
+                if (!tmmEp.isWatched()) {
+                  LOGGER.trace("Marking episode '{}' as watched", tmmEp.getTitle());
+                  tmmEp.setWatched(true);
                   epDirty = true;
                 }
-              }
+                if (tmmEp.getPlaycount() != MetadataUtil.unboxInteger(be.plays)) {
+                  tmmEp.setPlaycount(MetadataUtil.unboxInteger(be.plays));
+                  epDirty = true;
+                }
 
-              if (epDirty) {
-                tmmEp.writeNFO();
-                tmmEp.setLastWatched(null); // write date to NFO, but do not save it!
-                tmmEp.saveToDb();
+                if (be.last_watched_at != null) {
+                  Date lastWatchedAt = DateTimeUtils.toDate(be.last_watched_at.toInstant());
+                  if (!lastWatchedAt.equals(tmmEp.getLastWatched())) {
+                    tmmEp.setLastWatched(lastWatchedAt);
+                    epDirty = true;
+                  }
+                }
+
+                if (epDirty) {
+                  tmmEp.writeNFO();
+                  tmmEp.setLastWatched(null); // write date to NFO, but do not save it!
+                  tmmEp.saveToDb();
+                }
               }
             }
           }
-        }
 
-        if (showDirty) {
-          tmmShow.writeNFO();
-          tmmShow.saveToDb();
+          if (showDirty) {
+            tmmShow.writeNFO();
+            tmmShow.saveToDb();
+          }
+        }
+        else {
+          LOGGER.trace("Skipping show '{}' from Trak.tv watched sync, because it is locked!", tmmShow.getTitle());
         }
       }
     }
@@ -369,18 +380,23 @@ class TraktTvTvShow {
       List<TvShow> matchingTmmTvShows = getTmmTvShowForTraktShow(tvShows, traktShow.show);
 
       for (TvShow tmmShow : matchingTmmTvShows) {
-        // update show IDs from trakt
-        boolean dirty = updateIDs(tmmShow, traktShow.show);
+        if (!tmmShow.isLocked()) {
+          // update show IDs from trakt
+          boolean dirty = updateIDs(tmmShow, traktShow.show);
 
-        MediaRating userRating = tmmShow.getUserRating();
-        if (userRating == MediaMetadata.EMPTY_RATING) {
-          tmmShow.setRating(new MediaRating(MediaRating.USER, traktShow.rating.value, 1, 10));
-          dirty = true;
+          MediaRating userRating = tmmShow.getUserRating();
+          if (userRating == MediaMetadata.EMPTY_RATING) {
+            tmmShow.setRating(new MediaRating(MediaRating.USER, traktShow.rating.value, 1, 10));
+            dirty = true;
+          }
+
+          if (dirty) {
+            tmmShow.writeNFO();
+            tmmShow.saveToDb();
+          }
         }
-
-        if (dirty) {
-          tmmShow.writeNFO();
-          tmmShow.saveToDb();
+        else {
+          LOGGER.trace("Skipping show '{}' from Trak.tv ratings sync, because it is locked!", tmmShow.getTitle());
         }
       }
     }
@@ -397,18 +413,23 @@ class TraktTvTvShow {
             MetadataUtil.unboxInteger(traktEpisode.episode.season, -1));
 
         for (TvShowEpisode tmmEpisode : matchingEpisodes) {
-          // update show IDs from trakt
-          boolean dirty = false;
+          if (!tmmEpisode.isLocked()) {
+            // update show IDs from trakt
+            boolean dirty = false;
 
-          MediaRating userRating = tmmEpisode.getUserRating();
-          if (userRating == MediaMetadata.EMPTY_RATING) {
-            tmmEpisode.setRating(new MediaRating(MediaRating.USER, traktEpisode.rating.value, 1, 10));
-            dirty = true;
+            MediaRating userRating = tmmEpisode.getUserRating();
+            if (userRating == MediaMetadata.EMPTY_RATING) {
+              tmmEpisode.setRating(new MediaRating(MediaRating.USER, traktEpisode.rating.value, 1, 10));
+              dirty = true;
+            }
+
+            if (dirty) {
+              tmmEpisode.writeNFO();
+              tmmEpisode.saveToDb();
+            }
           }
-
-          if (dirty) {
-            tmmEpisode.writeNFO();
-            tmmEpisode.saveToDb();
+          else {
+            LOGGER.trace("Skipping episode '{}' from Trak.tv ratings sync, because it is locked!", tmmEpisode.getTitle());
           }
         }
       }
@@ -437,6 +458,50 @@ class TraktTvTvShow {
         LOGGER.error("failed syncing trakt: {}", e.getMessage());
         return;
       }
+    }
+  }
+
+  void removeFromTraktCollection(TvShow tmmShow) {
+    removeFromTraktCollection(Collections.singletonList(tmmShow));
+  }
+
+  void removeFromTraktCollection(List<TvShow> tmmShows) {
+    List<SyncShow> syncShows = new ArrayList<>();
+    for (TvShow tmmShow : tmmShows) {
+      LOGGER.debug("Going to remove from your Trakt.tv collection: {}", tmmShow.getTitle());
+      SyncShow sync = toSyncShow(tmmShow, false, Collections.emptyList());
+      syncShows.add(sync);
+    }
+
+    try {
+      SyncItems items = new SyncItems().shows(syncShows);
+      SyncResponse response = executeCall(api.sync().deleteItemsFromCollection(items));
+      printStatus(response);
+    }
+    catch (Exception e) {
+      LOGGER.error("Failed removing from Trakt.tv collection: {}", e.getMessage());
+    }
+  }
+
+  void removeFromTraktWatched(TvShow tmmShow) {
+    removeFromTraktWatched(Collections.singletonList(tmmShow));
+  }
+
+  void removeFromTraktWatched(List<TvShow> tmmShows) {
+    List<SyncShow> syncShows = new ArrayList<>();
+    for (TvShow tmmShow : tmmShows) {
+      LOGGER.debug("Going to remove from your Trakt.tv collection: {}", tmmShow.getTitle());
+      SyncShow sync = toSyncShow(tmmShow, true, Collections.emptyList());
+      syncShows.add(sync);
+    }
+
+    try {
+      SyncItems items = new SyncItems().shows(syncShows);
+      SyncResponse response = executeCall(api.sync().deleteItemsFromWatchedHistory(items));
+      printStatus(response);
+    }
+    catch (Exception e) {
+      LOGGER.error("Failed removing from Trakt.tv collection: {}", e.getMessage());
     }
   }
 

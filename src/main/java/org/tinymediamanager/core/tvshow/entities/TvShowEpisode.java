@@ -65,7 +65,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -690,7 +689,11 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
         existingEpisodeNumber = mediaEpisodeNumber;
         break;
       }
+    }
 
+    if (existingEpisodeNumber == episode) {
+      // nothing to do
+      return;
     }
 
     if (existingEpisodeNumber != null) {
@@ -706,9 +709,17 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
     else {
       episodeNumbers.add(episode);
     }
-    firePropertyChange(EPISODE, -1, episode.episode());
-    firePropertyChange(SEASON, -1, episode.season());
-    firePropertyChange(TITLE_FOR_UI, -1, episode.episode());
+
+    if (existingEpisodeNumber != null) {
+      firePropertyChange(EPISODE, existingEpisodeNumber.episode(), episode.episode());
+      firePropertyChange(SEASON, existingEpisodeNumber.season(), episode.season());
+      firePropertyChange(TITLE_FOR_UI, existingEpisodeNumber.episode(), episode.episode());
+    }
+    else {
+      firePropertyChange(EPISODE, -1, episode.episode());
+      firePropertyChange(SEASON, -1, episode.season());
+      firePropertyChange(TITLE_FOR_UI, -1, episode.episode());
+    }
   }
 
   /**
@@ -949,6 +960,14 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
       }
     }
 
+    // when there are no ids, we must assume that this is the first scrape of the episode - treat it like a matched one (to prevent existing/manually
+    // entered data from being overwritten)
+    boolean newEntity = false;
+    if (ids.isEmpty()) {
+      matchFound = true;
+      newEntity = true;
+    }
+
     if (!matchFound && overwriteExistingItems) {
       // clear the old ids to set only the new ones
       ids.clear();
@@ -966,10 +985,10 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
     }
 
     if (config.contains(TvShowEpisodeScraperMetadataConfig.TITLE) && StringUtils.isNotBlank(metadata.getTitle())
-        && (overwriteExistingItems || StringUtils.isBlank(getTitle()))) {
+        && (overwriteExistingItems || newEntity || StringUtils.isBlank(getTitle()))) {
       // Capitalize first letter of original title if setting is set!
       if (TvShowModuleManager.getInstance().getSettings().getCapitalWordsInTitles()) {
-        setTitle(WordUtils.capitalize(metadata.getTitle()));
+        setTitle(StrgUtils.capitalize(metadata.getTitle()));
       }
       else {
         setTitle(metadata.getTitle());
@@ -979,7 +998,7 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
     if (config.contains(TvShowEpisodeScraperMetadataConfig.ORIGINAL_TITLE) && (overwriteExistingItems || StringUtils.isBlank(getOriginalTitle()))) {
       // Capitalize first letter of original title if setting is set!
       if (TvShowModuleManager.getInstance().getSettings().getCapitalWordsInTitles()) {
-        setOriginalTitle(WordUtils.capitalize(metadata.getOriginalTitle()));
+        setOriginalTitle(StrgUtils.capitalize(metadata.getOriginalTitle()));
       }
       else {
         setOriginalTitle(metadata.getOriginalTitle());
@@ -1406,6 +1425,10 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
 
   public void setLastWatched(Date lastWatched) {
     this.lastWatched = lastWatched;
+  }
+
+  public String getCRC32() {
+    return getMainVideoFile().getCRC32();
   }
 
   /**

@@ -73,7 +73,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.IMediaInformation;
@@ -100,6 +99,7 @@ import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.MovieScraperMetadataConfig;
 import org.tinymediamanager.core.movie.MovieSetScraperMetadataConfig;
 import org.tinymediamanager.core.movie.MovieSetSearchAndScrapeOptions;
+import org.tinymediamanager.core.movie.MovieSettings;
 import org.tinymediamanager.core.movie.connector.IMovieConnector;
 import org.tinymediamanager.core.movie.connector.MovieConnectors;
 import org.tinymediamanager.core.movie.connector.MovieToEmbyConnector;
@@ -793,6 +793,8 @@ public class Movie extends MediaEntity implements IMediaInformation {
       return;
     }
 
+    MovieSettings settings = MovieModuleManager.getInstance().getSettings();
+
     // populate ids
 
     // here we have two flavors:
@@ -807,6 +809,14 @@ public class Movie extends MediaEntity implements IMediaInformation {
         matchFound = true;
         break;
       }
+    }
+
+    // when there are no ids, we must assume that this is the first scrape of the movie - treat it like a matched one (to prevent existing/manually
+    // entered data from being overwritten)
+    boolean newEntity = false;
+    if (ids.isEmpty()) {
+      matchFound = true;
+      newEntity = true;
     }
 
     if (!matchFound && overwriteExistingItems) {
@@ -827,10 +837,10 @@ public class Movie extends MediaEntity implements IMediaInformation {
 
     // set chosen metadata
     if (config.contains(MovieScraperMetadataConfig.TITLE) && StringUtils.isNotBlank(metadata.getTitle())
-        && (overwriteExistingItems || StringUtils.isBlank(getTitle()))) {
+        && (overwriteExistingItems || newEntity || StringUtils.isBlank(getTitle()))) {
       // Capitalize first letter of title if setting is set!
-      if (MovieModuleManager.getInstance().getSettings().getCapitalWordsInTitles()) {
-        setTitle(WordUtils.capitalize(metadata.getTitle()));
+      if (settings.getCapitalWordsInTitles()) {
+        setTitle(StrgUtils.capitalize(metadata.getTitle()));
       }
       else {
         setTitle(metadata.getTitle());
@@ -839,8 +849,8 @@ public class Movie extends MediaEntity implements IMediaInformation {
 
     if (config.contains(MovieScraperMetadataConfig.ORIGINAL_TITLE) && (overwriteExistingItems || StringUtils.isBlank(getOriginalTitle()))) {
       // Capitalize first letter of original title if setting is set!
-      if (MovieModuleManager.getInstance().getSettings().getCapitalWordsInTitles()) {
-        setOriginalTitle(WordUtils.capitalize(metadata.getOriginalTitle()));
+      if (settings.getCapitalWordsInTitles()) {
+        setOriginalTitle(StrgUtils.capitalize(metadata.getOriginalTitle()));
       }
       else {
         setOriginalTitle(metadata.getOriginalTitle());
@@ -1015,7 +1025,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
             List<MediaScraper> movieSetMediaScrapers = MediaScraper.getMediaScrapers(ScraperType.MOVIE_SET);
             if (!movieSetMediaScrapers.isEmpty()) {
 
-              // get movieset metadata (async to donot block here)
+              // get movieset metadata (async to do not block here)
               MovieSetSearchAndScrapeOptions options = new MovieSetSearchAndScrapeOptions();
               options.setTmdbId(col);
               if (metadata.getScrapeOptions() != null) {
@@ -2752,6 +2762,10 @@ public class Movie extends MediaEntity implements IMediaInformation {
 
   public boolean isOffline() {
     return offline;
+  }
+
+  public String getCRC32() {
+    return getMainVideoFile().getCRC32();
   }
 
   public void setEdition(MovieEdition newValue) {

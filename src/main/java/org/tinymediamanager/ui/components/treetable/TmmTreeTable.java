@@ -33,7 +33,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.stream.IntStream;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.swing.Icon;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -217,11 +220,11 @@ public class TmmTreeTable extends TmmTable {
   }
 
   public void expandRow(int row) {
-    expandPath(treeTableModel.getLayout().getPathForRow(row));
+    expandPath(getRowPath(row));
   }
 
   public void collapseRow(int row) {
-    collapsePath(treeTableModel.getLayout().getPathForRow(row));
+    collapsePath(getRowPath(row));
   }
 
   public void expandPath(TreePath path) {
@@ -232,12 +235,36 @@ public class TmmTreeTable extends TmmTable {
     return getTreePathSupport().isExpanded(path);
   }
 
+  public boolean isExpanded(int row) {
+    return isExpanded(getRowPath(row));
+  }
+
+  public boolean isCollapsed(int row) {
+    return !isExpanded(row);
+  }
+
   public boolean isLeaf(TreePath path) {
     return getTreePathSupport().isLeaf(path);
   }
 
+  public boolean isLeaf(int row) {
+    return isLeaf(getRowPath(row));
+  }
+
+  public boolean isBranch(int row) {
+    return !isLeaf(row);
+  }
+
   public void collapsePath(TreePath path) {
     getTreePathSupport().collapsePath(path);
+  }
+
+  TreePath getRowPath(int row) {
+    return treeTableModel.getLayout().getPathForRow(row);
+  }
+
+  TreePath[] getSelectedTreePaths() {
+    return IntStream.of(getSelectedRows()).mapToObj(this::getRowPath).toArray(TreePath[]::new);
   }
 
   boolean isTreeColumnIndex(int column) {
@@ -722,6 +749,15 @@ public class TmmTreeTable extends TmmTable {
     return ((TmmTreeModel) treeTableModel.getTreeModel()).isAdjusting();
   }
 
+  private void setSelectedRows(int[] selectedRows) {
+    ((TmmTreeModel) treeTableModel.getTreeModel()).setAdjusting(true);
+    clearSelection();
+    ((TmmTreeModel) treeTableModel.getTreeModel()).setAdjusting(false);
+    for (int selectedRow : selectedRows) {
+      getSelectionModel().addSelectionInterval(selectedRow, selectedRow);
+    }
+  }
+
   private class TmmTreeModelConnector<E extends TmmTreeNode> extends TmmTreeModel {
 
     /**
@@ -740,7 +776,7 @@ public class TmmTreeTable extends TmmTable {
 
       if (now > nextNodeStructureChanged) {
         // store selected nodes
-        int[] selectedRows = getSelectedRows();
+        TreePath[] selectedPaths = getSelectedTreePaths();
 
         setAdjusting(true);
 
@@ -750,11 +786,9 @@ public class TmmTreeTable extends TmmTable {
           nodeStructureChanged();
 
           // Restoring tree state including all selections and expansions
-          clearSelection();
           setAdjusting(false);
-          for (int row : selectedRows) {
-            getSelectionModel().addSelectionInterval(row, row);
-          }
+
+          setSelectedRows(treeTableModel.getLayout().getRowsForPaths(selectedPaths));
         }
         else {
           setAdjusting(false);
@@ -798,42 +832,75 @@ public class TmmTreeTable extends TmmTable {
     getTableHeader().repaint();
   }
 
-  private static class TmmTreeTableKeyAdapter extends KeyAdapter {
+  private class TmmTreeTableKeyAdapter extends KeyAdapter {
     final TmmTreeTable treeTable;
 
     TmmTreeTableKeyAdapter(TmmTreeTable treeTable) {
       this.treeTable = treeTable;
     }
 
+    private int[] getParentRows(int[] childRows) {
+      return IntStream.of(childRows).map(leafRow -> {
+        @Nonnull
+        TreePath leafPath = getRowPath(leafRow);
+        @Nullable
+        TreePath parentPath = leafPath.getParentPath();
+        @Nonnull
+        TreePath pathToReturn = parentPath != null ? parentPath : leafPath;
+        int parentRow = treeTableModel.getLayout().getRowForPath(pathToReturn);
+        return parentRow > -1 ? parentRow : leafRow;
+      }).toArray();
+    }
+
+    private void toggleRows(int[] rows, boolean expand) {
+      int[] collapsedAndLeafRows = IntStream.of(rows).filter(treeTable::isCollapsed).toArray();
+
+      if (!expand && collapsedAndLeafRows.length == rows.length) {
+        int[] parentRows = getParentRows(rows);
+        setSelectedRows(parentRows);
+        return;
+      }
+
+      // Expand/collapse rows in reverse order to ensure that row indexes don't change.
+      int[] reversedBranchRows = new int[rows.length];
+      for (int i = 0; i < rows.length; i++) {
+        reversedBranchRows[rows.length - i - 1] = rows[i];
+      }
+
+      // Save the list of currently-selected row paths so that we can restore the user's selection after toggling.
+      TreePath[] selectedPaths = getSelectedTreePaths();
+
+      for (int row : reversedBranchRows) {
+        if (expand) {
+          treeTable.expandRow(row);
+        }
+        else {
+          treeTable.collapseRow(row);
+        }
+      }
+
+      setSelectedRows(treeTableModel.getLayout().getRowsForPaths(selectedPaths));
+    }
+
     @Override
     public void keyPressed(KeyEvent e) {
-      int selectedRow = treeTable.getSelectedRow();
+      int[] selectedRows = treeTable.getSelectedRows();
+      if (selectedRows.length == 0) {
+        return;
+      }
 
       try {
         if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-          TreePath treePath = treeTable.getTreeTableModel().getLayout().getPathForRow(selectedRow);
-          if (!treeTable.isLeaf(treePath)) {
-            if (!treeTable.isExpanded(treePath)) {
-              treeTable.expandRow(treeTable.getSelectedRow());
-            }
-            else {
-              treeTable.getSelectionModel().setSelectionInterval(selectedRow + 1, selectedRow + 1);
-            }
-          }
+          toggleRows(selectedRows, true);
         }
-        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-          TreePath treePath = treeTable.getTreeTableModel().getLayout().getPathForRow(selectedRow);
-          if (!treeTable.isLeaf(treePath) && treeTable.isExpanded(treePath)) {
-            treeTable.collapseRow(treeTable.getSelectedRow());
-          }
-          else if (treeTable.isLeaf(treePath) || !treeTable.isExpanded(treePath)) {
-            TreePath parent = treePath.getParentPath();
-            if (parent != treeTable.getTreeTableModel().getTreeModel().getRoot()) {
-              int parentRow = treeTable.getTreeTableModel().getLayout().getRowForPath(parent);
-              if (parentRow > -1) {
-                treeTable.getSelectionModel().setSelectionInterval(parentRow, parentRow);
-              }
-            }
+        else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+          toggleRows(selectedRows, false);
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+          int[] branchRows = IntStream.of(selectedRows).filter(treeTable::isBranch).toArray();
+          if (branchRows.length > 0) {
+            boolean areAnyBranchesCollapsed = IntStream.of(branchRows).anyMatch(treeTable::isCollapsed);
+            toggleRows(selectedRows, areAnyBranchesCollapsed);
           }
         }
       }

@@ -54,6 +54,7 @@ public class MovieSyncSelectedTraktTvAction extends TmmAction {
     MovieSyncTraktTvTask task = new MovieSyncTraktTvTask(selectedMovies);
     task.setSyncCollection(true);
     task.setSyncWatched(true);
+    task.setSyncRating(true);
 
     TmmTaskManager.getInstance().addUnnamedTask(task);
   }

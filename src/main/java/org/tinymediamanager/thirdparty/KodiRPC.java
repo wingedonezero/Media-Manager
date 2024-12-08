@@ -216,7 +216,13 @@ public class KodiRPC {
             rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
             ds = ds.replaceAll(SEPARATOR_REGEX + "$", ""); // replace ending separator
             ds = ds.replaceAll(".*" + SEPARATOR_REGEX, ""); // replace everything till last separator
-            kodiDsAndFolder.put(ds + "|" + rel, movie.movieid);
+            if (!kodiDsAndFolder.containsKey(rel)) {
+              kodiDsAndFolder.put(rel, movie.movieid);
+            }
+            else {
+              // no putIfAbsent since i wanna have a log!
+              LOGGER.warn("Kodi movie {} already attached to another datasource - skipping", rel);
+            }
           }
         }
         else {
@@ -226,7 +232,13 @@ public class KodiRPC {
           rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
           ds = ds.replaceAll(SEPARATOR_REGEX + "$", ""); // replace ending separator
           ds = ds.replaceAll(".*" + SEPARATOR_REGEX, ""); // replace everything till last separator
-          kodiDsAndFolder.put(ds + "|" + rel, movie.movieid);
+          if (!kodiDsAndFolder.containsKey(rel)) {
+            kodiDsAndFolder.put(rel, movie.movieid);
+          }
+          else {
+            // no putIfAbsent since i wanna have a log!
+            LOGGER.warn("Kodi movie {} already attached to another datasource - skipping", rel);
+          }
         }
       }
       LOGGER.debug("KODI {} movies", call.getResults().size()); // stacked movies are multiple times in here
@@ -281,6 +293,10 @@ public class KodiRPC {
       File f = ds.toFile();
       dsName = f.getName();
     }
+    if (dsName.isEmpty()) {
+      // happens when only a drive letter like M:\ is set - return 1:1
+      dsName = ds.toString();
+    }
     return dsName;
   }
 
@@ -292,7 +308,6 @@ public class KodiRPC {
       return fileMap;
     }
 
-    String dsName = parseDatasourceName(ds);
     MediaFile main = entity.getMainFile();
     if (isDisc) {
       // Kodi RPC sends what we call the main disc identifier, but we have disc folder only
@@ -317,14 +332,26 @@ public class KodiRPC {
         if (file != null) {
           String rel = Utils.relPath(ds, file); // file relative from datasource
           rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-          fileMap.put(dsName + "|" + rel, entity.getDbId());
+          if (!fileMap.containsKey(rel)) {
+            fileMap.put(rel, entity.getDbId());
+          }
+          else {
+            // no putIfAbsent since i wanna have a log!
+            LOGGER.warn("File {} already attached to another datasource - skipping", rel);
+          }
         }
       }
     }
     else {
       String rel = Utils.relPath(ds, main.getFileAsPath()); // file relative from datasource
       rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-      fileMap.put(dsName + "|" + rel, entity.getDbId());
+      if (!fileMap.containsKey(rel)) {
+        fileMap.put(rel, entity.getDbId());
+      }
+      else {
+        // no putIfAbsent since i wanna have a log!
+        LOGGER.warn("File {} already attached to another datasource - skipping", rel);
+      }
     }
     return fileMap;
   }
@@ -352,7 +379,13 @@ public class KodiRPC {
         rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
         ds = ds.replaceAll(SEPARATOR_REGEX + "$", ""); // replace ending separator
         ds = ds.replaceAll(".*" + SEPARATOR_REGEX, ""); // replace everything till last separator
-        kodiDsAndFolder.put(ds + "|" + rel, show.tvshowid);
+        if (!kodiDsAndFolder.containsKey(rel)) {
+          kodiDsAndFolder.put(rel, show.tvshowid);
+        }
+        else {
+          // no putIfAbsent since i wanna have a log!
+          LOGGER.warn("Kodi show {} already attached to another datasource - skipping", rel);
+        }
       }
       LOGGER.debug("KODI {} shows", kodiDsAndFolder.size());
 
@@ -361,17 +394,16 @@ public class KodiRPC {
       for (TvShow tmmShow : TvShowModuleManager.getInstance().getTvShowList().getTvShows()) {
         try {
           Path ds = Paths.get(tmmShow.getDataSource());
-          String dsName = parseDatasourceName(ds);
           String rel = Utils.relPath(ds, tmmShow.getPathNIO());
           rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
 
-          Integer kodiId = kodiDsAndFolder.get(dsName + "|" + rel);
+          Integer kodiId = kodiDsAndFolder.get(rel);
           if (kodiId != null && kodiId > 0) {
             // we have a match!
             tvshowmappings.put(tmmShow.getDbId(), kodiId);
           }
           else {
-            LOGGER.trace("Could not map: {}", dsName + "|" + rel);
+            LOGGER.trace("Could not map: {}", rel);
           }
         }
         catch (Exception e) {
@@ -547,7 +579,13 @@ public class KodiRPC {
         rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
         ds = ds.replaceAll(SEPARATOR_REGEX + "$", ""); // replace ending separator
         ds = ds.replaceAll(".*" + SEPARATOR_REGEX, ""); // replace everything till last separator
-        kodiDsAndFolder.put(ds + "|" + rel, ep.episodeid);
+        if (!kodiDsAndFolder.containsKey(rel)) {
+          kodiDsAndFolder.put(rel, ep.episodeid);
+        }
+        else {
+          // no putIfAbsent since i wanna have a log!
+          LOGGER.warn("Kodi episode {} already attached to another datasource - skipping", rel);
+        }
       }
       LOGGER.debug("KODI {} episodes", kodiDsAndFolder.size());
 

@@ -24,6 +24,7 @@ import static org.tinymediamanager.thirdparty.trakttv.TraktTv.printStatus;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -129,22 +130,26 @@ class TraktTvMovie {
       boolean metadataFound = false;
 
       for (Movie tmmMovie : matchingTmmMovies) {
-        // update missing IDs (we get them for free :)
-        boolean dirty = updateIDs(tmmMovie, traktMovie.movie);
+        if (!tmmMovie.isLocked()) {
+          // update missing IDs (we get them for free :)
+          boolean dirty = updateIDs(tmmMovie, traktMovie.movie);
 
-        if (traktMovie.collected_at != null) {
-          Date collectedAt = DateTimeUtils.toDate(traktMovie.collected_at.toInstant());
-          if (!collectedAt.equals(tmmMovie.getDateAdded()))
-            // always set from trakt, if not matched (Trakt = master)
-            LOGGER.trace("Marking movie '{}' as collected on {} (was {})", tmmMovie.getTitle(), collectedAt, tmmMovie.getDateAddedAsString());
-          tmmMovie.setDateAdded(collectedAt);
-          dirty = true;
+          if (traktMovie.collected_at != null) {
+            Date collectedAt = DateTimeUtils.toDate(traktMovie.collected_at.toInstant());
+            if (!collectedAt.equals(tmmMovie.getDateAdded()))
+              // always set from trakt, if not matched (Trakt = master)
+              LOGGER.trace("Marking movie '{}' as collected on {} (was {})", tmmMovie.getTitle(), collectedAt, tmmMovie.getDateAddedAsString());
+            tmmMovie.setDateAdded(collectedAt);
+            dirty = true;
+          }
 
+          if (dirty) {
+            tmmMovie.writeNFO();
+            tmmMovie.saveToDb();
+          }
         }
-
-        if (dirty) {
-          tmmMovie.writeNFO();
-          tmmMovie.saveToDb();
+        else {
+          LOGGER.trace("Skipping movie '{}' from Trak.tv collection sync, because it is locked!", tmmMovie.getTitle());
         }
 
         // remove it from our list, if we already have at least a video source (so metadata has also been synced)
@@ -233,34 +238,39 @@ class TraktTvMovie {
       List<Movie> matchingTmmMovies = getTmmMoviesForTraktMovie(tmmMovies, traktWatched.movie);
 
       for (Movie tmmMovie : matchingTmmMovies) {
-        // update missing IDs (we get them for free :)
-        boolean dirty = updateIDs(tmmMovie, traktWatched.movie);
+        if (!tmmMovie.isLocked()) {
+          // update missing IDs (we get them for free :)
+          boolean dirty = updateIDs(tmmMovie, traktWatched.movie);
 
-        if (!tmmMovie.isWatched()) {
-          // save Trakt watched status
-          LOGGER.trace("Marking movie '{}' as watched", tmmMovie.getTitle());
-          tmmMovie.setWatched(true);
-          dirty = true;
-        }
-        if (tmmMovie.getPlaycount() != traktWatched.plays) {
-          tmmMovie.setPlaycount(traktWatched.plays);
-          dirty = true;
-        }
-
-        if (traktWatched.last_watched_at != null) {
-          Date lastWatchedAt = DateTimeUtils.toDate(traktWatched.last_watched_at.toInstant());
-          if (!lastWatchedAt.equals(tmmMovie.getLastWatched())) {
-            // always set from trakt, if not matched (Trakt = master)
-            LOGGER.trace("Marking movie '{}' as watched on {} (was {})", tmmMovie.getTitle(), lastWatchedAt, tmmMovie.getLastWatched());
-            tmmMovie.setLastWatched(lastWatchedAt);
+          if (!tmmMovie.isWatched()) {
+            // save Trakt watched status
+            LOGGER.trace("Marking movie '{}' as watched", tmmMovie.getTitle());
+            tmmMovie.setWatched(true);
             dirty = true;
           }
-        }
+          if (tmmMovie.getPlaycount() != traktWatched.plays) {
+            tmmMovie.setPlaycount(traktWatched.plays);
+            dirty = true;
+          }
 
-        if (dirty) {
-          tmmMovie.writeNFO();
-          tmmMovie.setLastWatched(null); // write date to NFO, but do not save it!
-          tmmMovie.saveToDb();
+          if (traktWatched.last_watched_at != null) {
+            Date lastWatchedAt = DateTimeUtils.toDate(traktWatched.last_watched_at.toInstant());
+            if (!lastWatchedAt.equals(tmmMovie.getLastWatched())) {
+              // always set from trakt, if not matched (Trakt = master)
+              LOGGER.trace("Marking movie '{}' as watched on {} (was {})", tmmMovie.getTitle(), lastWatchedAt, tmmMovie.getLastWatched());
+              tmmMovie.setLastWatched(lastWatchedAt);
+              dirty = true;
+            }
+          }
+
+          if (dirty) {
+            tmmMovie.writeNFO();
+            tmmMovie.setLastWatched(null); // write date to NFO, but do not save it!
+            tmmMovie.saveToDb();
+          }
+        }
+        else {
+          LOGGER.trace("Skipping movie '{}' from Trak.tv watched sync, because it is locked!", tmmMovie.getTitle());
         }
       }
     }
@@ -348,18 +358,24 @@ class TraktTvMovie {
       List<Movie> matchingTmmMovies = getTmmMoviesForTraktMovie(tmmMovies, traktRated.movie);
 
       for (Movie tmmMovie : matchingTmmMovies) {
-        // update missing IDs (we get them for free :)
-        boolean dirty = updateIDs(tmmMovie, traktRated.movie);
+        if (!tmmMovie.isLocked()) {
+          // update missing IDs (we get them for free :)
+          boolean dirty = updateIDs(tmmMovie, traktRated.movie);
 
-        MediaRating userRating = tmmMovie.getUserRating();
-        if (userRating == MediaMetadata.EMPTY_RATING) {
-          tmmMovie.setRating(new MediaRating(MediaRating.USER, traktRated.rating.value, 1, 10));
-          dirty = true;
+          MediaRating userRating = tmmMovie.getUserRating();
+          if (userRating == MediaMetadata.EMPTY_RATING) {
+            tmmMovie.setRating(new MediaRating(MediaRating.USER, traktRated.rating.value, 1, 10));
+            dirty = true;
+          }
+
+          if (dirty) {
+            tmmMovie.writeNFO();
+            tmmMovie.saveToDb();
+          }
+
         }
-
-        if (dirty) {
-          tmmMovie.writeNFO();
-          tmmMovie.saveToDb();
+        else {
+          LOGGER.trace("Skipping movie '{}' from Trak.tv ratings sync, because it is locked!", tmmMovie.getTitle());
         }
       }
     }
@@ -433,6 +449,50 @@ class TraktTvMovie {
     }
     catch (Exception e) {
       LOGGER.error("failed syncing trakt: {}", e.getMessage());
+    }
+  }
+
+  void removeFromTraktCollection(Movie tmmMovie) {
+    removeFromTraktCollection(Collections.singletonList(tmmMovie));
+  }
+
+  void removeFromTraktCollection(List<Movie> tmmMovies) {
+    List<SyncMovie> syncMovies = new ArrayList<>();
+    for (Movie tmmMovie : tmmMovies) {
+      LOGGER.debug("Going to remove from your Trakt.tv collection: {}", tmmMovie.getTitle());
+      SyncMovie sync = toSyncMovie(tmmMovie, TraktTv.SyncType.COLLECTION);
+      syncMovies.add(sync);
+    }
+
+    try {
+      SyncItems items = new SyncItems().movies(syncMovies);
+      SyncResponse response = executeCall(api.sync().deleteItemsFromCollection(items));
+      printStatus(response);
+    }
+    catch (Exception e) {
+      LOGGER.error("Failed removing from Trakt.tv collection: {}", e.getMessage());
+    }
+  }
+
+  void removeFromTraktWatchedHistory(Movie tmmMovie) {
+    removeFromTraktWatchedHistory(Collections.singletonList(tmmMovie));
+  }
+
+  void removeFromTraktWatchedHistory(List<Movie> tmmMovies) {
+    List<SyncMovie> syncMovies = new ArrayList<>();
+    for (Movie tmmMovie : tmmMovies) {
+      LOGGER.debug("Going to remove from your Trakt.tv collection: {}", tmmMovie.getTitle());
+      SyncMovie sync = toSyncMovie(tmmMovie, TraktTv.SyncType.WATCHED);
+      syncMovies.add(sync);
+    }
+
+    try {
+      SyncItems items = new SyncItems().movies(syncMovies);
+      SyncResponse response = executeCall(api.sync().deleteItemsFromWatchedHistory(items));
+      printStatus(response);
+    }
+    catch (Exception e) {
+      LOGGER.error("Failed removing from Trakt.tv collection: {}", e.getMessage());
     }
   }
 
