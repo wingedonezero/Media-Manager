@@ -44,8 +44,8 @@ import org.tinymediamanager.scraper.config.MediaProviderConfig;
 import org.tinymediamanager.scraper.config.MediaProviderConfigObject;
 import org.tinymediamanager.scraper.interfaces.IMediaProvider;
 import org.tinymediamanager.ui.IconManager;
-import org.tinymediamanager.ui.components.TmmLabel;
 import org.tinymediamanager.ui.components.combobox.TmmCheckComboBox;
+import org.tinymediamanager.ui.components.label.TmmLabel;
 
 import com.google.gson.Gson;
 
@@ -285,7 +285,7 @@ public class MediaScraperConfigurationPanel extends JPanel {
             mediaProvider.getProviderInfo().getConfig().setValue(entry.getKey(), (Integer) (((JSpinner) comp).getValue()));
           }
           else {
-            mediaProvider.getProviderInfo().getConfig().setValue(entry.getKey(), ((JTextField) comp).getText());
+            mediaProvider.getProviderInfo().getConfig().setValue(entry.getKey(), StringUtils.strip(((JTextField) comp).getText()));
           }
         }
         catch (Exception ignored) {
