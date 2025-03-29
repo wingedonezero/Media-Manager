@@ -30,6 +30,7 @@ import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
 import org.tinymediamanager.core.MediaFileType;
+import org.tinymediamanager.core.TmmDateFormat;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaFileAudioStream;
@@ -124,6 +125,15 @@ public class MovieMediaInformationPanel extends MediaInformationPanel {
 
     chckbxWatched.setSelected(movie.isWatched());
 
+    if (movie.isWatched() && movie.getLastWatched() != null) {
+      lblLastPlayed.setText("(" + TmmDateFormat.MEDIUM_DATE_FORMAT.format(movie.getLastWatched()) + ")");
+      lblLastPlayed.setToolTipText(TmmResourceBundle.getString("metatag.lastplayed"));
+    }
+    else {
+      lblLastPlayed.setText(null);
+      lblLastPlayed.setToolTipText(null);
+    }
+
     lblVideoCodec.setText(mediaFile.getVideoCodec());
     if (mediaFile.getAspectRatio() > 0) {
       lblVideoResolution.setText(String.format("%s (%.2f:1)", mediaFile.getVideoResolution(), mediaFile.getAspectRatio()));
@@ -137,6 +147,7 @@ public class MovieMediaInformationPanel extends MediaInformationPanel {
     lblFrameRate.setText(String.format("%.2f fps", mediaFile.getFrameRate()));
     lblOriginalFilename.setText(movie.getOriginalFilename());
     lblHdrFormat.setText(mediaFile.getHdrFormat());
+    lblCrc32.setText(movie.getCRC32());
   }
 
   @Override

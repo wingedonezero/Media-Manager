@@ -193,6 +193,7 @@ public class TraktTvShowMetadataProvider extends TraktMetadataProvider
         ep.setScrapeOptions(options);
         ep.setEpisodeNumber(MediaEpisodeGroup.DEFAULT_AIRED, TvUtils.getSeasonNumber(episode.season), TvUtils.getEpisodeNumber(episode.number));
         ep.setTitle(episode.title);
+        ep.setRuntime(episode.runtime);
 
         if (episode.rating != null && episode.votes != null) {
           MediaRating rating = new MediaRating(getId());
@@ -744,7 +745,7 @@ public class TraktTvShowMetadataProvider extends TraktMetadataProvider
   }
 
   private Map<String, Object> getEpisodeIds(Map<String, Object> ids) throws ScrapeException {
-    LOGGER.debug("getRatings(): {}", ids);
+    LOGGER.debug("getEpisodeIds(): {}", ids);
 
     // lazy initialization of the api
     initAPI();

@@ -90,12 +90,12 @@ import org.tinymediamanager.scraper.imdb.entities.ImdbTitleKeyword;
 import org.tinymediamanager.scraper.imdb.entities.ImdbTitleType;
 import org.tinymediamanager.scraper.imdb.entities.ImdbVideo;
 import org.tinymediamanager.scraper.interfaces.IMediaProvider;
+import org.tinymediamanager.scraper.util.DateUtils;
 import org.tinymediamanager.scraper.util.JsonUtils;
 import org.tinymediamanager.scraper.util.LanguageUtils;
 import org.tinymediamanager.scraper.util.ListUtils;
 import org.tinymediamanager.scraper.util.MediaIdUtil;
 import org.tinymediamanager.scraper.util.MetadataUtil;
-import org.tinymediamanager.scraper.util.StrgUtils;
 import org.tinymediamanager.scraper.util.UrlUtil;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -932,7 +932,7 @@ public abstract class ImdbParser {
     }
   }
 
-  protected List<MediaArtwork> getMediaArt(ArtworkSearchAndScrapeOptions options) {
+  protected List<MediaArtwork> getMediaArt(ArtworkSearchAndScrapeOptions options) throws Exception {
     List<MediaArtwork> artworks = new ArrayList<>();
     String imdbId = "";
     // imdbId from searchResult
@@ -947,26 +947,21 @@ public abstract class ImdbParser {
       return Collections.emptyList();
     }
 
-    try {
-      Document doc = null;
-      Callable<Document> fanarts = new ImdbWorker(constructUrl("title/", imdbId, decode("L21lZGlhaW5kZXgvP2NvbnRlbnRUeXBlcz1zdGlsbF9mcmFtZQ==")),
-          options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), true);
-      Future<Document> futureFanarts = executor.submit(fanarts);
+    Document doc = null;
+    Callable<Document> fanarts = new ImdbWorker(constructUrl("title/", imdbId, decode("L21lZGlhaW5kZXgvP2NvbnRlbnRUeXBlcz1zdGlsbF9mcmFtZQ==")),
+        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), true);
+    Future<Document> futureFanarts = executor.submit(fanarts);
 
-      Callable<Document> posters = new ImdbWorker(constructUrl("title/", imdbId, decode("L21lZGlhaW5kZXgvP2NvbnRlbnRUeXBlcz1wb3N0ZXI=")),
-          options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), true);
-      Future<Document> futurePosters = executor.submit(posters);
+    Callable<Document> posters = new ImdbWorker(constructUrl("title/", imdbId, decode("L21lZGlhaW5kZXgvP2NvbnRlbnRUeXBlcz1wb3N0ZXI=")),
+        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), true);
+    Future<Document> futurePosters = executor.submit(posters);
 
-      // add posters
-      doc = futurePosters.get();
-      artworks.addAll(parseImagesPageJson(doc, MediaArtworkType.POSTER));
-      // add stills = fanarts
-      doc = futureFanarts.get();
-      artworks.addAll(parseImagesPageJson(doc, MediaArtworkType.BACKGROUND));
-    }
-    catch (Exception e) {
-      getLogger().warn("Could not get imagesfor id '{}' - '{}'", imdbId, e.getMessage());
-    }
+    // add posters
+    doc = futurePosters.get();
+    artworks.addAll(parseImagesPageJson(doc, MediaArtworkType.POSTER));
+    // add stills = fanarts
+    doc = futureFanarts.get();
+    artworks.addAll(parseImagesPageJson(doc, MediaArtworkType.BACKGROUND));
 
     return artworks;
   }
@@ -1825,7 +1820,7 @@ public abstract class ImdbParser {
 
   protected Date parseDate(String dateAsSting) {
     try {
-      return StrgUtils.parseDate(dateAsSting);
+      return DateUtils.parseDate(dateAsSting);
     }
     catch (ParseException e) {
       getLogger().trace("could not parse date: {}", e.getMessage());

@@ -26,6 +26,7 @@ import static org.tinymediamanager.core.Constants.FIRST_AIRED;
 import static org.tinymediamanager.core.Constants.FIRST_AIRED_AS_STRING;
 import static org.tinymediamanager.core.Constants.HAS_NFO_FILE;
 import static org.tinymediamanager.core.Constants.MEDIA_SOURCE;
+import static org.tinymediamanager.core.Constants.RUNTIME;
 import static org.tinymediamanager.core.Constants.SEASON;
 import static org.tinymediamanager.core.Constants.SEASON_BANNER;
 import static org.tinymediamanager.core.Constants.SEASON_POSTER;
@@ -98,6 +99,7 @@ import org.tinymediamanager.scraper.entities.MediaArtwork.MediaArtworkType;
 import org.tinymediamanager.scraper.entities.MediaCertification;
 import org.tinymediamanager.scraper.entities.MediaEpisodeGroup;
 import org.tinymediamanager.scraper.entities.MediaEpisodeNumber;
+import org.tinymediamanager.scraper.util.DateUtils;
 import org.tinymediamanager.scraper.util.ListUtils;
 import org.tinymediamanager.scraper.util.StrgUtils;
 
@@ -130,6 +132,8 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
   @JsonProperty
   private int                                playcount             = 0;
   @JsonProperty
+  private Date                               lastWatched           = null;
+  @JsonProperty
   private UUID                               tvShowId              = null;
   @JsonProperty
   private MediaSource                        mediaSource           = MediaSource.UNKNOWN;
@@ -137,6 +141,8 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
   private TvShowEpisodeEdition               edition               = TvShowEpisodeEdition.NONE;
   @JsonProperty
   private boolean                            stacked               = false;
+  @JsonProperty
+  private int                                runtime               = 0;
 
   @JsonProperty
   private final List<Person>                 actors                = new CopyOnWriteArrayList<>();
@@ -147,7 +153,6 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
 
   private TvShow                             tvShow                = null;
   private String                             titleSortable         = "";
-  private Date                               lastWatched           = null;
   private boolean                            dummy                 = false;
   private MediaEpisodeNumber                 mainEpisodeNumber     = null;
 
@@ -198,6 +203,7 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
     ids.putAll(source.ids);
     mediaSource = source.mediaSource;
     edition = source.edition;
+    runtime = source.runtime;
 
     episodeNumbers.addAll(source.episodeNumbers);
 
@@ -264,8 +270,10 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
     setFirstAired(firstAired == null || force ? other.firstAired : firstAired);
     setWatched(!watched || force ? other.watched : watched);
     setPlaycount(playcount == 0 || force ? other.playcount : playcount);
+    setLastWatched(lastWatched == null || force ? other.lastWatched : lastWatched);
     setMediaSource(mediaSource == MediaSource.UNKNOWN || force ? other.mediaSource : mediaSource);
     setEdition(edition == TvShowEpisodeEdition.NONE || force ? other.edition : edition);
+    setRuntime(runtime == 0 || force ? other.runtime : runtime);
 
     if (force) {
       actors.clear();
@@ -436,7 +444,7 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
    */
   public void setFirstAired(String aired) {
     try {
-      setFirstAired(StrgUtils.parseDate(aired));
+      setFirstAired(DateUtils.parseDate(aired));
     }
     catch (ParseException ignored) {
     }
@@ -1009,6 +1017,10 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
 
     if (config.contains(TvShowEpisodeScraperMetadataConfig.AIRED) && (overwriteExistingItems || getFirstAired() == null)) {
       setFirstAired(metadata.getReleaseDate());
+    }
+
+    if (config.contains(TvShowEpisodeScraperMetadataConfig.RUNTIME) && (overwriteExistingItems || getRuntime() <= 0)) {
+      setRuntime(metadata.getRuntime());
     }
 
     if (config.contains(TvShowEpisodeScraperMetadataConfig.RATING)) {
@@ -1983,12 +1995,28 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
   }
 
   /**
-   * get the runtime. Just a wrapper to tvShow.getRuntime() until we support separate runtimes for episodes
+   * Sets the runtime in minutes
+   * 
+   * @param newValue
+   *          the runtime in minutes
+   */
+  public void setRuntime(int newValue) {
+    int oldValue = this.runtime;
+    this.runtime = newValue;
+    firePropertyChange(RUNTIME, oldValue, newValue);
+  }
+
+  /**
+   * get the runtime in minutes
    *
    * @return the runtime in minutes
    */
   public int getRuntime() {
-    return tvShow.getRuntime();
+    int runtimeFromMi = getRuntimeFromMediaFilesInMinutes();
+    if (TvShowModuleManager.getInstance().getSettings().isRuntimeFromMediaInfo() && runtimeFromMi > 0) {
+      return runtimeFromMi;
+    }
+    return runtime == 0 ? runtimeFromMi : runtime;
   }
 
   /**

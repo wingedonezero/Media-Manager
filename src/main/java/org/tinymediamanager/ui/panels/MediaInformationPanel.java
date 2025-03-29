@@ -31,8 +31,6 @@ import javax.swing.JSeparator;
 import javax.swing.JTable;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaFileAudioStream;
@@ -57,19 +55,18 @@ import net.miginfocom.swing.MigLayout;
  * @author Manuel Laggner
  */
 public abstract class MediaInformationPanel extends JPanel {
-
-  private static final Logger               LOGGER = LoggerFactory.getLogger(MediaInformationPanel.class);
-
   protected EventList<MediaFile>            mediaFileEventList;
   protected EventList<AudioStreamContainer> audioStreamEventList;
   protected EventList<SubtitleContainer>    subtitleEventList;
 
   protected JLabel                          lblRuntime;
   protected JCheckBox                       chckbxWatched;
+  protected JLabel                          lblLastPlayed;
   protected JLabel                          lblVideoCodec;
   protected JLabel                          lblVideoResolution;
   protected JLabel                          lblVideoBitrate;
   protected JLabel                          lblVideoBitDepth;
+  protected JLabel                          lblCrc32;
   protected JLabel                          lblFrameRate;
   protected JLabel                          lblSource;
   protected LinkTextArea                    lblPath;
@@ -91,7 +88,7 @@ public abstract class MediaInformationPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[][][100lp][20lp][][grow]", "[][][][][][][][][5lp!][50lp:75lp,grow][5lp!][50lp:75lp,grow][][][200lp,grow 300]"));
+    setLayout(new MigLayout("", "[][][100lp][20lp][][grow]", "[][][][][][][][][][5lp!][50lp:75lp,grow][5lp!][50lp:75lp,grow][][][200lp,grow 300]"));
     {
       JLabel lblMoviePathT = new TmmLabel(TmmResourceBundle.getString("metatag.path"));
       add(lblMoviePathT, "cell 0 0");
@@ -114,6 +111,9 @@ public abstract class MediaInformationPanel extends JPanel {
       chckbxWatched = new JCheckBox("");
       chckbxWatched.setEnabled(false);
       add(chckbxWatched, "cell 4 1 2 1");
+
+      lblLastPlayed = new JLabel();
+      add(lblLastPlayed, "cell 4 1 2 1");
     }
     {
       JLabel lblOriginalFilenameT = new TmmLabel(TmmResourceBundle.getString("metatag.originalfile"));
@@ -176,10 +176,16 @@ public abstract class MediaInformationPanel extends JPanel {
 
       lblVideoBitDepth = new JLabel("");
       add(lblVideoBitDepth, "cell 5 5");
+
+      JLabel lblCrc32T = new TmmLabel("CRC32"); // hardcode
+      add(lblCrc32T, "cell 4 8");
+
+      lblCrc32 = new JLabel("");
+      add(lblCrc32, "cell 5 8");
     }
     {
       JLabel lblAudioT = new TmmLabel(TmmResourceBundle.getString("metatag.audio"));
-      add(lblAudioT, "cell 0 9,aligny top");
+      add(lblAudioT, "cell 0 10,aligny top");
 
       TmmTableModel<AudioStreamContainer> tmmTableModel = new TmmTableModel<>(audioStreamEventList, new AudioStreamTableFormat());
       tableAudioStreams = new TmmTable(tmmTableModel);
@@ -188,11 +194,11 @@ public abstract class MediaInformationPanel extends JPanel {
       JScrollPane scrollPane = new JScrollPane();
       tableAudioStreams.configureScrollPane(scrollPane);
       scrollPane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_AS_NEEDED);
-      add(scrollPane, "cell 1 9 5 1,growx");
+      add(scrollPane, "cell 1 10 5 1,growx");
     }
     {
       JLabel lblSubtitle = new TmmLabel(TmmResourceBundle.getString("metatag.subtitles"));
-      add(lblSubtitle, "cell 0 11,aligny top");
+      add(lblSubtitle, "cell 0 12,aligny top");
 
       TmmTableModel<SubtitleContainer> tmmTableModel = new TmmTableModel<>(subtitleEventList, new SubtitleTableFormat());
       tableSubtitles = new TmmTable(tmmTableModel);
@@ -201,18 +207,18 @@ public abstract class MediaInformationPanel extends JPanel {
       JScrollPane scrollPane = new JScrollPane();
       tableSubtitles.configureScrollPane(scrollPane);
       scrollPane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_AS_NEEDED);
-      add(scrollPane, "cell 1 11 5 1,growx");
+      add(scrollPane, "cell 1 12 5 1,growx");
     }
     {
-      add(new JSeparator(), "cell 0 12 6 1,growx");
+      add(new JSeparator(), "cell 0 13 6 1,growx");
     }
     {
       JLabel lblMediaFilesT = new TmmLabel(TmmResourceBundle.getString("metatag.mediafiles"));
-      add(lblMediaFilesT, "cell 0 13 2 1");
+      add(lblMediaFilesT, "cell 0 14 2 1");
     }
     {
       panelMediaFiles = new MediaFilesPanel(mediaFileEventList);
-      add(panelMediaFiles, "cell 0 14 6 1,grow");
+      add(panelMediaFiles, "cell 0 15 6 1,grow");
     }
   }
 

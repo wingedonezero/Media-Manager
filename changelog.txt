@@ -1,3 +1,24 @@
+Version 5.1.5
+=======================
++ [Movies/TV shows] added an option to suppress writing of <dateadded> to the NFO #2893
++ [Movies/TV shows] added an option to skip the ".nomedia" check on update data sources #2211
++ [TV shows] added runtime for episodes too
++ [TV shows] enabled using runtime from mediainfo instead of scraped one #2838
+x [Movies] do not overwrite extrafanarts when running downloading missing artwork
+x [Movies/TV shows] enhanced loading of changed artwork in the information panels #2750 #2836
+x [Movies/TV shows] store lastplayed date from NFO/Trakt.tv in the database and use it at NFO writing #2873
+x [TV shows] do not get episode images from all scrapers
+x [TV shows] enabled handling of multiple trailers in the renamer #2287
+x [UI] fix AniDB clickable episode links #2889
+x [UI] store window locations for the new message dialog
+x [UI] Better express, what the username of OpenSubtitles should be (and what not)
+x [UI] show generated CRC32 in GUI #913
+x [UI] re-added changing seasons in the TV show bulk editor - but just for the main episode group of the TV show itself #2856
+x [MediaInfo] better parse all known 3D variants #2896
+x [MediaInfo] upgraded to 25.03
+x [TVDB] also scrape clearart/clearlogo
+
+
 Version 5.1.4
 =======================
 x [TMDB] fix web link to episode #2875

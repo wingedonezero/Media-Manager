@@ -54,10 +54,12 @@ import org.tinymediamanager.core.entities.MediaFileSubtitle;
 import org.tinymediamanager.core.entities.MediaRating;
 import org.tinymediamanager.core.entities.Person;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
+import org.tinymediamanager.core.tvshow.TvShowSettings;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
 import org.tinymediamanager.core.tvshow.filenaming.TvShowEpisodeNfoNaming;
 import org.tinymediamanager.scraper.MediaMetadata;
 import org.tinymediamanager.scraper.entities.MediaEpisodeNumber;
+import org.tinymediamanager.scraper.util.DateUtils;
 import org.tinymediamanager.scraper.util.ParserUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -76,12 +78,14 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
   protected static final DecimalFormatSymbols DECIMAL_FORMAT_SYMBOLS = new DecimalFormatSymbols(Locale.US);
 
   protected final List<TvShowEpisode>         episodes;
+  protected final TvShowSettings              settings;
 
   protected Document                          document;
   protected Element                           root;
 
   protected TvShowEpisodeGenericXmlConnector(List<TvShowEpisode> episodes) {
     this.episodes = episodes;
+    this.settings = TvShowModuleManager.getInstance().getSettings();
   }
 
   /**
@@ -100,7 +104,7 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
 
     // first of all, get the data from a previous written NFO file,
     // if we do not want clean NFOs
-    if (!TvShowModuleManager.getInstance().getSettings().isWriteCleanNfo()) {
+    if (!settings.isWriteCleanNfo()) {
       for (MediaFile mf : firstEpisode.getMediaFiles(MediaFileType.NFO)) {
         try {
           parser = TvShowEpisodeNfoParser.parseNfo(mf.getFileAsPath());
@@ -135,7 +139,7 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
           if (first) {
             Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String dat = formatter.format(new Date());
-            TvShowConnectors conn = TvShowModuleManager.getInstance().getSettings().getTvShowConnector();
+            TvShowConnectors conn = settings.getTvShowConnector();
             document.appendChild(
                 document.createComment("created on " + dat + " by tinyMediaManager " + Settings.getInstance().getVersion() + " for " + conn.name()));
           }
@@ -380,7 +384,7 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
     Map<String, MediaRating> ratings = episode.getRatings();
 
     MediaRating mainMediaRating = null;
-    for (String ratingSource : TvShowModuleManager.getInstance().getSettings().getRatingSources()) {
+    for (String ratingSource : settings.getRatingSources()) {
       mainMediaRating = ratings.get(ratingSource);
       if (mainMediaRating != null) {
         break;
@@ -492,8 +496,7 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
     Element mpaa = document.createElement("mpaa");
 
     if (episode.getCertification() != null) {
-      mpaa.setTextContent(CertificationStyle.formatCertification(episode.getCertification(),
-          TvShowModuleManager.getInstance().getSettings().getCertificationStyle()));
+      mpaa.setTextContent(CertificationStyle.formatCertification(episode.getCertification(), settings.getCertificationStyle()));
     }
     root.appendChild(mpaa);
   }
@@ -513,8 +516,12 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
    * add the dateAdded date in <dateadded>xxx</dateadded>
    */
   protected void addDateAdded(TvShowEpisode episode, TvShowEpisodeNfoParser.Episode parser) {
+    if (!settings.isNfoWriteDateAdded()) {
+      return;
+    }
+
     Element dateadded = document.createElement("dateadded");
-    switch (TvShowModuleManager.getInstance().getSettings().getNfoDateAddedField()) {
+    switch (settings.getNfoDateAddedField()) {
       case DATE_ADDED:
         if (episode.getDateAdded() != null) {
           dateadded.setTextContent(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(episode.getDateAdded()));
@@ -555,7 +562,7 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
    * This will protect the NFO from being modified by Emby
    */
   protected void addLockdata(TvShowEpisode episode, TvShowEpisodeNfoParser.Episode parser) {
-    if (TvShowModuleManager.getInstance().getSettings().isNfoWriteLockdata()) {
+    if (settings.isNfoWriteLockdata()) {
       Element lockdata = document.createElement("lockdata");
       lockdata.setTextContent("true");
 
@@ -567,7 +574,7 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
    * add the fileinfo structure <fileinfo><streamdetails><video>...</video><audio>...</audio></streamdetails></fileinfo>
    */
   protected void addFileinfo(TvShowEpisode episode, TvShowEpisodeNfoParser.Episode parser) {
-    if (TvShowModuleManager.getInstance().getSettings().isNfoWriteFileinfo()) {
+    if (settings.isNfoWriteFileinfo()) {
       Element fileinfo = document.createElement("fileinfo");
       Element streamdetails = document.createElement("streamdetails");
 
@@ -621,23 +628,28 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
           video.appendChild(durationinseconds);
         }
 
-        Element stereomode = document.createElement("stereomode");
-        // "Spec": https://github.com/xbmc/xbmc/blob/master/xbmc/guilib/StereoscopicsManager.cpp
-        switch (videoFile.getVideo3DFormat()) {
-          case MediaFileHelper.VIDEO_3D_SBS:
-          case MediaFileHelper.VIDEO_3D_HSBS:
-            stereomode.setTextContent("left_right");
-            break;
+        if (!videoFile.getVideo3DFormat().isEmpty()) {
+          Element stereomode = document.createElement("stereomode");
+          switch (videoFile.getVideo3DFormat()) {
+            // old style till TMM 5.1.4
+            case MediaFileHelper.VIDEO_3D_SBS:
+            case MediaFileHelper.VIDEO_3D_HSBS:
+              stereomode.setTextContent("left_right");
+              break;
 
-          case MediaFileHelper.VIDEO_3D_TAB:
-          case MediaFileHelper.VIDEO_3D_HTAB:
-            stereomode.setTextContent("top_bottom");
-            break;
+            case MediaFileHelper.VIDEO_3D_TAB:
+            case MediaFileHelper.VIDEO_3D_HTAB:
+              stereomode.setTextContent("top_bottom");
+              break;
 
-          default:
-            break;
+            default:
+              // new style as of TMM 5.1.5
+              stereomode.setTextContent(videoFile.getVideo3DFormat());
+              break;
+          }
+          video.appendChild(stereomode);
         }
-        video.appendChild(stereomode);
+
         streamdetails.appendChild(video);
 
         for (MediaFileAudioStream as : videoFile.getAudioStreams()) {
@@ -735,19 +747,17 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
    * add the <lastplayed>xxx</lastplayed> we do not have this in tmm, but we might get it from an existing nfo
    */
   private void addLastplayed(TvShowEpisode episode, TvShowEpisodeNfoParser.Episode parser) {
-    Element lastplayed = document.createElement("lastplayed");
+    Element lastPlayed = document.createElement("lastplayed");
 
     // IF we have a (temp) date, write it
     if (episode.isWatched()) {
-      if (episode.getLastWatched() != null) {
-        lastplayed.setTextContent(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(episode.getLastWatched()));
-        root.appendChild(lastplayed);
-      }
-      else {
-        if (parser != null && parser.lastplayed != null) {
-          lastplayed.setTextContent(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(parser.lastplayed));
-          root.appendChild(lastplayed);
-        }
+      Date lastPlayedFromNFO = parser != null ? parser.lastplayed : null;
+      Date lastPlayedFromMovie = episode.getLastWatched();
+
+      Date lastPlayedDate = DateUtils.getHigherDate(lastPlayedFromNFO, lastPlayedFromMovie);
+      if (lastPlayedDate != null) {
+        lastPlayed.setTextContent(new SimpleDateFormat("yyyy-MM-dd").format(lastPlayedDate));
+        root.appendChild(lastPlayed);
       }
     }
   }
@@ -762,7 +772,7 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
       root.appendChild(studio);
 
       // break here if we just want to write one studio
-      if (TvShowModuleManager.getInstance().getSettings().isNfoWriteSingleStudio()) {
+      if (settings.isNfoWriteSingleStudio()) {
         break;
       }
     }
@@ -854,7 +864,7 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
    * add the trailer url in <trailer>xxx</trailer>
    */
   protected void addTrailer(TvShowEpisode episode, TvShowEpisodeNfoParser.Episode parser) {
-    if (TvShowModuleManager.getInstance().getSettings().isNfoWriteAllActors()) {
+    if (settings.isNfoWriteAllActors()) {
       Element trailer = document.createElement("trailer");
       if (parser != null && StringUtils.isNotBlank(parser.trailer)) {
         trailer.setTextContent(parser.trailer);

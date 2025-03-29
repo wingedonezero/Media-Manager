@@ -56,9 +56,11 @@ import org.tinymediamanager.core.entities.MediaRating;
 import org.tinymediamanager.core.entities.MediaTrailer;
 import org.tinymediamanager.core.entities.Person;
 import org.tinymediamanager.core.movie.MovieModuleManager;
+import org.tinymediamanager.core.movie.MovieSettings;
 import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.core.movie.filenaming.MovieNfoNaming;
 import org.tinymediamanager.scraper.MediaMetadata;
+import org.tinymediamanager.scraper.util.DateUtils;
 import org.tinymediamanager.scraper.util.LanguageUtils;
 import org.tinymediamanager.scraper.util.ParserUtils;
 import org.w3c.dom.Document;
@@ -75,7 +77,9 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
   private static final Logger                 LOGGER                 = LoggerFactory.getLogger(MovieGenericXmlConnector.class);
   protected static final String               ORACLE_IS_STANDALONE   = "http://www.oracle.com/xml/is-standalone";
   protected static final DecimalFormatSymbols DECIMAL_FORMAT_SYMBOLS = new DecimalFormatSymbols(Locale.US);
+
   protected final Movie                       movie;
+  protected final MovieSettings               settings;
   protected MovieNfoParser                    parser                 = null;
 
   protected Document                          document;
@@ -83,6 +87,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
 
   protected MovieGenericXmlConnector(Movie movie) {
     this.movie = movie;
+    this.settings = MovieModuleManager.getInstance().getSettings();
   }
 
   /**
@@ -95,7 +100,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
 
     // first of all, get the data from a previous written NFO file,
     // if we do not want clean NFOs
-    if (!MovieModuleManager.getInstance().getSettings().isWriteCleanNfo()) {
+    if (!settings.isWriteCleanNfo()) {
       for (MediaFile mf : movie.getMediaFiles(MediaFileType.NFO)) {
         try {
           parser = MovieNfoParser.parseNfo(mf.getFileAsPath());
@@ -124,7 +129,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
         // tmm comment
         Format formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String dat = formatter.format(new Date());
-        MovieConnectors conn = MovieModuleManager.getInstance().getSettings().getMovieConnector();
+        MovieConnectors conn = settings.getMovieConnector();
         document.appendChild(
             document.createComment("created on " + dat + " by tinyMediaManager " + Settings.getInstance().getVersion() + " for " + conn.name()));
 
@@ -155,6 +160,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
         addPremiered();
         addWatched();
         addPlaycount();
+        addLastPlayed();
         addGenres();
         addStudios();
         addCredits();
@@ -288,7 +294,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
     Map<String, MediaRating> ratings = movie.getRatings();
 
     MediaRating mainMediaRating = null;
-    for (String ratingSource : MovieModuleManager.getInstance().getSettings().getRatingSources()) {
+    for (String ratingSource : settings.getRatingSources()) {
       mainMediaRating = ratings.get(ratingSource);
       if (mainMediaRating != null) {
         break;
@@ -377,9 +383,9 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
    */
   protected void addOutline() {
     String outlineText = "";
-    if (MovieModuleManager.getInstance().getSettings().isCreateOutline()) {
+    if (settings.isCreateOutline()) {
       // lets create the outline since we do not have any outline field
-      if (MovieModuleManager.getInstance().getSettings().isOutlineFirstSentence()) {
+      if (settings.isOutlineFirstSentence()) {
         // use the first sentence of the plot (at least 20 chars)
         StringBuilder text = new StringBuilder();
         String[] sentences = movie.getPlot().split("\\.");
@@ -457,8 +463,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
     Element mpaa = document.createElement("mpaa");
 
     if (movie.getCertification() != null) {
-      mpaa.setTextContent(
-          CertificationStyle.formatCertification(movie.getCertification(), MovieModuleManager.getInstance().getSettings().getCertificationStyle()));
+      mpaa.setTextContent(CertificationStyle.formatCertification(movie.getCertification(), settings.getCertificationStyle()));
     }
     root.appendChild(mpaa);
   }
@@ -469,8 +474,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
   protected void addCertification() {
     Element certification = document.createElement("certification");
     if (movie.getCertification() != null) {
-      certification.setTextContent(
-          CertificationStyle.formatCertification(movie.getCertification(), MovieModuleManager.getInstance().getSettings().getCertificationStyle()));
+      certification.setTextContent(CertificationStyle.formatCertification(movie.getCertification(), settings.getCertificationStyle()));
     }
     root.appendChild(certification);
   }
@@ -545,8 +549,12 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
    * add the dateAdded date in <dateadded>xxx</dateadded>
    */
   protected void addDateAdded() {
+    if (!settings.isNfoWriteDateAdded()) {
+      return;
+    }
+
     Element dateadded = document.createElement("dateadded");
-    switch (MovieModuleManager.getInstance().getSettings().getNfoDateAddedField()) {
+    switch (settings.getNfoDateAddedField()) {
       case DATE_ADDED:
         if (movie.getDateAdded() != null) {
           dateadded.setTextContent(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(movie.getDateAdded()));
@@ -586,7 +594,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
    * This will protect the NFO from being modified by Emby
    */
   protected void addLockdata() {
-    if (MovieModuleManager.getInstance().getSettings().isNfoWriteLockdata()) {
+    if (settings.isNfoWriteLockdata()) {
       Element lockdata = document.createElement("lockdata");
       lockdata.setTextContent("true");
 
@@ -598,7 +606,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
    * add the <fileinfo>xx</fileinfo> tag with mediainfo data
    */
   protected void addFileinfo() {
-    if (MovieModuleManager.getInstance().getSettings().isNfoWriteFileinfo()) {
+    if (settings.isNfoWriteFileinfo()) {
       Element fileinfo = document.createElement("fileinfo");
       Element streamdetails = document.createElement("streamdetails");
 
@@ -652,23 +660,27 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
             video.appendChild(durationinseconds);
           }
 
-          Element stereomode = document.createElement("stereomode");
-          // "Spec": https://github.com/xbmc/xbmc/blob/master/xbmc/guilib/StereoscopicsManager.cpp
-          switch (vid.getVideo3DFormat()) {
-            case MediaFileHelper.VIDEO_3D_SBS:
-            case MediaFileHelper.VIDEO_3D_HSBS:
-              stereomode.setTextContent("left_right");
-              break;
+          if (!vid.getVideo3DFormat().isEmpty()) {
+            Element stereomode = document.createElement("stereomode");
+            switch (vid.getVideo3DFormat()) {
+              // old style till TMM 5.1.4
+              case MediaFileHelper.VIDEO_3D_SBS:
+              case MediaFileHelper.VIDEO_3D_HSBS:
+                stereomode.setTextContent("left_right");
+                break;
 
-            case MediaFileHelper.VIDEO_3D_TAB:
-            case MediaFileHelper.VIDEO_3D_HTAB:
-              stereomode.setTextContent("top_bottom");
-              break;
+              case MediaFileHelper.VIDEO_3D_TAB:
+              case MediaFileHelper.VIDEO_3D_HTAB:
+                stereomode.setTextContent("top_bottom");
+                break;
 
-            default:
-              break;
+              default:
+                // new style as of TMM 5.1.5
+                stereomode.setTextContent(vid.getVideo3DFormat());
+                break;
+            }
+            video.appendChild(stereomode);
           }
-          video.appendChild(stereomode);
 
           streamdetails.appendChild(video);
         }
@@ -692,7 +704,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
         }
 
         // also include external audio files if set
-        if (MovieModuleManager.getInstance().getSettings().isIncludeExternalAudioStreams()) {
+        if (settings.isIncludeExternalAudioStreams()) {
           for (MediaFile audioFile : movie.getMediaFiles(MediaFileType.AUDIO)) {
             for (MediaFileAudioStream audioStream : vid.getAudioStreams()) {
               Element audio = document.createElement("audio");
@@ -778,12 +790,30 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
   }
 
   /**
+   * add the last played date in <lastplayed>xxx</lastplayed> (yyyy-mm-dd) either from tmm itself or an existing NFO (the newer one wins)
+   */
+  protected void addLastPlayed() {
+    Element lastPlayed = document.createElement("lastplayed");
+
+    if (movie.isWatched()) {
+      Date lastPlayedFromNFO = parser != null ? parser.lastplayed : null;
+      Date lastPlayedFromMovie = movie.getLastWatched();
+
+      Date lastPlayedDate = DateUtils.getHigherDate(lastPlayedFromNFO, lastPlayedFromMovie);
+      if (lastPlayedDate != null) {
+        lastPlayed.setTextContent(new SimpleDateFormat("yyyy-MM-dd").format(lastPlayedDate));
+        root.appendChild(lastPlayed);
+      }
+    }
+  }
+
+  /**
    * add genres in <genre>xxx</genre> tags (multiple)
    */
   protected void addGenres() {
     for (MediaGenres mediaGenre : movie.getGenres()) {
       Element genre = document.createElement("genre");
-      genre.setTextContent(mediaGenre.getLocalizedName(MovieModuleManager.getInstance().getSettings().getNfoLanguage()));
+      genre.setTextContent(mediaGenre.getLocalizedName(settings.getNfoLanguage()));
       root.appendChild(genre);
     }
   }
@@ -799,7 +829,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
       root.appendChild(studio);
 
       // break here if we just want to write one studio
-      if (MovieModuleManager.getInstance().getSettings().isNfoWriteSingleStudio()) {
+      if (settings.isNfoWriteSingleStudio()) {
         break;
       }
     }
@@ -926,8 +956,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
     // prepare the languages to be printed in localized form
     List<String> translatedLanguages = new ArrayList<>();
     for (String langu : ParserUtils.split(movie.getSpokenLanguages())) {
-      String translated = LanguageUtils.getLocalizedLanguageNameFromLocalizedString(MovieModuleManager.getInstance().getSettings().getNfoLanguage(),
-          langu.strip());
+      String translated = LanguageUtils.getLocalizedLanguageNameFromLocalizedString(settings.getNfoLanguage(), langu.strip());
       translatedLanguages.add(translated);
     }
 
@@ -950,7 +979,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
    * add the trailer url in <trailer>xxx</trailer>
    */
   protected void addTrailer() {
-    if (MovieModuleManager.getInstance().getSettings().isNfoWriteTrailer()) {
+    if (settings.isNfoWriteTrailer()) {
       Element trailer = document.createElement("trailer");
       for (MediaTrailer mediaTrailer : new ArrayList<>(movie.getTrailer())) {
         if (mediaTrailer.getInNfo() && mediaTrailer.getUrl().startsWith("http")) {

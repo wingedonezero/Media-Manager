@@ -18,6 +18,7 @@ package org.tinymediamanager.core;
 
 import static org.tinymediamanager.scraper.util.LanguageUtils.parseLanguageFromString;
 
+import java.awt.Dimension;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -57,6 +58,7 @@ import org.tinymediamanager.core.entities.MediaFileAudioStream;
 import org.tinymediamanager.core.entities.MediaFileSubtitle;
 import org.tinymediamanager.core.entities.MediaStreamInfo;
 import org.tinymediamanager.core.entities.MediaStreamInfo.Flags;
+import org.tinymediamanager.core.mediainfo.MediaInfo3D;
 import org.tinymediamanager.core.mediainfo.MediaInfoFile;
 import org.tinymediamanager.core.mediainfo.MediaInfoUtils;
 import org.tinymediamanager.core.mediainfo.MediaInfoXMLParser;
@@ -68,6 +70,7 @@ import org.tinymediamanager.library.bluray.playlist.MPLSReader;
 import org.tinymediamanager.library.bluray.playlist.PlayItem;
 import org.tinymediamanager.library.dvd.DvdTitle;
 import org.tinymediamanager.library.dvd.IfoReader;
+import org.tinymediamanager.scraper.util.DateUtils;
 import org.tinymediamanager.scraper.util.LanguageUtils;
 import org.tinymediamanager.scraper.util.MediaIdUtil;
 import org.tinymediamanager.scraper.util.MetadataUtil;
@@ -2395,7 +2398,7 @@ public class MediaFileHelper {
     String dateAsString = getMediaInfoValue(miSnapshot, MediaInfo.StreamKind.General, 0, "Released_Date", "Recorded_Date", "Date");
     if (StringUtils.isNotBlank(dateAsString)) {
       try {
-        Date date = StrgUtils.parseDate(dateAsString);
+        Date date = DateUtils.parseDate(dateAsString);
         if (date != null) {
           Calendar calendar = Calendar.getInstance();
           calendar.setTime(date);
@@ -2868,21 +2871,16 @@ public class MediaFileHelper {
     if (!StringUtils.isEmpty(mvc) && mvc.equals("2")) {
       video3DFormat = MediaFileHelper.VIDEO_3D;
       String mvl = getMediaInfoValue(miSnapshot, MediaInfo.StreamKind.Video, 0, "MultiView_Layout").toLowerCase(Locale.ROOT);
-      LOGGER.trace("3D detected :) - {}", mvl);
-      if (!StringUtils.isEmpty(mvl) && mvl.contains("top") && mvl.contains("bottom")) {
-        video3DFormat = MediaFileHelper.VIDEO_3D_HTAB; // assume HalfTAB as default
-        if (height > width) {
-          video3DFormat = MediaFileHelper.VIDEO_3D_TAB;// FullTAB eg 1920x2160
+      if (!mvl.isEmpty()) {
+        LOGGER.trace("3D detected :) - {}", mvl);
+        MediaInfo3D ddd = MediaInfo3D.get3DFrom(mvl);
+        if (ddd != MediaInfo3D.MONO) {
+          video3DFormat = ddd.getId();
         }
       }
-      if (!StringUtils.isEmpty(mvl) && mvl.contains("side")) {
-        video3DFormat = MediaFileHelper.VIDEO_3D_HSBS;// assume HalfSBS as default
-        if (mediaFile.getAspectRatio() > 3) {
-          video3DFormat = MediaFileHelper.VIDEO_3D_SBS;// FullSBS eg 3840x1080
-        }
-      }
-      if (!StringUtils.isEmpty(mvl) && mvl.contains("laced")) { // Both Eyes laced in one block
-        video3DFormat = MediaFileHelper.VIDEO_3D_MVC;
+      else {
+        LOGGER.warn("3D detected, but correct impl could not be detected!");
+        video3DFormat = VIDEO_3D;
       }
     }
     else {
@@ -3289,5 +3287,20 @@ public class MediaFileHelper {
     info.set(flags);
 
     return info;
+  }
+
+  /**
+   * Gets the artwork dimension of the given {@link MediaFile} if it is not null and an artwork
+   *
+   * @param mediaFile
+   *          the {@link MediaFile} to get the artwork dimension for
+   * @return the artwork {@link Dimension} (if it is an artwork) or an empty {@link Dimension} (if no artwork or null)
+   */
+  public static Dimension getArtworkDimension(MediaFile mediaFile) {
+    if (mediaFile == null || !mediaFile.isGraphic()) {
+      return new Dimension(0, 0);
+    }
+
+    return new Dimension(mediaFile.getVideoWidth(), mediaFile.getVideoHeight());
   }
 }

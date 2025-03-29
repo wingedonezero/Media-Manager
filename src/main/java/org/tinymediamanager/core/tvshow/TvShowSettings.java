@@ -156,9 +156,11 @@ public final class TvShowSettings extends AbstractSettings {
   final Map<String, List<UIFilters>>             uiFilterPresets                        = new HashMap<>();
 
   // data sources / NFO settings
+  boolean                                        skipFoldersWithNomedia                 = true;
   TvShowConnectors                               tvShowConnector                        = TvShowConnectors.KODI;
   CertificationStyle                             certificationStyle                     = CertificationStyle.LARGE;
   boolean                                        writeCleanNfo                          = false;
+  boolean                                        nfoWriteDateAdded                      = true;
   DateField                                      nfoDateAddedField                      = DateField.DATE_ADDED;
   Locale                                         nfoLanguage                            = Locale.ENGLISH;
   boolean                                        nfoWriteEpisodeguide                   = true;
@@ -225,6 +227,7 @@ public final class TvShowSettings extends AbstractSettings {
   boolean                                        subtitleForceBestMatch                 = false;
 
   // misc
+  boolean                                        runtimeFromMediaInfo                   = true;
   boolean                                        buildImageCacheOnImport                = true;
   boolean                                        syncTrakt                              = false;
   boolean                                        syncTraktCollection                    = true;
@@ -731,6 +734,16 @@ public final class TvShowSettings extends AbstractSettings {
     boolean oldValue = this.buildImageCacheOnImport;
     this.buildImageCacheOnImport = newValue;
     firePropertyChange("buildImageCacheOnImport", oldValue, newValue);
+  }
+
+  public boolean isRuntimeFromMediaInfo() {
+    return runtimeFromMediaInfo;
+  }
+
+  public void setRuntimeFromMediaInfo(boolean newValue) {
+    boolean oldValue = this.runtimeFromMediaInfo;
+    this.runtimeFromMediaInfo = newValue;
+    firePropertyChange("runtimeFromMediaInfo", oldValue, newValue);
   }
 
   public boolean isExtractArtworkFromVsmeta() {
@@ -1669,6 +1682,16 @@ public final class TvShowSettings extends AbstractSettings {
     firePropertyChange("certificationStyle", oldValue, newValue);
   }
 
+  public boolean isSkipFoldersWithNomedia() {
+    return skipFoldersWithNomedia;
+  }
+
+  public void setSkipFoldersWithNomedia(boolean newValue) {
+    boolean oldValue = this.skipFoldersWithNomedia;
+    this.skipFoldersWithNomedia = newValue;
+    firePropertyChange("skipFoldersWithNomedia", oldValue, newValue);
+  }
+
   public TvShowConnectors getTvShowConnector() {
     return tvShowConnector;
   }
@@ -1687,6 +1710,16 @@ public final class TvShowSettings extends AbstractSettings {
     boolean oldValue = this.writeCleanNfo;
     this.writeCleanNfo = newValue;
     firePropertyChange("writeCleanNfo", oldValue, newValue);
+  }
+
+  public boolean isNfoWriteDateAdded() {
+    return nfoWriteDateAdded;
+  }
+
+  public void setNfoWriteDateAdded(boolean newValue) {
+    boolean oldValue = this.nfoWriteDateAdded;
+    this.nfoWriteDateAdded = newValue;
+    firePropertyChange("nfoWriteDateAdded", oldValue, newValue);
   }
 
   public DateField getNfoDateAddedField() {

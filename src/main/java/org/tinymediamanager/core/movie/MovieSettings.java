@@ -138,12 +138,14 @@ public final class MovieSettings extends AbstractSettings {
   final List<String>                        skipFolders                            = ObservableCollections.observableList(new ArrayList<>());
 
   // data sources / NFO settings
+  boolean                                   skipFoldersWithNomedia                 = true;
   boolean                                   buildImageCacheOnImport                = true;
   MovieConnectors                           movieConnector                         = MovieConnectors.KODI;
   CertificationStyle                        certificationStyle                     = CertificationStyle.LARGE;
   boolean                                   nfoDiscFolderInside                    = true;
   boolean                                   trailerDiscFolderInside                = true;
   boolean                                   writeCleanNfo                          = false;
+  boolean                                   nfoWriteDateAdded                      = true;
   DateField                                 nfoDateAddedField                      = DateField.DATE_ADDED;
   Locale                                    nfoLanguage                            = Locale.ENGLISH;
   boolean                                   createOutline                          = true;
@@ -1250,6 +1252,16 @@ public final class MovieSettings extends AbstractSettings {
     firePropertyChange("renamerNfoCleanup", oldValue, newValue);
   }
 
+  public boolean isSkipFoldersWithNomedia() {
+    return skipFoldersWithNomedia;
+  }
+
+  public void setSkipFoldersWithNomedia(boolean newValue) {
+    boolean oldValue = this.skipFoldersWithNomedia;
+    this.skipFoldersWithNomedia = newValue;
+    firePropertyChange("skipFoldersWithNomedia", oldValue, newValue);
+  }
+
   public boolean isBuildImageCacheOnImport() {
     return buildImageCacheOnImport;
   }
@@ -1670,6 +1682,16 @@ public final class MovieSettings extends AbstractSettings {
     boolean oldValue = writeCleanNfo;
     this.writeCleanNfo = newValue;
     firePropertyChange("writeCleanNfo", oldValue, newValue);
+  }
+
+  public boolean isNfoWriteDateAdded() {
+    return nfoWriteDateAdded;
+  }
+
+  public void setNfoWriteDateAdded(boolean newValue) {
+    boolean oldValue = this.nfoWriteDateAdded;
+    this.nfoWriteDateAdded = newValue;
+    firePropertyChange("nfoWriteDateAdded", oldValue, newValue);
   }
 
   public DateField getNfoDateAddedField() {

@@ -108,6 +108,7 @@ import org.tinymediamanager.scraper.entities.MediaArtwork.MediaArtworkType;
 import org.tinymediamanager.scraper.entities.MediaCertification;
 import org.tinymediamanager.scraper.entities.MediaEpisodeGroup;
 import org.tinymediamanager.scraper.entities.MediaEpisodeNumber;
+import org.tinymediamanager.scraper.util.DateUtils;
 import org.tinymediamanager.scraper.util.ListUtils;
 import org.tinymediamanager.scraper.util.StrgUtils;
 import org.tinymediamanager.scraper.util.TvUtils;
@@ -1561,7 +1562,7 @@ public class TvShow extends MediaEntity implements IMediaInformation {
    */
   public void setFirstAired(String aired) {
     try {
-      setFirstAired(StrgUtils.parseDate(aired));
+      setFirstAired(DateUtils.parseDate(aired));
     }
     catch (ParseException ignored) {
     }
@@ -1594,6 +1595,21 @@ public class TvShow extends MediaEntity implements IMediaInformation {
    * @return the runtime
    */
   public int getRuntime() {
+    return runtime;
+  }
+
+  /**
+   * Gets the sum of all episodes runtime
+   *
+   * @return the sum of all episode runtime
+   */
+  public int getRuntimeOfEpisodes() {
+    int runtime = 0;
+
+    for (TvShowEpisode episode : episodes) {
+      runtime += episode.getRuntime();
+    }
+
     return runtime;
   }
 

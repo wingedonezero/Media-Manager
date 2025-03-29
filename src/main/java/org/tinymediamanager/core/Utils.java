@@ -103,6 +103,7 @@ import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.scraper.http.Url;
+import org.tinymediamanager.scraper.util.DateUtils;
 import org.tinymediamanager.scraper.util.StrgUtils;
 import org.tinymediamanager.scraper.util.UrlUtil;
 
@@ -1909,7 +1910,7 @@ public class Utils {
         Matcher matcher = pattern.matcher(path.getFileName().toString());
         if (matcher.find()) {
           try {
-            Date date = StrgUtils.parseDate(matcher.group());
+            Date date = DateUtils.parseDate(matcher.group());
             if (dateBefore30Days.after(date)) {
               Utils.deleteFileSafely(path);
             }
@@ -2264,12 +2265,15 @@ public class Utils {
    * check if the given folder contains any of the well known skip files (tmmignore, .tmmignore, .nomedia)
    *
    * @param dir
-   *          the folder to check
+   *          the folder to check#
+   * @param readNomedia
+   *          read .nomedia files
    * @return true/false
    */
   @Deprecated
-  public static boolean containsSkipFile(Path dir) {
-    return Files.exists(dir.resolve(".tmmignore")) || Files.exists(dir.resolve("tmmignore")) || Files.exists(dir.resolve(".nomedia"));
+  public static boolean containsSkipFile(Path dir, boolean readNomedia) {
+    return Files.exists(dir.resolve(".tmmignore")) || Files.exists(dir.resolve("tmmignore"))
+        || (readNomedia && Files.exists(dir.resolve(".nomedia")));
   }
 
   /**

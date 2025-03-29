@@ -16,6 +16,7 @@
 package org.tinymediamanager.scraper.kodi;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.SortedSet;
 
@@ -38,7 +39,7 @@ import org.tinymediamanager.scraper.interfaces.IMediaProvider;
 import org.tinymediamanager.scraper.interfaces.ITvShowArtworkProvider;
 import org.tinymediamanager.scraper.interfaces.ITvShowMetadataProvider;
 import org.tinymediamanager.scraper.util.DOMUtils;
-import org.tinymediamanager.scraper.util.StrgUtils;
+import org.tinymediamanager.scraper.util.DateUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -277,7 +278,7 @@ public class KodiTvShowMetadataProvider extends AbstractKodiMetadataProvider imp
         md.setId(scraper.getProviderInfo().getId(), DOMUtils.getElementValue(el, "id"));
         // String epUrl = DOMUtils.getElementValue(el, "url"); // cannot save in ME!!!
         try {
-          md.setReleaseDate(StrgUtils.parseDate(DOMUtils.getElementValue(el, "aired")));
+          md.setReleaseDate(DateUtils.parseDate(DOMUtils.getElementValue(el, "aired")));
         }
         catch (Exception ignored) {
           // ignored
@@ -319,7 +320,7 @@ public class KodiTvShowMetadataProvider extends AbstractKodiMetadataProvider imp
     // scrape again to get Kodi XML (thank god we have a mem cachedUrl)
     try {
       if (options.getSearchResult() == null || !scraper.getProviderInfo().getId().equals(options.getSearchResult().getProviderId())) {
-        throw new MissingIdException("scraping with Kodi scrapers only with a prior result possible");
+        return Collections.emptyList();
       }
 
       MediaMetadata md = _getMetadata(options);
@@ -327,7 +328,6 @@ public class KodiTvShowMetadataProvider extends AbstractKodiMetadataProvider imp
       LOGGER.trace("******* END ARTWORK XML FOR {} ***********", options.getArtworkType());
     }
     catch (Exception e) {
-      LOGGER.error("error getting artwork: {}", e.getMessage());
       throw new ScrapeException(e);
     }
     return mas;

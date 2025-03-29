@@ -31,6 +31,7 @@ import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
 import org.tinymediamanager.core.MediaFileType;
+import org.tinymediamanager.core.TmmDateFormat;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaFileAudioStream;
@@ -117,6 +118,15 @@ public class TvShowEpisodeMediaInformationPanel extends MediaInformationPanel {
 
     chckbxWatched.setSelected(tvShowEpisode.isWatched());
 
+    if (tvShowEpisode.isWatched() && tvShowEpisode.getLastWatched() != null) {
+      lblLastPlayed.setText("(" + TmmDateFormat.MEDIUM_DATE_FORMAT.format(tvShowEpisode.getLastWatched()) + ")");
+      lblLastPlayed.setToolTipText(TmmResourceBundle.getString("metatag.lastplayed"));
+    }
+    else {
+      lblLastPlayed.setText(null);
+      lblLastPlayed.setToolTipText(null);
+    }
+
     lblVideoCodec.setText(mediaFile.getVideoCodec());
     if (mediaFile.getAspectRatio() > 0) {
       lblVideoResolution.setText(String.format("%s (%.2f:1)", mediaFile.getVideoResolution(), mediaFile.getAspectRatio()));
@@ -130,6 +140,7 @@ public class TvShowEpisodeMediaInformationPanel extends MediaInformationPanel {
     lblFrameRate.setText(String.format("%.2f fps", mediaFile.getFrameRate()));
     lblOriginalFilename.setText(tvShowEpisode.getOriginalFilename());
     lblHdrFormat.setText(mediaFile.getHdrFormat());
+    lblCrc32.setText(mediaFile.getCRC32());
   }
 
   @Override
