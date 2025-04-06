@@ -18,6 +18,9 @@ package org.tinymediamanager.scraper.util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -184,5 +187,57 @@ public class DateUtils {
     }
 
     return date;
+  }
+
+  /**
+   * Converts {@link Date} to {@link LocalDate} with default zone
+   * 
+   * @param date
+   * @return LocalDate or NULL
+   */
+  public static LocalDate toLocalD(Date date) {
+    if (date == null) {
+      return null;
+    }
+    return LocalDate.ofInstant(date.toInstant(), ZoneId.systemDefault());
+  }
+
+  /**
+   * Converts {@link Date} to {@link LocalDateTime} with default zone
+   * 
+   * @param date
+   * @return LocalDateTime or NULL
+   */
+  public static LocalDateTime toLocalDT(Date date) {
+    if (date == null) {
+      return null;
+    }
+    return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+  }
+
+  /**
+   * Converts {@link LocalDate} to {@link Date} with default zone
+   * 
+   * @param localDate
+   * @return Date or NULL
+   */
+  public static Date toDate(LocalDate localDate) {
+    if (localDate == null) {
+      return null;
+    }
+    return Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+  }
+
+  /**
+   * Converts {@link LocalDateTime} to {@link Date} with default zone
+   * 
+   * @param dateTime
+   * @return Date or NULL
+   */
+  public static Date toDate(LocalDateTime dateTime) {
+    if (dateTime == null) {
+      return null;
+    }
+    return Date.from(dateTime.atZone(ZoneId.systemDefault()).toInstant());
   }
 }
