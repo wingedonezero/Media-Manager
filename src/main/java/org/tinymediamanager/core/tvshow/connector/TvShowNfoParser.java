@@ -18,13 +18,14 @@ package org.tinymediamanager.core.tvshow.connector;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -46,11 +47,13 @@ import org.tinymediamanager.core.MediaAiredStatus;
 import org.tinymediamanager.core.MediaFileType;
 import org.tinymediamanager.core.entities.MediaGenres;
 import org.tinymediamanager.core.entities.MediaRating;
+import org.tinymediamanager.core.entities.MediaTrailer;
 import org.tinymediamanager.core.tvshow.TvShowHelpers;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowSeason;
 import org.tinymediamanager.scraper.MediaMetadata;
 import org.tinymediamanager.scraper.entities.MediaCertification;
+import org.tinymediamanager.scraper.entities.MediaEpisodeGroup;
 import org.tinymediamanager.scraper.util.DateUtils;
 import org.tinymediamanager.scraper.util.MediaIdUtil;
 import org.tinymediamanager.scraper.util.MetadataUtil;
@@ -84,6 +87,7 @@ public class TvShowNfoParser {
   public boolean                    watched             = false;
   public int                        playcount           = 0;
   public String                     userNote            = "";
+  public MediaEpisodeGroup          episodeGroup        = MediaEpisodeGroup.DEFAULT_AIRED;
 
   public Map<String, Object>        ids                 = new HashMap<>();
   public Map<String, Rating>        ratings             = new HashMap<>();
@@ -107,6 +111,7 @@ public class TvShowNfoParser {
   public List<String>               countries           = new ArrayList<>();
   public List<String>               tags                = new ArrayList<>();
   public List<Person>               actors              = new ArrayList<>();
+  public List<MediaEpisodeGroup>    episodeGroups       = new ArrayList<>();
 
   public List<String>               unsupportedElements = new ArrayList<>();
 
@@ -179,6 +184,7 @@ public class TvShowNfoParser {
     parseTag(TvShowNfoParser::parseEpisodeguide);
     parseTag(TvShowNfoParser::parseEnddate);
     parseTag(TvShowNfoParser::parseUserNote);
+    parseTag(TvShowNfoParser::parseEpisodeGroups);
 
     // MUST BE THE LAST ONE!
     parseTag(TvShowNfoParser::findUnsupportedElements);
@@ -1309,18 +1315,13 @@ public class TvShowNfoParser {
           pattern = Pattern.compile("plugin://plugin.video.hdtrailers_net/video/.*\\?/(.*)$");
           matcher = pattern.matcher(element.ownText());
           if (matcher.matches()) {
-            try {
-              trailer = URLDecoder.decode(matcher.group(1), "UTF-8");
-            }
-            catch (UnsupportedEncodingException ignored) {
-              // ignored
-            }
+            trailer = URLDecoder.decode(matcher.group(1), StandardCharsets.UTF_8);
           }
         }
       }
 
       // pure http link
-      if (StringUtils.isNotBlank(element.ownText()) && element.ownText().matches("https?://.*")) {
+      if (StringUtils.isNotBlank(element.ownText())) {
         trailer = element.ownText();
       }
     }
@@ -1455,6 +1456,34 @@ public class TvShowNfoParser {
   }
 
   /**
+   * the episode groups are in the episode_group tag
+   */
+  private Void parseEpisodeGroups() {
+    supportedElements.add("episode_groups");
+
+    Element element = getSingleElement(root, "episode_groups");
+    if (element != null) {
+      for (Element group : element.children()) {
+        try {
+          MediaEpisodeGroup.EpisodeGroupType episodeGroupType = MediaEpisodeGroup.EpisodeGroupType.valueOf(group.attr("id"));
+          String episodeGroupName = group.attr("name");
+          MediaEpisodeGroup mediaEpisodeGroup = new MediaEpisodeGroup(episodeGroupType, episodeGroupName);
+
+          if (Boolean.parseBoolean(group.attr("active"))) {
+            episodeGroup = mediaEpisodeGroup;
+          }
+
+          episodeGroups.add(mediaEpisodeGroup);
+        }
+        catch (Exception ignored) {
+          // nothing to do
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
    * morph this instance to a TvShow object
    *
    * @return the TvShow object
@@ -1575,7 +1604,20 @@ public class TvShowNfoParser {
     show.addToGenres(genres);
     show.addToTags(tags);
 
+    if (StringUtils.isNotBlank(trailer)) {
+      // only add new MT when not a local file
+      MediaTrailer mediaTrailer = new MediaTrailer();
+      mediaTrailer.setName("fromNFO");
+      mediaTrailer.setProvider("from NFO");
+      mediaTrailer.setQuality("unknown");
+      mediaTrailer.setUrl(trailer);
+      mediaTrailer.setInNfo(true);
+      show.addToTrailer(Collections.singletonList(mediaTrailer));
+    }
+
     show.setNote(userNote);
+    show.setEpisodeGroups(episodeGroups);
+    show.setEpisodeGroup(episodeGroup);
 
     return show;
   }

@@ -155,6 +155,7 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
   private String                             titleSortable         = "";
   private boolean                            dummy                 = false;
   private MediaEpisodeNumber                 mainEpisodeNumber     = null;
+  private int                                runtimeFromMediaFiles = 0;
 
   // LEGACY
   @JsonIgnore
@@ -409,6 +410,7 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
 
   public void setMultiEpisode(boolean multiEpisode) {
     this.multiEpisode = multiEpisode;
+    runtimeFromMediaFiles = 0; // reset cached runtime from media files
   }
 
   /**
@@ -869,33 +871,39 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
    */
   private void writeThumbImage(boolean async) {
     String thumbUrl = getArtworkUrl(MediaFileType.THUMB);
-    if (StringUtils.isNotBlank(thumbUrl)) {
-      // create correct filename
-      MediaFile mf = getMediaFiles(MediaFileType.VIDEO).get(0);
-      String basename = FilenameUtils.getBaseName(mf.getFilename());
+    if (StringUtils.isBlank(thumbUrl)) {
+      return;
+    }
 
-      List<String> filenames = new ArrayList<>();
-      for (TvShowEpisodeThumbNaming thumbNaming : TvShowModuleManager.getInstance().getSettings().getEpisodeThumbFilenames()) {
-        String filename = thumbNaming.getFilename(basename, Utils.getArtworkExtensionFromUrl(thumbUrl));
-        if (StringUtils.isBlank(filename)) {
-          continue;
-        }
-        if (isDisc()) {
-          filename = "thumb." + FilenameUtils.getExtension(thumbUrl); // DVD/BluRay fixate to thumb.ext
-        }
+    MediaFile mf = getMainVideoFile();
+    if (mf == MediaFile.EMPTY_MEDIAFILE) {
+      return;
+    }
 
-        filenames.add(filename);
+    // create correct filename
+    String basename = FilenameUtils.getBaseName(mf.getFilename());
+
+    List<String> filenames = new ArrayList<>();
+    for (TvShowEpisodeThumbNaming thumbNaming : TvShowModuleManager.getInstance().getSettings().getEpisodeThumbFilenames()) {
+      String filename = thumbNaming.getFilename(basename, Utils.getArtworkExtensionFromUrl(thumbUrl));
+      if (StringUtils.isBlank(filename)) {
+        continue;
+      }
+      if (isDisc()) {
+        filename = "thumb." + FilenameUtils.getExtension(thumbUrl); // DVD/BluRay fixate to thumb.ext
       }
 
-      if (!filenames.isEmpty()) {
-        // get images in thread
-        MediaEntityImageFetcherTask task = new MediaEntityImageFetcherTask(this, thumbUrl, MediaArtworkType.THUMB, filenames);
-        if (async) {
-          TmmTaskManager.getInstance().addImageDownloadTask(task);
-        }
-        else {
-          task.run();
-        }
+      filenames.add(filename);
+    }
+
+    if (!filenames.isEmpty()) {
+      // get images in thread
+      MediaEntityImageFetcherTask task = new MediaEntityImageFetcherTask(this, thumbUrl, MediaArtworkType.THUMB, filenames);
+      if (async) {
+        TmmTaskManager.getInstance().addImageDownloadTask(task);
+      }
+      else {
+        task.run();
       }
     }
 
@@ -1522,6 +1530,11 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
   }
 
   public int getRuntimeFromMediaFiles() {
+    // use calculated value if available
+    if (runtimeFromMediaFiles != 0) {
+      return runtimeFromMediaFiles;
+    }
+
     int runtime = 0;
     for (MediaFile mf : getMediaFiles(MediaFileType.VIDEO)) {
       runtime += mf.getDuration();
@@ -1534,6 +1547,9 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
         runtime = (int) (runtime / (float) eps.size());
       }
     }
+
+    // cache
+    runtimeFromMediaFiles = runtime;
 
     return runtime;
   }
@@ -1550,6 +1566,10 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
   @Override
   public void callbackForGatheredMediainformation(MediaFile mediaFile) {
     boolean dirty = false;
+
+    if (mediaFile.getType() == MediaFileType.VIDEO) {
+      runtimeFromMediaFiles = 0; // reset cached runtime from media files
+    }
 
     // upgrade MediaSource to UHD bluray, if video format says so
     if (getMediaSource() == MediaSource.BLURAY && getMainVideoFile().getVideoDefinitionCategory().equals(MediaFileHelper.VIDEO_FORMAT_UHD)) {
@@ -1738,7 +1758,7 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
 
   @Override
   public MediaFile getMainVideoFile() {
-    MediaFile vid = null;
+    MediaFile vid;
 
     if (stacked) {
       // search the first stacked media file (e.g. CD1)
