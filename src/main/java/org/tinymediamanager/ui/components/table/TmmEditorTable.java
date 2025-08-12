@@ -17,6 +17,7 @@ package org.tinymediamanager.ui.components.table;
 
 import java.awt.Cursor;
 import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
@@ -81,7 +82,7 @@ public abstract class TmmEditorTable extends TmmTable {
     });
 
     InputMap im = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_E, InputEvent.CTRL_DOWN_MASK + InputEvent.SHIFT_DOWN_MASK), "edit");
+    im.put(KeyStroke.getKeyStroke(KeyEvent.VK_E, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() + InputEvent.SHIFT_DOWN_MASK), "edit");
 
     im.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), "tabPressed");
     im.put(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK), "tabPressedReverse");
@@ -150,6 +151,20 @@ public abstract class TmmEditorTable extends TmmTable {
   }
 
   /**
+   * callback if another link has been clicked
+   *
+   * @param row
+   *          the row index
+   * @param column
+   *          the column index
+   * @param mouseEvent
+   *          the mouse event
+   */
+  protected void linkClicked(int row, int column, MouseEvent mouseEvent) {
+    // empty default impl.
+  }
+
+  /**
    * helper class for listening to the edit button
    */
   private class TableButtonListener extends MouseAdapter {
@@ -174,7 +189,7 @@ public abstract class TmmEditorTable extends TmmTable {
       }
       else if (isLinkCell(row, col)) {
         row = table.convertRowIndexToModel(row);
-        linkClicked(row, col);
+        linkClicked(row, col, arg0);
       }
     }
 

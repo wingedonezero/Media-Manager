@@ -38,7 +38,7 @@ public class TvShowMediaFilesFilter extends AbstractCheckComboBoxTvShowUIFilter<
 
   public TvShowMediaFilesFilter() {
     super();
-    checkComboBox.enableFilter((s, s2) -> s.toString().toLowerCase(Locale.ROOT).startsWith(s2.toLowerCase(Locale.ROOT)));
+    checkComboBox.enableFilter((s, s2) -> s.toString().toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
 
     List<TvShowMediaFilesFilter.MediaFileTypeContainer> mediaFileTypeList = new ArrayList<>();
 
@@ -84,6 +84,14 @@ public class TvShowMediaFilesFilter extends AbstractCheckComboBoxTvShowUIFilter<
       boolean foundEpisode = false;
       List<MediaFile> mfs = episode.getMediaFiles();
       for (MediaFile mf : mfs) {
+        if (selectedItems.contains(mf.getType())) {
+          foundEpisode = true;
+          break;
+        }
+      }
+
+      // also look in the containing season
+      for (MediaFile mf : episode.getTvShowSeason().getMediaFiles()) {
         if (selectedItems.contains(mf.getType())) {
           foundEpisode = true;
           break;

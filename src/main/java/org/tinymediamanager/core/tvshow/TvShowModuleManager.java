@@ -32,9 +32,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.commons.lang3.StringUtils;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
+import org.h2.mvstore.MVStoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.Globals;
+import org.tinymediamanager.UpgradeTasks;
 import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.CustomNullStringSerializerProvider;
 import org.tinymediamanager.core.ITmmModule;
@@ -182,7 +184,7 @@ public final class TvShowModuleManager implements ITmmModule {
       TmmHttpServer.getInstance().createContext("tvshow", new TvShowCommandHandler());
     }
     catch (Exception e) {
-      LOGGER.warn("could not register TV show API - '{}'", e.getMessage());
+      LOGGER.warn("Could not register TV show API - '{}'", e.getMessage());
     }
   }
 
@@ -199,26 +201,75 @@ public final class TvShowModuleManager implements ITmmModule {
       return;
     }
     catch (Exception e) {
+      if (e instanceof MVStoreException && e.getMessage().contains("format 1 is smaller")) {
+        // this is a special case - we try to load the dbmigrator plugin
+        // to migrate the old database
+        LOGGER.warn("Database file '{}' contains an old format - trying to import via dbmigrator.jar", databaseFile);
+
+        try {
+          Path databaseBackup = Paths.get(Globals.BACKUP_FOLDER, TV_SHOW_DB + ".oldv1");
+
+          Utils.deleteFileSafely(databaseBackup);
+          Utils.moveFileSafe(databaseFile, databaseBackup);
+
+          Map<?, ?> oldDatabase = UpgradeTasks.loadOldDatabase(databaseBackup);
+          loadDatabase(databaseFile);
+
+          tvShowMap = mvStore.openMap("tvshows");
+          seasonMap = mvStore.openMap("seasons");
+          episodeMap = mvStore.openMap("episodes");
+
+          Map<UUID, String> oldTvShowsMap = (Map<UUID, String>) oldDatabase.get("tvshows");
+          if (oldTvShowsMap != null) {
+            tvShowMap.putAll(oldTvShowsMap);
+          }
+
+          Map<UUID, String> oldSeasonsMap = (Map<UUID, String>) oldDatabase.get("seasons");
+          if (oldSeasonsMap != null) {
+            seasonMap.putAll(oldSeasonsMap);
+          }
+
+          Map<UUID, String> oldEpisodesMap = (Map<UUID, String>) oldDatabase.get("episodes");
+          if (oldEpisodesMap != null) {
+            episodeMap.putAll(oldEpisodesMap);
+          }
+
+          Map<String, String> oldMetadataMap = (Map<String, String>) oldDatabase.get("metadata");
+          if (oldMetadataMap != null) {
+            metadataMap.putAll(oldMetadataMap);
+          }
+
+          getTvShowList().loadTvShowsFromDatabase(tvShowMap, seasonMap, episodeMap);
+          getTvShowList().initDataAfterLoading();
+
+          return;
+        }
+        catch (Exception ex) {
+          LOGGER.error("Could not load old database - '{}'", ex.getMessage());
+        }
+      }
+
       // look if the file is locked by another process (rethrow rather than delete the db file)
-      if (e instanceof IllegalStateException && e.getMessage().contains("file is locked")) {
+      if ((e instanceof IllegalStateException || e instanceof MVStoreException) && e.getMessage().contains("file is locked")) {
         throw e;
       }
 
       if (mvStore != null && !mvStore.isClosed()) {
         mvStore.close();
       }
-      LOGGER.error("Could not open database file: {}", e.getMessage());
+      LOGGER.error("Could not open database file '{}' - '{}'", databaseFile, e.getMessage());
     }
 
     try {
-      Utils.deleteFileSafely(Paths.get(Globals.BACKUP_FOLDER, TV_SHOW_DB + ".corrupted"));
-      Utils.moveFileSafe(databaseFile, Paths.get(Globals.BACKUP_FOLDER, TV_SHOW_DB + ".corrupted"));
+      Path corruptedFile = Paths.get(Globals.BACKUP_FOLDER, TV_SHOW_DB + ".corrupted");
+      Utils.deleteFileSafely(corruptedFile);
+      Utils.moveFileSafe(databaseFile, corruptedFile);
     }
     catch (Exception e) {
       LOGGER.error("Could not move corrupted database to '{}' - '{}", TV_SHOW_DB + ".corrupted", e.getMessage());
     }
 
-    LOGGER.info("try to restore the database from the backups");
+    LOGGER.info("Try to restore the database from the backups");
 
     // get backups
     List<Path> backups = Utils.listFiles(Paths.get(Globals.BACKUP_FOLDER));
@@ -241,6 +292,7 @@ public final class TvShowModuleManager implements ITmmModule {
         Utils.unzipFile(backup, Paths.get("/", "data", TV_SHOW_DB), databaseFile);
         loadDatabase(databaseFile);
         startupMessages.add(TmmResourceBundle.getString("tvshow.loaddb.failed.restore"));
+        LOGGER.info("Restored database from backup: '{}'", backup);
 
         return;
       }
@@ -248,11 +300,11 @@ public final class TvShowModuleManager implements ITmmModule {
         if (mvStore != null && !mvStore.isClosed()) {
           mvStore.close();
         }
-        LOGGER.error("Could not open database file from backup: {}", e.getMessage());
+        LOGGER.error("Could not open database file from backup - '{}'", e.getMessage());
       }
     }
 
-    LOGGER.info("starting over with an empty database file");
+    LOGGER.info("Starting over with an empty database file");
 
     try {
       Utils.deleteFileSafely(databaseFile);
@@ -260,7 +312,7 @@ public final class TvShowModuleManager implements ITmmModule {
       startupMessages.add(TmmResourceBundle.getString("tvshow.loaddb.failed"));
     }
     catch (Exception e1) {
-      LOGGER.error("could not move old database file and create a new one: {}", e1.getMessage());
+      LOGGER.error("Could not move old database file and create a new one - '{}'", e1.getMessage());
     }
   }
 
@@ -270,21 +322,22 @@ public final class TvShowModuleManager implements ITmmModule {
 
       @Override
       public void uncaughtException(Thread t, Throwable e) {
-        if (e instanceof IllegalStateException) {
+        if (e instanceof IllegalStateException || e instanceof MVStoreException) {
           // wait up to 10 times, then try to recover
           if (counter < 10) {
             counter++;
             return;
           }
 
-          LOGGER.error("database corruption detected - try to recover");
+          LOGGER.error("Database ({}) corruption detected - try to recover", databaseFile);
 
           // try to in-memory fix the DB
           mvStore.close();
 
           try {
-            Utils.deleteFileSafely(Paths.get(Globals.BACKUP_FOLDER, TV_SHOW_DB + ".corrupted"));
-            Utils.moveFileSafe(databaseFile, Paths.get(Globals.BACKUP_FOLDER, TV_SHOW_DB + ".corrupted"));
+            Path corruptedFile = Paths.get(Globals.BACKUP_FOLDER, TV_SHOW_DB + ".corrupted");
+            Utils.deleteFileSafely(corruptedFile);
+            Utils.moveFileSafe(databaseFile, corruptedFile);
           }
           catch (Exception e1) {
             LOGGER.error("Could not move corrupted database to '{}' - '{}", TV_SHOW_DB + ".corrupted", e1.getMessage());
@@ -355,8 +408,6 @@ public final class TvShowModuleManager implements ITmmModule {
     if (mvStore != null && !mvStore.isClosed()) {
       writePendingChanges(true);
       mvStore.commit();
-
-      mvStore.compactMoveChunks();
       mvStore.close();
     }
 
@@ -423,7 +474,7 @@ public final class TvShowModuleManager implements ITmmModule {
           }
         }
         catch (Exception e) {
-          LOGGER.warn("could not store '{}' - '{}'", entry.getValue().getClass().getName(), e.getMessage());
+          LOGGER.debug("could not store '{}' - '{}'", entry.getValue().getClass().getName(), e.getMessage());
         }
         finally {
           pendingChanges.remove(entry.getValue());
@@ -475,7 +526,7 @@ public final class TvShowModuleManager implements ITmmModule {
       return s;
     }
     catch (Exception e) {
-      LOGGER.error("Cannot parse JSON!", e);
+      LOGGER.debug("Cannot parse JSON!", e);
     }
     return "";
   }
@@ -489,7 +540,7 @@ public final class TvShowModuleManager implements ITmmModule {
   public void dump(TvShow tvShow, boolean withChilds) {
     String d = getTvShowJsonFromDB(tvShow, withChilds);
     if (!d.isEmpty()) {
-      LOGGER.info("Dumping TvShow: {}\n{}", tvShow.getDbId(), d);
+      LOGGER.debug("Dumping TvShow: {}\n{}", tvShow.getDbId(), d);
     }
   }
 
@@ -512,10 +563,10 @@ public final class TvShowModuleManager implements ITmmModule {
         seasonNode.set("episodes", episodes);
       }
       String s = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(seasonNode);
-      LOGGER.info("Dumping TvShowSeason: {}\n{}", season.getDbId(), s);
+      LOGGER.debug("Dumping TvShowSeason: {}\n{}", season.getDbId(), s);
     }
     catch (Exception e) {
-      LOGGER.error("Cannot parse JSON!", e);
+      LOGGER.debug("Cannot parse JSON!", e);
     }
   }
 
@@ -531,15 +582,15 @@ public final class TvShowModuleManager implements ITmmModule {
       if (episodeMap.get(episode.getDbId()) != null) {
         ObjectNode epNode = mapper.readValue(episodeMap.get(episode.getDbId()), ObjectNode.class);
         String s = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(epNode);
-        LOGGER.info("Dumping TvShowEpisode: {}\n{}", episode.getDbId(), s);
+        LOGGER.debug("Dumping TvShowEpisode: {}\n{}", episode.getDbId(), s);
       }
       else {
         // dummy?
-        LOGGER.warn("Cannot dump DummyEpisode - check them on show level!");
+        LOGGER.debug("Cannot dump DummyEpisode - check them on show level!");
       }
     }
     catch (Exception e) {
-      LOGGER.error("Cannot parse JSON!", e);
+      LOGGER.debug("Cannot parse JSON!", e);
     }
   }
 

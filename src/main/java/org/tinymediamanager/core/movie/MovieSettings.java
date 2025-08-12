@@ -63,6 +63,7 @@ import org.tinymediamanager.scraper.entities.CountryCode;
 import org.tinymediamanager.scraper.entities.MediaArtwork.FanartSizes;
 import org.tinymediamanager.scraper.entities.MediaArtwork.PosterSizes;
 import org.tinymediamanager.scraper.entities.MediaLanguages;
+import org.tinymediamanager.scraper.rating.RatingProvider;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -115,6 +116,7 @@ public final class MovieSettings extends AbstractSettings {
   static final String                       MOVIESET_CHECK_METADATA                = "movieSetCheckMetadata";
   static final String                       MOVIESET_CHECK_ARTWORK                 = "movieSetCheckArtwork";
   static final String                       POST_PROCESS                           = "postProcess";
+  static final String                       MOVIE_SET_POST_PROCESS                 = "movieSetPostProcess";
 
   final List<String>                        movieDataSources                       = ObservableCollections.observableList(new ArrayList<>());
   final List<MovieNfoNaming>                nfoFilenames                           = new ArrayList<>();
@@ -154,6 +156,7 @@ public final class MovieSettings extends AbstractSettings {
   boolean                                   nfoWriteLockdata                       = false;
   boolean                                   nfoWriteTrailer                        = true;
   boolean                                   nfoWriteFileinfo                       = true;
+  boolean                                   nfoWriteArtworkUrls                    = true;
 
   // renamer
   boolean                                   renameAfterScrape                      = false;
@@ -170,6 +173,7 @@ public final class MovieSettings extends AbstractSettings {
   boolean                                   renamerCreateMoviesetForSingleMovie    = false;
   String                                    renamerFirstCharacterNumberReplacement = "#";
   boolean                                   asciiReplacement                       = false;
+  boolean                                   unicodeReplacement                     = false;
   boolean                                   allowMultipleMoviesInSameDir           = false;
 
   // meta data scraper
@@ -182,7 +186,8 @@ public final class MovieSettings extends AbstractSettings {
   final List<MovieScraperMetadataConfig>    scraperMetadataConfig                  = new ArrayList<>();
   boolean                                   doNotOverwriteExistingData             = false;
   boolean                                   capitalWordsInTitles                   = false;
-  boolean                                   fetchAllRatings                        = false;
+  boolean                                   fetchAllRatings                        = true;
+  final List<RatingProvider.RatingSource>   fetchRatingSources                     = new ArrayList<>();
 
   // artwork scraper
   PosterSizes                               imagePosterSize                        = PosterSizes.LARGE;
@@ -203,7 +208,7 @@ public final class MovieSettings extends AbstractSettings {
   boolean                                   writeActorImages                       = false;
 
   // trailer scraper
-  boolean                                   useYtDlp                               = false;
+  boolean                                   useYtDlp                               = true;
   boolean                                   useTrailerPreference                   = true;
   boolean                                   automaticTrailerDownload               = false;
   TrailerQuality                            trailerQuality                         = TrailerQuality.HD_720;
@@ -226,10 +231,12 @@ public final class MovieSettings extends AbstractSettings {
 
   boolean                                   title                                  = true;
   boolean                                   sortableTitle                          = false;
-  boolean                                   originalTitle                          = false;
+  boolean                                   originalTitle                          = true;
   boolean                                   sortableOriginalTitle                  = false;
   boolean                                   sortTitle                              = false;
+  boolean                                   englishTitle                           = true;
   final List<PostProcess>                   postProcess                            = ObservableCollections.observableList(new ArrayList<>());
+  final List<PostProcess>                   movieSetPostProcess                    = ObservableCollections.observableList(new ArrayList<>());
 
   // ui
   final List<MediaFileType>                 showArtworkTypes                       = ObservableCollections.observableList(new ArrayList<>());
@@ -387,6 +394,8 @@ public final class MovieSettings extends AbstractSettings {
 
     universalFilterFields.addAll(Arrays.asList(UniversalFilterFields.values()));
     scraperMetadataConfig.addAll(Arrays.asList(MovieScraperMetadataConfig.values()));
+
+    fetchRatingSources.add(RatingProvider.RatingSource.IMDB);
   }
 
   @Override
@@ -1342,6 +1351,12 @@ public final class MovieSettings extends AbstractSettings {
     firePropertyChange("sortTitle", oldValue, newValue);
   }
 
+  public void setEnglishTitle(boolean newValue) {
+    boolean oldValue = this.englishTitle;
+    this.englishTitle = newValue;
+    firePropertyChange("englishTitle", oldValue, newValue);
+  }
+
   public boolean getTitle() {
     return this.title;
   }
@@ -1362,6 +1377,10 @@ public final class MovieSettings extends AbstractSettings {
     return this.sortTitle;
   }
 
+  public boolean getEnglishTitle() {
+    return this.englishTitle;
+  }
+
   public boolean isIncludeExternalAudioStreams() {
     return includeExternalAudioStreams;
   }
@@ -1380,6 +1399,16 @@ public final class MovieSettings extends AbstractSettings {
     boolean oldValue = this.asciiReplacement;
     this.asciiReplacement = newValue;
     firePropertyChange("asciiReplacement", oldValue, newValue);
+  }
+
+  public boolean isUnicodeReplacement() {
+    return unicodeReplacement;
+  }
+
+  public void setUnicodeReplacement(boolean newValue) {
+    boolean oldValue = this.unicodeReplacement;
+    this.unicodeReplacement = newValue;
+    firePropertyChange("unicodeReplacement", oldValue, newValue);
   }
 
   public boolean isAllowMultipleMoviesInSameDir() {
@@ -1744,6 +1773,16 @@ public final class MovieSettings extends AbstractSettings {
     firePropertyChange("nfoWriteFileinfo", oldValue, newValue);
   }
 
+  public boolean isNfoWriteArtworkUrls() {
+    return nfoWriteArtworkUrls;
+  }
+
+  public void setNfoWriteArtworkUrls(boolean newValue) {
+    boolean oldValue = this.nfoWriteArtworkUrls;
+    this.nfoWriteArtworkUrls = newValue;
+    firePropertyChange("nfoWriteArtworkUrls", oldValue, newValue);
+  }
+
   public Locale getNfoLanguage() {
     return nfoLanguage;
   }
@@ -1792,6 +1831,16 @@ public final class MovieSettings extends AbstractSettings {
     boolean oldValue = this.fetchAllRatings;
     this.fetchAllRatings = newValue;
     firePropertyChange("fetchAllRatings", oldValue, newValue);
+  }
+
+  public List<RatingProvider.RatingSource> getFetchRatingSources() {
+    return fetchRatingSources;
+  }
+
+  public void setFetchRatingSources(List<RatingProvider.RatingSource> newValues) {
+    fetchRatingSources.clear();
+    fetchRatingSources.addAll(newValues);
+    firePropertyChange("fetchRatingSources", null, fetchRatingSources);
   }
 
   public boolean isDoNotOverwriteExistingData() {
@@ -2046,6 +2095,26 @@ public final class MovieSettings extends AbstractSettings {
     postProcess.clear();
     postProcess.addAll(newValues);
     firePropertyChange(POST_PROCESS, null, postProcess);
+  }
+
+  public void addMovieSetPostProcess(PostProcess newProcess) {
+    movieSetPostProcess.add(newProcess);
+    firePropertyChange(MOVIE_SET_POST_PROCESS, null, movieSetPostProcess);
+  }
+
+  public void removeMovieSetPostProcess(PostProcess process) {
+    movieSetPostProcess.remove(process);
+    firePropertyChange(MOVIE_SET_POST_PROCESS, null, movieSetPostProcess);
+  }
+
+  public List<PostProcess> getMovieSetPostProcess() {
+    return movieSetPostProcess;
+  }
+
+  public void setMovieSetPostProcess(List<PostProcess> newValues) {
+    movieSetPostProcess.clear();
+    movieSetPostProcess.addAll(newValues);
+    firePropertyChange(MOVIE_SET_POST_PROCESS, null, movieSetPostProcess);
   }
 
   public boolean isResetNewFlagOnUds() {

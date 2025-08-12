@@ -35,6 +35,7 @@ import java.sql.Date;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.logging.LogManager;
 
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -43,10 +44,14 @@ import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import org.apache.commons.lang3.SystemUtils;
+import org.h2.mvstore.MVStoreException;
 import org.jdesktop.beansbinding.ELProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tinymediamanager.cli.TinyMediaManagerCLI;
+import org.tinymediamanager.core.ImageCache;
+import org.tinymediamanager.core.MessageManager;
 import org.tinymediamanager.core.Settings;
 import org.tinymediamanager.core.TmmDateFormat;
 import org.tinymediamanager.core.TmmModuleManager;
@@ -71,6 +76,8 @@ import org.tinymediamanager.scraper.util.LanguageUtils;
 import org.tinymediamanager.thirdparty.ExternalTools;
 import org.tinymediamanager.thirdparty.KodiRPC;
 import org.tinymediamanager.thirdparty.upnp.Upnp;
+import org.tinymediamanager.thirdparty.yt.YtDlp;
+import org.tinymediamanager.thirdparty.yt.YtDownloader;
 import org.tinymediamanager.ui.MainWindow;
 import org.tinymediamanager.ui.TmmTaskbar;
 import org.tinymediamanager.ui.TmmUIHelper;
@@ -137,7 +144,7 @@ public final class TinyMediaManager {
           splashScreen = new TmmSplashScreen();
         }
         catch (Exception e) {
-          LOGGER.error("could not initialize splash - {}", e.getMessage());
+          LOGGER.error("Could not initialize splash - '{}'", e.getMessage());
         }
         TmmTaskbar.setImage(new LogoCircle(512).getImage());
 
@@ -242,8 +249,8 @@ public final class TinyMediaManager {
                 }
               });
             }
-            catch (IllegalStateException e) {
-              LOGGER.error("IllegalStateException", e);
+            catch (IllegalStateException | MVStoreException e) {
+              LOGGER.error("MVStoreException", e);
               if (e.getMessage().contains("file is locked")) {
                 JOptionPane.showMessageDialog(null,
                     TmmResourceBundle.getString("tmm.nostart") + "\n" + TmmResourceBundle.getString("tmm.nostart.instancerunning"),
@@ -253,7 +260,7 @@ public final class TinyMediaManager {
               System.exit(1);
             }
             catch (Exception e) {
-              LOGGER.error("Exception while start of tmm", e);
+              LOGGER.error("Exception while starting tmm", e);
               MessageDialog.showExceptionWindow(e);
               shutdownLogger();
               System.exit(1);
@@ -276,13 +283,13 @@ public final class TinyMediaManager {
       try {
         startup();
       }
-      catch (IllegalStateException e) {
-        LOGGER.error("IllegalStateException", e);
+      catch (IllegalStateException | MVStoreException e) {
+        LOGGER.error("MVStoreException", e);
         shutdownLogger();
         System.exit(1);
       }
       catch (Exception e) {
-        LOGGER.error("Exception while start of tmm", e);
+        LOGGER.error("Exception while starting tmm", e);
         shutdownLogger();
         System.exit(1);
       }
@@ -308,7 +315,7 @@ public final class TinyMediaManager {
         shutdownLogger();
       }
       catch (Exception ex) {
-        LOGGER.warn(ex.getMessage());
+        LOGGER.error(ex.getMessage());
       }
       System.exit(0);
     }
@@ -441,13 +448,17 @@ public final class TinyMediaManager {
 
     // some infos from lic
     if (License.getInstance().validUntil() != null) {
-      LOGGER.info("{}", License.getInstance().sig());
-      LOGGER.info("{}", License.getInstance().dat());
+      LOGGER.debug("{}", License.getInstance().sig());
+      LOGGER.debug("{}", License.getInstance().dat());
     }
 
     // various initializations of classes
     MediaGenres.init();
     LanguageUtils.init();
+    ImageCache.init();
+    MessageManager.init();
+    YtDlp.init();
+    YtDownloader.init();
 
     // init http server
     if (Settings.getInstance().isEnableHttpServer()) {
@@ -457,7 +468,7 @@ public final class TinyMediaManager {
         TmmHttpServer.getInstance();
       }
       catch (Exception e) {
-        LOGGER.error("could not start webserver: {}", e.getMessage());
+        LOGGER.error("Could not start web server - '{}'", e.getMessage());
       }
     }
   }
@@ -506,7 +517,7 @@ public final class TinyMediaManager {
       }
     }
     catch (Exception e) {
-      LOGGER.error("Could not start UPNP - '{}'", e.getMessage());
+      LOGGER.error("Could not start UPnP server - '{}'", e.getMessage());
     }
     try {
       if (Settings.getInstance().isUpnpRemotePlay()) {
@@ -517,7 +528,7 @@ public final class TinyMediaManager {
       }
     }
     catch (Exception e) {
-      LOGGER.error("Could not start UPNP - '{}'", e.getMessage());
+      LOGGER.error("Could not start UPnP server - '{}'", e.getMessage());
     }
 
     try {
@@ -527,7 +538,7 @@ public final class TinyMediaManager {
     }
     catch (Exception e) {
       // catch all, to not kill JVM on any other exceptions!
-      LOGGER.error(e.getMessage());
+      LOGGER.error("Could not start KodiRPC - '{}'", e.getMessage());
     }
   }
 
@@ -595,13 +606,20 @@ public final class TinyMediaManager {
    *          the arguments
    */
   public static void main(String[] args) {
+    // Remove existing handlers attached to j.u.l root logger
+    LogManager.getLogManager().reset();
+
+    // Install the SLF4J bridge
+    SLF4JBridgeHandler.install();
+
     Thread.setDefaultUncaughtExceptionHandler(new Log4jBackstop());
 
     try {
-      License.getInstance().init2123();
+      License.getInstance().init520();
     }
     catch (Exception e) {
       LOGGER.error("Could not initialize license module!");
+      LOGGER.debug(e.getMessage());
     }
 
     ReleaseInfo.init();

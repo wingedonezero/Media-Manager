@@ -78,7 +78,7 @@ class ImdbRating {
       }
     }
     catch (Exception e) {
-      LOGGER.warn("could not read the MVstore - '{}'", e.getMessage());
+      LOGGER.debug("could not read the MVstore - '{}'", e.getMessage());
       Utils.deleteFileSafely(Paths.get(Globals.CACHE_FOLDER, IMDB_DB));
       shutdown();
     }
@@ -89,7 +89,14 @@ class ImdbRating {
   private static void initImdbRatings() {
     Path databaseFile = Paths.get(Globals.CACHE_FOLDER, IMDB_DB);
     try {
-      mvStore = new MVStore.Builder().fileName(databaseFile.toString()).compressHigh().autoCommitDisabled().open();
+      try {
+        mvStore = new MVStore.Builder().fileName(databaseFile.toString()).compressHigh().autoCommitDisabled().open();
+      }
+      catch (Exception e) {
+        LOGGER.debug("Could not open IMDB ratings database - '{}'", e.getMessage());
+        Utils.deleteFileSafely(databaseFile);
+        mvStore = new MVStore.Builder().fileName(databaseFile.toString()).compressHigh().autoCommitDisabled().open();
+      }
       ratingMap = mvStore.openMap("ratings");
 
       Url cachedUrl = new OnDiskCachedUrl("https://datasets.imdbws.com/title.ratings.tsv.gz", 7, TimeUnit.DAYS);
@@ -127,7 +134,7 @@ class ImdbRating {
       Thread.currentThread().interrupt();
     }
     catch (Exception e) {
-      LOGGER.warn("could not create IMDB ratings database - '{}'", e.getMessage());
+      LOGGER.warn("Could not create IMDB ratings database - '{}'", e.getMessage());
       Utils.deleteFileSafely(Paths.get(Globals.CACHE_FOLDER, IMDB_DB));
       shutdown();
     }
@@ -136,12 +143,11 @@ class ImdbRating {
   static synchronized void shutdown() {
     try {
       if (mvStore != null && !mvStore.isClosed()) {
-        mvStore.compactMoveChunks();
         mvStore.close();
       }
     }
     catch (Exception e) {
-      LOGGER.warn("could not close MVstore - deleting the cache");
+      LOGGER.debug("could not close MVstore - deleting the cache");
       Utils.deleteFileSafely(Paths.get(Globals.CACHE_FOLDER, IMDB_DB));
     }
     finally {

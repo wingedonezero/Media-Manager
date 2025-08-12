@@ -32,6 +32,8 @@ import org.tinymediamanager.scraper.anidb.AniDbMovieMetadataProvider;
 import org.tinymediamanager.scraper.anidb.AniDbTvShowMetadataProvider;
 import org.tinymediamanager.scraper.fanarttv.FanartTvMovieArtworkProvider;
 import org.tinymediamanager.scraper.fanarttv.FanartTvTvShowArtworkProvider;
+import org.tinymediamanager.scraper.fernsehserien.FernsehserienMovieMetadataProvider;
+import org.tinymediamanager.scraper.fernsehserien.FernsehserienTvShowMetadataProvider;
 import org.tinymediamanager.scraper.ffmpeg.FFmpegMovieArtworkProvider;
 import org.tinymediamanager.scraper.ffmpeg.FFmpegTvShowArtworkProvider;
 import org.tinymediamanager.scraper.hdtrailersnet.HdTrailersNetMovieTrailerProvider;
@@ -58,9 +60,12 @@ import org.tinymediamanager.scraper.mpdbtv.MpdbMovieMetadataProvider;
 import org.tinymediamanager.scraper.ofdb.OfdbMovieMetadataProvider;
 import org.tinymediamanager.scraper.omdb.OmdbMovieMetadataProvider;
 import org.tinymediamanager.scraper.omdb.OmdbTvShowMetadataProvider;
+import org.tinymediamanager.scraper.opensubtitles.OpenSubtitlesMovieSubtitleProvider;
+import org.tinymediamanager.scraper.opensubtitles.OpenSubtitlesTvShowSubtitleProvider;
 import org.tinymediamanager.scraper.opensubtitles_com.OpenSubtitlesComMovieSubtitleProvider;
 import org.tinymediamanager.scraper.opensubtitles_com.OpenSubtitlesComTvShowSubtitleProvider;
 import org.tinymediamanager.scraper.spi.IAddonProvider;
+import org.tinymediamanager.scraper.thesportsdb.TheSportsDbTvShowMetadataProvider;
 import org.tinymediamanager.scraper.thetvdb.TheTvDbMovieArtworkProvider;
 import org.tinymediamanager.scraper.thetvdb.TheTvDbMovieMetadataProvider;
 import org.tinymediamanager.scraper.thetvdb.TheTvDbTvShowArtworkProvider;
@@ -108,7 +113,7 @@ public class MediaProviders {
         addons.addAll(addonIterator.next().getAddonClasses());
       }
       catch (Exception | Error e) {
-        LOGGER.error("Could not load addons - '{}'", e.getMessage());
+        LOGGER.error("Could not load addon - '{}'", e.getMessage());
       }
     }
 
@@ -124,6 +129,7 @@ public class MediaProviders {
     loadProvider(AniDbMovieMetadataProvider.class);
     loadProvider(OfdbMovieMetadataProvider.class);
     loadProvider(MpdbMovieMetadataProvider.class);
+    loadProvider(FernsehserienMovieMetadataProvider.class);
     loadProvider(KodiMetadataProvider.class);
 
     // addons
@@ -167,8 +173,8 @@ public class MediaProviders {
     /////////////////////////////////////////////
     // MOVIE SUBTITLES
     /////////////////////////////////////////////
-    // loadProvider(OpenSubtitlesMovieSubtitleProvider.class); // obsolete as of 2024-01-01
     loadProvider(OpenSubtitlesComMovieSubtitleProvider.class);
+    loadProvider(OpenSubtitlesMovieSubtitleProvider.class); // obsolete as of 2024-01-01, but still working
 
     // addons
     loadAddonsForInterface(addons, IMovieSubtitleProvider.class);
@@ -183,6 +189,8 @@ public class MediaProviders {
     loadProvider(AniDbTvShowMetadataProvider.class);
     loadProvider(TvMazeTvShowMetadataProvider.class);
     loadProvider(OmdbTvShowMetadataProvider.class);
+    loadProvider(FernsehserienTvShowMetadataProvider.class);
+    loadProvider(TheSportsDbTvShowMetadataProvider.class);
     // loadProvider(TvdbV3TvShowMetadataProvider.class);
 
     // addons
@@ -233,8 +241,8 @@ public class MediaProviders {
     /////////////////////////////////////////////
     // TV SHOW SUBTITLES
     /////////////////////////////////////////////
-    // loadProvider(OpenSubtitlesTvShowSubtitleProvider.class); // obsolete as of 2024-01-01
     loadProvider(OpenSubtitlesComTvShowSubtitleProvider.class);
+    loadProvider(OpenSubtitlesTvShowSubtitleProvider.class); // obsolete as of 2024-01-01, but still working
 
     // addons
     loadAddonsForInterface(addons, ITvShowSubtitleProvider.class);
@@ -264,7 +272,7 @@ public class MediaProviders {
       }
     }
     catch (Exception e) {
-      LOGGER.error("could not load media provider {} - {}", clazz.getName(), e.getMessage());
+      LOGGER.error("Could not load media provider {} - {}", clazz.getName(), e.getMessage());
     }
   }
 

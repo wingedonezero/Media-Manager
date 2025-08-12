@@ -119,6 +119,7 @@ public class UniversalTvShowMetadataProvider implements ITvShowMetadataProvider 
     config.addLabel("tvShowLabel", "tmm.tvshow");
     config.addSelect("title", "metatag.title", compatibleScraperIds, UNDEFINED);
     config.addSelect("originalTitle", "metatag.originaltitle", compatibleScraperIds, UNDEFINED);
+    config.addSelect("englishTitle", "metatag.title.english", Arrays.asList(UNDEFINED, MediaMetadata.TMDB, MediaMetadata.IMDB), UNDEFINED);
     config.addSelect("year", "metatag.year", compatibleScraperIds, UNDEFINED);
     config.addSelect("releaseDate", "metatag.releasedate", compatibleScraperIds, UNDEFINED);
     config.addSelect("plot", "metatag.plot", compatibleScraperIds, UNDEFINED);
@@ -200,7 +201,7 @@ public class UniversalTvShowMetadataProvider implements ITvShowMetadataProvider 
       }
     }
     catch (ScrapeException e) {
-      LOGGER.warn("Could not call search method of {} - {}", mp.getProviderInfo().getId(), e.getMessage());
+      LOGGER.debug("Could not call search method of {} - {}", mp.getProviderInfo().getId(), e.getMessage());
       throw e;
     }
 
@@ -223,7 +224,9 @@ public class UniversalTvShowMetadataProvider implements ITvShowMetadataProvider 
       }
 
       for (String value : values) {
-        if (((episode && entry.getKey().startsWith("episode")) || (!episode && !entry.getKey().startsWith("episode"))) && !UNDEFINED.equals(value)) {
+
+        if (((episode && entry.getKey().startsWith("episode")) || (!episode && !entry.getKey().startsWith("episode"))
+            || FALLBACK_SCRAPERS.equals(entry.getKey())) && !UNDEFINED.equals(value)) {
           ITvShowMetadataProvider mp = COMPATIBLE_SCRAPERS.get(value);
           if (mp != null && mp.isActive()) {
             metadataProviders.add(mp);
@@ -257,7 +260,7 @@ public class UniversalTvShowMetadataProvider implements ITvShowMetadataProvider 
         }
       }
       catch (Exception e) {
-        LOGGER.warn("Could not get a result from scraper: {}", e.getMessage());
+        LOGGER.debug("Could not get a result from scraper: {}", e.getMessage());
       }
     }
     return metadataMap;
@@ -346,7 +349,7 @@ public class UniversalTvShowMetadataProvider implements ITvShowMetadataProvider 
             }
           }
           catch (Exception e) {
-            LOGGER.warn("Could not get a result from scraper: {}", e.getMessage());
+            LOGGER.debug("Could not get a result from scraper: {}", e.getMessage());
           }
         }
         // we got a response - parse out TVDB id, TMDB id and IMDB id if needed
@@ -485,7 +488,7 @@ public class UniversalTvShowMetadataProvider implements ITvShowMetadataProvider 
 
         }
         catch (Exception e) {
-          LOGGER.warn("Problem assigning {} - {}", scraper, e.getMessage());
+          LOGGER.debug("Problem assigning {} - {}", scraper, e.getMessage());
         }
       }
     }
@@ -605,7 +608,7 @@ public class UniversalTvShowMetadataProvider implements ITvShowMetadataProvider 
 
         }
         catch (Exception e) {
-          LOGGER.warn("Problem assigning {} - {}", scraper, e.getMessage());
+          LOGGER.debug("Problem assigning {} - {}", scraper, e.getMessage());
         }
       }
     }
@@ -682,7 +685,7 @@ public class UniversalTvShowMetadataProvider implements ITvShowMetadataProvider 
             }
           }
           catch (Exception e) {
-            LOGGER.warn("Could not get a result from scraper: {}", e.getMessage());
+            LOGGER.debug("Could not get a result from scraper: {}", e.getMessage());
           }
         }
         // we got a response - parse out TVDB id, TMDB id and IMDB id if needed

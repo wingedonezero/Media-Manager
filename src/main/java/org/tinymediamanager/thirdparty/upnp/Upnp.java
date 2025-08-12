@@ -129,17 +129,19 @@ public class Upnp {
     if (localDevice == null) {
       DeviceIdentity identity = new DeviceIdentity(UDN.uniqueSystemIdentifier("tinyMediaManager"), 600);
       DeviceType type = new UDADeviceType("MediaServer", 1);
-      String hostname = NetworkUtil.getMachineHostname();
-      if (hostname == null) {
-        hostname = ipAddress;
-      }
+
+      // nah, stick with IP address
+      // String hostname = NetworkUtil.getMachineHostname();
+      // if (hostname == null) {
+      // hostname = ipAddress;
+      // }
 
       // @formatter:off
       DeviceDetails details = new DeviceDetails("tinyMediaManager",
         new ManufacturerDetails("tinyMediaManager", "https://www.tinymediamanager.org/"),
         new ModelDetails("tinyMediaManager", "tinyMediaManager - Media Server", ReleaseInfo.getVersion()), 
         // @Namespace default /dev/<udn>/desc
-        new URI("http://" + hostname + ":" + UPNP_PORT + "/dev/" + identity.getUdn().getIdentifierString() + "/desc"),
+        new URI("http://" + ipAddress + ":" + UPNP_PORT + "/dev/" + identity.getUdn().getIdentifierString() + "/desc"),
         new DLNADoc[] {
             new DLNADoc("DMS", DLNADoc.Version.V1_5), 
             new DLNADoc("M-DMS", DLNADoc.Version.V1_5) 
@@ -160,7 +162,7 @@ public class Upnp {
         }
       }
 
-      LOGGER.info("Hello, i'm " + identity.getUdn().getIdentifierString());
+      LOGGER.info("UPnP: Hello, i'm " + identity.getUdn().getIdentifierString());
 
       // Content Directory Service
       LocalService<ContentDirectoryService> cds = new AnnotationLocalServiceBinder().read(ContentDirectoryService.class);
@@ -190,7 +192,7 @@ public class Upnp {
           icon = new Icon("image/png", 128, 128, 24, new File("AppBundler/tmm.png"));
         }
         catch (Exception e2) {
-          LOGGER.warn("Did not find device icon...");
+          LOGGER.debug("Did not find device icon...");
         }
       }
 
@@ -236,7 +238,7 @@ public class Upnp {
   public void setPlayer(Device device) {
     this.playerService = device.findService(new UDAServiceId("AVTransport"));
     if (this.playerService == null) {
-      LOGGER.warn("Could not find AVTransportService on device " + device.getDisplayString());
+      LOGGER.warn("Could not find AVTransportService on UPnP device {}", device.getDisplayString());
     }
   }
 
@@ -250,11 +252,11 @@ public class Upnp {
    */
   public void playFile(MediaEntity me, MediaFile mf) {
     if (this.playerService == null) {
-      LOGGER.warn("No player set - did you call setPlayer(Device) ?");
+      LOGGER.debug("No UPnP player set - did you call setPlayer(Device) ?");
       return;
     }
     if (mf == null) {
-      LOGGER.warn("parameters empty!");
+      LOGGER.debug("parameters empty!");
       return;
     }
 
@@ -265,11 +267,11 @@ public class Upnp {
       try {
         DIDLContent didl = new DIDLContent();
         DIDLParser dip = new DIDLParser();
-        if (me instanceof Movie) {
-          didl.addItem(Metadata.getUpnpMovie((Movie) me, true));
+        if (me instanceof Movie movie) {
+          didl.addItem(Metadata.getUpnpMovie(movie, true));
         }
-        else if (me instanceof TvShowEpisode) {
-          didl.addItem(Metadata.getUpnpTvShowEpisode(((TvShowEpisode) me).getTvShow(), (TvShowEpisode) me, true));
+        else if (me instanceof TvShowEpisode episode) {
+          didl.addItem(Metadata.getUpnpTvShowEpisode(episode.getTvShow(), episode, true));
         }
 
         // get url from didl, no need to regenerate this
@@ -278,7 +280,7 @@ public class Upnp {
         meta = dip.generate(didl);
       }
       catch (Exception e) {
-        LOGGER.warn("Could not generate metadata / url");
+        LOGGER.debug("Could not generate metadata / url");
         return;
       }
     }
@@ -286,7 +288,7 @@ public class Upnp {
     ActionCallback setAVTransportURIAction = new SetAVTransportURI(this.playerService, url, meta) {
       @Override
       public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {
-        LOGGER.warn("Setting URL for player failed! " + defaultMsg);
+        LOGGER.debug("Setting URL for player failed! " + defaultMsg);
       }
     };
     this.upnpService.getControlPoint().execute(setAVTransportURIAction);
@@ -294,7 +296,7 @@ public class Upnp {
     ActionCallback playAction = new Play(this.playerService) {
       @Override
       public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {
-        LOGGER.warn("Playing failed! " + defaultMsg);
+        LOGGER.warn("Playing via UPnP failed - '{}'", defaultMsg);
       }
     };
     this.upnpService.getControlPoint().execute(playAction);
@@ -311,7 +313,7 @@ public class Upnp {
     ActionCallback stopAction = new Stop(this.playerService) {
       @Override
       public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {
-        LOGGER.warn("Stopping failed! " + defaultMsg);
+        LOGGER.warn("Stopping UPnP playback failed - '{}'", defaultMsg);
       }
     };
     this.upnpService.getControlPoint().execute(stopAction);
@@ -325,7 +327,7 @@ public class Upnp {
           .generate(localDevice, new RemoteClientInfo(), upnpService.getConfiguration().getNamespace());
     }
     catch (DescriptorBindingException e) {
-      LOGGER.warn("Could not generate UPNP device descriptor", e);
+      LOGGER.debug("Could not generate UPNP device descriptor", e);
     }
     return xml;
   }
@@ -341,7 +343,7 @@ public class Upnp {
       }
     }
     catch (IOException e) {
-      LOGGER.warn("Could not start WebServer!", e);
+      LOGGER.warn("Could not start UPnP web server - '{}'", e.getMessage());
     }
   }
 
@@ -358,7 +360,7 @@ public class Upnp {
     }
     catch (RegistrationException | LocalServiceBindingException | ValidationException | IOException | IllegalArgumentException
         | URISyntaxException e) {
-      LOGGER.warn("could not start UPNP MediaServer!", e);
+      LOGGER.warn("Could not start UPnP MediaServer - '{}'", e.getMessage());
     }
   }
 
@@ -377,7 +379,7 @@ public class Upnp {
         this.upnpService.getRouter().shutdown();
       }
       catch (RouterException e) {
-        LOGGER.warn("Could not shutdown the UPNP router.");
+        LOGGER.debug("Could not shutdown the UPNP router.");
       }
       this.upnpService.shutdown();
     }
