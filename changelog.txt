@@ -15,10 +15,12 @@ Version 5.2.0
 + [UI] created an "Activity log" to track all tasks and their results/messages #2914
 + [UI] offering multiple profile links for actors and crew members based on their IDs
 + [UI] changed hotkey modifier to comply with macOS standards
++ [UI] added the search result score to the movie/TV show chooser dialogs #3023
 + [Renamer] enhanced renamer preview
 + [Renamer] added an optional Unicode replacement for forbidden filesystem characters
 + [Movie sets] added the post processing framework to movie sets too #2901
 + [Subtitles] re-added OpenSubtitles.org support, since they haven't shut down their API yet and some users still rely on it
++ [Subtitles] added Yifysubtitles.com support, a new subtitle provider
 ---
 x [NFO] added a NFO option to suppress writing of artwork URLs #2982 #2518
   ATTENTION: Jellyfin users should revisit their NFO settings
@@ -34,6 +36,7 @@ x [UI] increased quality level of the scaling algorithm for better image quality
 x [UI] re-layout all visible dialogs when changing the font size #2970
 x [UI] fixed filtering on season artwork #2957
 x [UI] changed filter behavior in the image chooser - you may now filter while images are loading #2889 #3019
+x [UI] enhanced loading actor images in the UI
 x [Images] fixed choosing of images of unspecified sizes #3010
 x [MediaInfo] corrected the format detection for some cropped 540p resolutions
 x [MediaInfo] fixed parsing of .ISO files #2998
