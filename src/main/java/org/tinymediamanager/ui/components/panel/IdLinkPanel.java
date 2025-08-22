@@ -138,6 +138,45 @@ public class IdLinkPanel extends JPanel {
         url = "https://www.themoviedb.org/collection/" + id;
         break;
 
+      // =====
+      // ANIME
+      // =====
+      case MediaMetadata.MY_ANIME_LIST:
+        url = "https://myanimelist.net/anime/" + id;
+        break;
+
+      case "animeplanet":
+        url = "https://www.anime-planet.com/anime/" + id;
+        break;
+
+      case "anilist":
+        url = "https://anilist.co/anime/" + id;
+        break;
+
+      case "livechart":
+        url = "https://www.livechart.me/anime/" + id;
+        break;
+
+      case "animecountdown":
+        url = "https://animecountdown.com/" + id;
+        break;
+
+      case "anisearch":
+        url = "https://www.anisearch.com/anime/" + id;
+        break;
+
+      case "animenewsnetwork":
+        url = "https://www.animenewsnetwork.com/encyclopedia/anime.php?id=" + id;
+        break;
+
+      case "kitsu":
+        url = "https://kitsu.app/anime/" + id;
+        break;
+
+      case "notify":
+        url = "https://notify.moe/anime/" + id;
+        break;
+
       default:
         break;
     }
@@ -154,6 +193,10 @@ public class IdLinkPanel extends JPanel {
 
         case MediaMetadata.TVDB:
           url = "https://thetvdb.com/dereferrer/movie/" + id;
+          break;
+
+        case "simkl":
+          url = "https://simkl.com/movies/" + id;
           break;
 
         default:
@@ -182,10 +225,9 @@ public class IdLinkPanel extends JPanel {
           url = "https://www.thesportsdb.com/league/" + id;
           break;
 
-        // do not use zap2it for now, because most IDs are broken
-        // case "zap2it":
-        // url = "https://tvschedule.zap2it.com/overview.html?programSeriesId=" + id;
-        // break;
+        case "simkl":
+          url = "https://simkl.com/tv/" + id; // anime gets redirected to /anime automatically
+          break;
 
         default:
           break;
