@@ -185,7 +185,7 @@ public class MediaIdUtil {
       for (String id : KNOWN_ANIME_IDS) {
         // always use String, map will contain correct type
         String val = getIdAsString(ids, id);
-        if (val.isBlank()) {
+        if (!val.isBlank()) {
           Map<String, Object> map = dataset.getIdsFor(id, val);
           if (!map.isEmpty()) {
             ids.putAll(map);

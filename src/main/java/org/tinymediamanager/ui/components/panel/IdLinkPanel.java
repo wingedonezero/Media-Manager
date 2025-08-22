@@ -106,10 +106,6 @@ public class IdLinkPanel extends JPanel {
         url = "https://www.imdb.com/title/" + id;
         break;
 
-      case MediaMetadata.ANIDB:
-        url = "https://anidb.net/anime/" + id;
-        break;
-
       case "moviemeter":
         url = "https://www.moviemeter.nl/film/" + id;
         break;
@@ -141,6 +137,10 @@ public class IdLinkPanel extends JPanel {
       // =====
       // ANIME
       // =====
+      case MediaMetadata.ANIDB:
+        url = "https://anidb.net/anime/" + id;
+        break;
+
       case MediaMetadata.MY_ANIME_LIST:
         url = "https://myanimelist.net/anime/" + id;
         break;
