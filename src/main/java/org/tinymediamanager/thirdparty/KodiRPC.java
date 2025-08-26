@@ -158,7 +158,7 @@ public class KodiRPC {
     send(call);
     if (call.getResults() != null && !call.getResults().isEmpty()) {
       this.videodatasources.clear();
-      try {
+       try {
         for (ListModel.SourceItem res : call.getResults()) {
           LOGGER.debug("Kodi datasource: {}", res.file);
           if (res.file.startsWith("multipath")) {
@@ -169,6 +169,7 @@ public class KodiRPC {
             for (String ds : source) {
               String s = URLDecoder.decode(ds, StandardCharsets.UTF_8);
               this.videodatasources.put(s, res.label);
+              LOGGER.debug("     {}", s);
             }
           }
           else {
@@ -207,39 +208,40 @@ public class KodiRPC {
           continue;
         }
 
-        // stacking only supported on movies
-        if (movie.file.startsWith("stack")) {
-          String[] files = movie.file.split(" , ");
-          for (String s : files) {
-            s = s.replaceFirst("^stack://", "");
-            String ds = detectDatasource(s);
-            String rel = s.replace(ds, ""); // remove ds, to have a relative folder
+        try {
+          // stacking only supported on movies
+          if (movie.file.startsWith("stack")) {
+            String[] files = movie.file.split(" , ");
+            for (String s : files) {
+              s = s.replaceFirst("^stack://", "");
+              String ds = detectDatasource(s);
+              String rel = s.replace(ds, ""); // remove ds, to have a relative folder
+              rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
+              if (!kodiDsAndFolder.containsKey(rel)) {
+                kodiDsAndFolder.put(rel, movie.movieid);
+              }
+              else {
+                // no putIfAbsent since i wanna have a log!
+                LOGGER.warn("Kodi movie '{}' already attached to another datasource - skipping", rel);
+              }
+            }
+          }
+          else {
+            // Kodi return full path of video file
+            String ds = detectDatasource(movie.file); // detect datasource of dir
+            String rel = movie.file.replace(ds, ""); // remove ds, to have a relative folder
             rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-            ds = ds.replaceAll(SEPARATOR_REGEX + "$", ""); // replace ending separator
-            ds = ds.replaceAll(".*" + SEPARATOR_REGEX, ""); // replace everything till last separator
             if (!kodiDsAndFolder.containsKey(rel)) {
               kodiDsAndFolder.put(rel, movie.movieid);
             }
             else {
               // no putIfAbsent since i wanna have a log!
-              LOGGER.info("Kodi movie '{}' already attached to another datasource - skipping", rel);
+              LOGGER.warn("Kodi movie '{}' already attached to another datasource - skipping", rel);
             }
           }
         }
-        else {
-          // Kodi return full path of video file
-          String ds = detectDatasource(movie.file); // detect datasource of show dir
-          String rel = movie.file.replace(ds, ""); // remove ds, to have a relative folder
-          rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-          ds = ds.replaceAll(SEPARATOR_REGEX + "$", ""); // replace ending separator
-          ds = ds.replaceAll(".*" + SEPARATOR_REGEX, ""); // replace everything till last separator
-          if (!kodiDsAndFolder.containsKey(rel)) {
-            kodiDsAndFolder.put(rel, movie.movieid);
-          }
-          else {
-            // no putIfAbsent since i wanna have a log!
-            LOGGER.info("Kodi movie '{}' already attached to another datasource - skipping", rel);
-          }
+        catch (Exception e) {
+          LOGGER.warn("Kodi movie '{}' error on mapping - skipping", movie.file);
         }
       }
       LOGGER.debug("KODI {} movies", call.getResults().size()); // stacked movies are multiple times in here
@@ -261,7 +263,7 @@ public class KodiRPC {
           LOGGER.trace("Could not map: {}", key);
         }
       }
-      LOGGER.debug("mapped {} movies", moviemappings.size());
+      LOGGER.info("mapped {} movies", moviemappings.size());
     }
   }
 
@@ -281,6 +283,7 @@ public class KodiRPC {
     return fileMap;
   }
 
+  @Deprecated
   private String parseDatasourceName(Path ds) {
     // get the name of the datasource folder
     // unfortunately, for UNC paths like \\server\share i cannot get the share name from Path
@@ -308,51 +311,57 @@ public class KodiRPC {
       LOGGER.debug("Datasource was empty? Ignoring {}", entity);
       return fileMap;
     }
+    ds = ds.toAbsolutePath(); // we do this for MFs, so to compare them in rel() we need to do this here as well
 
-    MediaFile main = entity.getMainFile();
-    if (isDisc) {
-      // Kodi RPC sends what we call the main disc identifier, but we have disc folder only
-      for (MediaFile mf : entity.getMediaFiles(MediaFileType.VIDEO)) {
+    try {
+      MediaFile main = entity.getMainFile();
+      if (isDisc) {
+        // Kodi RPC sends what we call the main disc identifier, but we have disc folder only
+        for (MediaFile mf : entity.getMediaFiles(MediaFileType.VIDEO)) {
 
-        Path file = null;
-        // append MainDiscIdentifier to our folder MF
-        if (mf.getFilename().equalsIgnoreCase(MediaFileHelper.VIDEO_TS)) {
-          file = mf.getFileAsPath().resolve("VIDEO_TS.IFO");
-        }
-        else if (mf.getFilename().equalsIgnoreCase(MediaFileHelper.HVDVD_TS)) {
-          file = mf.getFileAsPath().resolve("HV000I01.IFO");
-        }
-        else if (mf.getFilename().equalsIgnoreCase(MediaFileHelper.BDMV)) {
-          file = mf.getFileAsPath().resolve("index.bdmv");
-        }
-        else if (mf.isMainDiscIdentifierFile()) {
-          // just add MainDiscIdentifier
-          file = mf.getFileAsPath();
-        }
-
-        if (file != null) {
-          String rel = Utils.relPath(ds, file); // file relative from datasource
-          rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-          if (!fileMap.containsKey(rel)) {
-            fileMap.put(rel, entity.getDbId());
+          Path file = null;
+          // append MainDiscIdentifier to our folder MF
+          if (mf.getFilename().equalsIgnoreCase(MediaFileHelper.VIDEO_TS)) {
+            file = mf.getFileAsPath().resolve("VIDEO_TS.IFO");
           }
-          else {
-            // no putIfAbsent since i wanna have a log!
-            LOGGER.warn("File '{}' already attached to another datasource - skipping", rel);
+          else if (mf.getFilename().equalsIgnoreCase(MediaFileHelper.HVDVD_TS)) {
+            file = mf.getFileAsPath().resolve("HV000I01.IFO");
           }
+          else if (mf.getFilename().equalsIgnoreCase(MediaFileHelper.BDMV)) {
+            file = mf.getFileAsPath().resolve("index.bdmv");
+          }
+          else if (mf.isMainDiscIdentifierFile()) {
+            // just add MainDiscIdentifier
+            file = mf.getFileAsPath();
+          }
+
+          if (file != null) {
+            String rel = Utils.relPath(ds, file); // file relative from datasource
+            rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
+            if (!fileMap.containsKey(rel)) {
+              fileMap.put(rel, entity.getDbId());
+            }
+            else {
+              // no putIfAbsent since i wanna have a log!
+              LOGGER.warn("File '{}' already attached to another datasource - skipping", rel);
+            }
+          }
+        }
+      }
+      else {
+        String rel = Utils.relPath(ds, main.getFileAsPath()); // file relative from datasource
+        rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
+        if (!fileMap.containsKey(rel)) {
+          fileMap.put(rel, entity.getDbId());
+        }
+        else {
+          // no putIfAbsent since i wanna have a log!
+          LOGGER.warn("File '{}' already attached to another datasource - skipping", rel);
         }
       }
     }
-    else {
-      String rel = Utils.relPath(ds, main.getFileAsPath()); // file relative from datasource
-      rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-      if (!fileMap.containsKey(rel)) {
-        fileMap.put(rel, entity.getDbId());
-      }
-      else {
-        // no putIfAbsent since i wanna have a log!
-        LOGGER.warn("File '{}' already attached to another datasource - skipping", rel);
-      }
+    catch (Exception e) {
+      LOGGER.warn("File '{}' error on mapping - skipping", e.getMessage());
     }
     return fileMap;
   }
@@ -374,12 +383,10 @@ public class KodiRPC {
           continue;
         }
         // Kodi return full path of show dir
-        String ds = detectDatasource(show.file); // detect datasource of show dir
+        String ds = detectDatasource(show.file); // detect datasource of dir
         String rel = show.file.replace(ds, ""); // remove ds, to have a relative folder
         rel = rel.replaceAll(SEPARATOR_REGEX + "$", ""); // remove ending separator
         rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-        ds = ds.replaceAll(SEPARATOR_REGEX + "$", ""); // replace ending separator
-        ds = ds.replaceAll(".*" + SEPARATOR_REGEX, ""); // replace everything till last separator
         if (!kodiDsAndFolder.containsKey(rel)) {
           kodiDsAndFolder.put(rel, show.tvshowid);
         }
@@ -411,7 +418,7 @@ public class KodiRPC {
           LOGGER.error("Error mapping Kodi TV show '{}' on '{}'", e.getMessage(), tmmShow);
         }
       }
-      LOGGER.debug("mapped {} shows", tvshowmappings.size());
+      LOGGER.info("mapped {} shows", tvshowmappings.size());
     }
   }
 
@@ -576,8 +583,6 @@ public class KodiRPC {
         String ds = detectDatasource(ep.file); // detect datasource of show dir
         String rel = ep.file.replace(ds, ""); // remove ds, to have a relative folde
         rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-        ds = ds.replaceAll(SEPARATOR_REGEX + "$", ""); // replace ending separator
-        ds = ds.replaceAll(".*" + SEPARATOR_REGEX, ""); // replace everything till last separator
         if (!kodiDsAndFolder.containsKey(rel)) {
           kodiDsAndFolder.put(rel, ep.episodeid);
         }
@@ -789,7 +794,7 @@ public class KodiRPC {
         }
       }
       catch (Exception e) {
-        LOGGER.error("Kodi RPC: Error connecting to Kodi - '{}'", e.getMessage());
+        LOGGER.error("Kodi RPC: Error connecting to Kodi - '{}'", e);
       }
     }).start();
   }
