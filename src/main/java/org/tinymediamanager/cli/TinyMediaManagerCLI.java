@@ -91,14 +91,28 @@ public class TinyMediaManagerCLI implements Runnable {
       }
     }
 
-    if (cmd.isVersionHelpRequested()) {
+    if (parsed.isVersionHelpRequested()) {
       cmd.printVersionHelp(System.out);
       return false;
     }
+    if (parsed.hasSubcommand()) {
+      ParseResult sub = parsed.subcommand();
+      if (sub.isVersionHelpRequested()) {
+        cmd.printVersionHelp(System.out);
+        return false;
+      }
+    }
 
-    if (cmd.isUsageHelpRequested()) {
+    if (parsed.isUsageHelpRequested()) {
       CommandLine.printHelpIfRequested(parsed);
       return false;
+    }
+    if (parsed.hasSubcommand()) {
+      ParseResult sub = parsed.subcommand();
+      if (sub.isUsageHelpRequested()) {
+        CommandLine.printHelpIfRequested(parsed);
+        return false;
+      }
     }
 
     return true;
