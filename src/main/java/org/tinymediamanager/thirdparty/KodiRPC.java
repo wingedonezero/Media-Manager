@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -158,7 +159,7 @@ public class KodiRPC {
     send(call);
     if (call.getResults() != null && !call.getResults().isEmpty()) {
       this.videodatasources.clear();
-       try {
+      try {
         for (ListModel.SourceItem res : call.getResults()) {
           LOGGER.debug("Kodi datasource: {}", res.file);
           if (res.file.startsWith("multipath")) {
@@ -183,8 +184,14 @@ public class KodiRPC {
     }
   }
 
+  // we need to sort the datasources by length (longest first) to find the best match!
+  // but keep the order of the LinkedHashMap
   private String detectDatasource(String file) {
-    for (String ds : this.videodatasources.keySet()) {
+    ArrayList<String> list = new ArrayList<>(this.videodatasources.keySet());
+    Collections.sort(list);
+    Collections.reverse(list);
+
+    for (String ds : list) {
       if (file.startsWith(ds)) {
         return ds;
       }
