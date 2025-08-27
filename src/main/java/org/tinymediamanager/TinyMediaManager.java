@@ -362,6 +362,11 @@ public final class TinyMediaManager {
     if (Globals.isDocker()) {
       lines.add("tmm.docker       : true");
     }
+    lines.add("tmm.home         : " + Path.of("").toAbsolutePath().toString());
+    lines.add("tmm.datafolder   : " + Globals.DATA_FOLDER);
+    lines.add("tmm.cachefolder  : " + Globals.CACHE_FOLDER);
+    lines.add("tmm.backupfolder : " + Globals.BACKUP_FOLDER);
+    lines.add("tmm.logfolder    : " + Globals.LOG_FOLDER);
     lines.add("os.name          : " + System.getProperty("os.name"));
     lines.add("os.version       : " + System.getProperty("os.version"));
     lines.add("os.arch          : " + System.getProperty("os.arch"));
@@ -387,11 +392,6 @@ public final class TinyMediaManager {
     // set GUI default language
     lines.add("System language  : " + System.getProperty("user.language") + "_" + System.getProperty("user.country"));
     lines.add("GUI language     : " + Locale.getDefault().toLanguageTag());
-    lines.add("tmm.home         : " + Path.of("").toAbsolutePath().toString());
-    lines.add("tmm.datafolder   : " + Globals.DATA_FOLDER);
-    lines.add("tmm.cachefolder  : " + Globals.CACHE_FOLDER);
-    lines.add("tmm.backupfolder : " + Globals.BACKUP_FOLDER);
-    lines.add("tmm.logfolder    : " + Globals.LOG_FOLDER);
     lines.add("=====================================================");
 
     return lines.toArray(String[]::new);
