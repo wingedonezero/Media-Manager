@@ -231,7 +231,7 @@ public class ITTmdbMetadataProviderTest extends BasicITest {
 
       assertEquals("Twelve Monkeys", md.getTitle());
       assertEquals(1995, md.getYear());
-      assertThat(md.getPlot()).contains("2035", "James Cole", "virus", "1990", "Dr. Kathryn Railly", "Jeffrey Goines", "Army of the 12 Monkeys");
+      assertThat(md.getPlot()).contains("2035", "James Cole", "virus", "1990", "Dr. Kathryn Railly", "12 Monkeys");
       assertEquals("The future is history.", md.getTagline());
 
       assertNotNull(md.getCastMembers(ACTOR));

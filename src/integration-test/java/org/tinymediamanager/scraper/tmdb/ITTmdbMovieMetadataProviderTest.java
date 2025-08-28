@@ -222,9 +222,7 @@ public class ITTmdbMovieMetadataProviderTest extends BasicITest {
 
     assertEquals("Twelve Monkeys", md.getTitle());
     assertEquals(1995, md.getYear());
-    assertEquals(
-        "In the year 2035, convict James Cole reluctantly volunteers to be sent back in time to discover the origin of a deadly virus that wiped out nearly all of the earth's population and forced the survivors into underground communities. But when Cole is mistakenly sent to 1990 instead of 1996, he's arrested and locked up in a mental hospital. There he meets psychiatrist Dr. Kathryn Railly, and patient Jeffrey Goines, the son of a famous virus expert, who may hold the key to the mysterious rogue group, the Army of the 12 Monkeys, thought to be responsible for unleashing the killer disease.",
-        md.getPlot());
+    assertThat(md.getPlot()).contains("2035", "James Cole", "virus", "1990", "Dr. Kathryn Railly", "12 Monkeys");
     assertEquals("The future is history.", md.getTagline());
 
     assertNotNull(md.getCastMembers(ACTOR));

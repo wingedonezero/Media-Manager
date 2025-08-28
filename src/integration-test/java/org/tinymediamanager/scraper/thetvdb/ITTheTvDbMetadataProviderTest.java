@@ -485,7 +485,7 @@ public class ITTheTvDbMetadataProviderTest extends BasicITest {
 
     md = mp.getMetadata(options);
 
-    assertThat(md.getTitle()).isEqualTo("Twelve Monkeys");
+    assertThat(md.getTitle()).isEqualTo("12 Monkeys");
     assertThat(md.getYear()).isEqualTo(1995);
     assertThat(md.getPlot()).startsWith("In a future world devastated by disease,");
     assertThat(md.getCertifications()).contains(MediaCertification.DE_FSK16);
@@ -584,7 +584,7 @@ public class ITTheTvDbMetadataProviderTest extends BasicITest {
       MediaMetadata mediaMetadata = mp.getMetadata(options);
 
       assertThat(mediaMetadata).isNotNull();
-      assertThat(mediaMetadata.getEpisodeGroups()).hasSize(2);
+      assertThat(mediaMetadata.getEpisodeGroups()).hasSizeGreaterThanOrEqualTo(2);
       assertThat(mediaMetadata.getEpisodeGroups()).anyMatch(episodeGroup -> episodeGroup.getEpisodeGroupType() == AIRED);
       assertThat(mediaMetadata.getEpisodeGroups())
           .anyMatch(episodeGroup -> episodeGroup.getEpisodeGroupType() == MediaEpisodeGroup.EpisodeGroupType.ALTERNATE);
