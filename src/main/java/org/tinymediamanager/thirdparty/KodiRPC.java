@@ -42,6 +42,7 @@ import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.entities.Movie;
+import org.tinymediamanager.core.tvshow.TvShowList;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
@@ -277,7 +278,7 @@ public class KodiRPC {
   private Map<String, UUID> prepareMovieFileMap(List<Movie> movies) {
     Map<String, UUID> fileMap = new HashMap<>();
     for (Movie movie : movies) {
-      fileMap.putAll(parseEntity(movie, movie.isDisc()));
+      fileMap.putAll(parseEntity(movie, movie.isDisc(), false));
     }
     return fileMap;
   }
@@ -285,7 +286,7 @@ public class KodiRPC {
   private Map<String, UUID> prepareEpisodeFileMap(TvShow show) {
     Map<String, UUID> fileMap = new HashMap<>();
     for (TvShowEpisode ep : show.getEpisodes()) {
-      fileMap.putAll(parseEntity(ep, ep.isDisc()));
+      fileMap.putAll(parseEntity(ep, ep.isDisc(), ep.isMultiEpisode()));
     }
     return fileMap;
   }
@@ -311,7 +312,7 @@ public class KodiRPC {
     return dsName;
   }
 
-  private Map<String, UUID> parseEntity(MediaEntity entity, boolean isDisc) {
+  private Map<String, UUID> parseEntity(MediaEntity entity, boolean isDisc, boolean isMultiEp) {
     Map<String, UUID> fileMap = new HashMap<>();
     Path ds = Paths.get(entity.getDataSource());
     if (ds == null || ds.toString().isBlank()) {
@@ -319,56 +320,76 @@ public class KodiRPC {
       return fileMap;
     }
     ds = ds.toAbsolutePath(); // we do this for MFs, so to compare them in rel() we need to do this here as well
+    MediaFile main = entity.getMainFile();
 
-    try {
-      MediaFile main = entity.getMainFile();
-      if (isDisc) {
-        // Kodi RPC sends what we call the main disc identifier, but we have disc folder only
-        for (MediaFile mf : entity.getMediaFiles(MediaFileType.VIDEO)) {
+    // when having a multi EP, we need to process all eps with the same main file
+    List<MediaEntity> entitiesToProcess = new ArrayList<>();
+    if (isMultiEp) {
+      // multi-ep - we have multiple main files
+      TvShowEpisode ep = (TvShowEpisode) entity;
+      List<TvShowEpisode> eps = TvShowList.getTvEpisodesByFile(ep.getTvShow(), main.getFile());
+      entitiesToProcess.addAll(eps);
+    }
+    else {
+      entitiesToProcess.add(entity);
+    }
 
-          Path file = null;
-          // append MainDiscIdentifier to our folder MF
-          if (mf.getFilename().equalsIgnoreCase(MediaFileHelper.VIDEO_TS)) {
-            file = mf.getFileAsPath().resolve("VIDEO_TS.IFO");
-          }
-          else if (mf.getFilename().equalsIgnoreCase(MediaFileHelper.HVDVD_TS)) {
-            file = mf.getFileAsPath().resolve("HV000I01.IFO");
-          }
-          else if (mf.getFilename().equalsIgnoreCase(MediaFileHelper.BDMV)) {
-            file = mf.getFileAsPath().resolve("index.bdmv");
-          }
-          else if (mf.isMainDiscIdentifierFile()) {
-            // just add MainDiscIdentifier
-            file = mf.getFileAsPath();
-          }
+    for (MediaEntity me : entitiesToProcess) {
+      try {
+        if (isDisc) {
+          // Kodi RPC sends what we call the main disc identifier, but we have disc folder only
+          for (MediaFile mf : me.getMediaFiles(MediaFileType.VIDEO)) {
 
-          if (file != null) {
-            String rel = Utils.relPath(ds, file); // file relative from datasource
-            rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-            if (!fileMap.containsKey(rel)) {
-              fileMap.put(rel, entity.getDbId());
+            Path file = null;
+            // append MainDiscIdentifier to our folder MF
+            if (mf.getFilename().equalsIgnoreCase(MediaFileHelper.VIDEO_TS)) {
+              file = mf.getFileAsPath().resolve("VIDEO_TS.IFO");
             }
-            else {
-              // no putIfAbsent since i wanna have a log!
-              LOGGER.warn("File '{}' already attached to another datasource - skipping", rel);
+            else if (mf.getFilename().equalsIgnoreCase(MediaFileHelper.HVDVD_TS)) {
+              file = mf.getFileAsPath().resolve("HV000I01.IFO");
+            }
+            else if (mf.getFilename().equalsIgnoreCase(MediaFileHelper.BDMV)) {
+              file = mf.getFileAsPath().resolve("index.bdmv");
+            }
+            else if (mf.isMainDiscIdentifierFile()) {
+              // just add MainDiscIdentifier
+              file = mf.getFileAsPath();
+            }
+
+            if (file != null) {
+              String rel = Utils.relPath(ds, file); // file relative from datasource
+              rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
+              if (!fileMap.containsKey(rel)) {
+                fileMap.put(rel, me.getDbId());
+              }
+              else {
+                // no putIfAbsent since i wanna have a log!
+                LOGGER.warn("File '{}' already attached to another datasource - skipping", rel);
+              }
             }
           }
-        }
-      }
-      else {
-        String rel = Utils.relPath(ds, main.getFileAsPath()); // file relative from datasource
-        rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-        if (!fileMap.containsKey(rel)) {
-          fileMap.put(rel, entity.getDbId());
         }
         else {
-          // no putIfAbsent since i wanna have a log!
-          LOGGER.warn("File '{}' already attached to another datasource - skipping", rel);
+          String rel = Utils.relPath(ds, main.getFileAsPath()); // file relative from datasource
+          rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
+          if (!fileMap.containsKey(rel)) {
+            fileMap.put(rel, me.getDbId());
+          }
+          else {
+            // can only happen on multi EPs (or maybe parted, if getMain returns multiple)
+            int i = 2; // start with #2 ^^
+            while (fileMap.containsKey(rel + "#" + i)) {
+              i++;
+            }
+            LOGGER.debug("Adding multi-EP for {} as {}", rel, rel + "#" + i);
+            rel = rel + "#" + i;
+            fileMap.put(rel, me.getDbId());
+          }
         }
       }
-    }
-    catch (Exception e) {
-      LOGGER.warn("File '{}' error on mapping - skipping", e.getMessage());
+      catch (Exception e) {
+        LOGGER.warn("File '{}' error on mapping - skipping", e.getMessage());
+      }
     }
     return fileMap;
   }
@@ -594,8 +615,14 @@ public class KodiRPC {
           kodiDsAndFolder.put(rel, ep.episodeid);
         }
         else {
-          // no putIfAbsent since i wanna have a log!
-          LOGGER.warn("Kodi RPC: Kodi episode '{}' already attached to another datasource - skipping", rel);
+          // multi EP!!
+          int i = 2; // start with #2 ^^
+          while (kodiDsAndFolder.containsKey(rel + "#" + i)) {
+            i++;
+          }
+          LOGGER.debug("Adding multi-EP for {} as {}", rel, rel + "#" + i);
+          rel = rel + "#" + i;
+          kodiDsAndFolder.put(rel, ep.episodeid);
         }
       }
       LOGGER.debug("KODI {} episodes", kodiDsAndFolder.size());
