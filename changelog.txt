@@ -45,6 +45,7 @@ x [HTTP] adhere globally to 429 retry headers, not per scraper
 x [UPNP] fixed a problem with UPNP connections
 x [KODI] improve error handling for the RPC methods, to better matching between #3030
 x [KODI] able to process multi-episode files #3033
+x [Trakt.tv] better error handling / visualization.
 x [Library] upgraded Java to 21.0.8
 x [Library] upgraded to the latest version of H2 MVStore
 x [Library] upgraded libmediainfo to 25.07
