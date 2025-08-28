@@ -52,6 +52,7 @@ import org.tinymediamanager.license.License;
 import org.tinymediamanager.scraper.entities.MediaCertification;
 import org.tinymediamanager.scraper.entities.MediaEpisodeGroup;
 import org.tinymediamanager.scraper.entities.MediaEpisodeNumber;
+import org.tinymediamanager.scraper.http.TmmHttpClient;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
@@ -69,6 +70,7 @@ public abstract class BasicITest {
   public void setup() throws Exception {
     settingsFolder = tmpFolder.newFolder("data").toPath();
     workFolder = tmpFolder.newFolder("work").toPath();
+    TmmHttpClient.clearCache();
 
     Settings.getInstance(settingsFolder.toString());
 
