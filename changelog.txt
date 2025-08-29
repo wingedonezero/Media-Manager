@@ -50,3 +50,4 @@ x [Trakt.tv] better error handling / visualization.
 x [Library] upgraded Java to 21.0.8
 x [Library] upgraded to the latest version of H2 MVStore
 x [Library] upgraded libmediainfo to 25.07
+x [CLI] fix CLI output, add missing version param, improve performance
