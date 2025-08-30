@@ -39,7 +39,7 @@ public class ITKodiRPCTest {
   // and you need to enable webserver -> some calls are POSTed (not async)
   // *************************************************************************************
 
-  @Test
+  // @Test
   public void events() {
     KodiRPC.getInstance();
     while (true) {

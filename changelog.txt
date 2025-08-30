@@ -29,8 +29,9 @@ x [TV shows] fixed a problem when exchanging the video file of a TV show episode
 x [TV shows] added enhanced quick filter, same as for movies #3001
 x [Renamer] fixed using ${originalFilename} in the renamer filename pattern #2966
 x [Scraper] do not overwrite existing fields with empty values #2947
-x [IMDB] also scrape actor attributes #3007
-x [IMDB] fix generating actor profile url #3005
+x [IMDb] also scrape actor attributes #3007
+x [IMDb] fixed generating actor profile url #3005
+x [IMDb] fixed fetching of taglines
 x [UI] some UI fixes
 x [UI] increased quality level of the scaling algorithm for better image quality
 x [UI] re-layout all visible dialogs when changing the font size #2970
@@ -49,3 +50,4 @@ x [Trakt.tv] better error handling / visualization.
 x [Library] upgraded Java to 21.0.8
 x [Library] upgraded to the latest version of H2 MVStore
 x [Library] upgraded libmediainfo to 25.07
+x [CLI] fix CLI output, add missing version param, improve performance
