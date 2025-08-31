@@ -1,5 +1,7 @@
 Version 5.2.1
 =======================
++ [Trailer] added a new option to set custom download parameters for yt-dlp
+---
 x [UI] fixed loading of episode actor images #3027
 
 

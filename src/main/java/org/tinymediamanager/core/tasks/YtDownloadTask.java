@@ -222,6 +222,7 @@ public abstract class YtDownloadTask extends TmmTask {
     }
     catch (Exception e) {
       LOGGER.error("Could not download trailer using yt-dlp - '{}'", e.getMessage());
+      MessageManager.getInstance().pushMessage(new Message("yt-dlp: " + mediaEntity.getTitle() + " - " + mediaTrailer.getName(), e.getMessage()));
     }
   }
 
