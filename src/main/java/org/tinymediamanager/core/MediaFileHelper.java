@@ -95,7 +95,7 @@ public class MediaFileHelper {
   // lower case
   public static final List<String> EXTRA_FOLDERS      = List.of("extra", "extras", "behind the scenes", "behindthescenes", "deleted scenes",
       "deletedscenes", "deleted", "featurette", "featurettes", "interview", "interviews", "scene", "scenes", "short", "shorts", "other", "others",
-      "bloopers");
+      "bloopers", "trickplay");
   // for structure detection
   public static final List<String> BLURAY_FOLDERS     = List.of("BDMV", "PLAYLIST", "CLIPINF", "STREAM");
 

@@ -4,6 +4,7 @@ Version 5.2.1
 ---
 x [UI] fixed loading of episode actor images #3027
 x [UI] prompt to overwrite existing actor images when downloading new ones #3034
+x [Jellyfin] add trickplay folder to be detected as "extras"
 
 
 Version 5.2.0
