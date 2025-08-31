@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.cfg.CacheProvider;
 import com.fasterxml.jackson.databind.ser.DefaultSerializerProvider;
 import com.fasterxml.jackson.databind.ser.SerializerFactory;
 
@@ -40,6 +41,10 @@ public class CustomNullStringSerializerProvider extends DefaultSerializerProvide
 
   public CustomNullStringSerializerProvider(CustomNullStringSerializerProvider provider, SerializationConfig config, SerializerFactory jsf) {
     super(provider, config, jsf);
+  }
+
+  public CustomNullStringSerializerProvider(CustomNullStringSerializerProvider provider, CacheProvider cp) {
+    super(provider, cp);
   }
 
   @Override
@@ -76,5 +81,10 @@ public class CustomNullStringSerializerProvider extends DefaultSerializerProvide
     public void serialize(Object o, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
       jsonGenerator.writeString("");
     }
+  }
+
+  @Override
+  public DefaultSerializerProvider withCaches(CacheProvider cacheProvider) {
+    return new CustomNullStringSerializerProvider(this, cacheProvider);
   }
 }
