@@ -10,6 +10,7 @@ package org.tinymediamanager.thirdparty;
 
 import static java.util.Collections.singletonMap;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -30,9 +31,7 @@ import com.sun.jna.WString;
 public class MediaInfo implements AutoCloseable {
   private static final Logger LOGGER      = LoggerFactory.getLogger(MediaInfo.class);
 
-  private static String       LibraryPath = "mediainfo";
-  private static boolean      preloadOk   = false;
-
+  static String               LibraryPath = "mediainfo";
   static {
     // libmediainfo for linux depends on libzen
     try {
@@ -46,30 +45,27 @@ public class MediaInfo implements AutoCloseable {
           LocalPath = loader.getResource(MediaInfo.class.getName().replace('.', '/') + ".class").getPath().replace("MediaInfo.class", "");
           try {
             NativeLibrary.getInstance(LocalPath + "libzen.so.0"); // Local path
-            NativeLibrary.getInstance(LocalPath + "libmediainfo.so.0"); // Local path
-            LibraryPath = LocalPath + "libmediainfo.so.0";
-            preloadOk = true;
           }
           catch (LinkageError e) {
             NativeLibrary.getInstance("zen"); // Default path
-            NativeLibrary.getInstance("libmediainfo"); // Default path
-            preloadOk = true;
           }
         }
         else {
-          NativeLibrary.getInstance("zen");
-          NativeLibrary.getInstance("libmediainfo"); // Default path
-          preloadOk = true;// Default path
+          LocalPath = "";
+          NativeLibrary.getInstance("zen"); // Default path
         }
-      }
-      else {
-        // Windows and macOS
-        NativeLibrary.getInstance("libmediainfo"); // Default path
-        preloadOk = true; // we do not need to preload on Windows or Mac
+        if (LocalPath.length() > 0) {
+          try {
+            NativeLibrary.getInstance(LocalPath + "libmediainfo.so.0"); // Local path
+            LibraryPath = LocalPath + "libmediainfo.so.0";
+          }
+          catch (LinkageError e) {
+          }
+        }
       }
     }
     catch (LinkageError e) {
-      LOGGER.warn("Could not preload libzen/libmediainfo, MediaInfo may not work properly - {}", e.getMessage());
+      LOGGER.warn("Could not preload libzen, MediaInfo may not work properly - {}", e.getMessage());
     }
   }
 
@@ -85,8 +81,13 @@ public class MediaInfo implements AutoCloseable {
       }
     }
 
-    MediaInfoDLL_Internal INSTANCE = preloadOk ? Native.load(LibraryPath, MediaInfoDLL_Internal.class,
-        singletonMap(OPTION_FUNCTION_MAPPER, (FunctionMapper) (lib, method) -> "MediaInfo_" + method.getName())) : null;
+    MediaInfoDLL_Internal INSTANCE = (MediaInfoDLL_Internal) Native.loadLibrary(LibraryPath, MediaInfoDLL_Internal.class,
+        singletonMap(OPTION_FUNCTION_MAPPER, new FunctionMapper() {
+          @Override
+          public String getFunctionName(NativeLibrary lib, Method method) {
+            return "MediaInfo_" + method.getName();
+          }
+        }));
 
     // Constructor/Destructor
     Pointer New();
@@ -196,34 +197,20 @@ public class MediaInfo implements AutoCloseable {
 
   // Constructor/Destructor
   public MediaInfo() {
-    try {
-      Handle = MediaInfoDLL_Internal.INSTANCE.New();
-    }
-    catch (Exception e) {
-      LOGGER.warn("Could not load MediaInfo library - {}", e.getMessage());
-      Handle = null;
-    }
-  }
-
-  /**
-   * checks if the internal handle is null.
-   *
-   * @return true/false
-   */
-  public boolean isLoaded() {
-    return Handle != null;
+    Handle = MediaInfoDLL_Internal.INSTANCE.New();
   }
 
   public void dispose() {
-    if (isLoaded()) {
-      MediaInfoDLL_Internal.INSTANCE.Delete(Handle);
-      Handle = null;
-    }
+    if (Handle == null)
+      throw new IllegalStateException();
+
+    MediaInfoDLL_Internal.INSTANCE.Delete(Handle);
+    Handle = null;
   }
 
   @Override
   protected void finalize() throws Throwable {
-    if (isLoaded())
+    if (Handle != null)
       dispose();
   }
 
@@ -236,19 +223,11 @@ public class MediaInfo implements AutoCloseable {
    * @return 1 if file was opened, 0 if file was not opened
    */
   public int Open(String File_Name) {
-    if (isLoaded()) {
-      return MediaInfoDLL_Internal.INSTANCE.Open(Handle, new WString(File_Name)).intValue();
-    }
-
-    return 0;
+    return MediaInfoDLL_Internal.INSTANCE.Open(Handle, new WString(File_Name)).intValue();
   }
 
   public int Open_Buffer_Init(long length, long offset) {
-    if (isLoaded()) {
-      return MediaInfoDLL_Internal.INSTANCE.Open_Buffer_Init(Handle, length, offset).intValue();
-    }
-
-    return 0;
+    return MediaInfoDLL_Internal.INSTANCE.Open_Buffer_Init(Handle, length, offset).intValue();
   }
 
   /**
@@ -263,27 +242,15 @@ public class MediaInfo implements AutoCloseable {
    *         Reserved bit 16-31: User defined
    */
   public int Open_Buffer_Continue(byte[] buffer, int size) {
-    if (isLoaded()) {
-      return MediaInfoDLL_Internal.INSTANCE.Open_Buffer_Continue(Handle, buffer, new MediaInfoDLL_Internal.SizeT(size)).intValue();
-    }
-
-    return 0;
+    return MediaInfoDLL_Internal.INSTANCE.Open_Buffer_Continue(Handle, buffer, new MediaInfoDLL_Internal.SizeT(size)).intValue();
   }
 
   public long Open_Buffer_Continue_GoTo_Get() {
-    if (isLoaded()) {
-      return MediaInfoDLL_Internal.INSTANCE.Open_Buffer_Continue_GoTo_Get(Handle);
-    }
-
-    return 0;
+    return MediaInfoDLL_Internal.INSTANCE.Open_Buffer_Continue_GoTo_Get(Handle);
   }
 
   public int Open_Buffer_Finalize() {
-    if (isLoaded()) {
-      return MediaInfoDLL_Internal.INSTANCE.Open_Buffer_Finalize(Handle).intValue();
-    }
-
-    return 0;
+    return MediaInfoDLL_Internal.INSTANCE.Open_Buffer_Finalize(Handle).intValue();
   }
 
   /**
@@ -291,9 +258,7 @@ public class MediaInfo implements AutoCloseable {
    *
    */
   public void Close() {
-    if (isLoaded()) {
-      MediaInfoDLL_Internal.INSTANCE.Close(Handle);
-    }
+    MediaInfoDLL_Internal.INSTANCE.Close(Handle);
   }
 
   // Information
@@ -303,11 +268,7 @@ public class MediaInfo implements AutoCloseable {
    * @return All details about a file in one string
    */
   public String Inform() {
-    if (isLoaded()) {
-      return MediaInfoDLL_Internal.INSTANCE.Inform(Handle, 0).toString();
-    }
-
-    return "";
+    return MediaInfoDLL_Internal.INSTANCE.Inform(Handle, 0).toString();
   }
 
   /**
@@ -357,14 +318,10 @@ public class MediaInfo implements AutoCloseable {
    * @return a string about information you search, an empty string if there is a problem
    */
   public String Get(StreamKind StreamKind, int StreamNumber, String parameter, InfoKind infoKind, InfoKind searchKind) {
-    if (isLoaded()) {
-      return MediaInfoDLL_Internal.INSTANCE
-          .Get(Handle, StreamKind.ordinal(), new MediaInfoDLL_Internal.SizeT(StreamNumber), new WString(parameter), infoKind.ordinal(),
-              searchKind.ordinal())
-          .toString();
-    }
-
-    return "";
+    return MediaInfoDLL_Internal.INSTANCE
+        .Get(Handle, StreamKind.ordinal(), new MediaInfoDLL_Internal.SizeT(StreamNumber), new WString(parameter), infoKind.ordinal(),
+            searchKind.ordinal())
+        .toString();
   }
 
   /**
@@ -398,14 +355,10 @@ public class MediaInfo implements AutoCloseable {
    * @return a string about information you search, an empty string if there is a problem
    */
   public String Get(StreamKind StreamKind, int StreamNumber, int parameterIndex, InfoKind infoKind) {
-    if (isLoaded()) {
-      return MediaInfoDLL_Internal.INSTANCE
-          .GetI(Handle, StreamKind.ordinal(), new MediaInfoDLL_Internal.SizeT(StreamNumber), new MediaInfoDLL_Internal.SizeT(parameterIndex),
-              infoKind.ordinal())
-          .toString();
-    }
-
-    return "";
+    return MediaInfoDLL_Internal.INSTANCE
+        .GetI(Handle, StreamKind.ordinal(), new MediaInfoDLL_Internal.SizeT(StreamNumber), new MediaInfoDLL_Internal.SizeT(parameterIndex),
+            infoKind.ordinal())
+        .toString();
   }
 
   /**
@@ -417,11 +370,7 @@ public class MediaInfo implements AutoCloseable {
    * @return number of Streams of the given Stream kind
    */
   public int Count_Get(StreamKind StreamKind) {
-    if (isLoaded()) {
-      return MediaInfoDLL_Internal.INSTANCE.Count_Get(Handle, StreamKind.ordinal(), new MediaInfoDLL_Internal.SizeT(-1)).intValue();
-    }
-
-    return 0;
+    return MediaInfoDLL_Internal.INSTANCE.Count_Get(Handle, StreamKind.ordinal(), new MediaInfoDLL_Internal.SizeT(-1)).intValue();
   }
 
   /**
@@ -434,11 +383,7 @@ public class MediaInfo implements AutoCloseable {
    * @return number of Streams of the given Stream kind
    */
   public int Count_Get(StreamKind StreamKind, int StreamNumber) {
-    if (isLoaded()) {
-      return MediaInfoDLL_Internal.INSTANCE.Count_Get(Handle, StreamKind.ordinal(), new MediaInfoDLL_Internal.SizeT(StreamNumber)).intValue();
-    }
-
-    return 0;
+    return MediaInfoDLL_Internal.INSTANCE.Count_Get(Handle, StreamKind.ordinal(), new MediaInfoDLL_Internal.SizeT(StreamNumber)).intValue();
   }
 
   // Options
@@ -450,11 +395,7 @@ public class MediaInfo implements AutoCloseable {
    * @return Depends on the option: by default "" (nothing) means No, other means Yes
    */
   public String Option(String Option) {
-    if (isLoaded()) {
-      return MediaInfoDLL_Internal.INSTANCE.Option(Handle, new WString(Option), new WString("")).toString();
-    }
-
-    return "";
+    return MediaInfoDLL_Internal.INSTANCE.Option(Handle, new WString(Option), new WString("")).toString();
   }
 
   /**
@@ -467,11 +408,7 @@ public class MediaInfo implements AutoCloseable {
    * @return Depends on the option: by default "" (nothing) means No, other means Yes
    */
   public String Option(String Option, String Value) {
-    if (isLoaded()) {
-      return MediaInfoDLL_Internal.INSTANCE.Option(Handle, new WString(Option), new WString(Value)).toString();
-    }
-
-    return "";
+    return MediaInfoDLL_Internal.INSTANCE.Option(Handle, new WString(Option), new WString(Value)).toString();
   }
 
   /**
@@ -482,10 +419,6 @@ public class MediaInfo implements AutoCloseable {
    * @return Depends on the option: by default "" (nothing) means No, other means Yes
    */
   public static String Option_Static(String Option) {
-    if (MediaInfoDLL_Internal.INSTANCE == null) {
-      return "";
-    }
-
     return MediaInfoDLL_Internal.INSTANCE.Option(MediaInfoDLL_Internal.INSTANCE.New(), new WString(Option), new WString("")).toString();
   }
 
@@ -499,10 +432,6 @@ public class MediaInfo implements AutoCloseable {
    * @return Depends on the option: by default "" (nothing) means No, other means Yes
    */
   public static String Option_Static(String Option, String Value) {
-    if (MediaInfoDLL_Internal.INSTANCE == null) {
-      return "";
-    }
-
     return MediaInfoDLL_Internal.INSTANCE.Option(MediaInfoDLL_Internal.INSTANCE.New(), new WString(Option), new WString(Value)).toString();
   }
 
@@ -516,10 +445,6 @@ public class MediaInfo implements AutoCloseable {
    * @return the string
    */
   public static String version() {
-    if (MediaInfoDLL_Internal.INSTANCE == null) {
-      return "";
-    }
-
     return Option_Static("Info_Version");
   }
 
