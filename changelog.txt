@@ -3,6 +3,7 @@ Version 5.2.1
 + [Trailer] added a new option to set custom download parameters for yt-dlp
 ---
 x [Scraper] fixed parsing single search results in "Fernsehserien.de" scraper #3043
+x [Scraper] fixed englishTitle in TVDB, overwriting locale one #3037
 x [UI] fixed loading of episode actor images #3027
 x [UI] prompt to overwrite existing actor images when downloading new ones #3034
 x [Jellyfin] add trickplay folder to be detected as "extras"
