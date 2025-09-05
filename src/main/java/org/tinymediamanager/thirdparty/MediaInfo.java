@@ -27,6 +27,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.mediainfo.MediaInfoException;
+import org.tinymediamanager.thirdparty.MediaInfoLibrary.SizeT;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
@@ -85,7 +86,7 @@ public class MediaInfo implements Closeable {
 
     if (file != null && isLoaded()) {
       LOGGER.trace("MediaInfo open file: {}", file.toAbsolutePath().toString());
-      return MediaInfoLibrary.INSTANCE.Open(handle, new WString(file.toAbsolutePath().toString())) > 0;
+      return MediaInfoLibrary.INSTANCE.Open(handle, new WString(file.toAbsolutePath().toString())).intValue() > 0;
     }
     else {
       return false;
@@ -109,7 +110,7 @@ public class MediaInfo implements Closeable {
       return false;
     }
     if (isLoaded()) {
-      return MediaInfoLibrary.INSTANCE.Open_Buffer_Init(handle, length, offset) > 0;
+      return MediaInfoLibrary.INSTANCE.Open_Buffer_Init(handle, length, offset).intValue() > 0;
     }
     else {
       return false;
@@ -132,7 +133,7 @@ public class MediaInfo implements Closeable {
    *         bit 16-31: User defined
    */
   public int openBufferContinue(byte[] buffer, int size) {
-    return MediaInfoLibrary.INSTANCE.Open_Buffer_Continue(handle, buffer, size);
+    return MediaInfoLibrary.INSTANCE.Open_Buffer_Continue(handle, buffer, new SizeT(size)).intValue();
   }
 
   public long openBufferContinueGoToGet() {
@@ -140,7 +141,7 @@ public class MediaInfo implements Closeable {
   }
 
   public int openBufferFinalize() {
-    return MediaInfoLibrary.INSTANCE.Open_Buffer_Finalize(handle);
+    return MediaInfoLibrary.INSTANCE.Open_Buffer_Finalize(handle).intValue();
   }
 
   /**
@@ -217,7 +218,7 @@ public class MediaInfo implements Closeable {
   public String Get(StreamKind StreamKind, int StreamNumber, String parameter, InfoKind infoKind, InfoKind searchKind) {
     if (isLoaded()) {
       return MediaInfoLibrary.INSTANCE
-          .Get(handle, StreamKind.ordinal(), StreamNumber, new WString(parameter), infoKind.ordinal(), searchKind.ordinal())
+          .Get(handle, StreamKind.ordinal(), new SizeT(StreamNumber), new WString(parameter), infoKind.ordinal(), searchKind.ordinal())
           .toString();
     }
     else {
@@ -255,7 +256,8 @@ public class MediaInfo implements Closeable {
    */
   public String Get(StreamKind StreamKind, int StreamNumber, int parameterIndex, InfoKind infoKind) {
     if (isLoaded()) {
-      return MediaInfoLibrary.INSTANCE.GetI(handle, StreamKind.ordinal(), StreamNumber, parameterIndex, infoKind.ordinal()).toString();
+      return MediaInfoLibrary.INSTANCE.GetI(handle, StreamKind.ordinal(), new SizeT(StreamNumber), new SizeT(parameterIndex), infoKind.ordinal())
+          .toString();
     }
     else {
       return "";
@@ -330,7 +332,7 @@ public class MediaInfo implements Closeable {
   public String get(StreamKind streamKind, int streamNumber, String parameter, InfoKind infoKind, InfoKind searchKind) {
     if (isLoaded()) {
       return MediaInfoLibrary.INSTANCE
-          .Get(handle, streamKind.ordinal(), streamNumber, new WString(parameter), infoKind.ordinal(), searchKind.ordinal())
+          .Get(handle, streamKind.ordinal(), new SizeT(streamNumber), new WString(parameter), infoKind.ordinal(), searchKind.ordinal())
           .toString();
     }
     else {
@@ -353,7 +355,8 @@ public class MediaInfo implements Closeable {
    */
   public String get(StreamKind streamKind, int streamNumber, int parameterIndex, InfoKind infoKind) {
     if (isLoaded()) {
-      return MediaInfoLibrary.INSTANCE.GetI(handle, streamKind.ordinal(), streamNumber, parameterIndex, infoKind.ordinal()).toString();
+      return MediaInfoLibrary.INSTANCE.GetI(handle, streamKind.ordinal(), new SizeT(streamNumber), new SizeT(parameterIndex), infoKind.ordinal())
+          .toString();
     }
     else {
       return "";
@@ -400,7 +403,7 @@ public class MediaInfo implements Closeable {
    */
   public int parameterCount(StreamKind streamKind, int streamNumber) {
     if (isLoaded()) {
-      return MediaInfoLibrary.INSTANCE.Count_Get(handle, streamKind.ordinal(), streamNumber);
+      return MediaInfoLibrary.INSTANCE.Count_Get(handle, streamKind.ordinal(), new SizeT(streamNumber)).intValue();
     }
     else {
       return 0;
