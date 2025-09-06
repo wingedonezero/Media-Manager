@@ -1,6 +1,7 @@
 Version 5.2.1
 =======================
 + [Trailer] added a new option to set custom download parameters for yt-dlp
++ [Subtitles] added new columns to display hearing impaired and machine translated subtitles in the subtitle chooser #3036
 ---
 x [Scraper] fixed parsing single search results in "Fernsehserien.de" scraper #3043
 x [Scraper] fixed englishTitle in TVDB, overwriting locale one #3037
