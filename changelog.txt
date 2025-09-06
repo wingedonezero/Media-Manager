@@ -1,3 +1,18 @@
+Version 5.2.1
+=======================
++ [Trailer] added a new option to set custom download parameters for yt-dlp
++ [Subtitles] added new columns to display hearing impaired and machine translated subtitles in the subtitle chooser #3036
+---
+x [Scraper] fixed parsing single search results in "Fernsehserien.de" scraper #3043
+x [Scraper] fixed englishTitle in TVDB, overwriting locale one #3037
+x [UI] fixed loading of episode actor images #3027
+x [UI] prompt to overwrite existing actor images when downloading new ones #3034
+x [UI] fixed some resizing issues in the wizard
+x [Trailer] fixed downloading trailers with yt-dlp #3045 #3046
+x [Jellyfin] add trickplay folder to be detected as "extras"
+x [MediaInfo] TMM starts now again when having NO mediainfo installed
+
+
 Version 5.2.0
 =======================
 + [Performance] completely reworked internal eventing

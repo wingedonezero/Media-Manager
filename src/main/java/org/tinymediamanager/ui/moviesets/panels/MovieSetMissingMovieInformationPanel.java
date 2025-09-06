@@ -178,7 +178,6 @@ public class MovieSetMissingMovieInformationPanel extends JPanel {
       lblMoviePoster = new ImageLabel(false, false, true);
       lblMoviePoster.setDesiredAspectRatio(2 / 3f);
       lblMoviePoster.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      lblMoviePoster.setPreferCache(true);
       lblMoviePoster.enableLightbox();
       panelLeft.add(lblMoviePoster);
 
@@ -187,7 +186,6 @@ public class MovieSetMissingMovieInformationPanel extends JPanel {
       lblMovieFanart = new ImageLabel(false, false, true);
       lblMovieFanart.setDesiredAspectRatio(16 / 9f);
       lblMovieFanart.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      lblMovieFanart.setPreferCache(true);
       lblMovieFanart.enableLightbox();
       panelLeft.add(lblMovieFanart);
     }
