@@ -137,7 +137,7 @@ public class TvShowEpisodeAndSeasonParser {
       delimited = delimited.replace("*", "\\*");
       delimited = delimited.replace("?", "\\?");
       delimited = delimited.replace(".", "\\.");
-      basename = basename.replace("(?i)^" + delimited, "");
+      basename = basename.replaceAll("(?i)^" + delimited, "");
     }
 
     basename = StrgUtils.replaceUnicodeCharactersInverse(basename);
