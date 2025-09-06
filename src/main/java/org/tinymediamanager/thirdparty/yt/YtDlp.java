@@ -144,8 +144,10 @@ public class YtDlp {
     }
 
     cmdList.add(url);
+    cmdList.add("-P");
+    cmdList.add(trailerFile.getParent().toAbsolutePath().toString());
     cmdList.add("-o");
-    cmdList.add(trailerFile.toAbsolutePath().toString());
+    cmdList.add(trailerFile.getFileName().toString() + ".%(ext)s");
 
     return cmdList;
   }
