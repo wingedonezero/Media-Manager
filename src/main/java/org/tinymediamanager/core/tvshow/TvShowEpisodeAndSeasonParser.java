@@ -133,7 +133,11 @@ public class TvShowEpisodeAndSeasonParser {
       basename = basename.replaceAll("(?i)^[^ES]" + Pattern.quote(tvShowName), ""); // with our added space, but not prefixed with S/E
       // "some fine show" would match with "some.fine-show"
       String delimited = tvShowName.replaceAll("[ _.-]", "[ _.-]"); // replace all delimiters, with delimiters pattern ;)
-      basename = basename.replaceAll("(?i)^" + delimited, "");
+      // escape known quantifiers
+      delimited = delimited.replace("*", "\\*");
+      delimited = delimited.replace("?", "\\?");
+      delimited = delimited.replace(".", "\\.");
+      basename = basename.replace("(?i)^" + delimited, "");
     }
 
     basename = StrgUtils.replaceUnicodeCharactersInverse(basename);
