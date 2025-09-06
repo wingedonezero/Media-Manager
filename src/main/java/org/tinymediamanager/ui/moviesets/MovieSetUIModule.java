@@ -17,6 +17,7 @@ package org.tinymediamanager.ui.moviesets;
 
 import java.awt.CardLayout;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -35,6 +36,7 @@ import org.tinymediamanager.core.PostProcess;
 import org.tinymediamanager.core.Settings;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.movie.MovieModuleManager;
+import org.tinymediamanager.core.movie.MovieSetMoviePostProcessExecutor;
 import org.tinymediamanager.core.movie.MovieSetPostProcessExecutor;
 import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.core.movie.entities.MovieSet;
@@ -286,11 +288,27 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
 
         // Post-processing
         postProcessingMenu.removeAll();
-        for (PostProcess process : new ArrayList<>(MovieModuleManager.getInstance().getSettings().getMovieSetPostProcess())) {
-          JMenuItem menuItem = new JMenuItem(process.getName(), IconManager.APPLY);
-          menuItem.addActionListener(pp -> new MovieSetPostProcessExecutor(process).execute());
-          postProcessingMenu.add(menuItem);
+
+        List<PostProcess> movieSetPostProcesses = new ArrayList<>(MovieModuleManager.getInstance().getSettings().getMovieSetPostProcess());
+        if (!movieSetPostProcesses.isEmpty()) {
+          postProcessingMenu.add(new TmmMenuLabel(TmmResourceBundle.getString("metatag.movieset")));
+          for (PostProcess process : movieSetPostProcesses) {
+            JMenuItem menuItem = new JMenuItem(process.getName(), IconManager.APPLY);
+            menuItem.addActionListener(pp -> new MovieSetPostProcessExecutor(process).execute());
+            postProcessingMenu.add(menuItem);
+          }
         }
+
+        List<PostProcess> moviePostProcesses = new ArrayList<>(MovieModuleManager.getInstance().getSettings().getPostProcess());
+        if (!moviePostProcesses.isEmpty()) {
+          postProcessingMenu.add(new TmmMenuLabel(TmmResourceBundle.getString("metatag.movie")));
+          for (PostProcess process : moviePostProcesses) {
+            JMenuItem menuItem = new JMenuItem(process.getName(), IconManager.APPLY);
+            menuItem.addActionListener(pp -> new MovieSetMoviePostProcessExecutor(process).execute());
+            postProcessingMenu.add(menuItem);
+          }
+        }
+
         if (postProcessingMenu.getItemCount() == 0) {
           postProcessingMenu.setEnabled(false);
         }
