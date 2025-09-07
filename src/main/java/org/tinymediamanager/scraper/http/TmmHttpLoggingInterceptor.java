@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tinymediamanager.Globals;
 
 import okhttp3.Connection;
 import okhttp3.Headers;
@@ -90,7 +91,7 @@ public class TmmHttpLoggingInterceptor implements Interceptor {
           Matcher matcher = CONTENT_PATTERN.matcher(content);
           if (!matcher.find()) {
             // only log the first 1k characters
-            if (content.length() > MAX_TEXT_BODY_LENGTH) {
+            if (!Globals.isDebug() && content.length() > MAX_TEXT_BODY_LENGTH) {
               LOGGER.trace("{}...", content.substring(0, MAX_TEXT_BODY_LENGTH)); // NOSONAR
             }
             else {
@@ -162,7 +163,7 @@ public class TmmHttpLoggingInterceptor implements Interceptor {
         if (contentLength != 0) {
           String content = buffer.clone().readString(charset);
           // only log the first 1k characters
-          if (content.length() > MAX_TEXT_BODY_LENGTH) {
+          if (!Globals.isDebug() && content.length() > MAX_TEXT_BODY_LENGTH) {
             LOGGER.trace("{}...", content.substring(0, MAX_TEXT_BODY_LENGTH)); // NOSONAR
           }
           else {
