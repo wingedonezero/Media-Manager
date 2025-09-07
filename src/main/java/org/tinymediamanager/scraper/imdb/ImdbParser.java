@@ -735,7 +735,6 @@ public abstract class ImdbParser {
       if (md.getOriginalTitle().isEmpty()) {
         md.setOriginalTitle(md.getTitle());
       }
-      md.setEnglishTitle(JsonUtils.at(node, "/props/pageProps/mainColumnData/akas/edges/0/node/text").asText());
       md.setYear(JsonUtils.at(node, "/props/pageProps/aboveTheFoldData/releaseYear/year").asInt(0));
 
       JsonNode plotNode = JsonUtils.at(node, "/props/pageProps/aboveTheFoldData/plot/plotText");
@@ -907,15 +906,26 @@ public abstract class ImdbParser {
       }
 
       JsonNode countriesNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/countriesDetails/countries");
+      boolean hasUS = false;
       for (ImdbCountry country : JsonUtils.parseList(mapper, countriesNode, ImdbCountry.class)) {
-        if (isScrapeLanguageNames()) {
+        if (country.id.equals("US")) {
+          hasUS = true;
+        }
+        if (isScrapeLanguageNames() && StringUtils.isNotBlank(country.text)) {
           md.addCountry(country.text);
         }
         else {
           md.addCountry(country.id);
         }
       }
-
+      if (hasUS) {
+        // use original title as english title
+        md.setEnglishTitle(md.getOriginalTitle());
+      }
+      else {
+        // parse first AKA as English title
+        md.setEnglishTitle(JsonUtils.at(node, "/props/pageProps/mainColumnData/akas/edges/0/node/text").asText());
+      }
       JsonNode prods = JsonUtils.at(node, "/props/pageProps/mainColumnData/production/edges");
       for (JsonNode p : ListUtils.nullSafe(prods)) {
         md.addProductionCompany(p.at("/node/company/companyText/text").asText());
@@ -1127,7 +1137,6 @@ public abstract class ImdbParser {
         if (md.getOriginalTitle().isEmpty()) {
           md.setOriginalTitle(md.getTitle());
         }
-        md.setEnglishTitle(JsonUtils.at(node, "/props/pageProps/mainColumnData/akas/edges/0/node/text").asText());
         md.setTagline(JsonUtils.at(node, "/props/pageProps/mainColumnData/taglines/edges/0/node/text").asText());
         md.setYear(JsonUtils.at(node, "/props/pageProps/mainColumnData/releaseYear/year").asInt(0));
 
@@ -1165,13 +1174,25 @@ public abstract class ImdbParser {
         }
 
         JsonNode countriesNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/countriesOfOrigin/countries");
+        boolean hasUS = false;
         for (ImdbCountry country : JsonUtils.parseList(mapper, countriesNode, ImdbCountry.class)) {
-          if (isScrapeLanguageNames()) {
+          if (country.id.equals("US")) {
+            hasUS = true;
+          }
+          if (isScrapeLanguageNames() && StringUtils.isNotBlank(country.text)) {
             md.addCountry(country.text);
           }
           else {
             md.addCountry(country.id);
           }
+        }
+        if (hasUS) {
+          // use original title as english title
+          md.setEnglishTitle(md.getOriginalTitle());
+        }
+        else {
+          // parse first AKA as English title
+          md.setEnglishTitle(JsonUtils.at(node, "/props/pageProps/mainColumnData/akas/edges/0/node/text").asText());
         }
 
         JsonNode releaseDateNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/releaseDate");

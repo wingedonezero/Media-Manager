@@ -1,5 +1,6 @@
 Version 5.2.2
 =======================
+x [IMDB] better parse englishTitle #3049
 
 
 Version 5.2.1
