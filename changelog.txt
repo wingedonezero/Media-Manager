@@ -1,5 +1,7 @@
 Version 5.2.2
 =======================
++ [Scraper] when scraping Anime, try to get all available IDs from other anime sites.
+---
 x [IMDB] better parse englishTitle #3049
 
 
