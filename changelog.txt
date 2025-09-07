@@ -1,3 +1,7 @@
+Version 5.2.2
+=======================
+
+
 Version 5.2.1
 =======================
 + [Trailer] added a new option to set custom download parameters for yt-dlp
