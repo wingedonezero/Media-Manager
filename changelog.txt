@@ -4,6 +4,7 @@ Version 5.2.2
 ---
 x [IMDB] better parse englishTitle #3049
 x [Renamer] fixed replacements of ... with its unicode variant #3048
+x [Scraper] better matching, if scraped existing entry again with uncommon scraper #3051
 
 
 Version 5.2.1

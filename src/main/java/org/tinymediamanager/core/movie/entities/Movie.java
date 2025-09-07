@@ -795,6 +795,17 @@ public class Movie extends MediaEntity implements IMediaInformation {
       }
     }
 
+    // with uncommon scrapers, you always have no match, so we clear out everything
+    // but what if the movie title (and year) would match? We could also assume this to be the same
+    // lets remove all weird chars first, as we might have - vs – etc
+    if (!matchFound && isScraped()) {
+      String ot = getTitle().replaceAll("\\W", "").toLowerCase(Locale.ROOT);
+      String nt = metadata.getTitle().replaceAll("\\W", "").toLowerCase(Locale.ROOT);
+      if (getYear() == metadata.getYear() && ot.equals(nt)) {
+        matchFound = true;
+      }
+    }
+
     // when there are no ids, we must assume that this is the first scrape of the movie - treat it like a matched one (to prevent existing/manually
     // entered data from being overwritten)
     boolean newEntity = false;

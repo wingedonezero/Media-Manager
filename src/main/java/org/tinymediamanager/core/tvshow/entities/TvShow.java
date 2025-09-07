@@ -55,6 +55,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -1087,6 +1088,17 @@ public class TvShow extends MediaEntity implements IMediaInformation {
       if (entry.getValue() != null && entry.getValue().equals(getId(entry.getKey()))) {
         matchFound = true;
         break;
+      }
+    }
+
+    // with uncommon scrapers, you always have no match, so we clear out everything
+    // but what if the show title (and year) would match? We could also assume this to be the same
+    // lets remove all weird chars first, as we might have - vs – etc
+    if (!matchFound && isScraped()) {
+      String ot = getTitle().replaceAll("\\W", "").toLowerCase(Locale.ROOT);
+      String nt = metadata.getTitle().replaceAll("\\W", "").toLowerCase(Locale.ROOT);
+      if (getYear() == metadata.getYear() && ot.equals(nt)) {
+        matchFound = true;
       }
     }
 
