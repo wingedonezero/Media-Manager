@@ -63,7 +63,7 @@ public interface IAddon {
     String executableFilename = getExecutableFilename();
 
     // 1. look in the user addon folder
-    Path executable = Paths.get(Globals.CONTENT_FOLDER).resolve("addons").toAbsolutePath().resolve(executableFilename);
+    Path executable = Paths.get(Globals.ADDON_FOLDER).toAbsolutePath().resolve(executableFilename);
     if (Files.isExecutable(executable)) {
       return executable.toString();
     }

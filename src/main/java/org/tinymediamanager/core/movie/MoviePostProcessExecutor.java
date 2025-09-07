@@ -57,7 +57,7 @@ public class MoviePostProcessExecutor extends PostProcessExecutor {
     }
   }
 
-  private String[] substituteMovieTokens(Movie movie) {
+  protected String[] substituteMovieTokens(Movie movie) {
     Engine engine = MovieRenamer.createEngine();
     engine.setModelAdaptor(new TmmModelAdaptor());
 

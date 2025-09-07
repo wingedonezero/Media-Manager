@@ -421,6 +421,8 @@ public class TvShowTest extends BasicTvShowTest {
 
     // ************************************************************************
     // various real world examples
+    assertEqual("Episode 1",
+        cleanTitle("Watari.kun's ****** Is about to Collapse - S01E01 - Episode 1.avi", "Watari-kun's ****** Is about to Collapse"));
     assertEqual("Der Weg nach Uralia", cleanTitle("Die Gummibärenbande - S05E02 - Der Weg nach Uralia.avi", "Die Gummibärenbande"));
     assertEqual("BlBlub Messy", cleanTitle("BlBlub - S08E01 - Messy.mp4", ""));
     assertEqual("Messy", cleanTitle("BlBlub - S08E01 - Messy.mp4", "BlBlub"));
