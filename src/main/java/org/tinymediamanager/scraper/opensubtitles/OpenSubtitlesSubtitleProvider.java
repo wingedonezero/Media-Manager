@@ -25,6 +25,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.LongBuffer;
 import java.nio.channels.FileChannel;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,6 +48,8 @@ import org.tinymediamanager.scraper.util.LanguageUtils;
 import org.tinymediamanager.scraper.util.MediaIdUtil;
 import org.tinymediamanager.scraper.util.Similarity;
 
+import jakarta.xml.bind.DatatypeConverter;
+
 /**
  * OpensubtitlesMetadataProvider provides subtitle scraping from OpenSubtitles.org
  *
@@ -55,13 +58,13 @@ import org.tinymediamanager.scraper.util.Similarity;
 abstract class OpenSubtitlesSubtitleProvider implements IMediaProvider {
   public static final String       ID              = "opensubtitles";
 
-  private static final String      SERVICE         = "http://api.opensubtitles.org/xml-rpc";
   private static final int         HASH_CHUNK_SIZE = 64 * 1024;
 
   protected static TmmXmlRpcClient client          = null;
 
   private final MediaProviderInfo  providerInfo;
 
+  private String                   serviceUrl      = "http://api.opensubtitles.org/xml-rpc";
   private String                   sessionToken    = "";
   private String                   username        = "";
   private String                   password        = "";
@@ -108,7 +111,7 @@ abstract class OpenSubtitlesSubtitleProvider implements IMediaProvider {
       }
 
       try {
-        client = new TmmXmlRpcClient(new URL(SERVICE));
+        client = new TmmXmlRpcClient(new URL(serviceUrl));
       }
       catch (MalformedURLException e) {
         getLogger().error("cannot create XmlRpcClient", e);
@@ -401,12 +404,21 @@ abstract class OpenSubtitlesSubtitleProvider implements IMediaProvider {
       try {
         OpenSubtitlesConnectionCounter.trackConnections();
 
-        Map<String, Object> response = (Map<String, Object>) client.call("LogIn", username, password, "", getApiKey());
+        // MD5 password
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        md.update(password.getBytes());
+        byte[] digest = md.digest();
+        String myHash = DatatypeConverter.printHexBinary(digest).toUpperCase();
+
+        Map<String, Object> response = (Map<String, Object>) client.call("LogIn", username, myHash, "", getApiKey());
 
         // check if we are VIP
         Map<String, Object> data = (Map<String, Object>) response.get("data");
         if (data != null && data.get("IsVIP") instanceof Integer vipStatus && vipStatus > 0) {
           sessionToken = (String) response.get("token");
+          serviceUrl = (String) data.get("Content-Location");
+          client = null;
+          initAPI();
           getLogger().debug("Login OK");
         }
         else {
