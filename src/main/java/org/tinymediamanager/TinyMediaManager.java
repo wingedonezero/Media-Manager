@@ -131,6 +131,7 @@ public final class TinyMediaManager {
 
     // load settings and set default locale
     Locale.setDefault(Utils.getLocaleFromLanguage(Settings.getInstance().getLanguage()));
+    TmmResourceBundle.clearCache(); // to reinitialize correct langu, see #3053
     newVersion = !Settings.getInstance().isCurrentVersion(); // same snapshots/git considered as "new", for upgrades
 
     printLogHeader();
