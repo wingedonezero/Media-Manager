@@ -125,6 +125,7 @@ public abstract class ImdbParser {
   static final String                 INCLUDE_TV_SERIES        = "includeTvSeriesResults";
   static final String                 INCLUDE_SHORT            = "includeShortResults";
   static final String                 INCLUDE_VIDEOGAME        = "includeVideogameResults";
+  static final String                 INCLUDE_MUSICVIDEO       = "includeMusicVideoResults";
   static final String                 INCLUDE_PODCAST          = "includePodcastResults";
   static final String                 INCLUDE_ADULT            = "includeAdultResults";
   static final String                 INCLUDE_METACRITIC       = "includeMetacritic";
@@ -196,6 +197,15 @@ public abstract class ImdbParser {
    */
   protected boolean isIncludeVideogameResults() {
     return config.getValueAsBool(INCLUDE_VIDEOGAME, false);
+  }
+
+  /**
+   * should we include music video results
+   *
+   * @return true/false
+   */
+  protected boolean isIncludeMusicVideoResults() {
+    return config.getValueAsBool(INCLUDE_MUSICVIDEO, false);
   }
 
   /**
@@ -389,6 +399,9 @@ public abstract class ImdbParser {
       if (isIncludeVideogameResults()) {
         param += ",video_game";
       }
+      if (isIncludeMusicVideoResults()) {
+        param += ",music_video";
+      }
     }
     else if (options.getMediaType() == MediaType.TV_SHOW) {
       param = "&title_type=tv_series,tv_miniseries";
@@ -516,9 +529,23 @@ public abstract class ImdbParser {
     String language = options.getLanguage().getLanguage();
     String country = options.getCertificationCountry().getAlpha2(); // for passing the country to the scrape
 
-    String param = "&s=tt&ttype=ft"; // movies
-    if (options.getMediaType() == MediaType.TV_SHOW) {
-      param = "&s=tt&ttype=tv"; // all TV related, even TVmovies (which cannot be parsed as TV) - but there is no other option in basic search
+    String param = "";
+    if (options.getMediaType() == MediaType.MOVIE) {
+      param = "&s=tt&ttype=ft"; // movies
+      if (isIncludeMusicVideoResults()) {
+        param += "&ttype=mu";
+      }
+      if (isIncludeVideogameResults()) {
+        param += "&ttype=vg";
+      }
+    }
+    else {
+      if (options.getMediaType() == MediaType.TV_SHOW) {
+        param = "&s=tt&ttype=tv"; // all TV related, even TVmovies (which cannot be parsed as TV) - but there is no other option in basic search
+        if (isIncludePodcastResults()) {
+          param += "&ttype=pe&ttype=pe";
+        }
+      }
     }
 
     Url findUrl = new InMemoryCachedUrl(constructUrl("find/?q=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param));
