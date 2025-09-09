@@ -59,7 +59,7 @@ import net.miginfocom.swing.MigLayout;
  * @author Manuel Laggner
  */
 class MovieScraperOptionsSettingsPanel extends JPanel {
-  private final MovieSettings       settings         = MovieModuleManager.getInstance().getSettings();
+  private final MovieSettings       settings = MovieModuleManager.getInstance().getSettings();
 
   private JSlider                   sliderThreshold;
   private JComboBox<MediaLanguages> cbScraperLanguage;
@@ -84,11 +84,12 @@ class MovieScraperOptionsSettingsPanel extends JPanel {
    * Instantiates a new movie scraper settings panel.
    */
   MovieScraperOptionsSettingsPanel() {
-    ItemListener checkBoxListener = e -> checkChanges();
-
     // UI init
     initComponents();
     initDataBindings();
+
+    loadRatings();
+    ItemListener checkBoxListener = e -> checkChanges();
 
     // data init
     for (String country : Locale.getISOCountries()) {
@@ -233,6 +234,40 @@ class MovieScraperOptionsSettingsPanel extends JPanel {
         TmmFontHelper.changeFont(tpScraperThresholdHint, L2);
         panelAutomaticScrape.add(tpScraperThresholdHint, "cell 1 1 3 1, growx, wmin 0");
       }
+    }
+  }
+
+  private void loadRatings() {
+    List<RatingProvider.RatingSource> src = settings.getFetchRatingSources();
+    if (src.contains(RatingProvider.RatingSource.IMDB)) {
+      chckbxRatingImdb.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.TMDB)) {
+      chckbxRatingTmdb.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.METACRITIC)) {
+      chckbxRatingMcMetascore.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.METACRITIC_USER)) {
+      chckbxRatingMcUserscore.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.ROTTEN_TOMATOES_TOMATOMETER)) {
+      chckbxRatingRtTomatometer.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.ROTTEN_TOMATOES_AVG_RATING)) {
+      chckbxRatingRtAudienceScore.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.MAL)) {
+      chckbxRatingMyAnimeList.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.ROGER_EBERT)) {
+      chckbxRatingRogerEbert.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.TRAKT_TV)) {
+      chckbxRatingTraktTv.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.LETTERBOXD)) {
+      chckbxRatingLetterboxd.setSelected(true);
     }
   }
 

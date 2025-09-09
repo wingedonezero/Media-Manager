@@ -72,11 +72,12 @@ class TvShowScraperOptionsSettingsPanel extends JPanel {
    * Instantiates a new movie scraper settings panel.
    */
   TvShowScraperOptionsSettingsPanel() {
-    ItemListener checkBoxListener = e -> checkChanges();
-
     // UI init
     initComponents();
     initDataBindings();
+
+    loadRatings();
+    ItemListener checkBoxListener = e -> checkChanges();
 
     // data init
     for (String country : Locale.getISOCountries()) {
@@ -171,6 +172,31 @@ class TvShowScraperOptionsSettingsPanel extends JPanel {
       chckbxDoNotOverwrite = new JCheckBox(TmmResourceBundle.getString("message.scrape.donotoverwrite"));
       chckbxDoNotOverwrite.setToolTipText(TmmResourceBundle.getString("message.scrape.donotoverwrite.desc"));
       panelDefaults.add(chckbxDoNotOverwrite, "cell 1 1 2 1");
+    }
+  }
+
+  private void loadRatings() {
+    List<RatingProvider.RatingSource> src = settings.getFetchRatingSources();
+    if (src.contains(RatingProvider.RatingSource.IMDB)) {
+      chckbxRatingImdb.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.TMDB)) {
+      chckbxRatingTmdb.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.METACRITIC_USER)) {
+      chckbxRatingMcUserscore.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.MAL)) {
+      chckbxRatingMyAnimeList.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.ROGER_EBERT)) {
+      chckbxRatingRogerEbert.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.TRAKT_TV)) {
+      chckbxRatingTraktTv.setSelected(true);
+    }
+    if (src.contains(RatingProvider.RatingSource.LETTERBOXD)) {
+      chckbxRatingLetterboxd.setSelected(true);
     }
   }
 
