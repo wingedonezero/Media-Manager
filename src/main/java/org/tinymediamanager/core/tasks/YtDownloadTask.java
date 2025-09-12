@@ -182,7 +182,17 @@ public abstract class YtDownloadTask extends TmmTask {
   private void downloadWithYtDlp(MediaTrailer mediaTrailer) {
     MediaEntity mediaEntity = getMediaEntityToAdd();
 
+    long timestamp = System.currentTimeMillis();
+    String tempFilename = "yt-dlp." + timestamp;
+
+    Path tempDir = Paths.get(Utils.getTempFolder(), tempFilename);
+
     try {
+      // create temp folder
+      if (!Files.exists(tempDir)) {
+        Files.createDirectories(tempDir);
+      }
+
       int height = 0;
       try {
         VideoQuality videoQuality = getVideoQuality(mediaTrailer.getQuality());
@@ -192,13 +202,6 @@ public abstract class YtDownloadTask extends TmmTask {
       }
 
       Path trailerBasename = getDestinationWoExtension().getParent().resolve(getDestinationWoExtension().getFileName());
-      Path tempDir = Paths.get(Utils.getTempFolder());
-      if (!Files.exists(tempDir)) {
-        Files.createDirectory(tempDir);
-      }
-      long timestamp = System.currentTimeMillis();
-      String tempFilename = "yt-dlp." + timestamp;
-
       YtDlp.downloadTrailer(mediaTrailer.getUrl(), height, tempDir.resolve(tempFilename));
 
       List<Path> tempFiles = Utils.listFiles(tempDir);
@@ -238,6 +241,10 @@ public abstract class YtDownloadTask extends TmmTask {
     catch (Exception e) {
       LOGGER.error("Could not download trailer using yt-dlp - '{}'", e.getMessage());
       MessageManager.getInstance().pushMessage(new Message("yt-dlp: " + mediaEntity.getTitle() + " - " + mediaTrailer.getName(), e.getMessage()));
+    }
+    finally {
+      // cleanup temp folder
+      Utils.deleteDirectorySafely(tempDir);
     }
   }
 
