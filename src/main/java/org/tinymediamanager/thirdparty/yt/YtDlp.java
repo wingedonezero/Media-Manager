@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -117,7 +118,13 @@ public class YtDlp {
     }
 
     if (StringUtils.isNotBlank(Settings.getInstance().getYtDlpParams())) {
-      cmdList.add(Settings.getInstance().getYtDlpParams());
+      // split all params and add them as own tokens to the ProcessBuilder
+      // this solves some problems with special characters in the params
+      StringTokenizer tokenizer = new StringTokenizer(Settings.getInstance().getYtDlpParams());
+      while (tokenizer.hasMoreTokens()) {
+        cmdList.add(tokenizer.nextToken());
+      }
+      // cmdList.add(Settings.getInstance().getYtDlpParams());
     }
     else {
       // ATTENTION: when changing the default parameters here, please also change them in ExternalToolsSettingsPanel!
