@@ -88,7 +88,7 @@ public abstract class YtDownloadTask extends TmmTask {
   private double               speed             = 0;
 
   protected YtDownloadTask(MediaTrailer mediaTrailer, TrailerQuality desiredQuality, boolean useYtDlp) {
-    super(TmmResourceBundle.getString("trailer.download") + " - " + mediaTrailer.getName(), 100, TaskType.BACKGROUND_TASK);
+    super(TmmResourceBundle.getString("trailer.download") + " - " + mediaTrailer.getName(), 0, TaskType.BACKGROUND_TASK);
     this.mediaTrailer = mediaTrailer;
     this.desiredQuality = desiredQuality;
     this.useYtDlp = useYtDlp;
