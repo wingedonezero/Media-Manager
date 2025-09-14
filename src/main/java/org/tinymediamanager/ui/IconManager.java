@@ -148,6 +148,9 @@ public class IconManager {
   public static final ImageIcon              TABLE_PROBLEM                = createSVGIcon("triangle-exclamation.svg", new Color(204, 120, 50));
   public static final ImageIcon              TABLE_NOT_OK                 = createSVGIcon("xmark.svg", RED);
   public static final ImageIcon              TABLE_ALERT                  = createSVGIcon("icn_alert_active.svg", Color.RED);
+  public static final ImageIcon              RENAMER_ADDED                = createSVGIcon("plus.svg", "Component.successColor", TmmFontHelper.L1);
+  public static final ImageIcon              RENAMER_SPACER               = createSVGIcon("spacer.svg", TmmFontHelper.L1);
+  public static final ImageIcon              RENAMER_REMOVED              = createSVGIcon("minus.svg", "Component.errorColor", TmmFontHelper.L1);
 
   // font awesome icons normal
   public static final ImageIcon              AI                           = createSVGIcon("microchip-ai.svg");
@@ -235,10 +238,10 @@ public class IconManager {
   public static final ImageIcon              WATCHED                      = createTableHeaderIcon("play.svg");
 
   // sort icons for glazedlists
-  public static final ImageIcon              SORT_UP_PRIMARY              = createSVGIcon("chevron-up.svg", 0.833);
-  public static final ImageIcon              SORT_UP_SECONDARY            = createSVGIcon("chevrons-up.svg", 0.833);
-  public static final ImageIcon              SORT_DOWN_PRIMARY            = createSVGIcon("chevron-down.svg", 0.833);
-  public static final ImageIcon              SORT_DOWN_SECONDARY          = createSVGIcon("chevrons-down.svg", 0.833);
+  public static final ImageIcon              SORT_UP_PRIMARY              = createSVGIcon("chevron-up.svg", TmmFontHelper.L2);
+  public static final ImageIcon              SORT_UP_SECONDARY            = createSVGIcon("chevrons-up.svg", TmmFontHelper.L2);
+  public static final ImageIcon              SORT_DOWN_PRIMARY            = createSVGIcon("chevron-down.svg", TmmFontHelper.L2);
+  public static final ImageIcon              SORT_DOWN_SECONDARY          = createSVGIcon("chevrons-down.svg", TmmFontHelper.L2);
 
   private IconManager() {
     throw new IllegalAccessError();

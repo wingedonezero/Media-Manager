@@ -16,8 +16,9 @@
 package org.tinymediamanager.ui.tvshows.dialogs;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Font;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,13 +30,14 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.event.TableColumnModelEvent;
+import javax.swing.event.TableColumnModelListener;
 
 import org.tinymediamanager.core.AbstractModelObject;
 import org.tinymediamanager.core.RenamerPreviewContainer;
@@ -56,7 +58,7 @@ import org.tinymediamanager.ui.components.table.TmmTable;
 import org.tinymediamanager.ui.components.table.TmmTableFormat;
 import org.tinymediamanager.ui.components.table.TmmTableModel;
 import org.tinymediamanager.ui.dialogs.TmmDialog;
-import org.tinymediamanager.ui.renderer.MultilineTextareaCellRenderer;
+import org.tinymediamanager.ui.renderer.RenamerCellRenderer;
 
 import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
@@ -208,6 +210,40 @@ public class TvShowRenamerPreviewDialog extends TmmDialog {
       addDefaultButton(btnClose);
     }
 
+    tableMediaFiles.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        tableMediaFiles.adjustRowHeights();
+      }
+    });
+
+    tableMediaFiles.getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+      @Override
+      public void columnMarginChanged(ChangeEvent e) {
+        SwingUtilities.invokeLater(tableMediaFiles::adjustRowHeights);
+      }
+
+      @Override
+      public void columnAdded(TableColumnModelEvent e) {
+        SwingUtilities.invokeLater(tableMediaFiles::adjustRowHeights);
+      }
+
+      @Override
+      public void columnRemoved(TableColumnModelEvent e) {
+        SwingUtilities.invokeLater(tableMediaFiles::adjustRowHeights);
+      }
+
+      @Override
+      public void columnMoved(TableColumnModelEvent e) {
+        SwingUtilities.invokeLater(tableMediaFiles::adjustRowHeights);
+      }
+
+      @Override
+      public void columnSelectionChanged(ListSelectionEvent e) {
+        SwingUtilities.invokeLater(tableMediaFiles::adjustRowHeights);
+      }
+    });
+
     // start calculation of the preview
     worker = new TvShowPreviewWorker(selectedTvShows);
     worker.execute();
@@ -266,17 +302,15 @@ public class TvShowRenamerPreviewDialog extends TmmDialog {
       /*
        * old filename
        */
-      col = new Column(TmmResourceBundle.getString("renamer.oldfiles"), "oldFilename", container -> String.join("\n", container.oldFiles),
-          String.class);
-      col.setCellRenderer(new MultilineTextareaCellRenderer());
+      col = new Column(TmmResourceBundle.getString("renamer.oldfiles"), "oldFilename", container -> container, MediaFileTypeContainer.class);
+      col.setCellRenderer(RenamerCellRenderer.forOldFilenames());
       addColumn(col);
 
       /*
        * new filename
        */
-      col = new Column(TmmResourceBundle.getString("renamer.newfiles"), "newFilename", container -> String.join("\n", container.newFiles),
-          String.class);
-      col.setCellRenderer(new MultilineTextareaCellRenderer());
+      col = new Column(TmmResourceBundle.getString("renamer.newfiles"), "newFilename", container -> container, MediaFileTypeContainer.class);
+      col.setCellRenderer(RenamerCellRenderer.forNewFilenames());
       addColumn(col);
     }
   }
@@ -360,7 +394,10 @@ public class TvShowRenamerPreviewDialog extends TmmDialog {
       }
 
       // update row heights in GUI thread
-      SwingUtilities.invokeLater(() -> adjustRowHeights(tableMediaFiles));
+      SwingUtilities.invokeLater(() -> {
+        tableMediaFiles.adjustColumnPreferredWidths(5); // leads to strange line breaks using the spacer...
+        tableMediaFiles.adjustRowHeights();
+      });
     }
 
     synchronized void setSelectedResult(RenamerPreviewContainer newValue) {
@@ -389,18 +426,6 @@ public class TvShowRenamerPreviewDialog extends TmmDialog {
       if (selectedResults.isEmpty()) {
         setSelectedResult(emptyResult);
       }
-    }
-  }
-
-  private void adjustRowHeights(JTable table) {
-    for (int row = 0; row < table.getRowCount(); row++) {
-      int maxHeight = table.getRowHeight();
-      for (int column = 0; column < table.getColumnCount(); column++) {
-        TableCellRenderer renderer = table.getCellRenderer(row, column);
-        Component comp = table.prepareRenderer(renderer, row, column);
-        maxHeight = Math.max(maxHeight, comp.getPreferredSize().height);
-      }
-      table.setRowHeight(row, maxHeight);
     }
   }
 }
