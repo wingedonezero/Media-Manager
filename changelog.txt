@@ -2,9 +2,10 @@ Version 5.2.2
 =======================
 + [Scraper] when scraping Anime, try to get all available IDs from other anime sites.
 + [IMDB] able to include music video in search results (check scraper settings)
++ [UI] added a trailer column for TV shows too #3060
 ---
 x [IMDB] better parse englishTitle #3049
-x [Renamer] fixed replacements of ... with its unicode variant #3048
+x [Renamer] fixed replacements of ... with its Unicode variant #3048
 x [Scraper] better matching, if scraped existing entry again with uncommon scraper #3051
 x [Scraper] OpenSubtitles.ORG - switch to VIP server if VIP
 x [UI] remove empty episode groups from TvShow upon scrape #3056
