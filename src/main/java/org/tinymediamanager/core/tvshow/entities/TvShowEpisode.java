@@ -2142,10 +2142,12 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
       case SEASON_EPISODE -> getEpisodeNumbers();
       case TITLE -> getTitle();
       case ORIGINAL_TITLE -> getOriginalTitle();
+      case ENGLISH_TITLE -> getEnglishTitle();
       case PLOT -> getPlot();
       case AIRED -> getFirstAired();
       case RATING -> getRatings();
       case TAGS -> getTags();
+      case RUNTIME -> getRuntime();
       case ACTORS -> getActors();
       case CREW -> getCrew();
       case THUMB -> getMediaFiles(MediaFileType.THUMB);
