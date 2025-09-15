@@ -675,6 +675,7 @@ public final class TinyMediaManager {
    * make a clean shutdown
    */
   public static void shutdown() {
+    LOGGER.info("Shutting down tinyMediaManager");
     try {
       // persist all stored properties
       TmmProperties.getInstance().writeProperties();

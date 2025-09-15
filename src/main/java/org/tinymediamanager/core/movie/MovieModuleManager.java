@@ -62,7 +62,7 @@ import com.fasterxml.jackson.module.blackbird.BlackbirdModule;
 
 /**
  * The class MovieModuleManager. Used to manage the movies module
- * 
+ *
  * @author Manuel Laggner
  */
 public final class MovieModuleManager implements ITmmModule {
@@ -384,7 +384,6 @@ public final class MovieModuleManager implements ITmmModule {
     // write pending changes
     if (mvStore != null && !mvStore.isClosed()) {
       writePendingChanges(true);
-      mvStore.commit();
       mvStore.close();
     }
 
@@ -455,7 +454,6 @@ public final class MovieModuleManager implements ITmmModule {
       }
     }
     finally {
-      mvStore.commit();
       lock.writeLock().unlock();
     }
   }
@@ -467,7 +465,7 @@ public final class MovieModuleManager implements ITmmModule {
 
   /**
    * dumps a whole movie to logfile
-   * 
+   *
    * @param movie
    *          the movie to make the dump for
    */
@@ -480,7 +478,7 @@ public final class MovieModuleManager implements ITmmModule {
 
   /**
    * dumps a whole movieset to logfile
-   * 
+   *
    * @param movieSet
    *          the movieset to make the dump for
    */
@@ -493,7 +491,7 @@ public final class MovieModuleManager implements ITmmModule {
 
   /**
    * gets the JSON out of the DB from specified movie
-   * 
+   *
    * @param movie
    *          the {@link Movie} to dump the data for
    * @return JSON string
@@ -512,7 +510,7 @@ public final class MovieModuleManager implements ITmmModule {
 
   /**
    * gets the JSON out of the DB from specified movieSet
-   * 
+   *
    * @param movieSet
    *          the {@link MovieSet} to dump the data for
    * @return JSON string
@@ -530,6 +528,11 @@ public final class MovieModuleManager implements ITmmModule {
   }
 
   void persistMovie(Movie movie) {
+    if (!enabled) {
+      // do not accept saving objects when not enabled
+      return;
+    }
+
     // write movie to DB
     try {
       lock.writeLock().lock();
@@ -541,6 +544,11 @@ public final class MovieModuleManager implements ITmmModule {
   }
 
   void removeMovieFromDb(Movie movie) {
+    if (!enabled) {
+      // do not accept removing objects when not enabled
+      return;
+    }
+
     try {
       lock.writeLock().lock();
       pendingChanges.remove(movie);
@@ -552,6 +560,11 @@ public final class MovieModuleManager implements ITmmModule {
   }
 
   void persistMovieSet(MovieSet movieSet) {
+    if (!enabled) {
+      // do not accept saving objects when not enabled
+      return;
+    }
+
     try {
       lock.writeLock().lock();
       pendingChanges.put(movieSet, System.currentTimeMillis());
@@ -562,6 +575,11 @@ public final class MovieModuleManager implements ITmmModule {
   }
 
   void removeMovieSetFromDb(MovieSet movieSet) {
+    if (!enabled) {
+      // do not accept removing objects when not enabled
+      return;
+    }
+
     try {
       lock.writeLock().lock();
       movieSetMap.remove(movieSet.getDbId());

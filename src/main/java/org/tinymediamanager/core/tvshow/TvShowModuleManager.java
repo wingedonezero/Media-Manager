@@ -407,7 +407,6 @@ public final class TvShowModuleManager implements ITmmModule {
     // write pending changes
     if (mvStore != null && !mvStore.isClosed()) {
       writePendingChanges(true);
-      mvStore.commit();
       mvStore.close();
     }
 
@@ -482,7 +481,6 @@ public final class TvShowModuleManager implements ITmmModule {
       }
     }
     finally {
-      mvStore.commit();
       lock.writeLock().unlock();
     }
   }
@@ -595,6 +593,11 @@ public final class TvShowModuleManager implements ITmmModule {
   }
 
   void persistTvShow(TvShow tvShow) {
+    if (!enabled) {
+      // do not accept saving objects when not enabled
+      return;
+    }
+
     // write movie to DB
     try {
       lock.writeLock().lock();
@@ -606,6 +609,11 @@ public final class TvShowModuleManager implements ITmmModule {
   }
 
   void removeTvShowFromDb(TvShow tvShow) {
+    if (!enabled) {
+      // do not accept removing objects when not enabled
+      return;
+    }
+
     try {
       lock.writeLock().lock();
       pendingChanges.remove(tvShow);
@@ -617,6 +625,11 @@ public final class TvShowModuleManager implements ITmmModule {
   }
 
   void persistSeason(TvShowSeason season) {
+    if (!enabled) {
+      // do not accept saving objects when not enabled
+      return;
+    }
+
     try {
       lock.writeLock().lock();
       pendingChanges.put(season, System.currentTimeMillis());
@@ -627,6 +640,11 @@ public final class TvShowModuleManager implements ITmmModule {
   }
 
   void removeSeasonFromDb(TvShowSeason season) {
+    if (!enabled) {
+      // do not accept removing objects when not enabled
+      return;
+    }
+
     try {
       lock.writeLock().lock();
       pendingChanges.remove(season);
@@ -638,6 +656,11 @@ public final class TvShowModuleManager implements ITmmModule {
   }
 
   void persistEpisode(TvShowEpisode episode) {
+    if (!enabled) {
+      // do not accept saving objects when not enabled
+      return;
+    }
+
     try {
       lock.writeLock().lock();
       pendingChanges.put(episode, System.currentTimeMillis());
@@ -648,6 +671,11 @@ public final class TvShowModuleManager implements ITmmModule {
   }
 
   void removeEpisodeFromDb(TvShowEpisode episode) {
+    if (!enabled) {
+      // do not accept removing objects when not enabled
+      return;
+    }
+
     try {
       lock.writeLock().lock();
       pendingChanges.remove(episode);
