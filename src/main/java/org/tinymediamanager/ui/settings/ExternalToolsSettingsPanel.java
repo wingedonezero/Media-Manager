@@ -217,7 +217,7 @@ public class ExternalToolsSettingsPanel extends JPanel {
         TmmFontHelper.changeFont(taYtDlpParamHint, L2);
 
         JTextArea taYtDlpDefaultParams = new ReadOnlyTextArea(
-            "-f \"bv*+ba/best\" -S res: 1080 --merge-output-format mkv --concurrent-fragments 4 --abort-on-unavailable-fragment --fragment-retries 99");
+            "-f bv*+ba/best -S res: 1080 --merge-output-format mkv --concurrent-fragments 4 --abort-on-unavailable-fragment --fragment-retries 99");
         panelYtDlp.add(taYtDlpDefaultParams, "cell 1 6 2 1, growx, wmin 0");
         TmmFontHelper.changeFont(taYtDlpDefaultParams, L2);
 
