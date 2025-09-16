@@ -580,12 +580,8 @@ public class TvShowRenamer {
         break;
 
       default:
-        // add the given media file with the new path
-        MediaFile newMediaFile = new MediaFile(original);
-        newMediaFile.setPath(tvShow.getPathNIO().toAbsolutePath().toString());
-        neededMediaFiles.add(newMediaFile);
+        neededMediaFiles.add(original);
         break;
-
     }
 
     if (filenamings != null) {

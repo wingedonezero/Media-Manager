@@ -6,7 +6,7 @@ Version 5.2.2
 ---
 x [IMDB] better parse englishTitle #3049
 x [Renamer] fixed replacements of ... with its Unicode variant #3048
-x [Renamer] fixed renaming of TV show themes
+x [Renamer] fixed renaming preview of TV show extras
 x [Scraper] better matching, if scraped existing entry again with uncommon scraper #3051
 x [Scraper] OpenSubtitles.ORG - switch to VIP server if VIP
 x [UI] remove empty episode groups from TvShow upon scrape #3056
