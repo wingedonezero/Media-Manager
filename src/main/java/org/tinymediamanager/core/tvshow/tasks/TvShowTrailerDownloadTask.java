@@ -110,7 +110,7 @@ public class TvShowTrailerDownloadTask extends TmmTask {
       }
 
       try {
-        LOGGER.debug("try to download trailer '{}'", url);
+        LOGGER.debug("try to download trailer '{}'", trailer);
 
         Matcher matcher = Utils.YOUTUBE_PATTERN.matcher(url);
         if (matcher.matches()) {
