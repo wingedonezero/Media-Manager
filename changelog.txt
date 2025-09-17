@@ -5,6 +5,7 @@ Version 5.2.2
 + [UI] added a trailer column for TV shows too #3060
 ---
 x [IMDB] better parse englishTitle #3049
+x [IMDB] fix auto-downloading trailer on scrape #3064
 x [Renamer] fixed replacements of ... with its Unicode variant #3048
 x [Renamer] fixed renaming preview of TV show extras
 x [Scraper] better matching, if scraped existing entry again with uncommon scraper #3051

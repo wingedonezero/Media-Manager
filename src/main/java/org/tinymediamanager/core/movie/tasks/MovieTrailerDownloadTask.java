@@ -109,8 +109,10 @@ public class MovieTrailerDownloadTask extends TmmTask {
     for (MediaTrailer trailer : trailers) {
       String url = trailer.getUrl();
 
-      if (StringUtils.isBlank(url)) {
+      if (StringUtils.isBlank(url) && StringUtils.isBlank(trailer.getId())) {
         // no url - no download
+        // OR: an IMDB trailer, were we ONLY collect the ID, because we must generate the url on-the-fly
+        LOGGER.trace("Trailer has neither an ID, nor an url: {}", trailer);
         continue;
       }
 
