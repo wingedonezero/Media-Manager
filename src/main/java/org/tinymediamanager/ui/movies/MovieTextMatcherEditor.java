@@ -74,7 +74,7 @@ public class MovieTextMatcherEditor extends AbstractMatcherEditor<Movie> {
   }
 
   private void refilter() {
-    normalizedFilterText = StrgUtils.normalizeString(textComponent.getText());
+    normalizedFilterText = StrgUtils.normalizeString(textComponent.getText().strip());
     try {
       filterPattern = Pattern.compile(normalizedFilterText, Pattern.CASE_INSENSITIVE);
       fireChanged(new MovieMatcher());

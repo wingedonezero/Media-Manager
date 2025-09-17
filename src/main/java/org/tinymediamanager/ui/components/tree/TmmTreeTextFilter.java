@@ -93,7 +93,7 @@ public class TmmTreeTextFilter<E extends TmmTreeNode> extends EnhancedTextField 
 
       private void updateFilter() {
         String oldValue = filterText;
-        filterText = prepareFilterText();
+        filterText = prepareFilterText().strip();
         try {
           filterPattern = Pattern.compile(filterText, Pattern.CASE_INSENSITIVE);
           firePropertyChange(ITmmTreeFilter.TREE_FILTER_CHANGED, oldValue, filterText);

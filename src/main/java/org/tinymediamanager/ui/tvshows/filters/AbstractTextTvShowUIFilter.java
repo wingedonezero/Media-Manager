@@ -55,7 +55,7 @@ public abstract class AbstractTextTvShowUIFilter extends AbstractTvShowUIFilter 
    */
   @Override
   protected void filterChanged() {
-    normalizedFilterText = StrgUtils.normalizeString(textField.getText());
+    normalizedFilterText = StrgUtils.normalizeString(textField.getText().strip());
     try {
       filterPattern = Pattern.compile(normalizedFilterText, Pattern.CASE_INSENSITIVE);
     }
