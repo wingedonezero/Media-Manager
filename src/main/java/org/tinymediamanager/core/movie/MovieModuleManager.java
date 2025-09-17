@@ -40,6 +40,8 @@ import org.tinymediamanager.UpgradeTasks;
 import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.CustomNullStringSerializerProvider;
 import org.tinymediamanager.core.ITmmModule;
+import org.tinymediamanager.core.Message;
+import org.tinymediamanager.core.MessageManager;
 import org.tinymediamanager.core.NullKeySerializer;
 import org.tinymediamanager.core.Settings;
 import org.tinymediamanager.core.TmmResourceBundle;
@@ -400,7 +402,7 @@ public final class MovieModuleManager implements ITmmModule {
   }
 
   private synchronized void writePendingChanges(boolean force) {
-    if (mvStore == null || mvStore.isClosed()) {
+    if (mvStore == null || mvStore.isClosed() || pendingChanges.isEmpty()) {
       return;
     }
 
@@ -413,6 +415,15 @@ public final class MovieModuleManager implements ITmmModule {
       if (!lock.writeLock().tryLock()) {
         return;
       }
+    }
+
+    // check if the database is read-only
+    if (mvStore.isReadOnly()) {
+      MessageManager.getInstance()
+          .pushMessage(new Message(Message.MessageLevel.ERROR, "Movie database", "tmm.db.readonly", new String[] { MOVIE_DB }));
+      pendingChanges.clear();
+      lock.writeLock().unlock();
+      return;
     }
 
     try {
