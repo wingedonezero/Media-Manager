@@ -88,7 +88,7 @@ public class SubtitleSearchResult implements Comparable<SubtitleSearchResult> {
    *          the release name
    */
   public void setReleaseName(String releaseName) {
-    this.releaseName = StrgUtils.getNonNullString(releaseName);
+    this.releaseName = StrgUtils.getNonNullString(releaseName).strip();
   }
 
   /**
@@ -126,7 +126,7 @@ public class SubtitleSearchResult implements Comparable<SubtitleSearchResult> {
    *          the title
    */
   public void setTitle(String title) {
-    this.title = StrgUtils.getNonNullString(title);
+    this.title = StrgUtils.getNonNullString(title).strip();
   }
 
   /**
