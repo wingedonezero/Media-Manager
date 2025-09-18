@@ -16,8 +16,6 @@
 package org.tinymediamanager.ui.dialogs;
 
 import java.awt.BorderLayout;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -28,7 +26,6 @@ import javax.swing.JTextArea;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tinymediamanager.ReleaseInfo;
 import org.tinymediamanager.core.Message;
 import org.tinymediamanager.core.Message.MessageLevel;
 import org.tinymediamanager.core.MessageManager;
@@ -130,16 +127,19 @@ public class BugReportDialog extends TmmDialog {
 
     final JButton btnCreateIssue = new JButton(TmmResourceBundle.getString("BugReport.craeteissue"));
     btnCreateIssue.addActionListener(e -> {
-      // create the url for github
-      String baseUrl = "https://gitlab.com/tinyMediaManager/tinyMediaManager/issues/new?issuable_template=Bug&issue[description]=";
-      String params = "Version: " + ReleaseInfo.getRealVersion() + "  ";
-      params += "\nBuild: " + ReleaseInfo.getRealBuildDate() + "  ";
-      params += "\nOS: " + System.getProperty("os.name") + " " + System.getProperty("os.version") + "  ";
-      params += "\nJDK: " + System.getProperty("java.version") + " " + System.getProperty("os.arch") + " " + System.getProperty("java.vendor") + "  ";
+      String baseUrl = "https://gitlab.com/tinyMediaManager/tinyMediaManager/-/issues/new?issuable_template=Bug";
+
+      // does not work any longer, always prompting for replacement
+      // String baseUrl = "https://gitlab.com/tinyMediaManager/tinyMediaManager/issues/new?issuable_template=Bug&issue[description]=";
+      // String params = "Version: " + ReleaseInfo.getRealVersion() + " ";
+      // params += "\nBuild: " + ReleaseInfo.getRealBuildDate() + " ";
+      // params += "\nOS: " + System.getProperty("os.name") + " " + System.getProperty("os.version") + " ";
+      // params += "\nJDK: " + System.getProperty("java.version") + " " + System.getProperty("os.arch") + " " + System.getProperty("java.vendor") + "
+      // ";
 
       String url = "";
       try {
-        url = baseUrl + URLEncoder.encode(params, StandardCharsets.UTF_8);
+        url = baseUrl; // + URLEncoder.encode(params, StandardCharsets.UTF_8);
         TmmUIHelper.browseUrl(url);
       }
       catch (Exception ex) {
