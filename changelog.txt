@@ -19,6 +19,7 @@ x [UI] remove leading/trailing spaces in the text based filters
 x [UI] trigger duplicate check when loading a filter preset containing the duplicate filter
 x [Subtitle] always extract .zip subtitle downloads #3009
 x [Trailer] enhanced parsing of custom yt-dlp parameters #3045
+x [MediaInfo] better detection of 1.85:1 aspect ratio and its video format
 
 
 Version 5.2.1

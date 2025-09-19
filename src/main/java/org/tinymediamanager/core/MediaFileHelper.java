@@ -580,6 +580,7 @@ public class MediaFileHelper {
     else if (w <= blur(640) && h <= blur(360)) { // Wide 360p 360p 640×360 16:9
       return VIDEO_FORMAT_360P;
     }
+
     // https://en.wikipedia.org/wiki/480p
     else if (w <= blur(640) && h <= blur(480)) { // 480p 640×480 4:3
       return VIDEO_FORMAT_480P;
@@ -593,48 +594,41 @@ public class MediaFileHelper {
     else if (w <= blur(853) && h <= blur(480)) { // Wide 480p 853.33×480 16:9 (unscaled)
       return VIDEO_FORMAT_480P;
     }
-    else if (w <= blur(776) && h <= blur(592)) {
-      // 720x576 (PAL) (handbrake sometimes encode it to a max of 776 x 592)
+
+    else if (w <= blur(776) && h <= blur(592)) { // 720x576 (PAL) (handbrake sometimes encode it to a max of 776 x 592)
       return VIDEO_FORMAT_576P;
     }
-    else if (w <= blur(960) && h <= blur(544)) {
-      // 960x540 (sometimes 544 which is multiple of 16)
+    else if (w <= blur(960) && h <= blur(544)) { // PSVita 960x540 (sometimes 544 which is multiple of 16)
       return VIDEO_FORMAT_540P;
     }
-    else if (w <= blur(912) && h <= blur(384)) {
-      // ~960/400 down to 912x384 cropped 16:9
+    else if (w <= blur(912) && h <= blur(384)) { // ~960/400 down to 912x384 cropped 16:9
       return VIDEO_FORMAT_540P;
     }
     else if (w <= blur(1024) && h <= blur(576)) { // Wide 576p 1024×576 16:9
       return VIDEO_FORMAT_576P;
     }
-    else if (w <= blur(1280) && h <= blur(720)) { // 720p Widescreen 16:9
+
+    else if (w <= blur(1332) && h <= blur(720)) { // 720p Widescreen 1.85:1
+      // else if (w <= blur(1280) && h <= blur(720)) { // 720p Widescreen 16:9
+      // else if (w <= blur(960) && h <= blur(720)) { // 720p Widescreen 4:3
+      // else if (w <= blur(1080) && h <= blur(720)) { // 720p Rec. 601 3:2
       return VIDEO_FORMAT_720P;
     }
-    else if (w <= blur(960) && h <= blur(720)) { // 720p Widescreen 4:3
-      return VIDEO_FORMAT_720P;
-    }
-    else if (w <= blur(1080) && h <= blur(720)) { // 720p Rec. 601 3:2
-      return VIDEO_FORMAT_720P;
-    }
-    else if (w <= blur(1920) && h <= blur(1080)) { // 1080p HD Widescreen 16:9
+
+    else if (w <= blur(1998) && h <= blur(1080)) { // 1080p HD Widescreen 1.85:1
+      // else if (w <= blur(1920) && h <= blur(1080)) { // 1080p HD Widescreen 16:9
+      // else if (w <= blur(1440) && h <= blur(1080)) { // 1080p SD 4:3
+      // else if (w <= blur(1620) && h <= blur(1080)) { // 1080p Rec. 601 3:2
       return VIDEO_FORMAT_1080P;
     }
-    else if (w <= blur(1440) && h <= blur(1080)) { // 1080p SD 4:3
-      return VIDEO_FORMAT_1080P;
-    }
-    else if (w <= blur(1620) && h <= blur(1080)) { // 1080p Rec. 601 3:2
-      return VIDEO_FORMAT_1080P;
-    }
-    else if (w <= blur(1920) && h <= blur(1440)) { // 1440p HD Widescreen 4:3
+
+    else if (w <= blur(2664) && h <= blur(1440)) { // 1440p HD Widescreen 1.85:1
+      // else if (w <= blur(1920) && h <= blur(1440)) { // 1440p HD Widescreen 4:3
+      // else if (w <= blur(2160) && h <= blur(1440)) { // 1440p Rec. 601 3:2
+      // else if (w <= blur(2560) && h <= blur(1440)) { // 1440p HD Widescreen 16:9
       return VIDEO_FORMAT_1440P;
     }
-    else if (w <= blur(2160) && h <= blur(1440)) { // 1440p Rec. 601 3:2
-      return VIDEO_FORMAT_1440P;
-    }
-    else if (w <= blur(2560) && h <= blur(1440)) { // 1440p HD Widescreen 16:9
-      return VIDEO_FORMAT_1440P;
-    }
+
     else if (w <= blur(3840) && h <= blur(2160)) { // 4K Ultra-high-definition television
       return VIDEO_FORMAT_2160P;
     }
