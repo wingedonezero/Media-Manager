@@ -16,6 +16,7 @@ x [UI] fixed displaying saved rating source in settings #3055
 x [UI] added runtime/English Title to the episode metadata check #3059
 x [UI] re-added change markers in the renamer previews #3061
 x [UI] remove leading/trailing spaces in the text based filters
+x [Subtitle] always extract .zip subtitle downloads #3009
 x [Trailer] enhanced parsing of custom yt-dlp parameters #3045
 
 
