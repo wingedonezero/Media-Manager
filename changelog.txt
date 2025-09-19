@@ -20,6 +20,7 @@ x [UI] trigger duplicate check when loading a filter preset containing the dupli
 x [Subtitle] always extract .zip subtitle downloads #3009
 x [Trailer] enhanced parsing of custom yt-dlp parameters #3045
 x [MediaInfo] better detection of 1.85:1 aspect ratio and its video format
+x [Bluray] upgraded library, to support reading of UHD blurays 
 
 
 Version 5.2.1

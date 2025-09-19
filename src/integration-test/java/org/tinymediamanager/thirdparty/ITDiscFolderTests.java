@@ -29,7 +29,7 @@ public class ITDiscFolderTests extends BasicTest {
 
   @Test
   public void playlist() {
-    MediaFile mf = new MediaFile(Path.of("..\\libbluray\\src\\test\\resources\\blurays\\FifthElement"));
+    MediaFile mf = new MediaFile(Path.of("..\\libbluray\\src\\test\\resources\\blurays\\Tenebre"));
     List<MediaInfoFile> mifs = MediaFileHelper.detectRelevantFiles(mf);
     for (MediaInfoFile mif : mifs) {
       System.out.println("Relevant: " + mif.getFilename() + " - " + mif.getDuration());
