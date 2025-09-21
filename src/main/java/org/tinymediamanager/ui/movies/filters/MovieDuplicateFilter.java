@@ -55,7 +55,8 @@ public class MovieDuplicateFilter extends AbstractMovieUIFilter {
 
   @Override
   public void setFilterValue(Object value) {
-    // nothing to do
+    // will be called when loading pre-sets
+    movieList.searchDuplicates();
   }
 
   @Override

@@ -582,7 +582,6 @@ public class TvShowRenamer {
       default:
         neededMediaFiles.add(original);
         break;
-
     }
 
     if (filenamings != null) {
@@ -1750,6 +1749,7 @@ public class TvShowRenamer {
       ////////////////////////////////////////////////////////////////////////
       // NFO
       ////////////////////////////////////////////////////////////////////////
+
       case NFO:
         MediaFile nfo = new MediaFile(mf);
         newFilename += "." + mf.getExtension();
@@ -1760,6 +1760,7 @@ public class TvShowRenamer {
       ////////////////////////////////////////////////////////////////////////
       // THUMB
       ////////////////////////////////////////////////////////////////////////
+
       case THUMB:
         for (TvShowEpisodeThumbNaming thumbNaming : TvShowModuleManager.getInstance().getSettings().getEpisodeThumbFilenames()) {
           String thumbFilename = thumbNaming.getFilename(newFilename, getMediaFileExtension(mf));
@@ -1772,6 +1773,7 @@ public class TvShowRenamer {
       ////////////////////////////////////////////////////////////////////////
       // SUBTITLE
       ////////////////////////////////////////////////////////////////////////
+
       case SUBTITLE:
         List<MediaFileSubtitle> subtitles = mf.getSubtitles();
         newFilename += getStackingString(mf);
@@ -1815,6 +1817,7 @@ public class TvShowRenamer {
       ////////////////////////////////////////////////////////////////////////
       // FANART
       ////////////////////////////////////////////////////////////////////////
+
       case FANART:
         MediaFile fanart = new MediaFile(mf);
         fanart.setFile(seasonFolder.resolve(newFilename + "-fanart." + getMediaFileExtension(mf)));
@@ -1824,6 +1827,7 @@ public class TvShowRenamer {
       ////////////////////////////////////////////////////////////////////////
       // TRAILER
       ////////////////////////////////////////////////////////////////////////
+
       case TRAILER:
         MediaFile trailer = new MediaFile(mf);
         trailer.setFile(seasonFolder.resolve(newFilename + "-trailer." + mf.getExtension()));
@@ -1833,6 +1837,7 @@ public class TvShowRenamer {
       ////////////////////////////////////////////////////////////////////////
       // MEDIAINFO
       ////////////////////////////////////////////////////////////////////////
+
       case MEDIAINFO:
         MediaFile mediainfo = new MediaFile(mf);
         newFilename += getStackingString(mf); // ToDo
@@ -1843,6 +1848,7 @@ public class TvShowRenamer {
       ////////////////////////////////////////////////////////////////////////
       // VSMETA
       ////////////////////////////////////////////////////////////////////////
+
       case VSMETA:
         MediaFile vsmeta = new MediaFile(mf);
         // HACK: get video extension from "old" name, eg video.avi.vsmeta
@@ -1855,6 +1861,7 @@ public class TvShowRenamer {
       ////////////////////////////////////////////////////////////////////////
       // VIDEO_EXTRA
       ////////////////////////////////////////////////////////////////////////
+
       case EXTRA:
       case VIDEO_EXTRA:
         // this extra is for an episode -> move it at least to the season folder and try to replace the episode tokens
@@ -1874,6 +1881,7 @@ public class TvShowRenamer {
       ////////////////////////////////////////////////////////////////////////
       // SAMPLE
       ////////////////////////////////////////////////////////////////////////
+
       case SAMPLE:
         MediaFile sample = new MediaFile(mf);
         sample.setFile(seasonFolder.resolve(newFilename + "-sample." + mf.getExtension()));
@@ -1884,6 +1892,7 @@ public class TvShowRenamer {
       // AUDIO / TEXT / UNKNOWN / VIDEO_EXTRA
       // take the unknown part of the file name and attach it to the new file name
       ////////////////////////////////////////////////////////////////////////
+
       case AUDIO:
       case TEXT:
       case UNKNOWN:
@@ -2451,6 +2460,11 @@ public class TvShowRenamer {
       destination = StrgUtils.convertToAscii(destination, false);
     }
 
+    // replace three subsequent dots with the Unicode ellipsis character
+    if (TvShowModuleManager.getInstance().getSettings().isUnicodeReplacement()) {
+      destination = destination.replace("...", "…");
+    }
+
     // replace all leading/trailing separators
     destination = destination.replaceAll("^[ \\.\\-_]+", "");
     destination = destination.replaceAll("[ \\.\\-_]+$", "");
@@ -2463,11 +2477,6 @@ public class TvShowRenamer {
 
     // trim out unnecessary whitespaces
     destination = destination.replaceAll(" +", " ");
-
-    // replace three subsequent dots with the Unicode ellipsis character
-    if (TvShowModuleManager.getInstance().getSettings().isUnicodeReplacement()) {
-      destination = destination.replace("...", "…");
-    }
 
     return destination.strip();
   }

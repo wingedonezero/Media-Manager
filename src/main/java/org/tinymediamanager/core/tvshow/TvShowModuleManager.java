@@ -40,6 +40,8 @@ import org.tinymediamanager.UpgradeTasks;
 import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.CustomNullStringSerializerProvider;
 import org.tinymediamanager.core.ITmmModule;
+import org.tinymediamanager.core.Message;
+import org.tinymediamanager.core.MessageManager;
 import org.tinymediamanager.core.NullKeySerializer;
 import org.tinymediamanager.core.Settings;
 import org.tinymediamanager.core.TmmResourceBundle;
@@ -407,7 +409,6 @@ public final class TvShowModuleManager implements ITmmModule {
     // write pending changes
     if (mvStore != null && !mvStore.isClosed()) {
       writePendingChanges(true);
-      mvStore.commit();
       mvStore.close();
     }
 
@@ -424,6 +425,10 @@ public final class TvShowModuleManager implements ITmmModule {
   }
 
   private synchronized void writePendingChanges(boolean force) {
+    if (mvStore == null || mvStore.isClosed() || pendingChanges.isEmpty()) {
+      return;
+    }
+
     if (force) {
       // force write - wait until the lock is released
       lock.writeLock().lock();
@@ -433,6 +438,15 @@ public final class TvShowModuleManager implements ITmmModule {
       if (!lock.writeLock().tryLock()) {
         return;
       }
+    }
+
+    // check if the database is read-only
+    if (mvStore.isReadOnly()) {
+      MessageManager.getInstance()
+          .pushMessage(new Message(Message.MessageLevel.ERROR, "TV show database", "tmm.db.readonly", new String[] { TV_SHOW_DB }));
+      pendingChanges.clear();
+      lock.writeLock().unlock();
+      return;
     }
 
     try {
@@ -482,7 +496,6 @@ public final class TvShowModuleManager implements ITmmModule {
       }
     }
     finally {
-      mvStore.commit();
       lock.writeLock().unlock();
     }
   }
@@ -595,6 +608,11 @@ public final class TvShowModuleManager implements ITmmModule {
   }
 
   void persistTvShow(TvShow tvShow) {
+    if (!enabled) {
+      // do not accept saving objects when not enabled
+      return;
+    }
+
     // write movie to DB
     try {
       lock.writeLock().lock();
@@ -606,6 +624,11 @@ public final class TvShowModuleManager implements ITmmModule {
   }
 
   void removeTvShowFromDb(TvShow tvShow) {
+    if (!enabled) {
+      // do not accept removing objects when not enabled
+      return;
+    }
+
     try {
       lock.writeLock().lock();
       pendingChanges.remove(tvShow);
@@ -617,6 +640,11 @@ public final class TvShowModuleManager implements ITmmModule {
   }
 
   void persistSeason(TvShowSeason season) {
+    if (!enabled) {
+      // do not accept saving objects when not enabled
+      return;
+    }
+
     try {
       lock.writeLock().lock();
       pendingChanges.put(season, System.currentTimeMillis());
@@ -627,6 +655,11 @@ public final class TvShowModuleManager implements ITmmModule {
   }
 
   void removeSeasonFromDb(TvShowSeason season) {
+    if (!enabled) {
+      // do not accept removing objects when not enabled
+      return;
+    }
+
     try {
       lock.writeLock().lock();
       pendingChanges.remove(season);
@@ -638,6 +671,11 @@ public final class TvShowModuleManager implements ITmmModule {
   }
 
   void persistEpisode(TvShowEpisode episode) {
+    if (!enabled) {
+      // do not accept saving objects when not enabled
+      return;
+    }
+
     try {
       lock.writeLock().lock();
       pendingChanges.put(episode, System.currentTimeMillis());
@@ -648,6 +686,11 @@ public final class TvShowModuleManager implements ITmmModule {
   }
 
   void removeEpisodeFromDb(TvShowEpisode episode) {
+    if (!enabled) {
+      // do not accept removing objects when not enabled
+      return;
+    }
+
     try {
       lock.writeLock().lock();
       pendingChanges.remove(episode);

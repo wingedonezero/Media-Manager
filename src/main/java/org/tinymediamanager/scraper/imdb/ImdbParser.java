@@ -125,6 +125,7 @@ public abstract class ImdbParser {
   static final String                 INCLUDE_TV_SERIES        = "includeTvSeriesResults";
   static final String                 INCLUDE_SHORT            = "includeShortResults";
   static final String                 INCLUDE_VIDEOGAME        = "includeVideogameResults";
+  static final String                 INCLUDE_MUSICVIDEO       = "includeMusicVideoResults";
   static final String                 INCLUDE_PODCAST          = "includePodcastResults";
   static final String                 INCLUDE_ADULT            = "includeAdultResults";
   static final String                 INCLUDE_METACRITIC       = "includeMetacritic";
@@ -196,6 +197,15 @@ public abstract class ImdbParser {
    */
   protected boolean isIncludeVideogameResults() {
     return config.getValueAsBool(INCLUDE_VIDEOGAME, false);
+  }
+
+  /**
+   * should we include music video results
+   *
+   * @return true/false
+   */
+  protected boolean isIncludeMusicVideoResults() {
+    return config.getValueAsBool(INCLUDE_MUSICVIDEO, false);
   }
 
   /**
@@ -389,6 +399,9 @@ public abstract class ImdbParser {
       if (isIncludeVideogameResults()) {
         param += ",video_game";
       }
+      if (isIncludeMusicVideoResults()) {
+        param += ",music_video";
+      }
     }
     else if (options.getMediaType() == MediaType.TV_SHOW) {
       param = "&title_type=tv_series,tv_miniseries";
@@ -516,9 +529,23 @@ public abstract class ImdbParser {
     String language = options.getLanguage().getLanguage();
     String country = options.getCertificationCountry().getAlpha2(); // for passing the country to the scrape
 
-    String param = "&s=tt&ttype=ft"; // movies
-    if (options.getMediaType() == MediaType.TV_SHOW) {
-      param = "&s=tt&ttype=tv"; // all TV related, even TVmovies (which cannot be parsed as TV) - but there is no other option in basic search
+    String param = "";
+    if (options.getMediaType() == MediaType.MOVIE) {
+      param = "&s=tt&ttype=ft"; // movies
+      if (isIncludeMusicVideoResults()) {
+        param += "&ttype=mu";
+      }
+      if (isIncludeVideogameResults()) {
+        param += "&ttype=vg";
+      }
+    }
+    else {
+      if (options.getMediaType() == MediaType.TV_SHOW) {
+        param = "&s=tt&ttype=tv"; // all TV related, even TVmovies (which cannot be parsed as TV) - but there is no other option in basic search
+        if (isIncludePodcastResults()) {
+          param += "&ttype=pe&ttype=pe";
+        }
+      }
     }
 
     Url findUrl = new InMemoryCachedUrl(constructUrl("find/?q=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param));
@@ -735,7 +762,6 @@ public abstract class ImdbParser {
       if (md.getOriginalTitle().isEmpty()) {
         md.setOriginalTitle(md.getTitle());
       }
-      md.setEnglishTitle(JsonUtils.at(node, "/props/pageProps/mainColumnData/akas/edges/0/node/text").asText());
       md.setYear(JsonUtils.at(node, "/props/pageProps/aboveTheFoldData/releaseYear/year").asInt(0));
 
       JsonNode plotNode = JsonUtils.at(node, "/props/pageProps/aboveTheFoldData/plot/plotText");
@@ -907,15 +933,26 @@ public abstract class ImdbParser {
       }
 
       JsonNode countriesNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/countriesDetails/countries");
+      boolean hasUS = false;
       for (ImdbCountry country : JsonUtils.parseList(mapper, countriesNode, ImdbCountry.class)) {
-        if (isScrapeLanguageNames()) {
+        if (country.id.equals("US")) {
+          hasUS = true;
+        }
+        if (isScrapeLanguageNames() && StringUtils.isNotBlank(country.text)) {
           md.addCountry(country.text);
         }
         else {
           md.addCountry(country.id);
         }
       }
-
+      if (hasUS) {
+        // use original title as english title
+        md.setEnglishTitle(md.getOriginalTitle());
+      }
+      else {
+        // parse first AKA as English title
+        md.setEnglishTitle(JsonUtils.at(node, "/props/pageProps/mainColumnData/akas/edges/0/node/text").asText());
+      }
       JsonNode prods = JsonUtils.at(node, "/props/pageProps/mainColumnData/production/edges");
       for (JsonNode p : ListUtils.nullSafe(prods)) {
         md.addProductionCompany(p.at("/node/company/companyText/text").asText());
@@ -1127,7 +1164,6 @@ public abstract class ImdbParser {
         if (md.getOriginalTitle().isEmpty()) {
           md.setOriginalTitle(md.getTitle());
         }
-        md.setEnglishTitle(JsonUtils.at(node, "/props/pageProps/mainColumnData/akas/edges/0/node/text").asText());
         md.setTagline(JsonUtils.at(node, "/props/pageProps/mainColumnData/taglines/edges/0/node/text").asText());
         md.setYear(JsonUtils.at(node, "/props/pageProps/mainColumnData/releaseYear/year").asInt(0));
 
@@ -1165,13 +1201,25 @@ public abstract class ImdbParser {
         }
 
         JsonNode countriesNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/countriesOfOrigin/countries");
+        boolean hasUS = false;
         for (ImdbCountry country : JsonUtils.parseList(mapper, countriesNode, ImdbCountry.class)) {
-          if (isScrapeLanguageNames()) {
+          if (country.id.equals("US")) {
+            hasUS = true;
+          }
+          if (isScrapeLanguageNames() && StringUtils.isNotBlank(country.text)) {
             md.addCountry(country.text);
           }
           else {
             md.addCountry(country.id);
           }
+        }
+        if (hasUS) {
+          // use original title as english title
+          md.setEnglishTitle(md.getOriginalTitle());
+        }
+        else {
+          // parse first AKA as English title
+          md.setEnglishTitle(JsonUtils.at(node, "/props/pageProps/mainColumnData/akas/edges/0/node/text").asText());
         }
 
         JsonNode releaseDateNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/releaseDate");

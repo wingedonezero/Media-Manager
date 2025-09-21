@@ -17,8 +17,10 @@ package org.tinymediamanager.ui.tvshows;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.lang3.StringUtils;
@@ -266,8 +268,23 @@ public class TvShowChooserModel extends AbstractModelObject {
       // also inject other ids
       MediaIdUtil.injectMissingIds(metadata.getIds(), MediaType.TV_SHOW);
 
+      // check for empty EGs
+      // it happens, that the SHOW says we have some EGs like absolute,
+      // but they do not return any episode having that.
+      Set<MediaEpisodeGroup> usedEpEg = new HashSet<MediaEpisodeGroup>();
+      for (MediaMetadata ep : episodeList) {
+        for (MediaEpisodeGroup eg : ep.getEpisodeNumbers().keySet()) {
+          usedEpEg.add(eg);
+        }
+      }
+
+      for (MediaEpisodeGroup showEg : metadata.getEpisodeGroups()) {
+        if (usedEpEg.contains(showEg)) {
+          episodeGroups.add(showEg);
+        }
+      }
+
       // if we do have more than one episode group, we need the episode list too
-      episodeGroups.addAll(metadata.getEpisodeGroups());
       Collections.sort(episodeGroups);
       if (episodeGroups.size() > 1) {
         // try to find out which episode group matches best

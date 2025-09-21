@@ -53,7 +53,8 @@ public class TvShowDuplicateEpisodesFilter extends AbstractTvShowUIFilter {
 
   @Override
   public void setFilterValue(Object value) {
-    // nothing to do
+    // will be called when loading presets
+    tvShowList.searchDuplicateEpisodes();
   }
 
   @Override

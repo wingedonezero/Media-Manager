@@ -99,7 +99,7 @@ public abstract class BasicITest {
     }
 
     if (StringUtils.isNotBlank(key)) {
-      License.getInstance().init520();
+      License.getInstance().init522();
       License.getInstance().setLicenseCode(key);
     }
   }

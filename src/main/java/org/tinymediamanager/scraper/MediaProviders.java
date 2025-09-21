@@ -65,6 +65,8 @@ import org.tinymediamanager.scraper.opensubtitles.OpenSubtitlesTvShowSubtitlePro
 import org.tinymediamanager.scraper.opensubtitles_com.OpenSubtitlesComMovieSubtitleProvider;
 import org.tinymediamanager.scraper.opensubtitles_com.OpenSubtitlesComTvShowSubtitleProvider;
 import org.tinymediamanager.scraper.spi.IAddonProvider;
+import org.tinymediamanager.scraper.subdl.SubdlMovieSubtitleProvider;
+import org.tinymediamanager.scraper.subdl.SubdlTvShowSubtitleProvider;
 import org.tinymediamanager.scraper.thesportsdb.TheSportsDbTvShowMetadataProvider;
 import org.tinymediamanager.scraper.thetvdb.TheTvDbMovieArtworkProvider;
 import org.tinymediamanager.scraper.thetvdb.TheTvDbMovieMetadataProvider;
@@ -177,6 +179,7 @@ public class MediaProviders {
     loadProvider(OpenSubtitlesComMovieSubtitleProvider.class);
     loadProvider(OpenSubtitlesMovieSubtitleProvider.class); // obsolete as of 2024-01-01, but still working
     loadProvider(YifySubtitlesProvider.class);
+    loadProvider(SubdlMovieSubtitleProvider.class);
 
     // addons
     loadAddonsForInterface(addons, IMovieSubtitleProvider.class);
@@ -245,6 +248,7 @@ public class MediaProviders {
     /////////////////////////////////////////////
     loadProvider(OpenSubtitlesComTvShowSubtitleProvider.class);
     loadProvider(OpenSubtitlesTvShowSubtitleProvider.class); // obsolete as of 2024-01-01, but still working
+    loadProvider(SubdlTvShowSubtitleProvider.class);
 
     // addons
     loadAddonsForInterface(addons, ITvShowSubtitleProvider.class);

@@ -1,3 +1,29 @@
+Version 5.2.2
+=======================
++ [Scraper] when scraping Anime, try to get all available IDs from other anime sites.
++ [IMDB] able to include music video in search results (check scraper settings)
+x [Subtitle] added SubDL as a new subtitles scraper (personal API key needed!) #2631
++ [UI] added a trailer column for TV shows too #3060
+---
+x [IMDB] better parse englishTitle #3049
+x [IMDB] fix auto-downloading trailer on scrape #3064
+x [TMDB] fix replacing generic episode title w/o fallback language #3063
+x [Renamer] fixed replacements of ... with its Unicode variant #3048
+x [Renamer] fixed renaming preview of TV show extras
+x [Scraper] better matching, if scraped existing entry again with uncommon scraper #3051
+x [Scraper] OpenSubtitles.ORG - switch to VIP server if VIP
+x [UI] remove empty episode groups from TvShow upon scrape #3056
+x [UI] fixed displaying saved rating source in settings #3055
+x [UI] added runtime/English Title to the episode metadata check #3059
+x [UI] re-added change markers in the renamer previews #3061
+x [UI] remove leading/trailing spaces in the text based filters
+x [UI] trigger duplicate check when loading a filter preset containing the duplicate filter
+x [Subtitle] always extract .zip subtitle downloads #3009
+x [Trailer] enhanced parsing of custom yt-dlp parameters #3045
+x [MediaInfo] better detection of 1.85:1 aspect ratio and its video format
+x [Bluray] upgraded library, to support reading of UHD blurays 
+
+
 Version 5.2.1
 =======================
 + [Trailer] added a new option to set custom download parameters for yt-dlp

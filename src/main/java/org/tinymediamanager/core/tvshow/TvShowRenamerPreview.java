@@ -92,7 +92,11 @@ public class TvShowRenamerPreview {
       MediaFileTypeContainer c = new MediaFileTypeContainer();
       for (MediaFile typeMf : tvShow.getMediaFiles(type)) {
         c.oldFiles.add(container.getOldPath().relativize(typeMf.getFileAsPath()).toString());
-        List<MediaFile> mfs = TvShowRenamer.generateFilename(clone, new MediaFile(typeMf));
+
+        MediaFile mediaFileClone = new MediaFile(typeMf);
+        mediaFileClone.setPath(typeMf.getPath().replace(container.getOldPath().toString(), container.getNewPath().toString()));
+
+        List<MediaFile> mfs = TvShowRenamer.generateFilename(clone, mediaFileClone);
         for (MediaFile mf : mfs) {
           c.newFiles.add(container.getNewPath().relativize(mf.getFileAsPath()).toString());
         }

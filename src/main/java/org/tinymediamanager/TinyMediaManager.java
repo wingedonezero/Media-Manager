@@ -131,6 +131,7 @@ public final class TinyMediaManager {
 
     // load settings and set default locale
     Locale.setDefault(Utils.getLocaleFromLanguage(Settings.getInstance().getLanguage()));
+    TmmResourceBundle.clearCache(); // to reinitialize correct langu, see #3053
     newVersion = !Settings.getInstance().isCurrentVersion(); // same snapshots/git considered as "new", for upgrades
 
     printLogHeader();
@@ -633,7 +634,7 @@ public final class TinyMediaManager {
     Thread.setDefaultUncaughtExceptionHandler(new Log4jBackstop());
 
     try {
-      License.getInstance().init520();
+      License.getInstance().init522();
     }
     catch (Exception e) {
       LOGGER.error("Could not initialize license module!");
@@ -674,6 +675,7 @@ public final class TinyMediaManager {
    * make a clean shutdown
    */
   public static void shutdown() {
+    LOGGER.info("Shutting down tinyMediaManager");
     try {
       // persist all stored properties
       TmmProperties.getInstance().writeProperties();

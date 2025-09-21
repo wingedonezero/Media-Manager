@@ -29,6 +29,7 @@ import org.tinymediamanager.scraper.MediaMetadata;
 import org.tinymediamanager.scraper.MediaProviders;
 import org.tinymediamanager.scraper.MediaScraper;
 import org.tinymediamanager.scraper.ScraperType;
+import org.tinymediamanager.scraper.animeofflinedb.AnimeOfflineDb;
 import org.tinymediamanager.scraper.entities.MediaType;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
 import org.tinymediamanager.scraper.interfaces.IMediaIdProvider;
@@ -41,7 +42,9 @@ import org.tinymediamanager.scraper.interfaces.ITvShowMetadataProvider;
  * @author Manuel Laggner
  */
 public class MediaIdUtil {
-  private static final Logger LOGGER = LoggerFactory.getLogger(MediaIdUtil.class);
+  private static final Logger       LOGGER          = LoggerFactory.getLogger(MediaIdUtil.class);
+  private static final List<String> KNOWN_ANIME_IDS = List.of(MediaMetadata.ANIDB, MediaMetadata.MY_ANIME_LIST, "animeplanet", "kitsu", "anisearch",
+      "anilist", "notify", "animecountdown", "animenewsnetwork", "livechart");
 
   private MediaIdUtil() {
     throw new IllegalAccessError();
@@ -158,10 +161,12 @@ public class MediaIdUtil {
     switch (mediaType) {
       case MOVIE:
         injectMovieIds(ids);
+        injectAnimeIds(ids);
         break;
 
       case TV_SHOW:
         injectTvShowIds(ids);
+        injectAnimeIds(ids);
         break;
 
       case TV_EPISODE:
@@ -171,6 +176,51 @@ public class MediaIdUtil {
       default:
         break;
     }
+  }
+
+  private static void injectAnimeIds(Map<String, Object> ids) {
+    if (hasAnimeIds(ids)) {
+      AnimeOfflineDb dataset = AnimeOfflineDb.getInstance();
+
+      for (String id : KNOWN_ANIME_IDS) {
+        // always use String, map will contain correct type
+        String val = getIdAsString(ids, id);
+        if (!val.isBlank()) {
+          Map<String, Object> map = dataset.getIdsFor(id, val);
+          if (!map.isEmpty()) {
+            ids.putAll(map);
+            break; // we only need one to get the rest
+          }
+        }
+      }
+
+    }
+  }
+
+  /**
+   * does our map contain at least one known anime id?
+   * 
+   * @param ids
+   * @return
+   */
+  public static boolean hasAnimeIds(Map<String, Object> ids) {
+    for (String id : KNOWN_ANIME_IDS) {
+      if (ids.containsKey(id)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * is this a known anime id?
+   * 
+   * @param id
+   *          the id to check
+   * @return true/false
+   */
+  public static boolean isAnimeId(String id) {
+    return KNOWN_ANIME_IDS.contains(id);
   }
 
   /**

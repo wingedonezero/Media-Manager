@@ -26,6 +26,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.Settings;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.threading.TmmTaskHandle.TaskState;
@@ -37,6 +39,8 @@ import org.tinymediamanager.core.threading.TmmThreadPool.TmmThreadFactory;
  * @author Manuel Laggner
  */
 public class TmmTaskManager implements TmmTaskListener {
+  private static final Logger            LOGGER        = LoggerFactory.getLogger(TmmTaskManager.class);
+
   public final AtomicLong                GLOB_THRD_CNT = new AtomicLong(1);
 
   private static final TmmTaskManager    instance      = new TmmTaskManager();
@@ -322,6 +326,7 @@ public class TmmTaskManager implements TmmTaskListener {
    * shut down all threads
    */
   public void shutdown() {
+    LOGGER.info("Sending shutdown signal to running tasks");
     isShutdown = true;
 
     if (imageDownloadExecutor != null) {
@@ -349,35 +354,46 @@ public class TmmTaskManager implements TmmTaskListener {
    * hard shutdown of all tasks after a max of 4 secs waiting
    */
   public void shutdownNow() {
+    LOGGER.info("Stopping task executors");
     isShutdown = true;
 
-    if (isPoolRunning()) {
-      // give the threads 4 seconds to finish
-      try {
-        Thread.sleep(4000);
-      }
-      catch (Exception ignored) {
-      }
-    }
-
     // check if all finished
-    if (imageDownloadExecutor != null && !imageDownloadExecutor.isTerminated()) {
-      imageDownloadExecutor.shutdownNow();
+    boolean stopped = true;
+
+    try {
+      if (imageDownloadExecutor != null && !imageDownloadExecutor.isTerminated()) {
+        imageDownloadExecutor.shutdownNow();
+        stopped = stopped && imageDownloadExecutor.awaitTermination(5, TimeUnit.SECONDS);
+      }
+      if (imageCacheExecutor != null && !imageCacheExecutor.isTerminated()) {
+        imageCacheExecutor.shutdownNow();
+        stopped = stopped && imageCacheExecutor.awaitTermination(5, TimeUnit.SECONDS);
+      }
+      if (unnamedTaskExecutor != null && !unnamedTaskExecutor.isTerminated()) {
+        unnamedTaskExecutor.shutdownNow();
+        stopped = stopped && unnamedTaskExecutor.awaitTermination(5, TimeUnit.SECONDS);
+      }
+      if (downloadExecutor != null && !downloadExecutor.isTerminated()) {
+        downloadExecutor.shutdownNow();
+        stopped = stopped && downloadExecutor.awaitTermination(5, TimeUnit.SECONDS);
+      }
+      if (!mainTaskExecutor.isTerminated()) {
+        mainTaskExecutor.shutdownNow();
+        stopped = stopped && mainTaskExecutor.awaitTermination(5, TimeUnit.SECONDS);
+      }
+      if (!scheduler.isTerminated()) {
+        scheduler.shutdownNow();
+        stopped = stopped && scheduler.awaitTermination(5, TimeUnit.SECONDS);
+      }
     }
-    if (imageCacheExecutor != null && !imageCacheExecutor.isTerminated()) {
-      imageCacheExecutor.shutdownNow();
+    catch (InterruptedException ignored) {
+      // ignore
     }
-    if (unnamedTaskExecutor != null && !unnamedTaskExecutor.isTerminated()) {
-      unnamedTaskExecutor.shutdownNow();
+    if (stopped) {
+      LOGGER.info("All task executors could be stopped");
     }
-    if (downloadExecutor != null && !downloadExecutor.isTerminated()) {
-      downloadExecutor.shutdownNow();
-    }
-    if (!mainTaskExecutor.isTerminated()) {
-      mainTaskExecutor.shutdownNow();
-    }
-    if (!scheduler.isTerminated()) {
-      scheduler.shutdownNow();
+    else {
+      LOGGER.warn("Could not stop all task executors");
     }
   }
 

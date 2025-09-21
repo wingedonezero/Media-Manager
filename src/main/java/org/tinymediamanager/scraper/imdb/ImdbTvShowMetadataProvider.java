@@ -53,6 +53,7 @@ public class ImdbTvShowMetadataProvider extends ImdbMetadataProvider implements 
     // providerInfo.getConfig().addBoolean(INCLUDE_SHORT, false); // tvshorts are mostly ads, hence "movies"
     // providerInfo.getConfig().addBoolean(INCLUDE_MOVIE, false); // movies cannot be parsed via TV!
     // providerInfo.getConfig().addBoolean(INCLUDE_VIDEOGAME, false); // look like movies
+    // providerInfo.getConfig().addBoolean(INCLUDE_MUSICVIDEOS, false); // look like movies
     providerInfo.getConfig().addBoolean(INCLUDE_PODCAST, false);
     providerInfo.getConfig().addBoolean(INCLUDE_ADULT, false);
 

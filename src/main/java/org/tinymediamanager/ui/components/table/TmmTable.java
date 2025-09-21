@@ -249,6 +249,25 @@ public class TmmTable extends JTable {
     resizeAndRepaint();
   }
 
+  public void adjustRowHeights() {
+    for (int row = 0; row < getRowCount(); row++) {
+      int maxHeight = 0;
+
+      for (int col = 0; col < getColumnCount(); col++) {
+        TableCellRenderer renderer = getCellRenderer(row, col);
+        Component comp = renderer.getTableCellRendererComponent(this, getValueAt(row, col), false, false, row, col);
+
+        comp.setSize(getColumnModel().getColumn(col).getWidth(), Integer.MAX_VALUE);
+        int preferredHeight = comp.getPreferredSize().height;
+        maxHeight = Math.max(maxHeight, preferredHeight);
+      }
+
+      if (getRowHeight(row) != maxHeight) {
+        setRowHeight(row, maxHeight);
+      }
+    }
+  }
+
   /**
    * Overridden to install special button into the upper right hand corner.
    *

@@ -1549,6 +1549,11 @@ public class MovieRenamer {
       newDestination = newDestination.replaceAll(Pattern.quote(replacement) + "+", replacement);
     }
 
+    // replace three subsequent dots with the Unicode ellipsis character
+    if (MovieModuleManager.getInstance().getSettings().isUnicodeReplacement()) {
+      newDestination = newDestination.replace("...", "…");
+    }
+
     // replace all leading/trailing separators (except the underscore which could be valid in the front)
     newDestination = newDestination.replaceAll("^[ \\.\\-]+", "");
     newDestination = newDestination.replaceAll("[ \\.\\-_]+$", "");
@@ -1570,11 +1575,6 @@ public class MovieRenamer {
     if (SystemUtils.IS_OS_WINDOWS) {
       // remove illegal characters on Windows
       newDestination = newDestination.replace("\"", " ");
-    }
-
-    // replace three subsequent dots with the Unicode ellipsis character
-    if (MovieModuleManager.getInstance().getSettings().isUnicodeReplacement()) {
-      newDestination = newDestination.replace("...", "…");
     }
 
     return newDestination.strip();
