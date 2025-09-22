@@ -148,6 +148,7 @@ public class MediaInfoXmlCreator {
     normalizedTag = normalizedTag.replace(':', '_'); // faster than replaceAll
     normalizedTag = normalizedTag.replace('.', '_'); // faster than replaceAll
     normalizedTag = normalizedTag.replace(' ', '_'); // no spaces allowed
+    normalizedTag = normalizedTag.replace("&", "_"); // XML encode
 
     // first character must not be a digit
     if (FIRST_CHARACTER_DIGIT_PATTERN.matcher(normalizedTag).find()) {

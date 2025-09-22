@@ -22,7 +22,9 @@ x [Subtitle] always extract .zip subtitle downloads #3009
 x [Trailer] enhanced parsing of custom yt-dlp parameters #3045
 x [MediaInfo] better detection of 1.85:1 aspect ratio and its video format
 x [Bluray] upgraded library, to support reading of UHD blurays 
-x [ISO] fix parsing DVD ISO files, error handling
+x [ISO] fix parsing DVD & Bluray ISO files, error handling 
+  You should reload MediaInformation for all your ISO entries.
+x [MediaInfo] error handling on XML creation
 
 
 Version 5.2.1
