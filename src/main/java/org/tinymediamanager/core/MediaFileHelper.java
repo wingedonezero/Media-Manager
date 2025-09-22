@@ -1258,6 +1258,14 @@ public class MediaFileHelper {
         if (!relevantFiles.contains(mif)) {
           continue;
         }
+        else {
+          // find it
+          MediaInfoFile rel = relevantFiles.stream()
+              .filter(mediaInfoFile -> mediaInfoFile.getFilename().equals(mif.getFilename()) && mediaInfoFile.getPath().equals(mif.getPath()))
+              .findAny()
+              .orElse(null);
+          mif.setContents(rel.getContents()); // copy previous read content
+        }
 
         LOGGER.trace("ISO: got entry {}, size : {}", entry.getName(), entry.getSize());
 
@@ -1537,15 +1545,26 @@ public class MediaFileHelper {
           continue;
         }
 
-        if (vts.getContents() == null) {
-          FileInputStream fin = new FileInputStream(vts.getFileAsPath().toString());
-          din = new DataInputStream(new BufferedInputStream(fin));
+        DataInputStream ifo = null;
+        try {
+          if (vts.getContents() == null) {
+            FileInputStream fin = new FileInputStream(vts.getFileAsPath().toString());
+            ifo = new DataInputStream(new BufferedInputStream(fin));
+          }
+          else {
+            ifo = new DataInputStream(new ByteArrayInputStream(vts.getContents()));
+          }
+          dvd.readVtsIfo(ifo, vtsn);
+          ifo.close();
         }
-        else {
-          din = new DataInputStream(new ByteArrayInputStream(vts.getContents()));
+        catch (Exception e) {
+          LOGGER.warn("Error parsing {}: {}", file, e.getMessage());
         }
-        dvd.readVtsIfo(din, vtsn);
-        din.close();
+        finally {
+          if (ifo != null) {
+            ifo.close();
+          }
+        }
       }
       // DVD/IFO files completely read
 
