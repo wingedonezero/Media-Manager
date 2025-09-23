@@ -61,6 +61,7 @@ import org.tinymediamanager.scraper.ScraperType;
 import org.tinymediamanager.scraper.entities.MediaLanguages;
 import org.tinymediamanager.scraper.rating.RatingProvider;
 import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.ParserUtils;
 
 /**
  * the class {@link MovieCommandTask} handles movie related API calls
@@ -226,7 +227,7 @@ class MovieCommandTask extends TmmThreadPool {
           if (StringUtils.isNotBlank(command.args.get("scraper"))) {
             String scraperId = command.args.get("scraper");
             MediaScraper scraper = MediaScraper.getMediaScraperById(scraperId, ScraperType.MOVIE);
-            if (scraper != null) {
+            if (scraper != null && scraper.isEnabled()) {
               options.setMetadataScraper(scraper);
             }
           }
@@ -408,6 +409,20 @@ class MovieCommandTask extends TmmThreadPool {
             selectedArtworkScrapers.add(artworkScraper);
           }
         }
+
+        // override default scrapers?
+        if (StringUtils.isNotBlank(command.args.get("scraper"))) {
+          selectedArtworkScrapers.clear();
+
+          List<String> scraperIds = ParserUtils.split(command.args.get("scraper"));
+          for (String id : scraperIds) {
+            MediaScraper scraper = MediaScraper.getMediaScraperById(id, ScraperType.MOVIE_ARTWORK);
+            if (scraper != null && scraper.isEnabled()) {
+              selectedArtworkScrapers.add(scraper);
+            }
+          }
+        }
+
         movieSearchAndScrapeConfig.setArtworkScraper(selectedArtworkScrapers);
 
         activeTask = new MovieMissingArtworkDownloadTask(getMoviesForScope(command.scope), movieSearchAndScrapeConfig,

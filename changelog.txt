@@ -4,6 +4,7 @@ Version 5.2.2
 + [IMDB] able to include music video in search results (check scraper settings)
 x [Subtitle] added SubDL as a new subtitles scraper (personal API key needed!) #2631
 + [UI] added a trailer column for TV shows too #3060
++ [HTTP API] added a param to override the chosen artwork scraper(s) for downloading missing artwork #3068
 ---
 x [IMDB] better parse englishTitle #3049
 x [IMDB] fix auto-downloading trailer on scrape #3064
