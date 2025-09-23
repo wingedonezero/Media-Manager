@@ -18,6 +18,7 @@ x [UI] added runtime/English Title to the episode metadata check #3059
 x [UI] re-added change markers in the renamer previews #3061
 x [UI] remove leading/trailing spaces in the text based filters
 x [UI] trigger duplicate check when loading a filter preset containing the duplicate filter
+x [UI] fixed displaying of movie plot & note in movie set module #3071
 x [Subtitle] always extract .zip subtitle downloads #3009
 x [Trailer] enhanced parsing of custom yt-dlp parameters #3045
 x [MediaInfo] better detection of 1.85:1 aspect ratio and its video format
