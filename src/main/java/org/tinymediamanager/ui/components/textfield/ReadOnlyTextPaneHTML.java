@@ -30,14 +30,14 @@ import org.tinymediamanager.ui.TmmUIHelper;
  * @author Myron Boyle
  */
 public class ReadOnlyTextPaneHTML extends ReadOnlyTextPane {
-
-  private static final long                    serialVersionUID = 1L;
-  private static final Document.OutputSettings NO_PRETTYPRINT   = new Document.OutputSettings().prettyPrint(false);
+  private static final Document.OutputSettings NO_PRETTYPRINT = new Document.OutputSettings().prettyPrint(false);
+  private static final String                  NO_TEXT        = "<html><body> </body></html>";
 
   public ReadOnlyTextPaneHTML() {
     super();
 
     setContentType("text/html");
+    setText(NO_TEXT);
 
     addHyperlinkListener(e -> {
       if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType())) {
@@ -49,12 +49,14 @@ public class ReadOnlyTextPaneHTML extends ReadOnlyTextPane {
         }
       }
     });
+
+    updateUI();
   }
 
   @Override
   public void setText(String t) {
     if (t == null || t.isEmpty()) {
-      super.setText("<html></html>");
+      super.setText(NO_TEXT);
     }
     else {
       if (t.startsWith("<html>")) {
@@ -73,14 +75,13 @@ public class ReadOnlyTextPaneHTML extends ReadOnlyTextPane {
           t = t.replaceAll("(?:https|http)://([^\\s]+)", "<a href=\"$0\">$1</a>");
           // whitespace before WWW to not include former style!!!
           t = t.replaceAll("(?:^|\\s)(www\\.[^\\s]+)", " <a href=\"https://$1\">$1</a>");
-
-          super.setText("<html>" + t + "</html>");
         }
         else {
           // no HTML links found to upgrade
           t = t.replaceAll("\\n", " <br/> ");
-          super.setText(t);
         }
+
+        super.setText("<html><body>" + t + "</body></html>");
       }
     }
   }

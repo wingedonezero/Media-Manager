@@ -1258,6 +1258,14 @@ public class MediaFileHelper {
         if (!relevantFiles.contains(mif)) {
           continue;
         }
+        else {
+          // find it
+          MediaInfoFile rel = relevantFiles.stream()
+              .filter(mediaInfoFile -> mediaInfoFile.getFilename().equals(mif.getFilename()) && mediaInfoFile.getPath().equals(mif.getPath()))
+              .findAny()
+              .orElse(null);
+          mif.setContents(rel.getContents()); // copy previous read content
+        }
 
         LOGGER.trace("ISO: got entry {}, size : {}", entry.getName(), entry.getSize());
 
@@ -1537,15 +1545,26 @@ public class MediaFileHelper {
           continue;
         }
 
-        if (vts.getContents() == null) {
-          FileInputStream fin = new FileInputStream(vts.getFileAsPath().toString());
-          din = new DataInputStream(new BufferedInputStream(fin));
+        DataInputStream ifo = null;
+        try {
+          if (vts.getContents() == null) {
+            FileInputStream fin = new FileInputStream(vts.getFileAsPath().toString());
+            ifo = new DataInputStream(new BufferedInputStream(fin));
+          }
+          else {
+            ifo = new DataInputStream(new ByteArrayInputStream(vts.getContents()));
+          }
+          dvd.readVtsIfo(ifo, vtsn);
+          ifo.close();
         }
-        else {
-          din = new DataInputStream(new ByteArrayInputStream(vts.getContents()));
+        catch (Exception e) {
+          LOGGER.warn("Error parsing {}: {}", file, e.getMessage());
         }
-        dvd.readVtsIfo(din, vtsn);
-        din.close();
+        finally {
+          if (ifo != null) {
+            ifo.close();
+          }
+        }
       }
       // DVD/IFO files completely read
 
@@ -2897,23 +2916,29 @@ public class MediaFileHelper {
   private static void gatherMediaInformationFromDvdFile(MediaFile mediaFile, List<MediaInfoFile> mediaInfoFiles) {
 
     MediaInfoFile ifo = null;
-    // FIXME: since we now have multiple files, each will overwrite the former :/
+    // since we now have multiple files, each will overwrite the former :/
+    // so we add some basic checks
     // parse VOBs first
     int videoDur = 0;
     for (MediaInfoFile mif : mediaInfoFiles) {
       mif.gatherMediaInformation();
       if (mif.getFileExtension().equalsIgnoreCase("vob")) {
-        gatherVideoInformation(mediaFile, mif.getSnapshot());
-        gatherAudioInformation(mediaFile, mif.getSnapshot());
-
-        // there is no exact overall bitrate for the whole DVD, so we just take the one from the biggest VOB
-        String br = getMediaInfoValue(mif.getSnapshot(), MediaInfo.StreamKind.General, 0, "OverallBitRate");
-        if (!br.isEmpty()) {
-          try {
-            mediaFile.setOverallBitRate(Integer.parseInt(br) / 1000); // in kbps
-          }
-          catch (NumberFormatException e) {
-            mediaFile.setOverallBitRate(0);
+        if (mediaFile.getVideoCodec().isEmpty()) {
+          gatherVideoInformation(mediaFile, mif.getSnapshot());
+        }
+        if (mediaFile.getAudioStreams() == null || mediaFile.getAudioStreams().size() == 0) {
+          gatherAudioInformation(mediaFile, mif.getSnapshot());
+        }
+        if (mediaFile.getOverallBitRate() == 0) {
+          // there is no exact overall bitrate for the whole DVD, so we just take the one from the biggest VOB
+          String br = getMediaInfoValue(mif.getSnapshot(), MediaInfo.StreamKind.General, 0, "OverallBitRate");
+          if (!br.isEmpty()) {
+            try {
+              mediaFile.setOverallBitRate(Integer.parseInt(br) / 1000); // in kbps
+            }
+            catch (NumberFormatException e) {
+              mediaFile.setOverallBitRate(0);
+            }
           }
         }
         videoDur += mif.getDuration();

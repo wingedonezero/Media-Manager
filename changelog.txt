@@ -4,6 +4,7 @@ Version 5.2.2
 + [IMDB] able to include music video in search results (check scraper settings)
 x [Subtitle] added SubDL as a new subtitles scraper (personal API key needed!) #2631
 + [UI] added a trailer column for TV shows too #3060
++ [HTTP API] added a param to override the chosen artwork scraper(s) for downloading missing artwork #3068
 ---
 x [IMDB] better parse englishTitle #3049
 x [IMDB] fix auto-downloading trailer on scrape #3064
@@ -18,10 +19,14 @@ x [UI] added runtime/English Title to the episode metadata check #3059
 x [UI] re-added change markers in the renamer previews #3061
 x [UI] remove leading/trailing spaces in the text based filters
 x [UI] trigger duplicate check when loading a filter preset containing the duplicate filter
+x [UI] fixed displaying of movie plot & note in movie set module #3071
 x [Subtitle] always extract .zip subtitle downloads #3009
 x [Trailer] enhanced parsing of custom yt-dlp parameters #3045
 x [MediaInfo] better detection of 1.85:1 aspect ratio and its video format
 x [Bluray] upgraded library, to support reading of UHD blurays 
+x [ISO] fix parsing DVD & Bluray ISO files, error handling 
+  You should reload MediaInformation for all your ISO entries.
+x [MediaInfo] error handling on XML creation
 
 
 Version 5.2.1

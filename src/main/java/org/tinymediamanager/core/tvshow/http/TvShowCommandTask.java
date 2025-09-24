@@ -69,6 +69,7 @@ import org.tinymediamanager.scraper.ScraperType;
 import org.tinymediamanager.scraper.entities.MediaLanguages;
 import org.tinymediamanager.scraper.rating.RatingProvider;
 import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.ParserUtils;
 import org.tinymediamanager.thirdparty.trakttv.TvShowSyncTraktTvTask;
 
 /**
@@ -535,6 +536,20 @@ class TvShowCommandTask extends TmmThreadPool {
             selectedArtworkScrapers.add(artworkScraper);
           }
         }
+
+        // override default scrapers?
+        if (StringUtils.isNotBlank(command.args.get("scraper"))) {
+          selectedArtworkScrapers.clear();
+
+          List<String> scraperIds = ParserUtils.split(command.args.get("scraper"));
+          for (String id : scraperIds) {
+            MediaScraper scraper = MediaScraper.getMediaScraperById(id, ScraperType.TVSHOW_ARTWORK);
+            if (scraper != null && scraper.isEnabled()) {
+              selectedArtworkScrapers.add(scraper);
+            }
+          }
+        }
+
         tvShowSearchAndScrapeConfig.setArtworkScraper(selectedArtworkScrapers);
 
         activeTask = new TvShowMissingArtworkDownloadTask(getTvShowsForScope(command.scope), Collections.emptyList(),

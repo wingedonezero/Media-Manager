@@ -205,7 +205,7 @@ public class MovieSetInformationPanel extends JPanel {
       JPanel panelRight = new JPanel();
       add(panelRight, "cell 1 0,grow");
       panelRight.setLayout(new MigLayout("insets 0 n n n, hidemode 2", "[450lp,grow]",
-          "[][shrink 0][][shrink 0][][250lp:350lp,grow][shrink 0][][shrink 0][20lp!][][350lp,grow]"));
+          "[][shrink 0][][shrink 0][][10%:25%,grow][shrink 0][][shrink 0][20lp!][][20%:35%,grow]"));
 
       {
         lblMovieSetName = new JLabel("");

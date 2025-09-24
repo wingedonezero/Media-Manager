@@ -34,6 +34,7 @@ public class ReadOnlyTextPane extends JTextPane {
   }
 
   public ReadOnlyTextPane(String text) {
+    super();
     setOpaque(false);
     setBorder(null);
     setEditable(false);

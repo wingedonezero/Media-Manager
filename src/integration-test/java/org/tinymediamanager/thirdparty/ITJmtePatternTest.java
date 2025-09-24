@@ -88,9 +88,31 @@ public class ITJmtePatternTest extends BasicITest {
 
           int index = 0;
           for (Type arg : pt.getActualTypeArguments()) {
-            Class<?> argClass = (Class<?>) arg;
-            typeAsString += getTypeName(argClass);
+            if (arg instanceof ParameterizedType) {
+              ParameterizedType argPt = (ParameterizedType) arg;
+              Class<?> argRawTypeClass = (Class<?>) argPt.getRawType();
+              typeAsString += argRawTypeClass.getSimpleName() + "\\<";
 
+              int argIndex = 0;
+              for (Type argArg : argPt.getActualTypeArguments()) {
+                Class<?> argArgClass = (Class<?>) argArg;
+                typeAsString += getTypeName(argArgClass);
+
+                argIndex++;
+                if (argIndex < argPt.getActualTypeArguments().length) {
+                  typeAsString += ",";
+                }
+              }
+              typeAsString += "\\>";
+            }
+            else if (!(arg instanceof Class<?>)) {
+              // sometimes, the type is not a class - e.g. for wildcards
+              typeAsString += arg.getTypeName();
+            }
+            else {
+              Class<?> argClass = (Class<?>) arg;
+              typeAsString += getTypeName(argClass);
+            }
             index++;
 
             if (index < pt.getActualTypeArguments().length) {
