@@ -405,7 +405,7 @@ abstract class OpenSubtitlesSubtitleProvider implements IMediaProvider {
         OpenSubtitlesConnectionCounter.trackConnections();
 
         // MD5 password
-        MessageDigest md = MessageDigest.getInstance("MD5");
+        MessageDigest md = MessageDigest.getInstance("MD5"); // NOSONAR
         md.update(password.getBytes());
         byte[] digest = md.digest();
         String myHash = DatatypeConverter.printHexBinary(digest).toUpperCase();
