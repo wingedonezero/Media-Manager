@@ -797,6 +797,8 @@ public class MediaFileHelper {
         view = Files.readAttributes(mediaFile.getFileAsPath(), BasicFileAttributes.class);
       }
 
+      boolean existingFile = mediaFile.getFiledate() > 0;
+
       if (view.creationTime().toMillis() > 100000) {
         Date creDat = new Date(view.creationTime().toMillis());
         mediaFile.setDateCreated(creDat);
@@ -817,9 +819,12 @@ public class MediaFileHelper {
       if (view.isDirectory()) {
         size = Utils.getDirectorySizeOfDiscFiles(mediaFile.getFile());
       }
-      if (size > 0 && size != mediaFile.getFilesize()) {
+
+      // only see as a dirty change, if we already had a filedate (means: existing file)
+      if (existingFile && size > 0 && size != mediaFile.getFilesize()) {
         dirty = true;
       }
+
       mediaFile.setFilesize(size);
     }
     catch (Exception e) {
