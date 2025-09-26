@@ -1,8 +1,8 @@
 Version 5.2.2
 =======================
-+ [Scraper] when scraping Anime, try to get all available IDs from other anime sites.
++ [Scraper] when scraping Anime, try to get all available IDs from other anime sites
 + [IMDB] able to include music video in search results (check scraper settings)
-x [Subtitle] added SubDL as a new subtitles scraper (personal API key needed!) #2631
++ [Subtitle] added SubDL as a new subtitles scraper (personal API key needed!) #2631
 + [UI] added a trailer column for TV shows too #3060
 + [HTTP API] added a param to override the chosen artwork scraper(s) for downloading missing artwork #3068
 ---
@@ -24,9 +24,9 @@ x [UI] fix live update of audio languages in filters #3072
 x [Subtitle] always extract .zip subtitle downloads #3009
 x [Trailer] enhanced parsing of custom yt-dlp parameters #3045
 x [MediaInfo] better detection of 1.85:1 aspect ratio and its video format
-x [Bluray] upgraded library, to support reading of UHD blurays 
+x [Bluray] upgraded library, to support reading of UHD Blurays
 x [ISO] fix parsing DVD & Bluray ISO files, error handling 
-  You should reload MediaInformation for all your ISO entries.
+  You should reload MediaInformation for all your ISO entries
 x [MediaInfo] error handling on XML creation
 
 
