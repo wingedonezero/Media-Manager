@@ -1193,7 +1193,7 @@ public final class TvShowList extends AbstractModelObject {
 
     // audio languages
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(audioLanguagesInEpisodes, audioLanguages)) {
-      firePropertyChange(Constants.SUBTITLE_LANGUAGES, null, audioLanguagesInEpisodes);
+      firePropertyChange(Constants.AUDIO_LANGUAGES, null, audioLanguagesInEpisodes);
     }
 
     // subtitles

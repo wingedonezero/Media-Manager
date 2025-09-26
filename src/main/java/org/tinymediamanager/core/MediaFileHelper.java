@@ -1616,6 +1616,17 @@ public class MediaFileHelper {
       }
     }
 
+    // if we don't have a VOB in our relevant files... ohmm... add the largest one (animusic)
+    MediaInfoFile relvob = relevantFiles.stream().filter(mif -> mif.getFilename().toUpperCase().endsWith("_1.VOB")).findAny().orElse(null);
+    if (relvob == null) {
+      MediaInfoFile vob = mediaInfoFiles.stream()
+          .filter(mif -> mif.getFilename().toUpperCase().endsWith("_1.VOB"))
+          .max(Comparator.comparingLong(MediaInfoFile::getFilesize))
+          .orElse(null);
+      if (vob != null) {
+        relevantFiles.add(vob);
+      }
+    }
     // last but not least add the main ifo (needed in the XML) - only when other files have been found
     if (!relevantFiles.isEmpty()) {
       relevantFiles.add(ifomif);
