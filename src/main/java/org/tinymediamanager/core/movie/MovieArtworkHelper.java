@@ -1356,7 +1356,7 @@ public class MovieArtworkHelper {
       for (Path file : files) {
         MediaFile mf = new MediaFile(file);
         if (mf.isGraphic()) {
-          MediaFileHelper.gatherFileInformation(mf); // basics as size
+          MediaFileHelper.gatherBasicFileInformation(mf); // basics as size
           if (largestPoster == null || largestPoster.getFilesize() < mf.getFilesize()) {
             largestPoster = mf;
           }

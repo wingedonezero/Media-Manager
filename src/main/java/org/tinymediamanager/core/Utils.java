@@ -2098,7 +2098,6 @@ public class Utils {
       size = walk
           // .peek(System.out::println) // debug
           .filter(Utils::isRegularFile)
-          .filter(f -> new MediaFile(f).isDiscFile())
           .mapToLong(p -> {
             // ugly, can pretty it with an extract method
             try {
