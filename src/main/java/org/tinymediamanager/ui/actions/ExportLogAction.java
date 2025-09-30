@@ -191,6 +191,15 @@ public class ExportLogAction extends TmmAction {
           zos.write(json.getBytes());
           zos.closeEntry();
         }
+        if (movie.getMovieSet() != null) {
+          String set = MovieModuleManager.getInstance().getMovieSetJsonFromDB(movie.getMovieSet());
+          if (!set.isEmpty()) {
+            zipParameters.setFileNameInZip("movieset.json");
+            zos.putNextEntry(zipParameters);
+            zos.write(set.getBytes());
+            zos.closeEntry();
+          }
+        }
       }
       if (show != null && show.getDbId() != null) {
         String json = TvShowModuleManager.getInstance().getTvShowJsonFromDB(show, true);
