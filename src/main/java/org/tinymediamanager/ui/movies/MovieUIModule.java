@@ -44,6 +44,7 @@ import org.tinymediamanager.ui.TmmLazyMenuAdapter;
 import org.tinymediamanager.ui.components.MenuScroller;
 import org.tinymediamanager.ui.components.tabbedpane.MainTabbedPane;
 import org.tinymediamanager.ui.movies.actions.DebugDumpMovieAction;
+import org.tinymediamanager.ui.movies.actions.DebugLoadMovieAction;
 import org.tinymediamanager.ui.movies.actions.MovieAddDatasourceAction;
 import org.tinymediamanager.ui.movies.actions.MovieAspectRatioDetectAction;
 import org.tinymediamanager.ui.movies.actions.MovieAssignMovieSetAction;
@@ -413,6 +414,7 @@ public class MovieUIModule extends AbstractTmmUIModule {
     if (Globals.isDebug()) {
       final JMenu debugMenu = new JMenu("Debug");
       debugMenu.add(new DebugDumpMovieAction());
+      debugMenu.add(new DebugLoadMovieAction());
       debugMenu.add(NullTasksMenu.createTaskManagerTestMenu());
       popupMenu.addSeparator();
       popupMenu.add(debugMenu);

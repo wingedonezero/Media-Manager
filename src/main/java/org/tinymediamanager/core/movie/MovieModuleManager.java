@@ -15,6 +15,7 @@
  */
 package org.tinymediamanager.core.movie;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -497,6 +498,23 @@ public final class MovieModuleManager implements ITmmModule {
     String d = getMovieSetJsonFromDB(movieSet);
     if (!d.isEmpty()) {
       LOGGER.debug("Dumping MovieSet: {}\n{}", movieSet.getDbId(), d);
+    }
+  }
+
+  /**
+   * the opposite of dump - load a JSON string into DB
+   * 
+   * @param json
+   */
+  public void load(String json) {
+    try {
+      Movie m = getMovieObjectReader().readValue(json);
+      persistMovie(m);
+      getMovieList().addMovie(m);
+      LOGGER.info("Loaded movie '{}' ({})", m.getTitle(), m.getDbId());
+    }
+    catch (IOException e) {
+      LOGGER.error("Failed loading movie from String: {}", e);
     }
   }
 
