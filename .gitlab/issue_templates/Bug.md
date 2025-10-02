@@ -1,60 +1,77 @@
+# 🐞 Bug Report
 <!--
-Have you already searched, if that issue has already been reported?  
-You could always try a portable nightly build in parallel, to verify if it is STILL an issue.
+If you have a feature request, please choose other description template above!
 -->
 
-## 🔖 What tinyMediaManager version are you using?  
-<!-- 
-Please tell us the version number from about dialog / main title screen. Like 5.2.1 or similar  
-If you use a nightly or pre-release, please also do tell.  
-And your operating system (Win/Mac/Linux/Docker/Unraid/...? version?)  
-(If you would attach a logfile, we wouldn't have to ask)  
--->
-TMM version:  
-Operating system:  
-
-## 🌐 What primary language are you using for gui/scraping/...?
+## 🐛 Summary
 <!--
-many issues can only be reproduced in a special language, so not necessarily in ours.  
-(If you would attach a logfile, we wouldn't have to ask)
+A clear and concise description of the bug (preferably in one sentence).
 -->
-Language: 
+
+_Example: "The app crashes when exporting a file with special characters in the name."_
 
 
-## 🐛 What is the actual behavior?
+
+## 📈 What is the expected behavior?
+<!--
+What did you expect to happen instead?
+-->
+
+_Example: "The file should export correctly regardless of filename characters."_
+
+
+## 🧐 Actual Behavior
 <!-- 
-describe (preferably in one sentence), what the problem is.
-Screenshots/Videos/AnimatedGifs say more than 1000 words.
--->  
+What actually happened? Error messages, screenshots, or logs say more than 1000 words.
+ -->
 
-
-## ✅ What is the expected behavior?
-<!-- 
-Describe how you think it should work.
--->  
+_Example: "The application closes immediately without saving the file."_
 
 
 ## ♻️ Steps to reproduce:
 <!-- 
+How do we reproduce the bug? Provide a step-by-step guide.
 BE PRECISE AS POSSIBLE! If we cannot reproduce it with our setup - we cannot fix it!
 Do NOT say: Scrape a movie which has this and that...
 SAY: use scraper XXX, in language YYY, and scrape movie with id ZZZ
 Always give a reference link or REAL-WORLD example. Do not anonymize filenames or movie titles!
 -->
 
-1) first
-2) second
-3) ...
+1. Go to '...'
+2. Click on '...'
+3. Scroll down to '...'
+4. See error
 
 
-## 💡 Additional
+## 🔖 Environment
+<!--
+Please provide details about your setup.
+-->
+
+- TMM version: <!-- e.g., 5.2.2, (or nightly, prerelease) -->
+- OS: <!-- e.g., Ubuntu 22.04, Windows 11, MacOs, Unraid, Docker, ... -->
+- Language: <!-- Many issues can only be reproduced in a special language, so not necessarily in ours -->
+
+
+## 💡 Additional Context
 <!--
 Long story short - if we don't have a TMM generated logfile, we waste a tremendous amount of time trying to reproduce your issue.  
 We cannot do that any longer, and will probably close your issue.  
 Creating such file is easy - just click the wrench icon in bottom left.  
 Best done after a fresh TMM start, reproducing your problem once again, so the logfile will be just as small as needed.  
 With that ZIP, we also get your complete TMM & regional settings, and can reproduce your issue more efficient (ZIP is password protected!)  
+Add any other context, related issues, or possible causes
 -->
 
-- [ ] I have read all comments, and provided enough information for anybody to understand my issue.
+_Example: "Might be related to Unicode handling, see issue #NNN."_
+
+
+---
+
+✅ **Checklist before submitting:**
+- [ ] I have checked existing issues to avoid duplicates  
+- [ ] I have provided clear steps to reproduce the bug  
+- [ ] I have attached logs/screenshots
+- [ ] I am willing to help test a fix if available  
+
 <!-- tick this with an [X] -- >
