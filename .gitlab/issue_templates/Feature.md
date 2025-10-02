@@ -31,7 +31,7 @@ _Example: "I considered a browser extension, but that only works locally and not
 ## 🗃️ Additional Context
 <!-- Any other information, screenshots, mockups, or references to related issues. -->
 
-_Example: "See #42 for related discussion about UI customization."_
+_Example: "See #nnn for related discussion about UI customization."_
 
 
 ## 🏷️ Links / references
