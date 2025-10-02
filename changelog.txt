@@ -1,5 +1,6 @@
 Version 5.2.3
 =======================
+x [UI] refactored post-process settings pages for movies and TV shows #3084
 
 
 Version 5.2.2

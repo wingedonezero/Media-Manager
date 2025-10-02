@@ -17,31 +17,31 @@ package org.tinymediamanager.ui.movies.settings;
 
 import static org.tinymediamanager.ui.TmmFontHelper.H3;
 
-import java.util.List;
-
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 
-import org.jdesktop.beansbinding.AutoBinding;
-import org.jdesktop.beansbinding.BeanProperty;
-import org.jdesktop.swingbinding.JTableBinding;
-import org.jdesktop.swingbinding.SwingBindings;
+import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.core.PostProcess;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.MovieSettings;
-import org.tinymediamanager.ui.MainWindow;
-import org.tinymediamanager.ui.TmmUIHelper;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.components.button.DocsButton;
+import org.tinymediamanager.ui.components.button.SquareIconButton;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.panel.CollapsiblePanel;
+import org.tinymediamanager.ui.components.table.PostProcessTable;
 import org.tinymediamanager.ui.components.table.TmmTable;
 import org.tinymediamanager.ui.dialogs.PostProcessDialog;
-import org.tinymediamanager.ui.movies.dialogs.MoviePostProcessDialog;
+import org.tinymediamanager.ui.dialogs.SettingsDialog;
 
+import ca.odell.glazedlists.EventList;
+import ca.odell.glazedlists.GlazedLists;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -50,71 +50,72 @@ import net.miginfocom.swing.MigLayout;
  * @author Wolfgang Janes
  */
 public class MoviePostProcessingSettingsPanel extends JPanel {
-  private final MovieSettings settings = MovieModuleManager.getInstance().getSettings();
 
-  private TmmTable            tablePostProcesses;
-  private JButton             btnRemoveProcess;
-  private JButton             btnAddProcess;
-  private JButton             btnEditProcess;
+  private final EventList<PostProcess> postProcessEventList;
+
+  private TmmTable                     tablePostProcesses;
+  private JButton                      btnRemoveProcess;
+  private JButton                      btnAddProcess;
+  private JButton                      btnMoveProcessUp;
+  private JButton                      btnMoveProcessDown;
 
   MoviePostProcessingSettingsPanel() {
+    MovieSettings settings = MovieModuleManager.getInstance().getSettings();
+
+    postProcessEventList = GlazedLists.eventList(settings.getPostProcess());
+    GlazedLists.syncEventListToList(postProcessEventList, settings.getPostProcess());
 
     initComponents();
-    initDataBindings();
+
+    tablePostProcesses.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     // button listeners
     btnAddProcess.addActionListener(e -> {
-
       PostProcessDialog dialog = new MoviePostProcessDialog();
       dialog.pack();
-      dialog.setLocationRelativeTo(MainWindow.getInstance());
+      dialog.setLocationRelativeTo(SettingsDialog.getInstance());
       dialog.setVisible(true);
       tablePostProcesses.adjustColumnPreferredWidths(5);
     });
 
     btnRemoveProcess.addActionListener(e -> {
-      int[] indexRows = TmmUIHelper.getSelectedRowsAsModelRows(tablePostProcesses);
+      int row = tablePostProcesses.convertRowIndexToModel(tablePostProcesses.getSelectedRow());
 
-      for (int indexRow : indexRows) {
-        try {
-          PostProcess process = settings.getPostProcess().get(indexRow);
-          settings.removePostProcess(process);
-        }
-        catch (Exception ex) {
-          // do nothing
-        }
+      if (row >= 0 && row < postProcessEventList.size()) {
+        postProcessEventList.remove(row);
+        MovieModuleManager.getInstance().getSettings().forceSaveSettings();
       }
 
       tablePostProcesses.adjustColumnPreferredWidths(5);
     });
 
-    btnEditProcess.addActionListener(e -> {
-      int row = tablePostProcesses.getSelectedRow();
-      row = tablePostProcesses.convertRowIndexToModel(row);
+    btnMoveProcessUp.addActionListener(e -> {
+      int row = tablePostProcesses.convertRowIndexToModel(tablePostProcesses.getSelectedRow());
 
-      if (row != -1) {
-        PostProcess process = settings.getPostProcess().get(row);
-        if (process != null) {
-          PostProcessDialog dialog = new MoviePostProcessDialog();
-          dialog.setProcess(process);
-          dialog.pack();
-          dialog.setLocationRelativeTo(MainWindow.getInstance());
-          dialog.setVisible(true);
-          tablePostProcesses.adjustColumnPreferredWidths(5);
-        }
+      if (row != -1 && row != 0) {
+        ListUtils.swap(postProcessEventList, row, row - 1);
+        MovieModuleManager.getInstance().getSettings().forceSaveSettings();
+
+        tablePostProcesses.getSelectionModel().setSelectionInterval(row - 1, row - 1);
       }
     });
 
-    // set Column Headers
-    tablePostProcesses.getColumnModel().getColumn(0).setHeaderValue(TmmResourceBundle.getString("Settings.processname"));
-    tablePostProcesses.getColumnModel().getColumn(1).setHeaderValue(TmmResourceBundle.getString("metatag.path"));
-    tablePostProcesses.getColumnModel().getColumn(2).setHeaderValue(TmmResourceBundle.getString("Settings.commandname"));
+    btnMoveProcessDown.addActionListener(e -> {
+      int row = tablePostProcesses.convertRowIndexToModel(tablePostProcesses.getSelectedRow());
+
+      if (row != -1 && row != postProcessEventList.size() - 1) {
+        ListUtils.swap(postProcessEventList, row, row + 1);
+        MovieModuleManager.getInstance().getSettings().forceSaveSettings();
+
+        tablePostProcesses.getSelectionModel().setSelectionInterval(row + 1, row + 1);
+      }
+    });
   }
 
   private void initComponents() {
     setLayout(new MigLayout("", "[600lp,grow]", "[]"));
     {
-      JPanel panelProcess = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][600lp,grow][]", "[500lp,grow]"));
+      JPanel panelProcess = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][600lp,grow]10lp[]", "[500lp,grow]"));
       JLabel lblProcess = new TmmLabel(TmmResourceBundle.getString("Settings.postprocessing"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelProcess, lblProcess, true);
       collapsiblePanel.addExtraTitleComponent(new DocsButton("/movies/settings#post-processing"));
@@ -123,36 +124,71 @@ public class MoviePostProcessingSettingsPanel extends JPanel {
       {
         JScrollPane spProcesses = new JScrollPane();
         panelProcess.add(spProcesses, "cell 1 0,grow");
-        tablePostProcesses = new TmmTable();
+        tablePostProcesses = new PostProcessTable(postProcessEventList) {
+          @Override
+          protected void editButtonClicked(int row) {
+            int index = convertRowIndexToModel(row);
+            PostProcess postProcess = postProcessList.get(index);
+
+            if (postProcess != null) {
+              PostProcessDialog dialog = new MoviePostProcessingSettingsPanel.MoviePostProcessDialog();
+              dialog.setProcess(postProcess);
+              dialog.pack();
+              dialog.setLocationRelativeTo(SettingsDialog.getInstance());
+              dialog.setVisible(true);
+              tablePostProcesses.adjustColumnPreferredWidths(5);
+            }
+          }
+        };
         tablePostProcesses.configureScrollPane(spProcesses);
+      }
 
-        btnAddProcess = new JButton(TmmResourceBundle.getString("Button.add"));
-        panelProcess.add(btnAddProcess, "flowy,cell 2 0,growx,aligny top");
+      {
+        btnAddProcess = new SquareIconButton(IconManager.ADD_INV);
+        panelProcess.add(btnAddProcess, "flowy,cell 2 0,aligny top");
+        btnRemoveProcess = new SquareIconButton(IconManager.REMOVE_INV);
+        panelProcess.add(btnRemoveProcess, "cell 2 0");
 
-        btnEditProcess = new JButton(TmmResourceBundle.getString("Button.edit"));
-        panelProcess.add(btnEditProcess, "cell 2 0,growx");
+        btnMoveProcessUp = new SquareIconButton(IconManager.ARROW_UP_INV);
+        panelProcess.add(btnMoveProcessUp, "cell 2 0");
 
-        btnRemoveProcess = new JButton(TmmResourceBundle.getString("Button.remove"));
-        panelProcess.add(btnRemoveProcess, "cell 2 0,growx");
+        btnMoveProcessDown = new SquareIconButton(IconManager.ARROW_DOWN_INV);
+        panelProcess.add(btnMoveProcessDown, "cell 2 0");
       }
     }
   }
 
-  protected void initDataBindings() {
-    BeanProperty<MovieSettings, List<PostProcess>> settingsBeanProperty = BeanProperty.create("postProcess");
-    JTableBinding<PostProcess, MovieSettings, JTable> jTableBinding = SwingBindings.createJTableBinding(AutoBinding.UpdateStrategy.READ_WRITE,
-        settings, settingsBeanProperty, tablePostProcesses);
+  /**
+   * the class {@link MoviePostProcessDialog} is used to add/edit a post-process action
+   *
+   * @author Manuel Laggner
+   */
+  private class MoviePostProcessDialog extends PostProcessDialog {
+    public MoviePostProcessDialog() {
+      super();
+    }
 
-    BeanProperty<PostProcess, String> wolBeanProperty_1 = BeanProperty.create("name");
-    jTableBinding.addColumnBinding(wolBeanProperty_1);
+    @Override
+    public void save() {
+      if (StringUtils.isBlank(tfProcessName.getText()) || (StringUtils.isBlank(tfCommand.getText()) && StringUtils.isBlank(tfPath.getText()))) {
 
-    BeanProperty<PostProcess, String> wolBeanProperty_3 = BeanProperty.create("path");
-    jTableBinding.addColumnBinding(wolBeanProperty_3);
+        JOptionPane.showMessageDialog(null, TmmResourceBundle.getString("message.missingitems"));
+        return;
+      }
 
-    BeanProperty<PostProcess, String> wolBeanProperty_4 = BeanProperty.create("command");
-    jTableBinding.addColumnBinding(wolBeanProperty_4);
+      if (process == null) {
+        // create a new post-process
+        process = new PostProcess();
+        postProcessEventList.add(process);
+      }
 
-    jTableBinding.setEditable(false);
-    jTableBinding.bind();
+      process.setName(tfProcessName.getText());
+      process.setCommand(tfCommand.getText());
+      process.setPath(tfPath.getText());
+
+      MovieModuleManager.getInstance().getSettings().forceSaveSettings();
+
+      setVisible(false);
+    }
   }
 }

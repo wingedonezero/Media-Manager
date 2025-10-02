@@ -19,227 +19,252 @@ import static org.tinymediamanager.ui.TmmFontHelper.H3;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
-import javax.swing.JTextPane;
+import javax.swing.ListSelectionModel;
 
-import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
-import org.jdesktop.beansbinding.BeanProperty;
-import org.jdesktop.beansbinding.Property;
-import org.jdesktop.swingbinding.JTableBinding;
-import org.jdesktop.swingbinding.SwingBindings;
+import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.core.PostProcess;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.TvShowSettings;
-import org.tinymediamanager.ui.TmmUIHelper;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.components.button.DocsButton;
+import org.tinymediamanager.ui.components.button.SquareIconButton;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.panel.CollapsiblePanel;
+import org.tinymediamanager.ui.components.table.PostProcessTable;
 import org.tinymediamanager.ui.components.table.TmmTable;
-import org.tinymediamanager.ui.components.textfield.ReadOnlyTextPane;
-import org.tinymediamanager.ui.tvshows.dialogs.TvShowPostProcessDialog;
+import org.tinymediamanager.ui.dialogs.PostProcessDialog;
+import org.tinymediamanager.ui.dialogs.SettingsDialog;
 
+import ca.odell.glazedlists.EventList;
+import ca.odell.glazedlists.GlazedLists;
 import net.miginfocom.swing.MigLayout;
 
 /**
- * the class {@link TvShowPostProcessingSettingsPanel} holds the settings for post process action for movies
+ * the class {@link TvShowPostProcessingSettingsPanel} holds the settings for post process action for TV shows
  *
- * @author Wolfgang Janes
+ * @author Manuel Laggner
  */
 public class TvShowPostProcessingSettingsPanel extends JPanel {
 
-  private final TvShowSettings settings = TvShowModuleManager.getInstance().getSettings();
+  private final EventList<PostProcess> postProcessTvShowEventList;
+  private final EventList<PostProcess> postProcessEpisodeEventList;
 
-  private TmmTable             tablePostProcessesEpisode;
-  private TmmTable             tablePostProcessesTvShow;
-  private JButton              btnRemoveProcessTvShow;
-  private JButton              btnAddProcessTvShow;
-  private JButton              btnEditProcessTvShow;
-  private JButton              btnAddProcessEpisode;
-  private JButton              btnEditProcessEpisode;
-  private JButton              btnRemoveProcessEpisode;
+  private TmmTable                     tablePostProcessesTvShow;
+  private TmmTable                     tablePostProcessesEpisode;
+  private JButton                      btnAddProcessTvShow;
+  private JButton                      btnRemoveProcessTvShow;
+  private JButton                      btnMoveProcessUpTvShow;
+  private JButton                      btnMoveProcessDownTvShow;
+  private JButton                      btnAddProcessEpisode;
+  private JButton                      btnRemoveProcessEpisode;
+  private JButton                      btnMoveProcessUpEpisode;
+  private JButton                      btnMoveProcessDownEpisode;
 
   TvShowPostProcessingSettingsPanel() {
+    TvShowSettings settings = TvShowModuleManager.getInstance().getSettings();
+
+    postProcessTvShowEventList = GlazedLists.eventList(settings.getPostProcessTvShow());
+    GlazedLists.syncEventListToList(postProcessTvShowEventList, settings.getPostProcessTvShow());
+
+    postProcessEpisodeEventList = GlazedLists.eventList(settings.getPostProcessEpisode());
+    GlazedLists.syncEventListToList(postProcessEpisodeEventList, settings.getPostProcessEpisode());
 
     initComponents();
-    initDataBindings();
 
-    // button listeners
+    tablePostProcessesTvShow.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    tablePostProcessesEpisode.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+    // TV Show buttons
     btnAddProcessTvShow.addActionListener(e -> {
-      TvShowPostProcessDialog.showTvShowPostProcessDialog();
+      PostProcessDialog dialog = new TvShowPostProcessDialog();
+      dialog.pack();
+      dialog.setLocationRelativeTo(SettingsDialog.getInstance());
+      dialog.setVisible(true);
       tablePostProcessesTvShow.adjustColumnPreferredWidths(5);
     });
 
     btnRemoveProcessTvShow.addActionListener(e -> {
-      int[] indexRows = TmmUIHelper.getSelectedRowsAsModelRows(tablePostProcessesTvShow);
-
-      for (int indexRow : indexRows) {
-        try {
-          PostProcess process = settings.getPostProcessTvShow().get(indexRow);
-          settings.removePostProcessTvShow(process);
-        }
-        catch (Exception ex) {
-          // do nothing
-        }
+      int row = tablePostProcessesTvShow.convertRowIndexToModel(tablePostProcessesTvShow.getSelectedRow());
+      if (row >= 0 && row < postProcessTvShowEventList.size()) {
+        postProcessTvShowEventList.remove(row);
+        TvShowModuleManager.getInstance().getSettings().forceSaveSettings();
       }
-
       tablePostProcessesTvShow.adjustColumnPreferredWidths(5);
     });
 
-    btnEditProcessTvShow.addActionListener(e -> {
-      int row = tablePostProcessesTvShow.getSelectedRow();
-      row = tablePostProcessesTvShow.convertRowIndexToModel(row);
-
-      if (row != -1) {
-        PostProcess process = settings.getPostProcessTvShow().get(row);
-        if (process != null) {
-          TvShowPostProcessDialog.showTvShowPostProcessDialog(process);
-          tablePostProcessesTvShow.adjustColumnPreferredWidths(5);
-        }
+    btnMoveProcessUpTvShow.addActionListener(e -> {
+      int row = tablePostProcessesTvShow.convertRowIndexToModel(tablePostProcessesTvShow.getSelectedRow());
+      if (row != -1 && row != 0) {
+        ListUtils.swap(postProcessTvShowEventList, row, row - 1);
+        TvShowModuleManager.getInstance().getSettings().forceSaveSettings();
+        tablePostProcessesTvShow.getSelectionModel().setSelectionInterval(row - 1, row - 1);
       }
     });
 
+    btnMoveProcessDownTvShow.addActionListener(e -> {
+      int row = tablePostProcessesTvShow.convertRowIndexToModel(tablePostProcessesTvShow.getSelectedRow());
+      if (row != -1 && row != postProcessTvShowEventList.size() - 1) {
+        ListUtils.swap(postProcessTvShowEventList, row, row + 1);
+        TvShowModuleManager.getInstance().getSettings().forceSaveSettings();
+        tablePostProcessesTvShow.getSelectionModel().setSelectionInterval(row + 1, row + 1);
+      }
+    });
+
+    // Episode buttons
     btnAddProcessEpisode.addActionListener(e -> {
-      TvShowPostProcessDialog.showEpisodePostProcessDialog();
+      PostProcessDialog dialog = new EpisodePostProcessDialog();
+      dialog.pack();
+      dialog.setLocationRelativeTo(SettingsDialog.getInstance());
+      dialog.setVisible(true);
       tablePostProcessesEpisode.adjustColumnPreferredWidths(5);
     });
 
     btnRemoveProcessEpisode.addActionListener(e -> {
-      int[] indexRows = TmmUIHelper.getSelectedRowsAsModelRows(tablePostProcessesEpisode);
-
-      for (int indexRow : indexRows) {
-        try {
-          PostProcess process = settings.getPostProcessEpisode().get(indexRow);
-          settings.removePostProcessEpisode(process);
-        }
-        catch (Exception ex) {
-          // do nothing
-        }
+      int row = tablePostProcessesEpisode.convertRowIndexToModel(tablePostProcessesEpisode.getSelectedRow());
+      if (row >= 0 && row < postProcessEpisodeEventList.size()) {
+        postProcessEpisodeEventList.remove(row);
+        TvShowModuleManager.getInstance().getSettings().forceSaveSettings();
       }
-
       tablePostProcessesEpisode.adjustColumnPreferredWidths(5);
     });
 
-    btnEditProcessEpisode.addActionListener(e -> {
-      int row = tablePostProcessesEpisode.getSelectedRow();
-      row = tablePostProcessesEpisode.convertRowIndexToModel(row);
-
-      if (row != -1) {
-        PostProcess process = settings.getPostProcessEpisode().get(row);
-        if (process != null) {
-          TvShowPostProcessDialog.showEpisodePostProcessDialog(process);
-          tablePostProcessesEpisode.adjustColumnPreferredWidths(5);
-        }
+    btnMoveProcessUpEpisode.addActionListener(e -> {
+      int row = tablePostProcessesEpisode.convertRowIndexToModel(tablePostProcessesEpisode.getSelectedRow());
+      if (row != -1 && row != 0) {
+        ListUtils.swap(postProcessEpisodeEventList, row, row - 1);
+        TvShowModuleManager.getInstance().getSettings().forceSaveSettings();
+        tablePostProcessesEpisode.getSelectionModel().setSelectionInterval(row - 1, row - 1);
       }
     });
 
-    // set Column Headers
-    tablePostProcessesTvShow.getColumnModel().getColumn(0).setHeaderValue(TmmResourceBundle.getString("Settings.processname"));
-    tablePostProcessesTvShow.getColumnModel().getColumn(1).setHeaderValue(TmmResourceBundle.getString("metatag.path"));
-    tablePostProcessesTvShow.getColumnModel().getColumn(2).setHeaderValue(TmmResourceBundle.getString("Settings.commandname"));
-    tablePostProcessesTvShow.adjustColumnPreferredWidths(5);
-
-    tablePostProcessesEpisode.getColumnModel().getColumn(0).setHeaderValue(TmmResourceBundle.getString("Settings.processname"));
-    tablePostProcessesEpisode.getColumnModel().getColumn(1).setHeaderValue(TmmResourceBundle.getString("metatag.path"));
-    tablePostProcessesEpisode.getColumnModel().getColumn(2).setHeaderValue(TmmResourceBundle.getString("Settings.commandname"));
-    tablePostProcessesEpisode.adjustColumnPreferredWidths(5);
+    btnMoveProcessDownEpisode.addActionListener(e -> {
+      int row = tablePostProcessesEpisode.convertRowIndexToModel(tablePostProcessesEpisode.getSelectedRow());
+      if (row != -1 && row != postProcessEpisodeEventList.size() - 1) {
+        ListUtils.swap(postProcessEpisodeEventList, row, row + 1);
+        TvShowModuleManager.getInstance().getSettings().forceSaveSettings();
+        tablePostProcessesEpisode.getSelectionModel().setSelectionInterval(row + 1, row + 1);
+      }
+    });
   }
 
   private void initComponents() {
     setLayout(new MigLayout("", "[600lp,grow]", "[]"));
-    {
-      JPanel panelProcess = new JPanel(
-          new MigLayout("hidemode 1, insets 0", "[20lp!][300lp:600lp,grow][]", "[][grow][150lp:200lp,grow][][][grow][150lp:200lp,grow]"));
-      JLabel lblProcess = new TmmLabel(TmmResourceBundle.getString("Settings.postprocessing"), H3);
-      CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelProcess, lblProcess, true);
-      collapsiblePanel.addExtraTitleComponent(new DocsButton("/tvshows/settings#post-processing"));
-      add(collapsiblePanel, "growx,wmin 0");
+    JPanel panelProcess = new JPanel(
+        new MigLayout("hidemode 1, insets 0", "[20lp!][300lp:600lp,grow][]", "[][grow][150lp:200lp,grow][][][grow][150lp:200lp,grow]"));
+    JLabel lblProcess = new TmmLabel(TmmResourceBundle.getString("Settings.postprocessing"), H3);
+    CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelProcess, lblProcess, true);
+    collapsiblePanel.addExtraTitleComponent(new DocsButton("/tvshows/settings#post-processing"));
+    add(collapsiblePanel, "growx,wmin 0");
 
-      {
-        JLabel lblTvShow = new TmmLabel(TmmResourceBundle.getString("metatag.tvshow"));
-        panelProcess.add(lblTvShow, "cell 1 0");
-
-        JTextPane tpTvShowDescription = new ReadOnlyTextPane(TmmResourceBundle.getString("Settings.tvshow.postprocess.tvshowhint"));
-        panelProcess.add(tpTvShowDescription, "cell 1 1 2 1,grow");
-
-        {
-          JScrollPane spProcesses = new JScrollPane();
-          panelProcess.add(spProcesses, "cell 1 2,grow");
-          tablePostProcessesTvShow = new TmmTable();
-          tablePostProcessesTvShow.configureScrollPane(spProcesses);
-
-          btnAddProcessTvShow = new JButton(TmmResourceBundle.getString("Button.add"));
-          panelProcess.add(btnAddProcessTvShow, "flowy,cell 2 2,growx,aligny top");
-
-          btnEditProcessTvShow = new JButton(TmmResourceBundle.getString("Button.edit"));
-          panelProcess.add(btnEditProcessTvShow, "cell 2 2,growx");
-
-          btnRemoveProcessTvShow = new JButton(TmmResourceBundle.getString("Button.remove"));
-          panelProcess.add(btnRemoveProcessTvShow, "cell 2 2,growx");
+    // TV Show table
+    JScrollPane spTvShow = new JScrollPane();
+    panelProcess.add(spTvShow, "cell 1 2,grow");
+    tablePostProcessesTvShow = new PostProcessTable(postProcessTvShowEventList) {
+      @Override
+      protected void editButtonClicked(int row) {
+        int index = convertRowIndexToModel(row);
+        PostProcess postProcess = postProcessList.get(index);
+        if (postProcess != null) {
+          PostProcessDialog dialog = new TvShowPostProcessingSettingsPanel.TvShowPostProcessDialog();
+          dialog.setProcess(postProcess);
+          dialog.pack();
+          dialog.setLocationRelativeTo(SettingsDialog.getInstance());
+          dialog.setVisible(true);
+          tablePostProcessesTvShow.adjustColumnPreferredWidths(5);
         }
       }
+    };
+    tablePostProcessesTvShow.configureScrollPane(spTvShow);
 
-      JSeparator separator = new JSeparator();
-      panelProcess.add(separator, "cell 1 3 2 1,growx");
+    btnAddProcessTvShow = new SquareIconButton(IconManager.ADD_INV);
+    panelProcess.add(btnAddProcessTvShow, "flowy,cell 2 2,aligny top");
+    btnRemoveProcessTvShow = new SquareIconButton(IconManager.REMOVE_INV);
+    panelProcess.add(btnRemoveProcessTvShow, "cell 2 2");
+    btnMoveProcessUpTvShow = new SquareIconButton(IconManager.ARROW_UP_INV);
+    panelProcess.add(btnMoveProcessUpTvShow, "cell 2 2");
+    btnMoveProcessDownTvShow = new SquareIconButton(IconManager.ARROW_DOWN_INV);
+    panelProcess.add(btnMoveProcessDownTvShow, "cell 2 2");
 
-      {
-        JLabel lblEpisode = new TmmLabel(TmmResourceBundle.getString("metatag.episode"));
-        panelProcess.add(lblEpisode, "cell 1 4");
-
-        JTextPane tpEpisodeDescription = new ReadOnlyTextPane(TmmResourceBundle.getString("Settings.tvshow.postprocess.episodehint"));
-        panelProcess.add(tpEpisodeDescription, "cell 1 5 2 1,grow");
-
-        {
-          JScrollPane spProcesses = new JScrollPane();
-          panelProcess.add(spProcesses, "cell 1 6,grow");
-          tablePostProcessesEpisode = new TmmTable();
-          tablePostProcessesEpisode.configureScrollPane(spProcesses);
-
-          btnAddProcessEpisode = new JButton(TmmResourceBundle.getString("Button.add"));
-          panelProcess.add(btnAddProcessEpisode, "flowy,cell 2 6,growx,aligny top");
-
-          btnEditProcessEpisode = new JButton(TmmResourceBundle.getString("Button.edit"));
-          panelProcess.add(btnEditProcessEpisode, "cell 2 6,growx");
-
-          btnRemoveProcessEpisode = new JButton(TmmResourceBundle.getString("Button.remove"));
-          panelProcess.add(btnRemoveProcessEpisode, "cell 2 6,growx");
+    // Episode table
+    JScrollPane spEpisode = new JScrollPane();
+    panelProcess.add(spEpisode, "cell 1 6,grow");
+    tablePostProcessesEpisode = new PostProcessTable(postProcessEpisodeEventList) {
+      @Override
+      protected void editButtonClicked(int row) {
+        int index = convertRowIndexToModel(row);
+        PostProcess postProcess = postProcessList.get(index);
+        if (postProcess != null) {
+          PostProcessDialog dialog = new EpisodePostProcessDialog();
+          dialog.setProcess(postProcess);
+          dialog.pack();
+          dialog.setLocationRelativeTo(SettingsDialog.getInstance());
+          dialog.setVisible(true);
+          tablePostProcessesEpisode.adjustColumnPreferredWidths(5);
         }
       }
+    };
+    tablePostProcessesEpisode.configureScrollPane(spEpisode);
+
+    btnAddProcessEpisode = new SquareIconButton(IconManager.ADD_INV);
+    panelProcess.add(btnAddProcessEpisode, "flowy,cell 2 6,aligny top");
+    btnRemoveProcessEpisode = new SquareIconButton(IconManager.REMOVE_INV);
+    panelProcess.add(btnRemoveProcessEpisode, "cell 2 6");
+    btnMoveProcessUpEpisode = new SquareIconButton(IconManager.ARROW_UP_INV);
+    panelProcess.add(btnMoveProcessUpEpisode, "cell 2 6");
+    btnMoveProcessDownEpisode = new SquareIconButton(IconManager.ARROW_DOWN_INV);
+    panelProcess.add(btnMoveProcessDownEpisode, "cell 2 6");
+  }
+
+  // Dialog for TV Show post-process
+  private class TvShowPostProcessDialog extends PostProcessDialog {
+    public TvShowPostProcessDialog() {
+      super();
+    }
+
+    @Override
+    public void save() {
+      if (StringUtils.isBlank(tfProcessName.getText()) || (StringUtils.isBlank(tfCommand.getText()) && StringUtils.isBlank(tfPath.getText()))) {
+        JOptionPane.showMessageDialog(null, TmmResourceBundle.getString("message.missingitems"));
+        return;
+      }
+      if (process == null) {
+        process = new PostProcess();
+        postProcessTvShowEventList.add(process);
+      }
+      process.setName(tfProcessName.getText());
+      process.setCommand(tfCommand.getText());
+      process.setPath(tfPath.getText());
+      TvShowModuleManager.getInstance().getSettings().forceSaveSettings();
+      setVisible(false);
     }
   }
 
-  protected void initDataBindings() {
-    Property settingsBeanProperty = BeanProperty.create("postProcessTvShow");
-    JTableBinding jTableBinding = SwingBindings.createJTableBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty,
-        tablePostProcessesTvShow);
-    //
-    Property wolBeanProperty_1 = BeanProperty.create("name");
-    jTableBinding.addColumnBinding(wolBeanProperty_1);
-    //
-    Property wolBeanProperty_3 = BeanProperty.create("path");
-    jTableBinding.addColumnBinding(wolBeanProperty_3);
-    //
-    Property wolBeanProperty_4 = BeanProperty.create("command");
-    jTableBinding.addColumnBinding(wolBeanProperty_4);
-    //
-    jTableBinding.setEditable(false);
-    jTableBinding.bind();
-    //
-    Property tvShowSettingsBeanProperty = BeanProperty.create("postProcessEpisode");
-    JTableBinding jTableBinding_1 = SwingBindings.createJTableBinding(UpdateStrategy.READ_WRITE, settings, tvShowSettingsBeanProperty,
-        tablePostProcessesEpisode);
-    //
-    Property postProcessBeanProperty = BeanProperty.create("name");
-    jTableBinding_1.addColumnBinding(postProcessBeanProperty);
-    //
-    Property postProcessBeanProperty_1 = BeanProperty.create("path");
-    jTableBinding_1.addColumnBinding(postProcessBeanProperty_1);
-    //
-    Property postProcessBeanProperty_2 = BeanProperty.create("command");
-    jTableBinding_1.addColumnBinding(postProcessBeanProperty_2);
-    //
-    jTableBinding_1.bind();
+  // Dialog for Episode post-process
+  private class EpisodePostProcessDialog extends PostProcessDialog {
+    public EpisodePostProcessDialog() {
+      super();
+    }
+
+    @Override
+    public void save() {
+      if (StringUtils.isBlank(tfProcessName.getText()) || (StringUtils.isBlank(tfCommand.getText()) && StringUtils.isBlank(tfPath.getText()))) {
+        JOptionPane.showMessageDialog(null, TmmResourceBundle.getString("message.missingitems"));
+        return;
+      }
+      if (process == null) {
+        process = new PostProcess();
+        postProcessEpisodeEventList.add(process);
+      }
+      process.setName(tfProcessName.getText());
+      process.setCommand(tfCommand.getText());
+      process.setPath(tfPath.getText());
+      TvShowModuleManager.getInstance().getSettings().forceSaveSettings();
+      setVisible(false);
+    }
   }
 }
