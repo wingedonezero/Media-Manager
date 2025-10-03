@@ -3,6 +3,7 @@ Version 5.2.3
 + [UI] date and time format settings are now configurable in the settings #3087
 ---
 x [UI] refactored post-process settings pages for movies and TV shows #3084
+x [TMDB] to not try to load SVG files (not supported by tinyMediaManager or Kodi) #3085
 
 
 Version 5.2.2

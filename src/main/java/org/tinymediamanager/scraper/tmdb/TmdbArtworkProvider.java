@@ -298,6 +298,18 @@ class TmdbArtworkProvider {
     if (artworkType == MediaArtworkType.CLEARLOGO || artworkType == MediaArtwork.MediaArtworkType.ALL) {
       for (Image image : ListUtils.nullSafe(tmdbArtwork.logos)) {
         MediaArtwork ma = new MediaArtwork(TmdbMetadataProvider.ID, MediaArtworkType.CLEARLOGO);
+
+        if (image.file_path.endsWith(".svg")) {
+          // we do not support svg, but TMDB offers the same logo as png
+          image.file_path = image.file_path.replace(".svg", ".png");
+
+          // since the width/height is not known, we set some dummy values here (probably 2000 width is a good choice)
+          if (image.width > 0 && image.height > 0) {
+            image.height = (int) (image.height * (2000f / image.width));
+            image.width = 2000;
+          }
+        }
+
         ma.setPreviewUrl(baseUrl + "w500" + image.file_path);
         ma.setOriginalUrl(baseUrl + "original" + image.file_path);
         ma.setLanguage(image.iso_639_1);
