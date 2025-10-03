@@ -125,7 +125,7 @@ public class TvShowEpisodeChooserModel extends AbstractModelObject {
       return "";
     }
     try {
-      return TmmDateFormat.MEDIUM_DATE_FORMAT.format(firstAired);
+      return TmmDateFormat.getDateFormat().format(firstAired);
     }
     catch (Exception e) {
       return "";

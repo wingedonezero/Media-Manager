@@ -218,7 +218,7 @@ public class MediaFilesPanel extends JPanel {
         return "";
       }
 
-      return TmmDateFormat.MEDIUM_DATE_SHORT_TIME_FORMAT.format(date);
+      return TmmDateFormat.getDateShortTimeFormat().format(date);
     }
   }
 

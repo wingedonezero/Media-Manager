@@ -723,7 +723,7 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
       return "";
     }
 
-    return TmmDateFormat.MEDIUM_DATE_SHORT_TIME_FORMAT.format(dateAdded);
+    return TmmDateFormat.getDateShortTimeFormat().format(dateAdded);
   }
 
   public void setDateAdded(Date newValue) {

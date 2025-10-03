@@ -2026,7 +2026,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
     if (this.releaseDate == null) {
       return "";
     }
-    return TmmDateFormat.MEDIUM_DATE_FORMAT.format(releaseDate);
+    return TmmDateFormat.getDateFormat().format(releaseDate);
   }
 
   /**

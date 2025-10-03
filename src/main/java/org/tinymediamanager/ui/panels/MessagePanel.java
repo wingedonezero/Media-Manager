@@ -49,7 +49,7 @@ public class MessagePanel extends JPanel {
     setOpaque(false);
     initComponents();
     // init data
-    DateFormat dateFormat = TmmDateFormat.MEDIUM_TIME_FORMAT;
+    DateFormat dateFormat = TmmDateFormat.getDateFormat();
     lblDate.setText(dateFormat.format(message.getMessageDate()));
 
     String text = "";

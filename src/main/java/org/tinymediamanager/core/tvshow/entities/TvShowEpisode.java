@@ -459,7 +459,7 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
     if (this.firstAired == null) {
       return "";
     }
-    return TmmDateFormat.MEDIUM_DATE_FORMAT.format(firstAired);
+    return TmmDateFormat.getDateFormat().format(firstAired);
   }
 
   /**

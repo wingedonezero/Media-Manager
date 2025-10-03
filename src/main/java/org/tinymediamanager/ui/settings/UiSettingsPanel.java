@@ -51,6 +51,7 @@ import org.tinymediamanager.core.Message;
 import org.tinymediamanager.core.Message.MessageLevel;
 import org.tinymediamanager.core.MessageManager;
 import org.tinymediamanager.core.Settings;
+import org.tinymediamanager.core.TmmDateFormat;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.Utils;
 import org.tinymediamanager.ui.TmmFontHelper;
@@ -96,6 +97,10 @@ class UiSettingsPanel extends JPanel {
   private JCheckBox                  chckbxAutomaticUpdates;
   private JLabel                     lblUpdateHint;
   private CollapsiblePanel           collapsiblePanelUpdate;
+  private JLabel                     lblDateFormatT;
+  private JComboBox                  cbDateFormat;
+  private JComboBox                  cbTimeFormat;
+  private JLabel                     lblTimeFormatT;
 
   UiSettingsPanel() {
     LocaleComboBox actualLocale = null;
@@ -299,7 +304,8 @@ class UiSettingsPanel extends JPanel {
     {
       JPanel panelMisc = new JPanel();
       // 16lp ~ width of the
-      panelMisc.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][][10lp!][][][][10lp!][][][][10lp!][][][][10lp!][][]"));
+      panelMisc.setLayout(
+          new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!,grow][grow]", "[][][10lp!][][][10lp!][][][][10lp!][][][][10lp!][][][][10lp!][][]"));
 
       JLabel lblMiscT = new TmmLabel(TmmResourceBundle.getString("Settings.misc"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelMisc, lblMiscT, true);
@@ -315,44 +321,56 @@ class UiSettingsPanel extends JPanel {
         JLabel lblDatefieldHint = new JLabel(TmmResourceBundle.getString("Settings.datefield.desc"));
         panelMisc.add(lblDatefieldHint, "cell 2 1");
       }
+      {
+        lblDateFormatT = new JLabel(TmmResourceBundle.getString("Settings.ui.date"));
+        panelMisc.add(lblDateFormatT, "flowx,cell 1 3 2 1");
 
+        cbDateFormat = new JComboBox(TmmDateFormat.DateFormatStyle.values());
+        panelMisc.add(cbDateFormat, "cell 1 3 2 1");
+
+        lblTimeFormatT = new JLabel(TmmResourceBundle.getString("Settings.ui.time"));
+        panelMisc.add(lblTimeFormatT, "flowx,cell 1 4 2 1");
+
+        cbTimeFormat = new JComboBox(TmmDateFormat.TimeFormatStyle.values());
+        panelMisc.add(cbTimeFormat, "cell 1 4");
+      }
       {
         JLabel lblFileSizeFormula = new JLabel(TmmResourceBundle.getString("Settings.filesize.formula"));
-        panelMisc.add(lblFileSizeFormula, "cell 1 3 2 1");
+        panelMisc.add(lblFileSizeFormula, "cell 1 6 2 1");
 
         rbFileSizeCalculationMB = new JRadioButton(TmmResourceBundle.getString("Settings.filesize.1000"));
-        panelMisc.add(rbFileSizeCalculationMB, "cell 2 4");
+        panelMisc.add(rbFileSizeCalculationMB, "cell 2 7");
 
         rbFileSizeCalculationMiB = new JRadioButton(TmmResourceBundle.getString("Settings.filesize.1024"));
-        panelMisc.add(rbFileSizeCalculationMiB, "cell 2 5");
+        panelMisc.add(rbFileSizeCalculationMiB, "cell 2 8");
       }
       {
         JLabel lblFileSizeT = new JLabel(TmmResourceBundle.getString("Settings.filesize"));
-        panelMisc.add(lblFileSizeT, "cell 1 7 2 1");
+        panelMisc.add(lblFileSizeT, "cell 1 10 2 1");
 
         rbFileSizeH = new JRadioButton(TmmResourceBundle.getString("Settings.filesize.human"));
-        panelMisc.add(rbFileSizeH, "cell 2 8");
+        panelMisc.add(rbFileSizeH, "cell 2 11");
 
         rbFileSizeM = new JRadioButton(TmmResourceBundle.getString("Settings.filesize.megabyte"));
-        panelMisc.add(rbFileSizeM, "cell 2 9");
+        panelMisc.add(rbFileSizeM, "cell 2 12");
       }
       {
         JLabel lblImageChooserDefaultFolderT = new JLabel(TmmResourceBundle.getString("Settings.imagechooser.folder"));
-        panelMisc.add(lblImageChooserDefaultFolderT, "cell 1 11 2 1");
+        panelMisc.add(lblImageChooserDefaultFolderT, "cell 1 14 2 1");
 
         rbImageChooserLastFolder = new JRadioButton(TmmResourceBundle.getString("Settings.imagechooser.last"));
-        panelMisc.add(rbImageChooserLastFolder, "cell 2 12");
+        panelMisc.add(rbImageChooserLastFolder, "cell 2 15");
 
         rbImageChooserEntityFolder = new JRadioButton(TmmResourceBundle.getString("Settings.imagechooser.entity"));
-        panelMisc.add(rbImageChooserEntityFolder, "cell 2 13");
+        panelMisc.add(rbImageChooserEntityFolder, "cell 2 16");
       }
       {
         chckbxStoreWindowPreferences = new JCheckBox(TmmResourceBundle.getString("Settings.storewindowpreferences"));
-        panelMisc.add(chckbxStoreWindowPreferences, "cell 1 15 2 1");
+        panelMisc.add(chckbxStoreWindowPreferences, "cell 1 18 2 1");
       }
       {
         chckbxShowMemory = new JCheckBox(TmmResourceBundle.getString("Settings.showmemory"));
-        panelMisc.add(chckbxShowMemory, "cell 1 16 2 1");
+        panelMisc.add(chckbxShowMemory, "cell 1 19 2 1");
       }
     }
     {
@@ -476,5 +494,15 @@ class UiSettingsPanel extends JPanel {
     AutoBinding autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_4, spUpdateInterval,
         jSpinnerBeanProperty_1);
     autoBinding_5.bind();
+    //
+    Property settingsBeanProperty_5 = BeanProperty.create("dateFormatStyle");
+    AutoBinding autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_5, cbDateFormat,
+        jComboBoxBeanProperty);
+    autoBinding_6.bind();
+    //
+    Property settingsBeanProperty_6 = BeanProperty.create("timeFormatStyle");
+    AutoBinding autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_6, cbTimeFormat,
+        jComboBoxBeanProperty);
+    autoBinding_7.bind();
   }
 }

@@ -69,7 +69,7 @@ public class UnlockDialog extends TmmDialog {
       LocalDate validUntil = License.getInstance().validUntil();
       if (License.getInstance().isValidLicense() && validUntil != null) {
         JLabel lblLicenseInfo = new JLabel("==> " + TmmResourceBundle.getString("tmm.license.validuntil") + ": "
-            + TmmDateFormat.MEDIUM_DATE_FORMAT.format(Date.valueOf(validUntil)) + " <==");
+            + TmmDateFormat.getDateFormat().format(Date.valueOf(validUntil)) + " <==");
         TmmFontHelper.changeFont(lblLicenseInfo, TmmFontHelper.H2, Font.BOLD);
         panelContent.add(lblLicenseInfo, "cell 0 1 2 1,grow, wmin 0");
       }

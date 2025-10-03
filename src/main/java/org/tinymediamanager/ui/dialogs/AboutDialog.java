@@ -97,8 +97,8 @@ public class AboutDialog extends TmmDialog {
       contentPanel.add(lblLicense, "cell 2 6");
 
       if (validUntil != null) {
-        lblLicense.setText(
-            TmmResourceBundle.getString("tmm.license.validuntil") + ": " + TmmDateFormat.MEDIUM_DATE_FORMAT.format(Date.valueOf(validUntil)));
+        lblLicense
+            .setText(TmmResourceBundle.getString("tmm.license.validuntil") + ": " + TmmDateFormat.getDateFormat().format(Date.valueOf(validUntil)));
         JButton btnLicenseInfo = new FlatButton("");
         btnLicenseInfo.setAction(new UnlockAction());
         btnLicenseInfo.setText(null);

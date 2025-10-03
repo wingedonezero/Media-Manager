@@ -119,7 +119,7 @@ public class TvShowEpisodeMediaInformationPanel extends MediaInformationPanel {
     chckbxWatched.setSelected(tvShowEpisode.isWatched());
 
     if (tvShowEpisode.isWatched() && tvShowEpisode.getLastWatched() != null) {
-      lblLastPlayed.setText("(" + TmmDateFormat.MEDIUM_DATE_FORMAT.format(tvShowEpisode.getLastWatched()) + ")");
+      lblLastPlayed.setText("(" + TmmDateFormat.getDateFormat().format(tvShowEpisode.getLastWatched()) + ")");
       lblLastPlayed.setToolTipText(TmmResourceBundle.getString("metatag.lastplayed"));
     }
     else {

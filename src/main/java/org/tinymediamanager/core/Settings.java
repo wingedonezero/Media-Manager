@@ -116,6 +116,8 @@ public final class Settings extends AbstractSettings {
 
   private boolean                                          imageChooserUseEntityFolder  = false;
   private boolean                                          storeWindowPreferences       = true;
+  private TmmDateFormat.DateFormatStyle                    dateFormatStyle              = TmmDateFormat.DateFormatStyle.NATIVE;
+  private TmmDateFormat.TimeFormatStyle                    timeFormatStyle              = TmmDateFormat.TimeFormatStyle.NATIVE;
   private DateField                                        dateField                    = DateField.DATE_ADDED;
   private boolean                                          fileSizeDisplayHumanReadable = true;
   private boolean                                          fileSizeBase10               = true;
@@ -1106,6 +1108,26 @@ public final class Settings extends AbstractSettings {
     DateField oldValue = this.dateField;
     this.dateField = newValue;
     firePropertyChange("dateField", oldValue, newValue);
+  }
+
+  public TmmDateFormat.DateFormatStyle getDateFormatStyle() {
+    return dateFormatStyle;
+  }
+
+  public void setDateFormatStyle(TmmDateFormat.DateFormatStyle newValue) {
+    TmmDateFormat.DateFormatStyle oldValue = this.dateFormatStyle;
+    this.dateFormatStyle = newValue;
+    firePropertyChange("dateFormatStyle", oldValue, newValue);
+  }
+
+  public TmmDateFormat.TimeFormatStyle getTimeFormatStyle() {
+    return timeFormatStyle;
+  }
+
+  public void setTimeFormatStyle(TmmDateFormat.TimeFormatStyle newValue) {
+    TmmDateFormat.TimeFormatStyle oldValue = this.timeFormatStyle;
+    this.timeFormatStyle = newValue;
+    firePropertyChange("timeFormatStyle", oldValue, newValue);
   }
 
   public boolean isFileSizeDisplayHumanReadable() {
