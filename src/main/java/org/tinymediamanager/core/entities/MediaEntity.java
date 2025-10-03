@@ -1381,11 +1381,11 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
     }
 
     for (MediaFile mf : mfs) {
-      // update the cached image by just MOVEing it around
-      Path oldCache = ImageCache.getAbsolutePath(mf);
       mf.replacePathForRenamedFolder(oldPath, newPath);
 
+      // update the cached image by just MOVEing it around
       if (mf.isGraphic()) {
+        Path oldCache = ImageCache.getAbsolutePath(mf);
         if (Files.exists(oldCache)) {
           Path newCache = ImageCache.getAbsolutePath(mf);
           LOGGER.trace("updating imageCache {} -> {}", oldCache, newCache);
