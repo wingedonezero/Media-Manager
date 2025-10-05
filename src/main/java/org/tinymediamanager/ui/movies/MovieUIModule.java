@@ -36,6 +36,7 @@ import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.MoviePostProcessExecutor;
 import org.tinymediamanager.core.threading.NullTasksMenu;
+import org.tinymediamanager.core.threading.TmmTaskManager;
 import org.tinymediamanager.license.License;
 import org.tinymediamanager.thirdparty.KodiRPC;
 import org.tinymediamanager.ui.AbstractTmmUIModule;
@@ -444,7 +445,8 @@ public class MovieUIModule extends AbstractTmmUIModule {
         postProcessingMenu.removeAll();
         for (PostProcess process : new ArrayList<>(MovieModuleManager.getInstance().getSettings().getPostProcess())) {
           JMenuItem menuItem = new JMenuItem(process.getName(), IconManager.APPLY);
-          menuItem.addActionListener(pp -> new MoviePostProcessExecutor(process).execute());
+          menuItem.addActionListener(pp -> TmmTaskManager.getInstance()
+              .addUnnamedTask(new MoviePostProcessExecutor(process, MovieUIModule.getInstance().getSelectionModel().getSelectedMovies())));
           postProcessingMenu.add(menuItem);
         }
         if (postProcessingMenu.getItemCount() == 0) {

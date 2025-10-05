@@ -33,6 +33,7 @@ import org.tinymediamanager.Globals;
 import org.tinymediamanager.core.PostProcess;
 import org.tinymediamanager.core.Settings;
 import org.tinymediamanager.core.TmmResourceBundle;
+import org.tinymediamanager.core.threading.TmmTaskManager;
 import org.tinymediamanager.core.tvshow.TvShowEpisodePostProcessExecutor;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.TvShowPostProcessExecutor;
@@ -541,7 +542,7 @@ public class TvShowUIModule extends AbstractTmmUIModule {
           traktMenu.setEnabled(false);
         }
 
-        // Post processing
+        // Post-processing
         postProcessingMenu.removeAll();
 
         if (TvShowModuleManager.getInstance().getSettings().getPostProcessTvShow().isEmpty()
@@ -551,7 +552,8 @@ public class TvShowUIModule extends AbstractTmmUIModule {
         else {
           for (PostProcess process : new ArrayList<>(TvShowModuleManager.getInstance().getSettings().getPostProcessTvShow())) {
             JMenuItem menuItem = new JMenuItem(TmmResourceBundle.getString("metatag.tvshow") + " - " + process.getName(), IconManager.APPLY_INV);
-            menuItem.addActionListener(pp -> new TvShowPostProcessExecutor(process).execute());
+            menuItem.addActionListener(pp -> TmmTaskManager.getInstance()
+                .addUnnamedTask(new TvShowPostProcessExecutor(process, TvShowUIModule.getInstance().getSelectionModel().getSelectedTvShows())));
             postProcessingMenu.add(menuItem);
           }
 
@@ -561,7 +563,9 @@ public class TvShowUIModule extends AbstractTmmUIModule {
 
           for (PostProcess process : new ArrayList<>(TvShowModuleManager.getInstance().getSettings().getPostProcessEpisode())) {
             JMenuItem menuItem = new JMenuItem(TmmResourceBundle.getString("metatag.episode") + " - " + process.getName(), IconManager.APPLY_INV);
-            menuItem.addActionListener(pp -> new TvShowEpisodePostProcessExecutor(process).execute());
+            menuItem.addActionListener(pp -> TmmTaskManager.getInstance()
+                .addUnnamedTask(
+                    new TvShowEpisodePostProcessExecutor(process, TvShowUIModule.getInstance().getSelectionModel().getSelectedEpisodes())));
             postProcessingMenu.add(menuItem);
           }
 

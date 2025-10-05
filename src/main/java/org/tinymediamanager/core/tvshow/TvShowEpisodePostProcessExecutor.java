@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.PostProcess;
 import org.tinymediamanager.core.PostProcessExecutor;
+import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.jmte.JmteUtils;
 import org.tinymediamanager.core.jmte.NamedArrayRenderer;
 import org.tinymediamanager.core.jmte.NamedArrayUniqueRenderer;
@@ -41,7 +42,6 @@ import org.tinymediamanager.core.jmte.TmmModelAdaptor;
 import org.tinymediamanager.core.jmte.ZeroNumberRenderer;
 import org.tinymediamanager.core.tvshow.TvShowRenamer.TvShowNamedFirstCharacterRenderer;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
-import org.tinymediamanager.ui.tvshows.TvShowUIModule;
 
 import com.floreysoft.jmte.Engine;
 import com.floreysoft.jmte.extended.ChainedNamedRenderer;
@@ -55,14 +55,17 @@ public class TvShowEpisodePostProcessExecutor extends PostProcessExecutor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TvShowEpisodePostProcessExecutor.class);
 
-  public TvShowEpisodePostProcessExecutor(PostProcess postProcess) {
-    super(postProcess);
+  public TvShowEpisodePostProcessExecutor(PostProcess postProcess, List<TvShowEpisode> episodes) {
+    super(postProcess, episodes);
   }
 
-  public void execute() {
-    List<TvShowEpisode> selectedEpisodes = TvShowUIModule.getInstance().getSelectionModel().getSelectedEpisodes();
+  @Override
+  protected void execute() {
+    for (MediaEntity mediaEntity : entities) {
+      if (!(mediaEntity instanceof TvShowEpisode episode)) {
+        continue;
+      }
 
-    for (TvShowEpisode episode : selectedEpisodes) {
       LOGGER.info("Executing post process '{}' for episode '{}'", postProcess.getName(), episode.getTitle());
 
       Map<String, Object> mappings = new HashMap<>();
@@ -74,6 +77,7 @@ public class TvShowEpisodePostProcessExecutor extends PostProcessExecutor {
 
       try {
         executeCommand(command, episode);
+        LOGGER.info("Successfully executed post process '{}' for episode '{}'", postProcess.getName(), episode.getTitle());
       }
       catch (InterruptedException e) {
         // ignored

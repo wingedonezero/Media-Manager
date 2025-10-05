@@ -16,13 +16,13 @@
 package org.tinymediamanager.core.movie;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.PostProcess;
 import org.tinymediamanager.core.PostProcessExecutor;
+import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.jmte.TmmModelAdaptor;
 import org.tinymediamanager.core.movie.entities.MovieSet;
 import org.tinymediamanager.ui.moviesets.MovieSetUIModule;
@@ -38,17 +38,20 @@ public class MovieSetPostProcessExecutor extends PostProcessExecutor {
   private static final Logger LOGGER = LoggerFactory.getLogger(MovieSetPostProcessExecutor.class);
 
   public MovieSetPostProcessExecutor(PostProcess postProcess) {
-    super(postProcess);
+    super(postProcess, MovieSetUIModule.getInstance().getSelectionModel().getSelectedMovieSets());
   }
 
   public void execute() {
-    List<MovieSet> selectedMovieSets = MovieSetUIModule.getInstance().getSelectionModel().getSelectedMovieSets();
+    for (MediaEntity mediaEntity : entities) {
+      if (!(mediaEntity instanceof MovieSet movieSet)) {
+        continue;
+      }
 
-    for (MovieSet movieSet : selectedMovieSets) {
       LOGGER.info("Executing post process '{}' for movie set '{}'", postProcess.getName(), movieSet.getTitle());
       String[] command = substituteMovieSetTokens(movieSet);
       try {
         executeCommand(command, movieSet);
+        LOGGER.info("Successfully executed post process '{}' for movie set '{}'", postProcess.getName(), movieSet.getTitle());
       }
       catch (Exception ignored) {
         // already logged in executeCommand
