@@ -36,7 +36,7 @@ import java.awt.image.BufferedImage;
 import java.io.InterruptedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -101,6 +101,7 @@ import org.tinymediamanager.scraper.http.Url;
 import org.tinymediamanager.scraper.interfaces.IMediaArtworkProvider;
 import org.tinymediamanager.scraper.util.ListUtils;
 import org.tinymediamanager.scraper.util.MediaIdUtil;
+import org.tinymediamanager.scraper.util.ParserUtils;
 import org.tinymediamanager.ui.ArtworkDragAndDropListener;
 import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.MainWindow;
@@ -108,13 +109,14 @@ import org.tinymediamanager.ui.TmmFontHelper;
 import org.tinymediamanager.ui.TmmUIHelper;
 import org.tinymediamanager.ui.WrapLayout;
 import org.tinymediamanager.ui.components.NoBorderScrollPane;
+import org.tinymediamanager.ui.components.button.FlatButton;
 import org.tinymediamanager.ui.components.button.SquareIconButton;
 import org.tinymediamanager.ui.components.combobox.MediaScraperCheckComboBox;
 import org.tinymediamanager.ui.components.combobox.TmmCheckComboBox;
 import org.tinymediamanager.ui.components.label.ImageLabel;
-import org.tinymediamanager.ui.components.label.LinkLabel;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.panel.CollapsiblePanel;
+import org.tinymediamanager.ui.components.slider.RangeSlider;
 import org.tinymediamanager.ui.components.textfield.EnhancedTextField;
 
 import net.miginfocom.swing.MigLayout;
@@ -157,8 +159,14 @@ public class ImageChooserDialog extends TmmDialog {
   private DownloadTask                     task;
 
   private MediaScraperCheckComboBox        cbScraper;
-  private TmmCheckComboBox<ImageSize>      cbSize;
   private TmmCheckComboBox<MediaLanguages> cbLanguage;
+  private RangeSlider                      widthSlider;
+  private RangeSlider                      heightSlider;
+  private JLabel                           lblMinWidth;
+  private JLabel                           lblMaxWidth;
+  private JLabel                           lblMinHeight;
+  private JLabel                           lblMaxHeight;
+  private JComboBox<SortOrder>             cbSortOrder;
 
   private JLabel                           lblThumbs;
   private JButton                          btnMarkExtrathumbs;
@@ -169,6 +177,24 @@ public class ImageChooserDialog extends TmmDialog {
   private JButton                          btnMarkExtrafanart;
   private JButton                          btnUnMarkExtrafanart;
   private JLabel                           lblExtrafanartSelected;
+
+  private boolean                          persistFilters = false;
+
+  enum SortOrder {
+    SCORE(TmmResourceBundle.getString("imagechooser.sortby.score")),
+    SIZE(TmmResourceBundle.getString("imagechooser.sortby.size")),;
+
+    private final String displayName;
+
+    SortOrder(String displayName) {
+      this.displayName = displayName;
+    }
+
+    @Override
+    public String toString() {
+      return displayName;
+    }
+  }
 
   /**
    * Instantiates a new image chooser dialog.
@@ -197,33 +223,16 @@ public class ImageChooserDialog extends TmmDialog {
     this.artworkScrapers = artworkScrapers;
     this.artwork = null;
 
+    switch (mediaType) {
+      case MOVIE, MOVIE_SET -> this.persistFilters = MovieModuleManager.getInstance().getSettings().isStoreUiFilters();
+      case TV_SHOW, TV_EPISODE -> this.persistFilters = TvShowModuleManager.getInstance().getSettings().isStoreUiFilters();
+    }
+
     filterListener = e -> SwingUtilities.invokeLater(this::filterChanged);
 
     init();
 
     cbScraper.addActionListener(filterListener);
-    cbSize.addActionListener(filterListener);
-    cbSize.addPopupMenuListener(new PopupMenuListener() {
-      @Override
-      public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        // nothing to do here
-      }
-
-      @Override
-      public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-        updateEntries();
-      }
-
-      @Override
-      public void popupMenuCanceled(PopupMenuEvent e) {
-        updateEntries();
-      }
-
-      private void updateEntries() {
-        updateSizeCombobox();
-      }
-    });
-
     cbLanguage.addActionListener(filterListener);
     cbLanguage.addPopupMenuListener(new PopupMenuListener() {
       @Override
@@ -246,6 +255,13 @@ public class ImageChooserDialog extends TmmDialog {
         updateLanguageCombobox();
       }
     });
+
+    widthSlider.addChangeListener(e -> SwingUtilities.invokeLater(this::filterChanged));
+    heightSlider.addChangeListener(e -> SwingUtilities.invokeLater(this::filterChanged));
+    cbSortOrder.addActionListener(l -> SwingUtilities.invokeLater(() -> {
+      imagePanels.sort(getImagePanelComparator());
+      filterChanged();
+    }));
   }
 
   private void init() {
@@ -353,34 +369,60 @@ public class ImageChooserDialog extends TmmDialog {
           true);
 
       contentPanel.add(collapsiblePanel, "cell 0 0 2 1,grow, wmin 0");
-      panelFilter.setLayout(new MigLayout("insets 0", "[25%:n][20lp!][25%:n][20lp!][25%:n]", "[][]"));
+      panelFilter.setLayout(new MigLayout("insets 0", "[][25%:n][30lp!][][30lp:n,right][15%:25%][30lp:n][50lp:50lp,grow][grow][10lp!]", "[][]"));
 
-      JLabel lblScraperT = new TmmLabel(TmmResourceBundle.getString("scraper.artwork"));
-      panelFilter.add(lblScraperT, "cell 0 0");
+      {
+        JLabel lblScraperT = new TmmLabel(TmmResourceBundle.getString("scraper.artwork"));
+        panelFilter.add(lblScraperT, "cell 0 0");
 
-      JLabel lblDimensionT = new TmmLabel(TmmResourceBundle.getString("metatag.size"));
-      panelFilter.add(lblDimensionT, "cell 2 0");
+        cbScraper = new MediaScraperCheckComboBox(artworkScrapers);
+        cbScraper.setFocusable(false);
+        panelFilter.add(cbScraper, "cell 1 0,growx,wmin 0");
 
-      JLabel lblLanguageT = new TmmLabel(TmmResourceBundle.getString("metatag.language"));
-      panelFilter.add(lblLanguageT, "cell 4 0");
+        JLabel lblLanguageT = new TmmLabel(TmmResourceBundle.getString("metatag.language"));
+        panelFilter.add(lblLanguageT, "cell 0 1");
 
-      cbScraper = new MediaScraperCheckComboBox(artworkScrapers);
-      cbScraper.setFocusable(false);
-      panelFilter.add(cbScraper, "cell 0 1,growx,wmin 0");
+        cbLanguage = new TmmCheckComboBox();
+        cbLanguage.setFocusable(false);
+        cbLanguage.setSingleLineEditor(); // looks weird when preselecting langu?
+        panelFilter.add(cbLanguage, "cell 1 1,growx,wmin 0");
+      }
+      {
+        JLabel lblWidthT = new TmmLabel(TmmResourceBundle.getString("metatag.width"));
+        panelFilter.add(lblWidthT, "cell 3 0");
 
-      cbSize = new TmmCheckComboBox();
-      cbSize.setFocusable(false);
-      cbSize.setSingleLineEditor();
-      panelFilter.add(cbSize, "cell 2 1,growx,wmin 0");
+        lblMinWidth = new JLabel("");
+        TmmFontHelper.changeFont(lblMinWidth, TmmFontHelper.L1);
+        panelFilter.add(lblMinWidth, "cell 4 0");
 
-      cbLanguage = new TmmCheckComboBox();
-      cbLanguage.setFocusable(false);
-      cbLanguage.setSingleLineEditor(); // looks weird when preselecting langu?
-      // our preferred should be activated?
-      // List<MediaLanguages> preferred = TvShowModuleManager.getInstance().getSettings().getImageScraperLanguages();
-      // cbLanguage.setItems(preferred);
-      // cbLanguage.setSelectedItems(preferred);
-      panelFilter.add(cbLanguage, "cell 4 1,growx,wmin 0");
+        widthSlider = new RangeSlider(0, 4000);
+        panelFilter.add(widthSlider, "cell 5 0,growx");
+
+        lblMaxWidth = new JLabel("0");
+        TmmFontHelper.changeFont(lblMaxWidth, TmmFontHelper.L1);
+        panelFilter.add(lblMaxWidth, "cell 6 0");
+
+        JLabel lblHeightT = new TmmLabel(TmmResourceBundle.getString("metatag.height"));
+        panelFilter.add(lblHeightT, "cell 3 1");
+
+        lblMinHeight = new JLabel("");
+        TmmFontHelper.changeFont(lblMinHeight, TmmFontHelper.L1);
+        panelFilter.add(lblMinHeight, "cell 4 1,alignx right");
+
+        heightSlider = new RangeSlider(0, 4000);
+        panelFilter.add(heightSlider, "cell 5 1,growx");
+
+        lblMaxHeight = new JLabel("");
+        TmmFontHelper.changeFont(lblMaxHeight, TmmFontHelper.L1);
+        panelFilter.add(lblMaxHeight, "cell 6 1");
+      }
+      {
+        JLabel lblSortByT = new JLabel(TmmResourceBundle.getString("imagechooser.sortby"));
+        panelFilter.add(lblSortByT, "flowx,cell 8 0,alignx trailing");
+
+        cbSortOrder = new JComboBox(SortOrder.values());
+        panelFilter.add(cbSortOrder, "cell 8 0,alignx right");
+      }
     }
     {
       scrollPane = new NoBorderScrollPane();
@@ -535,6 +577,89 @@ public class ImageChooserDialog extends TmmDialog {
         }
       });
     }
+
+    if (persistFilters) {
+      // load saved filters
+      loadFilters();
+    }
+  }
+
+  private void loadFilters() {
+
+    // artwork scrapers
+    List<String> scraperIds = ParserUtils
+        .split(TmmProperties.getInstance().getProperty("imagechooser.scrapers." + mediaType.name() + "." + type.name()));
+    if (!scraperIds.isEmpty()) {
+      List<MediaScraper> selectedScrapers = new ArrayList<>();
+      for (MediaScraper scraper : cbScraper.getItems()) {
+        if (scraperIds.contains(scraper.getId())) {
+          selectedScrapers.add(scraper);
+        }
+      }
+
+      if (!selectedScrapers.isEmpty()) {
+        cbScraper.setSelectedItems(selectedScrapers);
+      }
+    }
+
+    // language
+    List<String> languages = ParserUtils
+        .split(TmmProperties.getInstance().getProperty("imagechooser.language." + mediaType.name() + "." + type.name()));
+    if (!languages.isEmpty()) {
+      List<MediaLanguages> selectedLanguages = new ArrayList<>();
+
+      for (String lang : languages) {
+        try {
+          MediaLanguages language = MediaLanguages.valueOf(lang);
+          selectedLanguages.add(language);
+        }
+        catch (Exception e) {
+          // just ignore
+        }
+      }
+
+      if (!selectedLanguages.isEmpty()) {
+        cbLanguage.setItems(selectedLanguages);
+        cbLanguage.setSelectedItems(selectedLanguages);
+      }
+    }
+
+    // width
+    int minWidth = TmmProperties.getInstance().getPropertyAsInteger("imagechooser.minwidth." + mediaType.name() + "." + type.name());
+    int maxWidth = TmmProperties.getInstance().getPropertyAsInteger("imagechooser.maxwidth." + mediaType.name() + "." + type.name());
+    if (minWidth > 0 && maxWidth > 0 && maxWidth >= minWidth) {
+      try {
+        widthSlider.setLowValue(minWidth);
+        widthSlider.setHighValue(maxWidth);
+      }
+      catch (Exception ignored) {
+        // ignore - just not crash
+      }
+    }
+
+    // height
+    int minHeight = TmmProperties.getInstance().getPropertyAsInteger("imagechooser.minheight." + mediaType.name() + "." + type.name());
+    int maxHeight = TmmProperties.getInstance().getPropertyAsInteger("imagechooser.maxheight." + mediaType.name() + "." + type.name());
+    if (minHeight > 0 && maxHeight > 0 && maxHeight >= minHeight) {
+      try {
+        heightSlider.setLowValue(minHeight);
+        heightSlider.setHighValue(maxHeight);
+      }
+      catch (Exception ignored) {
+        // ignore - just not crash
+      }
+    }
+
+    // sort order
+    String sortOrder = TmmProperties.getInstance().getProperty("imagechooser.sortorder." + mediaType.name() + "." + type.name());
+    if (StringUtils.isNotBlank(sortOrder)) {
+      try {
+        cbSortOrder.setSelectedItem(SortOrder.valueOf(sortOrder));
+      }
+      catch (Exception ignored) {
+        // ignore - just not crash
+      }
+    }
   }
 
   private void startScraping() {
@@ -676,7 +801,7 @@ public class ImageChooserDialog extends TmmDialog {
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.gridx = 0;
     gbc.gridy = row;
-    gbc.gridwidth = 3;
+    gbc.gridwidth = 4;
     gbc.fill = GridBagConstraints.HORIZONTAL;
     gbc.insets = new Insets(5, 5, 5, 5);
 
@@ -730,105 +855,55 @@ public class ImageChooserDialog extends TmmDialog {
 
     /* show image button */
     gbc = new GridBagConstraints();
-    gbc.gridx = 0;
-    gbc.gridy = ++row;
-    gbc.anchor = GridBagConstraints.LINE_START;
-    gbc.fill = GridBagConstraints.HORIZONTAL;
-    if (extraThumbs != null || extraFanarts != null) {
-      gbc.gridwidth = 1;
-    }
-    else {
-      gbc.gridwidth = 3;
-    }
+    gbc.gridx = 3;
+    gbc.gridy = row;
     gbc.insets = new Insets(0, 5, 0, 5);
 
-    LinkLabel lblShowImage = new LinkLabel(TmmResourceBundle.getString("image.showoriginal"));
-    lblShowImage.addActionListener(e -> {
+    JButton btnShowOriginalImage = new FlatButton(IconManager.LINK);
+    btnShowOriginalImage.setToolTipText(TmmResourceBundle.getString("image.showoriginal"));
+    btnShowOriginalImage.addActionListener(e -> {
       ImagePreviewDialog dialog = new ImagePreviewDialog(artwork.getOriginalUrl());
       dialog.setVisible(true);
     });
-    imagePanel.add(lblShowImage, gbc);
+    imagePanel.add(btnShowOriginalImage, gbc);
 
-    // should we provide an option for extrathumbs
-    if (extraThumbs != null) {
-      gbc = new GridBagConstraints();
-      gbc.gridx = 1;
-      gbc.gridy = row;
-      gbc.anchor = GridBagConstraints.LINE_END;
-      gbc.insets = new Insets(0, 5, 0, 5);
-      JLabel label = new JLabel("Extrathumb");
-      imagePanel.add(label, gbc);
+    if (extraFanarts != null || extraThumbs != null) {
+      int x = 0;
+      int y = ++row;
 
-      gbc = new GridBagConstraints();
-      gbc.gridx = 2;
-      gbc.gridy = row++;
-      gbc.anchor = GridBagConstraints.LINE_START;
-      gbc.insets = new Insets(0, 5, 0, 5);
-      JCheckBox chkbx = new JCheckBox();
-      button.putClientProperty("MediaArtworkExtrathumb", chkbx);
-      chkbx.addActionListener(l -> updateExtrathumbSelectedCount());
-      imagePanel.add(chkbx, gbc);
-    }
+      // should we provide an option for extrafanart
+      if (extraFanarts != null) {
+        gbc = new GridBagConstraints();
+        gbc.gridx = x;
+        gbc.gridy = y;
+        gbc.anchor = GridBagConstraints.LAST_LINE_START;
+        gbc.insets = new Insets(0, 5, 0, 5);
+        JCheckBox chkbx = new JCheckBox("Extrafanart");
+        button.putClientProperty("MediaArtworkExtrafanart", chkbx);
+        chkbx.addActionListener(l -> updateExtraFanartSelectedCount());
+        imagePanel.add(chkbx, gbc);
 
-    // should we provide an option for extrafanart
-    if (extraFanarts != null) {
-      gbc = new GridBagConstraints();
-      gbc.gridx = 1;
-      gbc.gridy = row;
-      gbc.anchor = GridBagConstraints.LINE_END;
-      gbc.insets = new Insets(0, 5, 0, 5);
-      JLabel label = new JLabel("Extrafanart");
-      imagePanel.add(label, gbc);
+        x += 2;
+      }
 
-      gbc = new GridBagConstraints();
-      gbc.gridx = 2;
-      gbc.gridy = row;
-      gbc.anchor = GridBagConstraints.LINE_START;
-      gbc.insets = new Insets(0, 5, 0, 5);
-      JCheckBox chkbx = new JCheckBox();
-      button.putClientProperty("MediaArtworkExtrafanart", chkbx);
-      chkbx.addActionListener(l -> updateExtraFanartSelectedCount());
-      imagePanel.add(chkbx, gbc);
+      // should we provide an option for extrathumbs
+      if (extraThumbs != null) {
+        gbc = new GridBagConstraints();
+        gbc.gridx = x;
+        gbc.gridy = y;
+        gbc.anchor = GridBagConstraints.LAST_LINE_START;
+        gbc.insets = new Insets(0, 5, 0, 5);
+        JCheckBox chkbx = new JCheckBox("Extrathumb");
+        button.putClientProperty("MediaArtworkExtrathumb", chkbx);
+        chkbx.addActionListener(l -> updateExtrathumbSelectedCount());
+        imagePanel.add(chkbx, gbc);
+      }
     }
 
     imagePanel.putClientProperty("MediaArtwork", artwork);
 
     imagePanels.add(imagePanel);
-    imagePanels.sort((o1, o2) -> {
-      Object obj1 = o1.getClientProperty("MediaArtwork");
-      Object obj2 = o2.getClientProperty("MediaArtwork");
-
-      if (!(obj1 instanceof MediaArtwork artwork1) || !(obj2 instanceof MediaArtwork artwork2)) {
-        return 0;
-      }
-
-      int score1 = 0;
-      int score2 = 0;
-      if (mediaType == MediaType.MOVIE || mediaType == MediaType.MOVIE_SET) {
-        score1 = MovieArtworkHelper.getMatchingScoreAccordingPreferences(artwork1);
-        score2 = MovieArtworkHelper.getMatchingScoreAccordingPreferences(artwork2);
-      }
-      else if (mediaType == MediaType.TV_SHOW || mediaType == MediaType.TV_EPISODE) {
-        score1 = TvShowArtworkHelper.getMatchingScoreAccordingPreferences(artwork1);
-        score2 = TvShowArtworkHelper.getMatchingScoreAccordingPreferences(artwork2);
-      }
-      int result = Integer.compare(score2, score1);
-      if (result == 0) {
-        // same score - sort by likes descending
-        result = Integer.compare(artwork2.getLikes(), artwork1.getLikes());
-      }
-      if (result == 0) {
-        // last resort
-        if (artwork1.getBiggestArtwork() == null || artwork2.getBiggestArtwork() == null) {
-          result = 0; // cannot compare!
-        }
-        else {
-          result = artwork2.getBiggestArtwork().compareTo(artwork1.getBiggestArtwork());
-        }
-      }
-
-      return result;
-    });
+    imagePanels.sort(getImagePanelComparator());
 
     // update filters
     SwingUtilities.invokeLater(() -> {
@@ -853,43 +928,95 @@ public class ImageChooserDialog extends TmmDialog {
         imageLanguages.add(mediaLanguage);
       }
 
-      updateSizeCombobox();
+      updateSizeSlider();
       updateLanguageCombobox();
       filterChanged();
     });
   }
 
-  private void updateSizeCombobox() {
-    if (cbSize.isPopupVisible()) {
-      // do not update combobox while popup is open
-      // the update will be done when the popup is closed
-      return;
-    }
+  @NotNull
+  private Comparator<JPanel> getImagePanelComparator() {
+    return (o1, o2) -> {
+      Object obj1 = o1.getClientProperty("MediaArtwork");
+      Object obj2 = o2.getClientProperty("MediaArtwork");
 
-    List<ImageSize> allItems = cbSize.getItems();
+      if (!(obj1 instanceof MediaArtwork artwork1) || !(obj2 instanceof MediaArtwork artwork2)) {
+        return 0;
+      }
 
-    if (allItems.size() == imageSizes.size()) {
-      // same size, no need to update
-      return;
-    }
+      int result = 0;
 
-    cbSize.removeActionListener(filterListener);
+      if (cbSortOrder.getSelectedItem() == SortOrder.SCORE) {
+        // sort by score
+        int score1 = 0;
+        int score2 = 0;
+        if (mediaType == MediaType.MOVIE || mediaType == MediaType.MOVIE_SET) {
+          score1 = MovieArtworkHelper.getMatchingScoreAccordingPreferences(artwork1);
+          score2 = MovieArtworkHelper.getMatchingScoreAccordingPreferences(artwork2);
+        }
+        else if (mediaType == MediaType.TV_SHOW || mediaType == MediaType.TV_EPISODE) {
+          score1 = TvShowArtworkHelper.getMatchingScoreAccordingPreferences(artwork1);
+          score2 = TvShowArtworkHelper.getMatchingScoreAccordingPreferences(artwork2);
+        }
+        result = Integer.compare(score2, score1);
+        if (result == 0) {
+          // same score - sort by likes descending
+          result = Integer.compare(artwork2.getLikes(), artwork1.getLikes());
+        }
+        if (result == 0) {
+          // last resort
+          if (artwork1.getBiggestArtwork() == null || artwork2.getBiggestArtwork() == null) {
+            result = 0; // cannot compare!
+          }
+          else {
+            result = artwork2.getBiggestArtwork().compareTo(artwork1.getBiggestArtwork());
+          }
+        }
+      }
+      else if (cbSortOrder.getSelectedItem() == SortOrder.SIZE) {
+        // sort by size
+        if (artwork1.getBiggestArtwork() == null || artwork2.getBiggestArtwork() == null) {
+          return 0; // cannot compare!
+        }
+        result = artwork2.getBiggestArtwork().compareTo(artwork1.getBiggestArtwork());
+        if (result == 0) {
+          // same size - sort by likes descending
+          result = Integer.compare(artwork2.getLikes(), artwork1.getLikes());
+        }
+        if (result == 0) {
+          // last resort
+          result = MovieArtworkHelper.getMatchingScoreAccordingPreferences(artwork2)
+              - MovieArtworkHelper.getMatchingScoreAccordingPreferences(artwork1);
+        }
+      }
 
-    List<ImageSize> selectedItems = cbSize.getSelectedItems();
+      return result;
+    };
+  }
+
+  private void updateSizeSlider() {
+    int maxWidth = 0;
 
     for (ImageSize imageSize : imageSizes) {
-      if (!allItems.contains(imageSize)) {
-        allItems.add(imageSize);
+      if (imageSize.width > maxWidth) {
+        maxWidth = imageSize.width;
       }
     }
 
-    allItems.sort(ImageSize::compareTo);
-    allItems.sort(Collections.reverseOrder());
+    if (widthSlider.getMaximum() < maxWidth) { // in case we have more than 4000px
+      widthSlider.setMaximum(maxWidth);
+    }
 
-    cbSize.setItems(allItems);
-    cbSize.setSelectedItems(selectedItems);
+    int maxHeight = 0;
+    for (ImageSize imageSize : imageSizes) {
+      if (imageSize.height > maxHeight) {
+        maxHeight = imageSize.height;
+      }
+    }
 
-    cbSize.addActionListener(filterListener);
+    if (heightSlider.getMaximum() < maxHeight) { // in case we have more than 4000px
+      heightSlider.setMaximum(maxHeight);
+    }
   }
 
   private void updateLanguageCombobox() {
@@ -935,6 +1062,12 @@ public class ImageChooserDialog extends TmmDialog {
   }
 
   private void filterChanged() {
+    // update labels
+    lblMinWidth.setText(String.valueOf(widthSlider.getLowValue()));
+    lblMaxWidth.setText(String.valueOf(widthSlider.getHighValue()));
+    lblMinHeight.setText(String.valueOf(heightSlider.getLowValue()));
+    lblMaxHeight.setText(String.valueOf(heightSlider.getHighValue()));
+
     panelImages.removeAll();
     ButtonModel selectedButton = null;
 
@@ -946,13 +1079,12 @@ public class ImageChooserDialog extends TmmDialog {
 
     for (JPanel panel : imagePanels) {
       Object obj = panel.getClientProperty("MediaArtwork");
-      if (!(obj instanceof MediaArtwork)) {
+      if (!(obj instanceof MediaArtwork mediaArtwork)) {
         continue;
       }
 
-      MediaArtwork artwork = (MediaArtwork) obj;
-
-      if (cbScraper.getSelectedItems().isEmpty() && cbSize.getSelectedItems().isEmpty() && cbLanguage.getSelectedItems().isEmpty()) {
+      if (cbScraper.getSelectedItems().isEmpty() && widthSlider.isUnchanged() && heightSlider.isUnchanged()
+          && cbLanguage.getSelectedItems().isEmpty()) {
         // nothing selected - add all
         panelImages.add(panel);
         for (Component child : panel.getComponents()) {
@@ -977,7 +1109,7 @@ public class ImageChooserDialog extends TmmDialog {
           scraperMatch = false;
 
           for (MediaScraper scraper : cbScraper.getSelectedItems()) {
-            if (scraper.getId().equals(artwork.getProviderId())) {
+            if (scraper.getId().equals(mediaArtwork.getProviderId())) {
               scraperMatch = true;
               break;
             }
@@ -985,16 +1117,12 @@ public class ImageChooserDialog extends TmmDialog {
         }
 
         // on size
-        if (!cbSize.getSelectedItems().isEmpty()) {
+        if (!widthSlider.isUnchanged() || !heightSlider.isUnchanged()) {
           sizeMatch = false;
           List<String> sizes = new ArrayList<>();
 
-          for (ImageSize sizeAndUrl : cbSize.getSelectedItems()) {
-            sizes.add(sizeAndUrl.toString());
-          }
-
-          for (ImageSizeAndUrl imageSizeAndUrl : artwork.getImageSizes()) {
-            if (sizes.contains(imageSizeAndUrl.toString())) {
+          for (ImageSizeAndUrl imageSizeAndUrl : mediaArtwork.getImageSizes()) {
+            if (widthSlider.contains(imageSizeAndUrl.getWidth()) && heightSlider.contains(imageSizeAndUrl.getHeight())) {
               sizeMatch = true;
               break;
             }
@@ -1016,7 +1144,7 @@ public class ImageChooserDialog extends TmmDialog {
             }
           }
 
-          if (languages.contains(artwork.getLanguage())) {
+          if (languages.contains(mediaArtwork.getLanguage())) {
             languageMatch = true;
           }
         }
@@ -1136,6 +1264,33 @@ public class ImageChooserDialog extends TmmDialog {
     }
 
     super.setVisible(visible);
+  }
+
+  private void persistFilters() {
+    List<MediaScraper> selectedScrapers = cbScraper.getSelectedItems();
+    List<String> scraperIds = new ArrayList<>();
+    for (MediaScraper scraper : selectedScrapers) {
+      scraperIds.add(scraper.getId());
+    }
+    TmmProperties.getInstance().putProperty("imagechooser.scrapers." + mediaType.name() + "." + type.name(), String.join(",", scraperIds));
+
+    List<MediaLanguages> selectedLanguages = cbLanguage.getSelectedItems();
+    List<String> languages = new ArrayList<>();
+    for (MediaLanguages lang : selectedLanguages) {
+      languages.add(lang.name());
+    }
+    TmmProperties.getInstance().putProperty("imagechooser.language." + mediaType.name() + "." + type.name(), String.join(",", languages));
+
+    TmmProperties.getInstance()
+        .putProperty("imagechooser.minwidth." + mediaType.name() + "." + type.name(), String.valueOf(widthSlider.getLowValue()));
+    TmmProperties.getInstance()
+        .putProperty("imagechooser.maxwidth." + mediaType.name() + "." + type.name(), String.valueOf(widthSlider.getHighValue()));
+    TmmProperties.getInstance()
+        .putProperty("imagechooser.minheight." + mediaType.name() + "." + type.name(), String.valueOf(heightSlider.getLowValue()));
+    TmmProperties.getInstance()
+        .putProperty("imagechooser.maxheight." + mediaType.name() + "." + type.name(), String.valueOf(heightSlider.getHighValue()));
+    TmmProperties.getInstance()
+        .putProperty("imagechooser.sortorder." + mediaType.name() + "." + type.name(), ((SortOrder) cbSortOrder.getSelectedItem()).name());
   }
 
   /**
@@ -1310,6 +1465,12 @@ public class ImageChooserDialog extends TmmDialog {
       }
 
       task.cancel(true);
+
+      if (persistFilters) {
+        // save current filters
+        persistFilters();
+      }
+
       setVisible(false);
     }
 
