@@ -47,7 +47,7 @@ public class TmmDateFormat {
   public static final Logger LOGGER = LoggerFactory.getLogger(TmmDateFormat.class);
 
   public enum DateFormatStyle {
-    NATIVE(TmmResourceBundle.getString("Settings.ui.date.system")),
+    NATIVE("Settings.ui.date.system"),
     INTERNATIONAL("yyyy-MM-dd (2024-12-31)"),
     US_LONG("MM/dd/yyyy (12/31/2024)"),
     UK_LONG("dd/MM/yyyy (31/12/2024)"),
@@ -67,12 +67,16 @@ public class TmmDateFormat {
 
     @Override
     public String toString() {
-      return displayName;
+      String result = TmmResourceBundle.getString(displayName);
+      if ("???".equalsIgnoreCase(result)) {
+        return displayName;
+      }
+      return result;
     }
   }
 
   public enum TimeFormatStyle {
-    NATIVE(TmmResourceBundle.getString("Settings.ui.time.system")),
+    NATIVE("Settings.ui.time.system"),
     TWENTY_FOUR_HOURS("hh:mm (23:59)"),
     AM_PM("HH:mm a (11:59 PM)");
 
@@ -84,7 +88,11 @@ public class TmmDateFormat {
 
     @Override
     public String toString() {
-      return displayName;
+      String result = TmmResourceBundle.getString(displayName);
+      if ("???".equalsIgnoreCase(result)) {
+        return displayName;
+      }
+      return result;
     }
   }
 
