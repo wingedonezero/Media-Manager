@@ -101,8 +101,9 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
   private final MovieSetTreePanel      treePanel;
   private final JPanel                 detailPanel;
   private final JPanel                 dataPanel;
-  private final MovieSetFilterDialog   movieSetFilterDialog;
-  private final TmmSettingsNode        settingsNode;
+
+  private MovieSetFilterDialog         movieSetFilterDialog;
+  private TmmSettingsNode              settingsNode;
 
   private MovieSetUIModule() {
     selectionModel = new MovieSetSelectionModel();
@@ -164,8 +165,6 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
     });
     dataPanel.add(movieDetailPanel, "movie");
 
-    movieSetFilterDialog = new MovieSetFilterDialog(treePanel.getTreeTable());
-
     // panel for missing movies
     JTabbedPane missingMovieDetailPanel = new MainTabbedPane() {
       @Override
@@ -183,8 +182,11 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
     createPopupMenu();
     registerAccelerators();
 
-    // settings node
-    settingsNode = new MovieSetSettingsNode();
+    // settings node & filter dialog - load lazily
+    SwingUtilities.invokeLater(() -> {
+      movieSetFilterDialog = new MovieSetFilterDialog(treePanel.getTreeTable());
+      settingsNode = new MovieSetSettingsNode();
+    });
 
     // further initializations
     init();

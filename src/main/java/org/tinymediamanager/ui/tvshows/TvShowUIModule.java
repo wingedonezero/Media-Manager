@@ -134,9 +134,9 @@ public class TvShowUIModule extends AbstractTmmUIModule {
   private final TvShowTreePanel     listPanel;
   private final JPanel              detailPanel;
   private final JPanel              dataPanel;
-  private final TvShowFilterDialog  tvShowFilterDialog;
 
-  private final TmmSettingsNode     settingsNode;
+  private TvShowFilterDialog        tvShowFilterDialog;
+  private TmmSettingsNode           settingsNode;
 
   private TvShowUIModule() {
 
@@ -200,17 +200,17 @@ public class TvShowUIModule extends AbstractTmmUIModule {
         new TvShowEpisodeMediaInformationPanel(tvShowEpisodeSelectionModel));
     dataPanel.add(tvShowEpisodeDetailPanel, "tvShowEpisode");
 
-    // glass pane for searching/filtering
-    tvShowFilterDialog = new TvShowFilterDialog(listPanel.getTreeTable());
-
     // create actions and menus
     createActions();
     createMenus();
     createPopupMenu();
     registerAccelerators();
 
-    // build settings node
-    settingsNode = new TvShowSettingsNode();
+    // settings node & filter dialog - load lazily
+    SwingUtilities.invokeLater(() -> {
+      tvShowFilterDialog = new TvShowFilterDialog(listPanel.getTreeTable());
+      settingsNode = new TvShowSettingsNode();
+    });
 
     // further initializations
     init();

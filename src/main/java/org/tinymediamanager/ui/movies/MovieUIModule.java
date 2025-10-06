@@ -121,8 +121,8 @@ public class MovieUIModule extends AbstractTmmUIModule {
   private final MovieListPanel      listPanel;
   private final JPanel              detailPanel;
   private final MovieSelectionModel selectionModel;
-  private final MovieFilterDialog   movieFilterDialog;
-  private final TmmSettingsNode     settingsNode;
+  private MovieFilterDialog         movieFilterDialog;
+  private TmmSettingsNode           settingsNode;
 
   private MovieUIModule() {
     listPanel = new MovieListPanel();
@@ -154,15 +154,17 @@ public class MovieUIModule extends AbstractTmmUIModule {
     tabbedPane.add(TmmResourceBundle.getString("metatag.trailer"), new MovieTrailerPanel(selectionModel));
     dataPanel.add(tabbedPane);
 
-    movieFilterDialog = new MovieFilterDialog(selectionModel);
 
     createActions();
     createMenus();
     createPopupMenu();
     registerAccelerators();
 
-    // settings node
-    settingsNode = new MovieSettingsNode();
+    // settings node & filter dialog - load lazily
+    SwingUtilities.invokeLater(() -> {
+      movieFilterDialog = new MovieFilterDialog(selectionModel);
+      settingsNode = new MovieSettingsNode();
+    });
 
     // further initializations
     init();

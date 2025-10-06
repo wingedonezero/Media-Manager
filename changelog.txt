@@ -3,6 +3,7 @@ Version 5.2.3
 + [UI] date and time format settings are now configurable in the settings #3087
 + [UI] refactored the image chooser dialog to support better filtering and sorting #2899
 + [UI] remember filters in the image chooser if enabled in the module settings (Persist UI filters)
++ [Performance] improved startup speed
 ---
 x [UI] refactored post-process settings pages for movies and TV shows #3084
 x [Post-Processing] moved post-processing tasks to a background thread
