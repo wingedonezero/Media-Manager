@@ -62,4 +62,23 @@ public class TvShowEpisodeToEmbyConnector extends TvShowEpisodeToKodiConnector {
 
     root.appendChild(episodenumberend);
   }
+
+  @Override
+  protected void addCredits(TvShowEpisode episode, TvShowEpisodeNfoParser.Episode parser) {
+    // do nothing! will be forced to be print after actors - see #2780
+  }
+
+  @Override
+  protected void addDirectors(TvShowEpisode episode, TvShowEpisodeNfoParser.Episode parser) {
+    // do nothing! will be forced to be print after actors - see #2780
+  }
+
+  @Override
+  protected void addActors(TvShowEpisode episode, TvShowEpisodeNfoParser.Episode parser) {
+    super.addActors(episode, parser);
+
+    // add credits and directors after the actors
+    super.addCredits(episode, parser);
+    super.addDirectors(episode, parser);
+  }
 }

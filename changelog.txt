@@ -8,6 +8,7 @@ Version 5.2.3
 x [UI] refactored post-process settings pages for movies and TV shows #3084
 x [Post-Processing] moved post-processing tasks to a background thread
 x [TMDB] to not try to load SVG files (not supported by tinyMediaManager or Kodi) #3085
+x [Emby] re-order crew members after actors in the NFO #2780
 
 
 Version 5.2.2
