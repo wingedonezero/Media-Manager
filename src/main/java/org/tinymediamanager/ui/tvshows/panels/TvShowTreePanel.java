@@ -29,8 +29,10 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.stream.Collectors;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -53,8 +55,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.core.AbstractSettings;
+import org.tinymediamanager.core.MediaFileType;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.entities.MediaEntity;
+import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.tvshow.TvShowList;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
@@ -515,8 +518,16 @@ public class TvShowTreePanel extends TmmListPanel {
 
     // episode
     String selectedEpisodes = TmmResourceBundle.getString("episode.selected").replace("{}", String.valueOf(episodes.size()));
-    double videoFileSize = episodes.stream().mapToLong(TvShowEpisode::getVideoFilesize).sum() / (1000.0 * 1000.0 * 1000);
-    double totalFileSize = episodes.stream().mapToLong(MediaEntity::getTotalFilesize).sum() / (1000.0 * 1000.0 * 1000);
+
+    // Collect all unique media files from selected episodes
+    Set<MediaFile> uniqueMediaFiles = episodes.stream().flatMap(e -> e.getMediaFiles().stream()).collect(Collectors.toSet());
+
+    double videoFileSize = uniqueMediaFiles.stream()
+        .filter(mediaFile -> mediaFile.getType() == MediaFileType.VIDEO)
+        .mapToLong(MediaFile::getFilesize)
+        .sum() / (1000.0 * 1000.0 * 1000);
+
+    double totalFileSize = uniqueMediaFiles.stream().mapToLong(MediaFile::getFilesize).sum() / (1000.0 * 1000.0 * 1000);
 
     String text = String.format("%s (%.2f G)", selectedEpisodes, totalFileSize);
     lblSelectedEpisodeCount.setText(text);
