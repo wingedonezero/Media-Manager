@@ -80,6 +80,8 @@ public class TvShowEpisodeAndSeasonParser {
   private static final Pattern ROMAN_PATTERN      = Pattern.compile("(part|pt)[\\._\\s]+([MDCLXVI]+)", Pattern.CASE_INSENSITIVE);
   private static final Pattern SEASON_MULTI_EP    = Pattern.compile("s(\\d{1,4})[ _]?((?:([epx.-]+\\d{1,4})+))", Pattern.CASE_INSENSITIVE);
   private static final Pattern SEASON_MULTI_EP_2  = Pattern.compile("(\\d{1,4})(?=x)((?:([epx]+\\d{1,4})+))", Pattern.CASE_INSENSITIVE);
+  // matches patterns like S01E05-07 (interval where second ep is greater than first)
+  private static final Pattern SEASON_EP_RANGE    = Pattern.compile("s(\\d{1,4})[ _]?[eE](\\d{1,4})-(\\d{1,4})", Pattern.CASE_INSENSITIVE);
   private static final Pattern NUMBERS_2_PATTERN  = Pattern.compile("([0-9]{2})", Pattern.CASE_INSENSITIVE);
   private static final Pattern NUMBERS_3_PATTERN  = Pattern.compile("([0-9])([0-9]{2})", Pattern.CASE_INSENSITIVE);
 
@@ -102,7 +104,7 @@ public class TvShowEpisodeAndSeasonParser {
       "(Special|SP|OVA|OAV|Picture Drama)(?:[ _.-]*(?:ep?[ .]?)?(\\d{1,4})(?:[_ ]?v\\d+)?)+(?=\\b|_)[^\\])}]*?(?:[\\[({][^\\])}]+[\\])}][ _.-]*)*?[^\\]\\[)(}{\\\\/]*$",
       Pattern.CASE_INSENSITIVE);
   private static final Pattern ANIME_APPEND2      = Pattern.compile(
-      "(?:S(?:eason)?\\s*(?=\\d))?(Specials|\\d{1,3})[\\\\/](?:[^\\\\/]+[\\\\/])*[^\\\\/]+(?:\\b|_)[ _.-]*(?:ep?[ .]?)?(\\d{1,4})(?:[_ ]?v\\d+)?(?:\\b|_)[^\\])}]*?(?:[\\[({][^\\])}]+[\\])}][ _.-]*)*?[^\\]\\[)(}{\\\\/]*?$",
+      "(?:S(?:eason)?\\s*(?=\\d))?(Specials|\\d{1,3})[\\\\/](?:[^\\\\/]+[\\\\/])*[^\\\\/]+(?:\\b|_)[ _.-]*(?:ep?[ .]?)?(\\d{1,4})(?:[_ ]?v\\d+)?(?:\\b|_)[^\\])}]*?(?:[\\[({][^\\])}]+[\\])}][ _.-]*)*?[^\\]\\[)(}{\\\\/]*$",
       Pattern.CASE_INSENSITIVE);
   private static final Pattern ANIME_APPEND3      = Pattern.compile(
       "[-._ ]+S(?:eason ?)?(\\d{1,3})(?:[ _.-]*(?:ep?[ .]?)?(\\d{1,4})(?:[_ ]?v\\d+)?)+(?=\\b|_)[^\\])}]*?(?:[\\[({][^\\])}]+[\\])}][ _.-]*)*?[^\\]\\[)(}{\\\\/]*$",
@@ -312,6 +314,8 @@ public class TvShowEpisodeAndSeasonParser {
       basename = basename.replaceAll("(?i)" + SEASON_LONG.toString(), "");
       foldername = foldername.replaceAll("(?i)" + SEASON_LONG.toString(), "");
     }
+    // new: handle ranges like S01E05-07 -> expand to E:5 E:6 E:7 (only when end > start)
+    result = parseSeasonMultiEPRange(result, basename + foldername);
     result = parseSeasonMultiEP(result, basename + foldername);
     result = parseSeasonMultiEP2(result, basename + foldername);
     result = parseEpisodePattern(result, basename);
@@ -705,6 +709,38 @@ public class TvShowEpisodeAndSeasonParser {
     return result;
   }
 
+  // parse SxxExx-Eyy ranges (e.g. S01E05-07) and expand to individual episodes when end > start
+  private static EpisodeMatchingResult parseSeasonMultiEPRange(EpisodeMatchingResult result, String name) {
+    Matcher m = SEASON_EP_RANGE.matcher(name);
+    while (m.find()) {
+      try {
+        int s = Integer.parseInt(m.group(1));
+        int startEp = Integer.parseInt(m.group(2));
+        int endEp = Integer.parseInt(m.group(3));
+        // only treat as interval when end > start (strictly higher)
+        if (endEp > startEp) {
+          if (result.season < 0) {
+            result.season = s;
+            LOGGER.trace("add found season '{}'(range)", s);
+          }
+          // multi pattern MUST have same season
+          if (result.season == s) {
+            for (int ep = startEp; ep <= endEp; ep++) {
+              if (ep > -1 && !result.episodes.contains(ep)) {
+                result.episodes.add(ep);
+                LOGGER.trace("add found EP '{}'(range)", ep);
+              }
+            }
+          }
+        }
+      }
+      catch (NumberFormatException ignored) {
+        // ignore malformed numbers and continue
+      }
+    }
+    return result;
+  }
+
   private static EpisodeMatchingResult parseEpisodeOnly(EpisodeMatchingResult result, String name) {
     Matcher m;
     m = EPISODE_ONLY.matcher(name);
@@ -918,7 +954,7 @@ public class TvShowEpisodeAndSeasonParser {
   private static EpisodeMatchingResult postClean(EpisodeMatchingResult emr) {
     // try to clean the filename
     emr.cleanedName = cleanFilename(emr.name, new Pattern[] { SEASON_LONG, SEASON_MULTI_EP, SEASON_MULTI_EP_2, EPISODE_PATTERN, EPISODE_PATTERN_2,
-        NUMBERS_3_PATTERN, NUMBERS_2_PATTERN, ROMAN_PATTERN, DATE_1, DATE_2, SEASON_ONLY });
+        NUMBERS_3_PATTERN, NUMBERS_2_PATTERN, ROMAN_PATTERN, DATE_1, DATE_2, SEASON_ONLY, SEASON_EP_RANGE });
     Collections.sort(emr.episodes);
     LOGGER.trace("returning result '{}'", emr);
     return emr;
