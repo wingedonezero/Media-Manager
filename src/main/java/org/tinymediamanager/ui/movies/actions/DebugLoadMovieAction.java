@@ -39,14 +39,14 @@ public class DebugLoadMovieAction extends TmmAction {
   @Override
   protected void processAction(ActionEvent e) {
     Path file = TmmUIHelper.selectFile(TmmResourceBundle.getString("debug.entity.load"), ".",
-        new FileNameExtensionFilter("User submitted JSON files", ".json"));
+        new FileNameExtensionFilter("User submitted JSON files", "json"));
     if (file != null && Utils.isRegularFile(file)) {
       try {
         String json = Utils.readFileToString(file);
         MovieModuleManager.getInstance().load(json);
       }
       catch (IOException io) {
-        LOGGER.error("Error loading movie into DB: {}", io);
+        LOGGER.error("Error loading movie into DB: {}", io.getMessage(), io);
       }
     }
   }
