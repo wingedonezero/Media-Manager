@@ -863,6 +863,16 @@ public class ImageChooserDialog extends TmmDialog {
     btnShowOriginalImage.setToolTipText(TmmResourceBundle.getString("image.showoriginal"));
     btnShowOriginalImage.addActionListener(e -> {
       ImagePreviewDialog dialog = new ImagePreviewDialog(artwork.getOriginalUrl());
+
+      String path;
+      if (StringUtils.isNotBlank(openFolderPath)) {
+        path = openFolderPath;
+      }
+      else {
+        path = TmmProperties.getInstance().getProperty(DIALOG_ID + ".path");
+      }
+
+      dialog.setOpenFolderPath(path);
       dialog.setVisible(true);
     });
     imagePanel.add(btnShowOriginalImage, gbc);
