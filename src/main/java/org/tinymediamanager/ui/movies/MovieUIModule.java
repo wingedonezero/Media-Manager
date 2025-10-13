@@ -36,6 +36,7 @@ import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.MoviePostProcessExecutor;
 import org.tinymediamanager.core.threading.NullTasksMenu;
+import org.tinymediamanager.core.threading.TmmTaskManager;
 import org.tinymediamanager.license.License;
 import org.tinymediamanager.thirdparty.KodiRPC;
 import org.tinymediamanager.ui.AbstractTmmUIModule;
@@ -44,6 +45,7 @@ import org.tinymediamanager.ui.TmmLazyMenuAdapter;
 import org.tinymediamanager.ui.components.MenuScroller;
 import org.tinymediamanager.ui.components.tabbedpane.MainTabbedPane;
 import org.tinymediamanager.ui.movies.actions.DebugDumpMovieAction;
+import org.tinymediamanager.ui.movies.actions.DebugLoadMovieAction;
 import org.tinymediamanager.ui.movies.actions.MovieAddDatasourceAction;
 import org.tinymediamanager.ui.movies.actions.MovieAspectRatioDetectAction;
 import org.tinymediamanager.ui.movies.actions.MovieAssignMovieSetAction;
@@ -119,8 +121,8 @@ public class MovieUIModule extends AbstractTmmUIModule {
   private final MovieListPanel      listPanel;
   private final JPanel              detailPanel;
   private final MovieSelectionModel selectionModel;
-  private final MovieFilterDialog   movieFilterDialog;
-  private final TmmSettingsNode     settingsNode;
+  private MovieFilterDialog         movieFilterDialog;
+  private TmmSettingsNode           settingsNode;
 
   private MovieUIModule() {
     listPanel = new MovieListPanel();
@@ -152,15 +154,17 @@ public class MovieUIModule extends AbstractTmmUIModule {
     tabbedPane.add(TmmResourceBundle.getString("metatag.trailer"), new MovieTrailerPanel(selectionModel));
     dataPanel.add(tabbedPane);
 
-    movieFilterDialog = new MovieFilterDialog(selectionModel);
 
     createActions();
     createMenus();
     createPopupMenu();
     registerAccelerators();
 
-    // settings node
-    settingsNode = new MovieSettingsNode();
+    // settings node & filter dialog - load lazily
+    SwingUtilities.invokeLater(() -> {
+      movieFilterDialog = new MovieFilterDialog(selectionModel);
+      settingsNode = new MovieSettingsNode();
+    });
 
     // further initializations
     init();
@@ -413,6 +417,7 @@ public class MovieUIModule extends AbstractTmmUIModule {
     if (Globals.isDebug()) {
       final JMenu debugMenu = new JMenu("Debug");
       debugMenu.add(new DebugDumpMovieAction());
+      debugMenu.add(new DebugLoadMovieAction());
       debugMenu.add(NullTasksMenu.createTaskManagerTestMenu());
       popupMenu.addSeparator();
       popupMenu.add(debugMenu);
@@ -442,7 +447,8 @@ public class MovieUIModule extends AbstractTmmUIModule {
         postProcessingMenu.removeAll();
         for (PostProcess process : new ArrayList<>(MovieModuleManager.getInstance().getSettings().getPostProcess())) {
           JMenuItem menuItem = new JMenuItem(process.getName(), IconManager.APPLY);
-          menuItem.addActionListener(pp -> new MoviePostProcessExecutor(process).execute());
+          menuItem.addActionListener(pp -> TmmTaskManager.getInstance()
+              .addUnnamedTask(new MoviePostProcessExecutor(process, MovieUIModule.getInstance().getSelectionModel().getSelectedMovies())));
           postProcessingMenu.add(menuItem);
         }
         if (postProcessingMenu.getItemCount() == 0) {

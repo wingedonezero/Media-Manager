@@ -1110,7 +1110,7 @@ public abstract class ImdbParser {
     // parse via JSON
     if (jsonEl != null) {
       try {
-        // System.out.println(jsonEl.data();
+        // System.out.println(jsonEl.data());
         JsonNode node = mapper.readTree(jsonEl.data());
 
         // ***** REQ/RESP column *****
@@ -1304,10 +1304,16 @@ public abstract class ImdbParser {
             Person.Type pt = switch (cat.id) {
               case "cast" -> Person.Type.ACTOR;
               case "director" -> Person.Type.DIRECTOR;
+              case "directors" -> Person.Type.DIRECTOR;
               case "writer" -> Person.Type.WRITER;
+              case "writers" -> Person.Type.WRITER;
               case "producer" -> Person.Type.PRODUCER;
+              case "producers" -> Person.Type.PRODUCER;
               case "editor" -> Person.Type.EDITOR;
+              case "editors" -> Person.Type.EDITOR;
               case "composer" -> Person.Type.COMPOSER;
+              case "composers" -> Person.Type.COMPOSER;
+              case "cinematographer" -> Person.Type.CAMERA;
               case "cinematographers" -> Person.Type.CAMERA;
 
               default -> Person.Type.OTHER;
@@ -1800,7 +1806,118 @@ public abstract class ImdbParser {
       }
     }
     return ret;
+  }
 
+  protected void parseFullcreditsPage(Document doc, MediaSearchAndScrapeOptions options, MediaMetadata md) throws Exception {
+    Element jsonEl = doc.getElementById("__NEXT_DATA__");
+    // parse via JSON
+    if (jsonEl != null) {
+      try {
+        // System.out.println(jsonEl.data());
+        JsonNode node = mapper.readTree(jsonEl.data());
+
+        JsonNode itemsNode = JsonUtils.at(node, "/props/pageProps/contentData/categories");
+        for (ImdbCreditsCategory cat : JsonUtils.parseList(mapper, itemsNode, ImdbCreditsCategory.class)) {
+          if (cat.section != null) {
+            Person.Type pt = switch (cat.id) {
+              case "cast" -> Person.Type.ACTOR;
+              case "director" -> Person.Type.DIRECTOR;
+              case "directors" -> Person.Type.DIRECTOR;
+              case "writer" -> Person.Type.WRITER;
+              case "writers" -> Person.Type.WRITER;
+              case "producer" -> Person.Type.PRODUCER;
+              case "producers" -> Person.Type.PRODUCER;
+              case "editor" -> Person.Type.EDITOR;
+              case "editors" -> Person.Type.EDITOR;
+              case "composer" -> Person.Type.COMPOSER;
+              case "composers" -> Person.Type.COMPOSER;
+              case "cinematographer" -> Person.Type.CAMERA;
+              case "cinematographers" -> Person.Type.CAMERA;
+
+              default -> Person.Type.OTHER;
+            };
+
+            if (pt == Type.OTHER) {
+              // not so fast - new IMDB style has not yet finalized its new IDs, as the are called like
+              // "amzn1.imdb.CONCEPT.name_credit_category.ace5cb4c-8708-4238-9542-04641e7c8171"
+              // until we can prove the UUID to be fixed, lets parse the NAME :/
+              // Therefor, this page MUST be called in en_US, else we get translated types...
+              String nam = cat.name.toLowerCase(Locale.ROOT);
+              pt = switch (nam) {
+                case "cast" -> Person.Type.ACTOR;
+                case "director" -> Person.Type.DIRECTOR;
+                case "directors" -> Person.Type.DIRECTOR;
+                case "writer" -> Person.Type.WRITER;
+                case "writers" -> Person.Type.WRITER;
+                case "producer" -> Person.Type.PRODUCER;
+                case "producers" -> Person.Type.PRODUCER;
+                case "editor" -> Person.Type.EDITOR;
+                case "editors" -> Person.Type.EDITOR;
+                case "composer" -> Person.Type.COMPOSER;
+                case "composers" -> Person.Type.COMPOSER;
+                case "cinematographer" -> Person.Type.CAMERA;
+                case "cinematographers" -> Person.Type.CAMERA;
+
+                default -> Person.Type.OTHER;
+              };
+            }
+            if (pt == Type.OTHER) {
+              continue;
+            }
+
+            // add persons
+            int cnt = 0;
+            for (ImdbCreditsCategoryPerson imdbPerson : ListUtils.nullSafe(cat.section.items)) {
+              cnt++;
+              Person p = new Person(pt);
+              p.setId(MediaMetadata.IMDB, imdbPerson.id);
+              p.setName(imdbPerson.rowTitle);
+              p.setProfileUrl("https://www.imdb.com/name/" + imdbPerson.id);
+              if (imdbPerson.isCast && !imdbPerson.characters.isEmpty()) {
+                // actors
+                p.setRole(String.join(" / ", imdbPerson.characters));
+                if (StringUtils.isNotBlank(imdbPerson.attributes)) {
+                  p.setRole(p.getRole() + " " + imdbPerson.attributes); // append (voice)
+                }
+              }
+              else {
+                // crew
+                p.setRole(cat.name);
+                if (StringUtils.isNotBlank(imdbPerson.attributes)) {
+                  p.setRole(imdbPerson.attributes);
+                }
+              }
+              if (imdbPerson.imageProps != null && imdbPerson.imageProps.imageModel != null && !imdbPerson.imageProps.imageModel.url.isBlank()) {
+                String url = imdbPerson.imageProps.imageModel.url;
+                if (url.endsWith("_V1_.jpg")) {
+                  url = url.replace("_V1_.jpg", "_V1_QL75_UX300.jpg"); // scale to 300px
+                }
+                if (imdbPerson.imageProps.imageModel.getHeight() > imdbPerson.imageProps.imageModel.getWidth()) {
+                  // only take portrait images
+                  p.setThumbUrl(url);
+                }
+              }
+              if (pt == Type.ACTOR && !isScrapeUncreditedActors() && cat.section.splitIndex > 0) {
+                // do not parse number out of refTagSuffix, just count...
+                // splitIndex divides the uncredited from normal actors
+                // and all of those have something like (uncredited) in attributes;
+                // but cannot check for it, since it is translated in user language...
+                if (cnt > cat.section.splitIndex + 1 || imdbPerson.attributes.contains("ncredited")) {
+                  continue; // as we do not want them
+                }
+              }
+              md.addCastMember(p);
+            }
+          }
+        }
+
+      }
+      catch (Exception e) {
+        getLogger().debug("Error parsing JSON: '{}'", e.getMessage());
+        throw e;
+      }
+
+    }
   }
 
   protected void parseKeywordsPage(Document doc, MediaSearchAndScrapeOptions options, MediaMetadata md) {

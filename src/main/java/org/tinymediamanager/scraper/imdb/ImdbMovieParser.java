@@ -118,6 +118,10 @@ public class ImdbMovieParser extends ImdbParser {
         options.getCertificationCountry().getAlpha2(), true);
     Future<Document> futureReference = executor.submit(worker);
 
+    // we must parse this as fixed language, since the IDs seem not to be fixated yet...?
+    worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L2Z1bGxjcmVkaXRz")), "en", "US", true);
+    Future<Document> futureCredits = executor.submit(worker);
+
     Future<Document> futureKeywords = null;
     if (isScrapeKeywordsPage() && getMaxKeywordCount() > 5) {
       worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L2tleXdvcmRz")), options.getLanguage().getLanguage(),
@@ -152,6 +156,14 @@ public class ImdbMovieParser extends ImdbParser {
           md.setCastMembers(md2.getCastMembers()); // overwrite all
           md.setTop250(md2.getTop250());
           md2.getCertifications().forEach(md::addCertification); // reference page has more certifications
+        }
+
+        // no cast? parse full credits
+        if (md.getCastMembers().isEmpty()) {
+          doc = futureCredits.get();
+          if (doc != null) {
+            parseFullcreditsPage(doc, options, md);
+          }
         }
 
         // if we have more that 5 keywords, we need to scrape dedicated page, as only 5 on detail page...

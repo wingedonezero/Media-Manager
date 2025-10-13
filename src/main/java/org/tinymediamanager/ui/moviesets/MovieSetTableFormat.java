@@ -160,7 +160,7 @@ public class MovieSetTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     col.setDefaultHidden(true);
     try {
       Date date = DateUtils.parseDate("2012-12-12");
-      col.setMinWidth(fontMetrics.stringWidth(TmmDateFormat.MEDIUM_DATE_FORMAT.format(date)) + getCellPadding());
+      col.setMinWidth(fontMetrics.stringWidth(TmmDateFormat.getDateFormat().format(date)) + getCellPadding());
     }
     catch (Exception ignored) {
       // ignore

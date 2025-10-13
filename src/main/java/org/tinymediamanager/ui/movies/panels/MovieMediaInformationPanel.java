@@ -126,7 +126,7 @@ public class MovieMediaInformationPanel extends MediaInformationPanel {
     chckbxWatched.setSelected(movie.isWatched());
 
     if (movie.isWatched() && movie.getLastWatched() != null) {
-      lblLastPlayed.setText("(" + TmmDateFormat.MEDIUM_DATE_FORMAT.format(movie.getLastWatched()) + ")");
+      lblLastPlayed.setText("(" + TmmDateFormat.getDateFormat().format(movie.getLastWatched()) + ")");
       lblLastPlayed.setToolTipText(TmmResourceBundle.getString("metatag.lastplayed"));
     }
     else {

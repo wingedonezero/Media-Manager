@@ -18,6 +18,7 @@ package org.tinymediamanager.scraper.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -511,6 +512,10 @@ public class ParserUtils {
    * @return an array with all parts
    */
   public static List<String> split(String source) {
+    if (StringUtils.isBlank(source)) {
+      return Collections.emptyList();
+    }
+
     List<String> result = new ArrayList<>();
 
     for (String string : source.split("[;,\\/|]")) {

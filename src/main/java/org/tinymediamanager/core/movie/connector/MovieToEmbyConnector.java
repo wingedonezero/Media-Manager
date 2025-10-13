@@ -84,4 +84,23 @@ public class MovieToEmbyConnector extends MovieToKodiConnector {
       }
     }
   }
+
+  @Override
+  protected void addCredits() {
+    // do nothing! will be forced to be print after actors - see #2780
+  }
+
+  @Override
+  protected void addDirectors() {
+    // do nothing! will be forced to be print after actors - see #2780
+  }
+
+  @Override
+  protected void addActors() {
+    super.addActors();
+
+    // add credits and directors after the actors
+    super.addCredits();
+    super.addDirectors();
+  }
 }

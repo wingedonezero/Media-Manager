@@ -1677,6 +1677,11 @@ public class TvShowRenamer {
     // return list of all generated MFs
     List<MediaFile> newFiles = new ArrayList<>();
 
+    // do we even want to write episode NFO files?
+    if (mf.getType() == MediaFileType.NFO && TvShowModuleManager.getInstance().getSettings().getEpisodeNfoFilenames().isEmpty()) {
+      return newFiles;
+    }
+
     List<TvShowEpisode> eps = TvShowList.getTvEpisodesByFile(tvShow, mf.getFile());
     if (ListUtils.isEmpty(eps)) {
       return newFiles;

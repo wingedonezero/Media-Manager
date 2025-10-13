@@ -237,4 +237,25 @@ public class ListUtils {
 
     return list.get(list.size() - 1);
   }
+
+  /**
+   * Swaps the entries at index i and j of the given list. If the list is null or the indexes are out of bounds, nothing happens
+   * 
+   * @param list
+   *          the list to swap entries from
+   * @param i
+   *          the first index
+   * @param j
+   *          the second index
+   * @param <E>
+   *          the type of the value
+   */
+  public static <E> void swap(List<E> list, int i, int j) {
+    if (list == null || i < 0 || j < 0 || i >= list.size() || j >= list.size() || i == j) {
+      return;
+    }
+    E temp = list.get(i);
+    list.set(i, list.get(j));
+    list.set(j, temp);
+  }
 }

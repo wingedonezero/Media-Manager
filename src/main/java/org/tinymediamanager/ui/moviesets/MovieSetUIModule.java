@@ -40,6 +40,7 @@ import org.tinymediamanager.core.movie.MovieSetMoviePostProcessExecutor;
 import org.tinymediamanager.core.movie.MovieSetPostProcessExecutor;
 import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.core.movie.entities.MovieSet;
+import org.tinymediamanager.core.threading.TmmTaskManager;
 import org.tinymediamanager.license.License;
 import org.tinymediamanager.thirdparty.KodiRPC;
 import org.tinymediamanager.ui.AbstractTmmUIModule;
@@ -100,8 +101,9 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
   private final MovieSetTreePanel      treePanel;
   private final JPanel                 detailPanel;
   private final JPanel                 dataPanel;
-  private final MovieSetFilterDialog   movieSetFilterDialog;
-  private final TmmSettingsNode        settingsNode;
+
+  private MovieSetFilterDialog         movieSetFilterDialog;
+  private TmmSettingsNode              settingsNode;
 
   private MovieSetUIModule() {
     selectionModel = new MovieSetSelectionModel();
@@ -163,8 +165,6 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
     });
     dataPanel.add(movieDetailPanel, "movie");
 
-    movieSetFilterDialog = new MovieSetFilterDialog(treePanel.getTreeTable());
-
     // panel for missing movies
     JTabbedPane missingMovieDetailPanel = new MainTabbedPane() {
       @Override
@@ -182,8 +182,11 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
     createPopupMenu();
     registerAccelerators();
 
-    // settings node
-    settingsNode = new MovieSetSettingsNode();
+    // settings node & filter dialog - load lazily
+    SwingUtilities.invokeLater(() -> {
+      movieSetFilterDialog = new MovieSetFilterDialog(treePanel.getTreeTable());
+      settingsNode = new MovieSetSettingsNode();
+    });
 
     // further initializations
     init();
@@ -304,7 +307,9 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
           postProcessingMenu.add(new TmmMenuLabel(TmmResourceBundle.getString("metatag.movie")));
           for (PostProcess process : moviePostProcesses) {
             JMenuItem menuItem = new JMenuItem(process.getName(), IconManager.APPLY);
-            menuItem.addActionListener(pp -> new MovieSetMoviePostProcessExecutor(process).execute());
+            menuItem.addActionListener(pp -> TmmTaskManager.getInstance()
+                .addUnnamedTask(
+                    new MovieSetMoviePostProcessExecutor(process, MovieSetUIModule.getInstance().getSelectionModel().getSelectedMoviesRecursive())));
             postProcessingMenu.add(menuItem);
           }
         }

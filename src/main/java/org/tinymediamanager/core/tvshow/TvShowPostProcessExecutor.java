@@ -23,10 +23,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.PostProcess;
 import org.tinymediamanager.core.PostProcessExecutor;
+import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.jmte.JmteUtils;
 import org.tinymediamanager.core.jmte.TmmModelAdaptor;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
-import org.tinymediamanager.ui.tvshows.TvShowUIModule;
 
 import com.floreysoft.jmte.Engine;
 
@@ -38,15 +38,17 @@ import com.floreysoft.jmte.Engine;
 public class TvShowPostProcessExecutor extends PostProcessExecutor {
   private static final Logger LOGGER = LoggerFactory.getLogger(TvShowPostProcessExecutor.class);
 
-  public TvShowPostProcessExecutor(PostProcess postProcess) {
-    super(postProcess);
+  public TvShowPostProcessExecutor(PostProcess postProcess, List<TvShow> tvShows) {
+    super(postProcess, tvShows);
   }
 
-  public void execute() {
+  @Override
+  protected void execute() {
+    for (MediaEntity mediaEntity : entities) {
+      if (!(mediaEntity instanceof TvShow tvShow)) {
+        continue;
+      }
 
-    List<TvShow> selectedTvShows = TvShowUIModule.getInstance().getSelectionModel().getSelectedTvShows();
-
-    for (TvShow tvShow : selectedTvShows) {
       LOGGER.info("Executing post process '{}' for TV show '{}'", postProcess.getName(), tvShow.getTitle());
 
       Map<String, Object> mappings = new HashMap<>();
@@ -56,6 +58,7 @@ public class TvShowPostProcessExecutor extends PostProcessExecutor {
 
       try {
         executeCommand(command, tvShow);
+        LOGGER.info("Successfully executed post process '{}' for TV show '{}'", postProcess.getName(), tvShow.getTitle());
       }
       catch (Exception ignored) {
         // already logged in executeCommand

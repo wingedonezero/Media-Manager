@@ -50,13 +50,31 @@ tinyMediaManager is compiled using Apache's build automation tool, [Maven][15]. 
    git clone https://gitlab.com/tinyMediaManager/tinyMediaManager.git
    ```
 
-1. Build using maven
+2. Build using maven. Since we use some different repositories, you need to adopt your maven settings.xml (usually
+   located in ~/.m2/settings.xml) to include your access key to GitHub Packages (replace YOUR_GITHUB_USERNAME and
+   YOUR_GITHUB_TOKEN
+   accordingly - https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry):
+
+   ```xml
+   <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+     <servers>
+       <server>
+         <id>github-maven</id>
+         <username>YOUR_GITHUB_USERNAME</username>
+         <password>YOUR_GITHUB_TOKEN</password>
+       </server>
+     </servers>
+   </settings>
+   ```
+   after that you can build and package tinyMediaManager using
 
    ```bash
-   mvn package
+   mvn -P dist clean package
    ```
 
-After that you will find the packaged build in the folder `dist`
+After the build completes, you will find the packages in the folder `dist` (without the Windows Installer and macOS .dmg
+files, since those require additional tools).
 
 [1]: https://www.tinymediamanager.org
 [4]: https://www.tinymediamanager.org/features/

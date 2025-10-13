@@ -761,26 +761,30 @@ public class MediaFileHelper {
   }
 
   /**
-   * gather basic file information like file size, creation date and last modified date
+   * gather basic file information like file size, creation date and last modified date<BR>
+   * 
+   * also returns <b>true</b> is there has been a change in the file size!
    *
    * @param mediaFile
    *          the {@link MediaFile} to gather the information for
-   * @return true if the filesize changed, false otherwise
+   * @return true if the file size changed, false otherwise
    */
-  public static boolean gatherFileInformation(MediaFile mediaFile) {
-    return gatherFileInformation(mediaFile, null);
+  public static boolean gatherBasicFileInformation(MediaFile mediaFile) {
+    return gatherBasicFileInformation(mediaFile, null);
   }
 
   /**
-   * gather basic file information like file size, creation date and last modified date
+   * gather basic file information like file size, creation date and last modified date <BR>
+   * <p>
+   * also returns <b>true</b> is there has been a change in the file size!
    *
    * @param mediaFile
    *          the {@link MediaFile} to gather the information for
    * @param basicFileAttributes
    *          offer already read {@link BasicFileAttributes} instead of querying from the filesystem again
-   * @return true if the filesize changed, false otherwise
+   * @return true if the file size changed, false otherwise
    */
-  public static boolean gatherFileInformation(MediaFile mediaFile, BasicFileAttributes basicFileAttributes) {
+  public static boolean gatherBasicFileInformation(MediaFile mediaFile, BasicFileAttributes basicFileAttributes) {
     boolean dirty = false;
 
     // get basic infos; file size, creation date and last modified
@@ -792,6 +796,8 @@ public class MediaFileHelper {
       else {
         view = Files.readAttributes(mediaFile.getFileAsPath(), BasicFileAttributes.class);
       }
+
+      boolean existingFile = mediaFile.getFiledate() > 0;
 
       if (view.creationTime().toMillis() > 100000) {
         Date creDat = new Date(view.creationTime().toMillis());
@@ -813,9 +819,12 @@ public class MediaFileHelper {
       if (view.isDirectory()) {
         size = Utils.getDirectorySizeOfDiscFiles(mediaFile.getFile());
       }
-      if (size > 0 && mediaFile.getFilesize() > 0 && size != mediaFile.getFilesize()) {
+
+      // only see as a dirty change, if we already had a filedate (means: existing file)
+      if (existingFile && size > 0 && size != mediaFile.getFilesize()) {
         dirty = true;
       }
+
       mediaFile.setFilesize(size);
     }
     catch (Exception e) {
@@ -841,7 +850,7 @@ public class MediaFileHelper {
     }
 
     // get basic infos; file size, creation date and last modified
-    boolean fileSizeChanged = gatherFileInformation(mediaFile);
+    boolean fileSizeChanged = gatherBasicFileInformation(mediaFile);
 
     // check for supported filetype
     if (!mediaFile.isValidMediainfoFormat()) {

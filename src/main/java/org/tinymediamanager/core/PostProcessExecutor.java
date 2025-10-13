@@ -32,25 +32,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.Globals;
 import org.tinymediamanager.core.entities.MediaEntity;
+import org.tinymediamanager.core.threading.TmmTask;
 
 /**
  * the class {@link PostProcessExecutor} executes post process steps for movies
  *
  * @author Manuel Laggner, Wolfgang Janess, Myron Boyle
  */
-public abstract class PostProcessExecutor {
-  private static final Logger LOGGER = LoggerFactory.getLogger(PostProcessExecutor.class);
+public abstract class PostProcessExecutor extends TmmTask {
+  private static final Logger                 LOGGER = LoggerFactory.getLogger(PostProcessExecutor.class);
 
-  protected final PostProcess postProcess;
+  protected final PostProcess                 postProcess;
+  protected final List<? extends MediaEntity> entities;
 
-  protected PostProcessExecutor(PostProcess postProcess) {
+  protected PostProcessExecutor(PostProcess postProcess, List<? extends MediaEntity> entities) {
+    super(postProcess.getName(), entities.size(), TaskType.BACKGROUND_TASK);
     this.postProcess = postProcess;
+    this.entities = new ArrayList<>(entities);
+  }
+
+  @Override
+  protected void doInBackground() {
+    execute();
   }
 
   /**
    * prepare the command end execute it with {@link PostProcessExecutor#executeCommand} in the end
    */
-  public abstract void execute();
+  protected abstract void execute();
 
   protected void executeCommand(String[] cmdline, MediaEntity mediaEntity) throws IOException, InterruptedException {
     List<String> commandList = new ArrayList<>();

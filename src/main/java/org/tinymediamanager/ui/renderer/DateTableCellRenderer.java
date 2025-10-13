@@ -16,7 +16,6 @@
 package org.tinymediamanager.ui.renderer;
 
 import java.awt.Component;
-import java.text.DateFormat;
 import java.util.Date;
 
 import javax.swing.JTable;
@@ -30,13 +29,10 @@ import org.tinymediamanager.core.TmmDateFormat;
  * @author Manuel Laggner
  */
 public class DateTableCellRenderer extends DefaultTableCellRenderer {
-  private final DateFormat dateFormat;
-
   /**
    * Create a new DateTableCellRenderer that renders Dates as formatted Strings.
    */
   public DateTableCellRenderer() {
-    this.dateFormat = TmmDateFormat.MEDIUM_DATE_FORMAT;
     setHorizontalAlignment(CENTER);
   }
 
@@ -47,7 +43,7 @@ public class DateTableCellRenderer extends DefaultTableCellRenderer {
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     super.getTableCellRendererComponent(table, null, isSelected, hasFocus, row, column);
     if (value != null) {
-      String prettyDate = dateFormat.format((Date) value);
+      String prettyDate = TmmDateFormat.getDateFormat().format((Date) value);
       setText(prettyDate);
     }
     else {

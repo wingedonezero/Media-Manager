@@ -235,7 +235,7 @@ public final class TinyMediaManager {
                   LocalDate validUntil = License.getInstance().validUntil();
                   if (validUntil != null && validUntil.minusDays(7).isBefore(LocalDate.now())) {
                     SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(window, TmmResourceBundle.getString("tmm.renewlicense")
-                        .replace("{}", TmmDateFormat.MEDIUM_DATE_FORMAT.format(Date.valueOf(validUntil)))));
+                        .replace("{}", TmmDateFormat.getDateFormat().format(Date.valueOf(validUntil)))));
                   }
                 }
 

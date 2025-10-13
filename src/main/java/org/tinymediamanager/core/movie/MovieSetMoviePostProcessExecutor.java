@@ -20,8 +20,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.PostProcess;
+import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.movie.entities.Movie;
-import org.tinymediamanager.ui.moviesets.MovieSetUIModule;
 
 /**
  * the class {@link MovieSetMoviePostProcessExecutor} executes post process steps for movie sets
@@ -31,18 +31,22 @@ import org.tinymediamanager.ui.moviesets.MovieSetUIModule;
 public class MovieSetMoviePostProcessExecutor extends MoviePostProcessExecutor {
   private static final Logger LOGGER = LoggerFactory.getLogger(MovieSetMoviePostProcessExecutor.class);
 
-  public MovieSetMoviePostProcessExecutor(PostProcess postProcess) {
-    super(postProcess);
+  public MovieSetMoviePostProcessExecutor(PostProcess postProcess, List<Movie> movies) {
+    super(postProcess, movies);
   }
 
+  @Override
   public void execute() {
-    List<Movie> selectedMovies = MovieSetUIModule.getInstance().getSelectionModel().getSelectedMoviesRecursive();
+    for (MediaEntity entity : entities) {
+      if (!(entity instanceof Movie movie)) {
+        continue;
+      }
 
-    for (Movie movie : selectedMovies) {
       LOGGER.info("Executing post process '{}' for movie '{}'", postProcess.getName(), movie.getTitle());
       String[] command = substituteMovieTokens(movie);
       try {
         executeCommand(command, movie);
+        LOGGER.info("Successfully executed post process '{}' for movie '{}'", postProcess.getName(), movie.getTitle());
       }
       catch (Exception ignored) {
         // already logged in executeCommand

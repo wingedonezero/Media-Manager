@@ -133,7 +133,7 @@ class DateTextField extends JFormattedTextField implements CaretListener, FocusL
       dateFormatter.applyPattern(dateFormatString);
     }
     catch (RuntimeException e) {
-      dateFormatter = (SimpleDateFormat) TmmDateFormat.MEDIUM_DATE_FORMAT;
+      dateFormatter = (SimpleDateFormat) TmmDateFormat.getDateFormat();
       dateFormatter.setLenient(false);
     }
     this.datePattern = dateFormatter.toPattern();

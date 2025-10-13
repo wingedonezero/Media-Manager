@@ -21,6 +21,7 @@ import java.awt.Font;
 import java.awt.Window;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -73,6 +74,7 @@ import org.tinymediamanager.updater.UpdaterTask;
 
 import com.formdev.flatlaf.FlatLaf;
 
+import io.github.jacksonbrienen.jwfd.FileExtension;
 import io.github.jacksonbrienen.jwfd.JWindowsFileDialog;
 
 /**
@@ -206,6 +208,7 @@ public class TmmUIHelper {
 
     int result = -1;
     if (open) {
+      fileChooser.setFileFilter(filter);
       result = fileChooser.showOpenDialog(MainWindow.getFrame());
     }
     else {
@@ -231,7 +234,12 @@ public class TmmUIHelper {
 
     if (SystemUtils.IS_OS_WINDOWS) {
       // on Windows we use the newer API provided via JWindowsFileDialog
-      String path = JWindowsFileDialog.showOpenDialog(null, title, initialPath);
+
+      FileExtension clonedFilter = null;
+      if (filter != null) {
+        clonedFilter = new FileExtension(filter.getDescription(), filter.getExtensions()); // lowercase extension without dot
+      }
+      String path = JWindowsFileDialog.showOpenDialog(null, title, initialPath, clonedFilter);
       if (StringUtils.isNotBlank(path)) {
         return Paths.get(path);
       }
@@ -243,7 +251,18 @@ public class TmmUIHelper {
       // on macOS/OSX we simply use the AWT FileDialog
       try {
         // open file chooser
-        return openFileDialog(title, initialPath, FileDialog.LOAD, null);
+        FilenameFilter clonedFilter = null;
+        if (filter != null) {
+          clonedFilter = (dir, name) -> {
+            for (String ext : filter.getExtensions()) {
+              if (name.endsWith(ext)) {
+                return true;
+              }
+            }
+            return false;
+          };
+        }
+        return openFileDialog(title, initialPath, FileDialog.LOAD, null, clonedFilter);
       }
       catch (Exception | Error e) {
         LOGGER.warn("Cannot open AWT filechooser - '{}'", e.getMessage());
@@ -301,14 +320,14 @@ public class TmmUIHelper {
       return null;
     }
     else if (SystemUtils.IS_OS_WINDOWS) {
-      return selectFile(title, initialPath, new FileNameExtensionFilter(TmmResourceBundle.getString("tmm.executables"), ".exe"));
+      return selectFile(title, initialPath, new FileNameExtensionFilter(TmmResourceBundle.getString("tmm.executables"), "exe"));
     }
     else {
       return selectFile(title, initialPath, null);
     }
   }
 
-  private static Path openFileDialog(String title, String initialPath, int mode, String filename) throws Exception, Error {
+  private static Path openFileDialog(String title, String initialPath, int mode, String filename, FilenameFilter filter) throws Exception, Error {
     FileDialog chooser = new FileDialog(MainWindow.getFrame(), title, mode);
     if (StringUtils.isNotBlank(initialPath)) {
       Path path = Paths.get(initialPath);
@@ -319,6 +338,7 @@ public class TmmUIHelper {
     if (mode == FileDialog.SAVE) {
       chooser.setFile(filename);
     }
+    chooser.setFilenameFilter(filter);
     chooser.setVisible(true);
 
     if (StringUtils.isNotEmpty(chooser.getFile())) {
@@ -349,7 +369,7 @@ public class TmmUIHelper {
       // on macOS/OSX we simply use the AWT FileDialog
       try {
         // open file chooser
-        return openFileDialog(title, initialPath, FileDialog.SAVE, filename);
+        return openFileDialog(title, initialPath, FileDialog.SAVE, filename, null);
       }
       catch (Exception | Error e) {
         LOGGER.warn("Cannot open AWT filechooser - '{}'", e.getMessage());

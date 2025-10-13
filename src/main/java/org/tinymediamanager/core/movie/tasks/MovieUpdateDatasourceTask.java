@@ -1676,7 +1676,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
         }
         else {
           // at least update the file dates
-          if (MediaFileHelper.gatherFileInformation(mf)) {
+          if (MediaFileHelper.gatherBasicFileInformation(mf)) {
             // okay, something changed with that movie file - force fetching mediainfo
             submitTask(new MovieMediaFileInformationFetcherTask(mf, movie, true));
           }
@@ -1710,7 +1710,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
         }
         else {
           // did the file dates/size change?
-          if (MediaFileHelper.gatherFileInformation(mf)) {
+          if (MediaFileHelper.gatherBasicFileInformation(mf)) {
             // okay, something changed with that movie file - force fetching mediainfo (and drop medianfo.xml for MAIN video only)
             if (mf.getType() == MediaFileType.VIDEO) {
               movie.getMediaFiles(MediaFileType.MEDIAINFO).forEach(mediaFile -> {

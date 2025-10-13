@@ -24,15 +24,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Locale;
 
-import org.apache.commons.io.output.FileWriterWithEncoding;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.Utils;
 import org.tinymediamanager.core.mediainfo.MediaInfoUtils;
-import org.tinymediamanager.scraper.util.UrlUtil;
 import org.tinymediamanager.thirdparty.MediaInfo;
 
 /**
@@ -58,11 +57,13 @@ public class TmmOsUtils {
     }
 
     String currentUsersHomeDir = System.getProperty("user.home");
+
+    // use absolute /usr paths for system-wide locations
     for (Path path : Arrays.asList(Paths.get(currentUsersHomeDir, ".local", "share", "applications", TmmOsUtils.DESKTOP_FILE).toAbsolutePath(),
-        Paths.get("usr", "local", "share", "applications", TmmOsUtils.DESKTOP_FILE).toAbsolutePath(),
-        Paths.get("usr", "share", "applications", TmmOsUtils.DESKTOP_FILE).toAbsolutePath())) {
-      if (!path.toFile().exists()) {
-        return true;
+        Paths.get("/", "usr", "local", "share", "applications", TmmOsUtils.DESKTOP_FILE).toAbsolutePath(),
+        Paths.get("/", "usr", "share", "applications", TmmOsUtils.DESKTOP_FILE).toAbsolutePath())) {
+      if (path.toFile().exists()) {
+        return true; // at least one .desktop file exists
       }
     }
     return false;
@@ -100,10 +101,22 @@ public class TmmOsUtils {
     sb.append("StartupWMClass=org-tinymediamanager-TinyMediaManager\n");
     sb.append("\n");
 
-    try (FileWriterWithEncoding writer = new FileWriterWithEncoding(desktop, UrlUtil.UTF_8)) {
-      writer.write(sb.toString());
-      if (!desktop.setExecutable(true)) {
-        LOGGER.warn("Could not set executable bit for '{}'", desktop.getName());
+    try {
+      Path parent = desktop.toPath().getParent();
+      if (parent != null) {
+        try {
+          Files.createDirectories(parent);
+        }
+        catch (Exception ignored) {
+          // best-effort to create parent directories
+        }
+      }
+
+      try (java.io.BufferedWriter writer = Files.newBufferedWriter(desktop.toPath(), StandardCharsets.UTF_8)) {
+        writer.write(sb.toString());
+        if (!desktop.setExecutable(true)) {
+          LOGGER.warn("Could not set executable bit for '{}'", desktop.getName());
+        }
       }
     }
     catch (IOException e) {
@@ -126,11 +139,11 @@ public class TmmOsUtils {
     }
     else if (SystemUtils.IS_OS_MAC) {
       tmmExecutable = Paths.get("../../MacOS/tinyMediaManager");
-      pb = new ProcessBuilder("nohup", "/bin/sh", "-c", "./" + tmmExecutable.toAbsolutePath().getFileName().toString());
+      pb = new ProcessBuilder("/usr/bin/nohup", "/bin/sh", "-c", "./" + tmmExecutable.toAbsolutePath().getFileName().toString());
     }
     else {
       tmmExecutable = Paths.get("tinyMediaManager");
-      pb = new ProcessBuilder("nohup", "/bin/sh", "-c", "./" + tmmExecutable.toAbsolutePath().getFileName().toString());
+      pb = new ProcessBuilder("/usr/bin/nohup", "/bin/sh", "-c", "./" + tmmExecutable.toAbsolutePath().getFileName().toString());
     }
 
     pb.directory(tmmExecutable.toAbsolutePath().getParent().toAbsolutePath().toFile());
@@ -200,7 +213,8 @@ public class TmmOsUtils {
     }
     // linux
     else if (SystemUtils.IS_OS_LINUX) {
-      if (System.getProperty("os.arch").contains("arm") || System.getProperty("os.arch").contains("aarch")) {
+      String arch = System.getProperty("os.arch", "").toLowerCase(Locale.ROOT);
+      if (arch.contains("arm") || arch.contains("aarch")) {
         nativepath += "arm";
       }
       else {
@@ -247,19 +261,7 @@ public class TmmOsUtils {
    * @return true/false
    */
   public static boolean hasInvalidCharactersForFilesystem(String name) {
-    // https://stackoverflow.com/a/31976060
-    // boolean ret = false;
-    // if (SystemUtils.IS_OS_WINDOWS) {
-    // if (name.length() > 2 && name.charAt(1) == ':') {
-    // name = name.substring(2); // w/o drive letter!!!
-    // }
-    // // ret = name.matches(".*[\":<>|?*].*"); // naa, bad perf
-    // ret = name.contains(":") || name.contains("\"") || name.contains("<") || name.contains(">") || name.contains("|") || name.contains("?")
-    // || name.contains("*") || name.endsWith(".") || name.endsWith(" ");
-    // }
-    // return ret;
-
-    // better approach
+    // better approach: try to construct a Path; if it fails the name contains invalid chars
     try {
       Paths.get(name);
       return false;

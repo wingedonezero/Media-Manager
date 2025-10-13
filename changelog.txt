@@ -1,3 +1,21 @@
+Version 5.2.3
+=======================
++ [TV shows] added detection of ranges (e.g. S01E01-02) in multi-episode filenames
++ [UI] date and time format settings are now configurable in the settings #3087
++ [UI] refactored the image chooser dialog to support better filtering and sorting #2899
++ [UI] remember filters in the image chooser if enabled in the module settings (Persist UI filters)
++ [Performance] improved startup speed
+---
+x [UI] refactored post-process settings pages for movies and TV shows #3084
+x [UI] do not calculate file size of multi episode files twice #3095
+x [UI] set the correct file filters in the file open/save dialogs
+x [Post-Processing] moved post-processing tasks to a background thread
+x [TMDB] to not try to load SVG files (not supported by tinyMediaManager or Kodi) #3085
+x [IMDB] fix parsing cast/crew due to site changes #3092 
+x [Emby] re-order crew members after actors in the NFO #2780
+x [Renamer] also remove episode NFO files upon rename, if unwanted in settings
+
+
 Version 5.2.2
 =======================
 + [Scraper] when scraping Anime, try to get all available IDs from other anime sites

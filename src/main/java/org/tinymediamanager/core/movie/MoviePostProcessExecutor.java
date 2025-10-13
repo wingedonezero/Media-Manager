@@ -23,10 +23,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.PostProcess;
 import org.tinymediamanager.core.PostProcessExecutor;
+import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.jmte.JmteUtils;
 import org.tinymediamanager.core.jmte.TmmModelAdaptor;
 import org.tinymediamanager.core.movie.entities.Movie;
-import org.tinymediamanager.ui.movies.MovieUIModule;
 
 import com.floreysoft.jmte.Engine;
 
@@ -38,18 +38,22 @@ import com.floreysoft.jmte.Engine;
 public class MoviePostProcessExecutor extends PostProcessExecutor {
   private static final Logger LOGGER = LoggerFactory.getLogger(MoviePostProcessExecutor.class);
 
-  public MoviePostProcessExecutor(PostProcess postProcess) {
-    super(postProcess);
+  public MoviePostProcessExecutor(PostProcess postProcess, List<Movie> movies) {
+    super(postProcess, movies);
   }
 
-  public void execute() {
-    List<Movie> selectedMovies = MovieUIModule.getInstance().getSelectionModel().getSelectedMovies();
+  @Override
+  protected void execute() {
+    for (MediaEntity entity : entities) {
+      if (!(entity instanceof Movie movie)) {
+        continue;
+      }
 
-    for (Movie movie : selectedMovies) {
       LOGGER.info("Executing post process '{}' for movie '{}'", postProcess.getName(), movie.getTitle());
       String[] command = substituteMovieTokens(movie);
       try {
         executeCommand(command, movie);
+        LOGGER.info("Successfully executed post process '{}' for movie '{}'", postProcess.getName(), movie.getTitle());
       }
       catch (Exception ignored) {
         // already logged in executeCommand
