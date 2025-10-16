@@ -5,6 +5,7 @@ Version 5.2.3
 + [UI] refactored the image chooser dialog to support better filtering and sorting #2899
 + [UI] remember filters in the image chooser if enabled in the module settings (Persist UI filters)
 + [Performance] improved startup speed
++ [uPnP] re-implemented the whole uPnP integration to support more devices and higher stability
 ---
 x [UI] refactored post-process settings pages for movies and TV shows #3084
 x [UI] do not calculate file size of multi episode files twice #3095

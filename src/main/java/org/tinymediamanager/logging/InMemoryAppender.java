@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.tinymediamanager;
+package org.tinymediamanager.logging;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

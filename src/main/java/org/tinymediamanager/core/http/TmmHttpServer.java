@@ -50,6 +50,8 @@ public class TmmHttpServer {
   private final ObjectWriter             objectWriter;
   private final Map<String, HttpHandler> contextMap;
 
+  private static boolean                 initialized    = false;
+
   private HttpServer                     httpServer;
   private boolean                        running        = false;
   private String                         apiKey         = "";
@@ -71,7 +73,11 @@ public class TmmHttpServer {
         Settings.getInstance().getHttpApiKey());
   }
 
-  public void start() {
+  public static void init() {
+    initialized = true;
+  }
+
+  private void start() {
     httpServer.start();
     running = true;
   }
@@ -145,6 +151,11 @@ public class TmmHttpServer {
   }
 
   public void updateConfiguration(boolean enabled, int port, String apiKey) throws IOException {
+    if (!initialized) {
+      // not yet initialized - nothing to do
+      return;
+    }
+
     if (!enabled && !running) {
       // not enabled and not running -> nothing to do
       return;

@@ -16,13 +16,19 @@
 
 package org.tinymediamanager.thirdparty.upnp;
 
-import org.fourthline.cling.model.meta.LocalDevice;
-import org.fourthline.cling.model.meta.RemoteDevice;
-import org.fourthline.cling.registry.Registry;
-import org.fourthline.cling.registry.RegistryListener;
+import org.jupnp.model.meta.Device;
+import org.jupnp.model.meta.LocalDevice;
+import org.jupnp.model.meta.RemoteDevice;
+import org.jupnp.registry.Registry;
+import org.jupnp.registry.RegistryListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Provides a lightweight registry listener for the embedded JUPnP registry. The listener logs discovery events at debug level.
+ * 
+ * @author Myron Boyle
+ */
 class UpnpListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(UpnpListener.class);
 
@@ -30,53 +36,62 @@ class UpnpListener {
     throw new IllegalAccessError();
   }
 
+  /**
+   * Creates and returns a new registry listener instance.
+   * 
+   * @return a new registry listener instance
+   */
   public static RegistryListener getListener() {
 
     return new RegistryListener() {
-
       @Override
       public void remoteDeviceDiscoveryStarted(Registry registry, RemoteDevice device) {
-        LOGGER.debug("Discovery started: '{}'", device.getDisplayString());
+        LOGGER.debug("Discovery started: {}", device.getDisplayString());
       }
 
       @Override
       public void remoteDeviceDiscoveryFailed(Registry registry, RemoteDevice device, Exception ex) {
-        LOGGER.debug("Discovery failed: '{}'", device.getDisplayString() + " => " + ex);
+        // Log the failure and include the throwable so the stacktrace is available when needed
+        LOGGER.debug("Discovery failed: {}", device.getDisplayString(), ex);
       }
 
       @Override
       public void remoteDeviceAdded(Registry registry, RemoteDevice device) {
-        LOGGER.debug("Remote device available: '{}'", device.getDisplayString());
+        LOGGER.debug("Remote device available: {}", device.getDisplayString());
       }
 
       @Override
       public void remoteDeviceUpdated(Registry registry, RemoteDevice device) {
-        // do not log here! just produces massive spam
+        // Intentionally left blank: updates are too frequent and cause excessive log spam
+        // LOGGER.debug("Remote device updated: {}", device.getDisplayString());
       }
 
       @Override
       public void remoteDeviceRemoved(Registry registry, RemoteDevice device) {
-        LOGGER.debug("Remote device removed: '{}'", device.getDisplayString());
+        LOGGER.debug("Remote device removed: {}", device.getDisplayString());
       }
 
       @Override
       public void localDeviceAdded(Registry registry, LocalDevice device) {
-        LOGGER.debug("Local device added: '{}", device.getDisplayString());
+        LOGGER.debug("Local device added: {}", device.getDisplayString());
       }
 
       @Override
       public void localDeviceRemoved(Registry registry, LocalDevice device) {
-        LOGGER.debug("Local device removed: '{}'", device.getDisplayString());
+        LOGGER.debug("Local device removed: {}", device.getDisplayString());
       }
 
       @Override
       public void beforeShutdown(Registry registry) {
-        LOGGER.debug("Before shutdown, the registry has devices: '{}'", registry.getDevices().size());
+        LOGGER.debug("Before shutdown, the UPnP registry has devices: {}", registry.getDevices().size());
+        for (Device d : registry.getDevices()) {
+          LOGGER.debug(d.getDetails().getFriendlyName());
+        }
       }
 
       @Override
       public void afterShutdown() {
-        LOGGER.debug("Shutdown of registry complete!");
+        LOGGER.debug("Shutdown of UPnP registry complete!");
       }
     };
   }

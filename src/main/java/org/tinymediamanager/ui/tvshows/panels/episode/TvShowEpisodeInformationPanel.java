@@ -51,11 +51,11 @@ import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tinymediamanager.core.MediaFileHelper;
 import org.tinymediamanager.core.MediaFileType;
 import org.tinymediamanager.core.Message;
 import org.tinymediamanager.core.MessageManager;
 import org.tinymediamanager.core.TmmResourceBundle;
+import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaRating;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
@@ -64,12 +64,11 @@ import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
 import org.tinymediamanager.scraper.MediaMetadata;
 import org.tinymediamanager.scraper.util.ListUtils;
 import org.tinymediamanager.ui.ColumnLayout;
-import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.TmmFontHelper;
 import org.tinymediamanager.ui.TmmUIHelper;
 import org.tinymediamanager.ui.WrapLayout;
 import org.tinymediamanager.ui.components.NoBorderScrollPane;
-import org.tinymediamanager.ui.components.button.FlatButton;
+import org.tinymediamanager.ui.components.button.UpnpPlayButton;
 import org.tinymediamanager.ui.components.label.ImageLabel;
 import org.tinymediamanager.ui.components.label.LinkLabel;
 import org.tinymediamanager.ui.components.label.TmmLabel;
@@ -181,20 +180,6 @@ public class TvShowEpisodeInformationPanel extends InformationPanel {
 
     this.tvShowEpisodeSelectionModel.addPropertyChangeListener(propertyChangeListener);
 
-    btnPlay.addActionListener(e -> {
-      MediaFile mf = this.tvShowEpisodeSelectionModel.getSelectedTvShowEpisode().getMainVideoFile();
-      if (StringUtils.isNotBlank(mf.getFilename())) {
-        try {
-          TmmUIHelper.openFile(MediaFileHelper.getMainVideoFile(mf));
-        }
-        catch (Exception ex) {
-          LOGGER.error("Could not open file manager - '{}'", ex.getMessage());
-          MessageManager.getInstance()
-              .pushMessage(new Message(Message.MessageLevel.ERROR, mf, "message.erroropenfile", new String[] { ":", ex.getLocalizedMessage() }));
-        }
-      }
-    });
-
     lblPath.addActionListener(arg0 -> {
       if (!StringUtils.isEmpty(lblPath.getText())) {
         // get the location from the label
@@ -257,7 +242,17 @@ public class TvShowEpisodeInformationPanel extends InformationPanel {
         panelTitle.add(lblTvShowName, "flowx,cell 0 0,growx,wmin 0");
       }
       {
-        btnPlay = new FlatButton(IconManager.PLAY_LARGE);
+        btnPlay = new UpnpPlayButton() {
+          @Override
+          public MediaFile getMediaFile() {
+            return tvShowEpisodeSelectionModel.getSelectedTvShowEpisode().getMainFile();
+          }
+
+          @Override
+          public MediaEntity getMediaEntity() {
+            return tvShowEpisodeSelectionModel.getSelectedTvShowEpisode();
+          }
+        };
         panelTitle.add(btnPlay, "cell 1 0 1 4,aligny top");
       }
       {

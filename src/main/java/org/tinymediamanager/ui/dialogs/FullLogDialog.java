@@ -23,8 +23,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import org.slf4j.LoggerFactory;
-import org.tinymediamanager.InMemoryAppender;
 import org.tinymediamanager.core.TmmResourceBundle;
+import org.tinymediamanager.logging.InMemoryAppender;
 import org.tinymediamanager.ui.components.NoBorderScrollPane;
 
 import ch.qos.logback.classic.LoggerContext;

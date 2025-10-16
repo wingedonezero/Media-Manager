@@ -15,24 +15,26 @@
  */
 package org.tinymediamanager.thirdparty;
 
-import org.fourthline.cling.model.types.UnsignedIntegerFourBytes;
-import org.fourthline.cling.support.contentdirectory.ContentDirectoryException;
-import org.fourthline.cling.support.model.BrowseFlag;
-import org.fourthline.cling.support.model.BrowseResult;
-import org.fourthline.cling.support.model.SortCriterion;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.tinymediamanager.core.BasicTest;
+import org.jupnp.support.contentdirectory.ContentDirectoryException;
+import org.jupnp.support.model.BrowseFlag;
+import org.jupnp.support.model.BrowseResult;
+import org.jupnp.support.model.SortCriterion;
+import org.tinymediamanager.core.BasicITest;
 import org.tinymediamanager.core.TmmModuleManager;
+import org.tinymediamanager.core.entities.MediaGenres;
 import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.thirdparty.upnp.ContentDirectoryService;
 
-public class ITContentDirectoryBrowseTest extends BasicTest {
+public class ITContentDirectoryBrowseTest extends BasicITest {
 
   private static final String                  KODI_FILTER = "dc:date,dc:description,upnp:longDescription,upnp:genre,res,res@duration,res@size,upnp:albumArtURI,upnp:rating,upnp:lastPlaybackPosition,upnp:lastPlaybackTime,upnp:playbackCount,upnp:originalTrackNumber,upnp:episodeNumber,upnp:programTitle,upnp:seriesTitle,upnp:album,upnp:artist,upnp:author,upnp:director,dc:publisher,searchable,childCount,dc:title,dc:creator,upnp:actor,res@resolution,upnp:episodeCount,upnp:episodeSeason,xbmc:dateadded,xbmc:rating,xbmc:votes,xbmc:artwork,xbmc:uniqueidentifier,xbmc:country,xbmc:userrating";
   private static final ContentDirectoryService CDS         = new ContentDirectoryService();
+  // depends on where we run that
+  private static final String                  ADVENTURE   = MediaGenres.ADVENTURE.getLocalizedName();
 
   @Before
   public void setup() throws Exception {
@@ -52,6 +54,8 @@ public class ITContentDirectoryBrowseTest extends BasicTest {
     createFakeShow("UPNPShow2");
     createFakeShow("UPNPShow1");
     createFakeShow("AnotherShow");
+
+    System.out.println("Used movie genres: " + MovieModuleManager.getInstance().getMovieList().getUsedGenres());
   }
 
   @After
@@ -71,55 +75,54 @@ public class ITContentDirectoryBrowseTest extends BasicTest {
 
   @Test
   public void browseStructure() throws ContentDirectoryException {
-    CDS.browse("0", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf("")); // 1 result / full meta
-    CDS.browse("0", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf("")); // list of needed meta
-    CDS.browse("0", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf("")); // list of needed meta (filtered for 1 result)
+    // ***** ROOT
+    browse(1L, "0", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf("")); // 1 result / full meta
+    browse(2L, "0", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf("")); // list of needed meta
+    browse(1L, "0", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf("")); // list of needed meta (filtered for 1 result)
 
-    CDS.browse("1", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
+    // ***** MOVIES
+    browse(1L, "1", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(2L, "1", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(1L, "1", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
+    browse(2L, "1", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(1L, "1", BrowseFlag.DIRECT_CHILDREN, "*", 1, 0, SortCriterion.valueOf(""));
 
-    CDS.browse("1/t", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1/t", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1/t", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
+    browse(1L, "1/t", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(4L, "1/t", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(1L, "1/t", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
 
-    CDS.browse("1/t/" + getUUID("AnotherMovie"), BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1/t/" + getUUID("AnotherMovie"), BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1/t/" + getUUID("AnotherMovie"), BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
+    browse(1L, "1/t/" + getUUID("AnotherMovie"), BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(0L, "1/t/" + getUUID("AnotherMovie"), BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(0L, "1/t/" + getUUID("AnotherMovie"), BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
 
-    CDS.browse("1/g", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1/g", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1/g", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
+    browse(1L, "1/g", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
+    Long usedMovieGenres = Long.valueOf(MovieModuleManager.getInstance().getMovieList().getUsedGenres().size());
+    browse(usedMovieGenres, "1/g", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(1L, "1/g", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
 
-    CDS.browse("1/g/Abenteuer", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1/g/Abenteuer", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1/g/Abenteuer", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
+    browse(1L, "1/g/" + ADVENTURE, BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(4L, "1/g/" + ADVENTURE, BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(1L, "1/g/" + ADVENTURE, BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
 
-    CDS.browse("1/g/Abenteuer/" + getUUID("AnotherMovie"), BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1/g/Abenteuer/" + getUUID("AnotherMovie"), BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1/g/Abenteuer/" + getUUID("AnotherMovie"), BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
+    browse(1L, "1/g/" + ADVENTURE + "/" + getUUID("AnotherMovie"), BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(0L, "1/g/" + ADVENTURE + "/" + getUUID("AnotherMovie"), BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(0L, "1/g/" + ADVENTURE + "/" + getUUID("AnotherMovie"), BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
 
-    CDS.browse("1/g/invalid", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1/g/invalid", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1/g/invalid", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
+    browse(0L, "1/g/invalid", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(0L, "1/g/invalid", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(0L, "1/g/invalid", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
 
-    CDS.browse("2", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("2", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("2", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
+    // ***** TV SHOWS
+    browse(1L, "2", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(4L, "2", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(1L, "2", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
 
-    CDS.browse("2/" + getUUID("UPNPShow3"), BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf("")); // show
-    CDS.browse("2/" + getUUID("UPNPShow3") + "/1", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf("")); // episode
-    CDS.browse("2/" + getUUID("UPNPShow3") + "/1/2", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf("")); // season
-    //
-    CDS.browse("2/" + getUUID("UPNPShow3"), BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf("")); // show
-    CDS.browse("2/" + getUUID("UPNPShow3") + "/1", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf("")); // episode
-    CDS.browse("2/" + getUUID("UPNPShow3") + "/1/2", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf("")); // season
-    //
-    CDS.browse("0", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("0", "BrowseDirectChildren", "*", new UnsignedIntegerFourBytes(0), new UnsignedIntegerFourBytes(0), "");
-    //
-    CDS.browse("1", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
-    CDS.browse("1", BrowseFlag.DIRECT_CHILDREN, "*", 1, 0, SortCriterion.valueOf(""));
+    browse(1L, "2/" + getUUID("UPNPShow3"), BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf("")); // show
+    browse(1L, "2/" + getUUID("UPNPShow3") + "/1", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf("")); // episode
+    browse(1L, "2/" + getUUID("UPNPShow3") + "/1/2", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf("")); // season
+    browse(1L, "2/" + getUUID("UPNPShow3"), BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf("")); // show
+    browse(1L, "2/" + getUUID("UPNPShow3") + "/1", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf("")); // episode
+    browse(0L, "2/" + getUUID("UPNPShow3") + "/1/2", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf("")); // season
   }
 
   // =====================================================
@@ -127,22 +130,22 @@ public class ITContentDirectoryBrowseTest extends BasicTest {
   // =====================================================
   @Test
   public void browseRoot() throws ContentDirectoryException {
-    browse("0", BrowseFlag.DIRECT_CHILDREN);
+    browse(2L, "0", BrowseFlag.DIRECT_CHILDREN);
   }
 
   @Test
   public void browseMovies() throws ContentDirectoryException {
-    browse("1", BrowseFlag.DIRECT_CHILDREN);
+    browse(2L, "1", BrowseFlag.DIRECT_CHILDREN);
   }
 
   @Test
   public void browseTvShow() throws ContentDirectoryException {
-    browse("2", BrowseFlag.DIRECT_CHILDREN);
+    browse(4L, "2", BrowseFlag.DIRECT_CHILDREN);
   }
 
   @Test
   public void browseEpisode() throws ContentDirectoryException {
-    browse("2/" + getValidShowID(), BrowseFlag.DIRECT_CHILDREN);
+    browse(1L, "2/" + getValidShowID(), BrowseFlag.DIRECT_CHILDREN);
   }
 
   // =====================================================
@@ -150,17 +153,17 @@ public class ITContentDirectoryBrowseTest extends BasicTest {
   // =====================================================
   @Test
   public void metadataRootContainer() throws ContentDirectoryException {
-    browse("0", BrowseFlag.METADATA);
+    browse(1L, "0", BrowseFlag.METADATA);
   }
 
   @Test
   public void metadataMovie() throws ContentDirectoryException {
-    browse("1/" + getValidMovieID(), BrowseFlag.METADATA);
+    browse(0L, "1/" + getValidMovieID(), BrowseFlag.METADATA);
   }
 
   @Test
   public void metadataEpisode() throws ContentDirectoryException {
-    browse("2/" + getValidShowID() + "/1/2", BrowseFlag.METADATA);
+    browse(1L, "2/" + getValidShowID() + "/1/2", BrowseFlag.METADATA);
   }
 
   // =====================================================
@@ -168,36 +171,40 @@ public class ITContentDirectoryBrowseTest extends BasicTest {
   // =====================================================
   @Test
   public void metadataMovieContainer() throws ContentDirectoryException {
-    BrowseResult r = browse("1", BrowseFlag.METADATA);
-    assertEqual(Long.valueOf(1), r.getCountLong());
+    browse(1L, "1", BrowseFlag.METADATA);
   }
 
   @Test
   public void metadataTvShowContainer() throws ContentDirectoryException {
-    BrowseResult r = browse("2", BrowseFlag.METADATA);
-    assertEqual(Long.valueOf(1), r.getCountLong());
+    browse(1L, "2", BrowseFlag.METADATA);
   }
 
   @Test
   public void invalidMovieUUID() throws ContentDirectoryException {
-    BrowseResult r = browse("1/00000000-0000-0000-0000-000000000000", BrowseFlag.METADATA);
-    assertEqual(Long.valueOf(0), r.getCountLong());
+    browse(0L, "1/00000000-0000-0000-0000-000000000000", BrowseFlag.METADATA);
   }
 
   @Test
   public void invalidShowUUID() throws ContentDirectoryException {
-    BrowseResult r = browse("2/00000000-0000-0000-0000-000000000000/1/2", BrowseFlag.METADATA);
-    assertEqual(Long.valueOf(0), r.getCountLong());
+    browse(0L, "2/00000000-0000-0000-0000-000000000000/1/2", BrowseFlag.METADATA);
   }
 
   @Test
   public void invalidEpisodeSE() throws ContentDirectoryException {
-    BrowseResult r = browse("2/" + getValidShowID() + "/10/20", BrowseFlag.METADATA);
-    assertEqual(Long.valueOf(0), r.getCountLong());
+    browse(0L, "2/" + getValidShowID() + "/10/20", BrowseFlag.METADATA);
   }
 
-  private BrowseResult browse(String s, BrowseFlag b) throws ContentDirectoryException {
-    return CDS.browse(s, b, "", 0, 200, SortCriterion.valueOf("+dc:date,+dc:title"));
+  private BrowseResult browse(Long expectedCount, String s, BrowseFlag b) throws ContentDirectoryException {
+    BrowseResult r = CDS.browse(s, b, "", 0, 200, SortCriterion.valueOf("+dc:date,+dc:title"));
+    assertEqual(expectedCount, r.getCountLong());
+    return r;
+  }
+
+  private BrowseResult browse(Long expectedCount, String objectID, BrowseFlag browseFlag, String filter, long firstResult, long maxResults,
+      SortCriterion[] orderby) throws ContentDirectoryException {
+    BrowseResult r = CDS.browse(objectID, browseFlag, filter, firstResult, maxResults, orderby);
+    assertEqual(expectedCount, r.getCountLong());
+    return r;
   }
 
 }

@@ -15,81 +15,69 @@
  */
 package org.tinymediamanager.thirdparty.upnp;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import org.fourthline.cling.DefaultUpnpServiceConfiguration;
-import org.fourthline.cling.UpnpService;
-import org.fourthline.cling.UpnpServiceImpl;
-import org.fourthline.cling.binding.LocalServiceBindingException;
-import org.fourthline.cling.binding.annotations.AnnotationLocalServiceBinder;
-import org.fourthline.cling.binding.xml.DescriptorBindingException;
-import org.fourthline.cling.controlpoint.ActionCallback;
-import org.fourthline.cling.model.DefaultServiceManager;
-import org.fourthline.cling.model.DiscoveryOptions;
-import org.fourthline.cling.model.ValidationException;
-import org.fourthline.cling.model.action.ActionInvocation;
-import org.fourthline.cling.model.message.UpnpResponse;
-import org.fourthline.cling.model.message.header.UDADeviceTypeHeader;
-import org.fourthline.cling.model.meta.Device;
-import org.fourthline.cling.model.meta.DeviceDetails;
-import org.fourthline.cling.model.meta.DeviceIdentity;
-import org.fourthline.cling.model.meta.Icon;
-import org.fourthline.cling.model.meta.LocalDevice;
-import org.fourthline.cling.model.meta.LocalService;
-import org.fourthline.cling.model.meta.ManufacturerDetails;
-import org.fourthline.cling.model.meta.ModelDetails;
-import org.fourthline.cling.model.meta.Service;
-import org.fourthline.cling.model.profile.RemoteClientInfo;
-import org.fourthline.cling.model.types.DLNACaps;
-import org.fourthline.cling.model.types.DLNADoc;
-import org.fourthline.cling.model.types.DeviceType;
-import org.fourthline.cling.model.types.UDADeviceType;
-import org.fourthline.cling.model.types.UDAServiceId;
-import org.fourthline.cling.model.types.UDN;
-import org.fourthline.cling.registry.RegistrationException;
-import org.fourthline.cling.support.avtransport.callback.Play;
-import org.fourthline.cling.support.avtransport.callback.SetAVTransportURI;
-import org.fourthline.cling.support.avtransport.callback.Stop;
-import org.fourthline.cling.support.connectionmanager.ConnectionManagerService;
-import org.fourthline.cling.support.contentdirectory.DIDLParser;
-import org.fourthline.cling.support.model.DIDLContent;
-import org.fourthline.cling.support.model.ProtocolInfos;
-import org.fourthline.cling.support.model.dlna.DLNAProfiles;
-import org.fourthline.cling.support.model.dlna.DLNAProtocolInfo;
-import org.fourthline.cling.transport.RouterException;
-import org.fourthline.cling.transport.impl.StreamClientConfigurationImpl;
-import org.fourthline.cling.transport.spi.StreamClient;
+import org.jupnp.UpnpService;
+import org.jupnp.controlpoint.ActionCallback;
+import org.jupnp.model.action.ActionInvocation;
+import org.jupnp.model.message.UpnpResponse;
+import org.jupnp.model.message.header.UDADeviceTypeHeader;
+import org.jupnp.model.meta.Device;
+import org.jupnp.model.meta.Service;
+import org.jupnp.model.types.UDADeviceType;
+import org.jupnp.model.types.UDAServiceId;
+import org.jupnp.support.avtransport.callback.Play;
+import org.jupnp.support.avtransport.callback.SetAVTransportURI;
+import org.jupnp.support.avtransport.callback.Stop;
+import org.jupnp.support.contentdirectory.DIDLParser;
+import org.jupnp.support.model.DIDLContent;
+import org.jupnp.transport.RouterException;
+import org.jupnp.util.SpecificationViolationReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tinymediamanager.ReleaseInfo;
+import org.tinymediamanager.core.Settings;
 import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
 import org.tinymediamanager.thirdparty.NetworkUtil;
 
+/**
+ * Small helper to manage the JUPnP service used by TinyMediaManager.
+ *
+ * <p>
+ * Responsibilities:
+ * <ul>
+ * <li>Start/stop the local UPnP service</li>
+ * <li>Discover remote media renderers</li>
+ * <li>Control a selected renderer (play/stop)</li>
+ * </ul>
+ * </p>
+ * 
+ * @author Myron Boyle
+ */
 public class Upnp {
-  private static final Logger LOGGER         = LoggerFactory.getLogger(Upnp.class);
-  public static final int     UPNP_PORT      = 8008;
-  public static final int     WEBSERVER_PORT = 8009;
+  private static final Logger LOGGER        = LoggerFactory.getLogger(Upnp.class);
 
-  // ROOT is fix 0 , do not change!!
-  public static final String  ID_ROOT        = "0";
-  public static final String  ID_MOVIES      = "1";
-  public static final String  ID_TVSHOWS     = "2";
+  // ROOT is fixed to 0, do not change
+  public static final String  ID_ROOT       = "0";
+  public static final String  ID_MOVIES     = "1";
+  public static final String  ID_TVSHOWS    = "2";
 
+  private static boolean      initialized   = false;
   private static Upnp         instance;
 
   private final String        ipAddress;
-  private UpnpService         upnpService    = null;
-  private WebServer           webServer      = null;
-  private Service             playerService  = null;
-  private LocalDevice         localDevice    = null;
+  private TmmUpnpService      upnpService   = null;
+  private Service<?, ?>       playerService = null;
+
+  public final Set<String>    blockedIps    = new HashSet<>();
+
+  // currently active UPnP listen port
+  private int                 upnpPort;
 
   private Upnp() {
     ipAddress = NetworkUtil.getMachineIPAddress();
@@ -97,119 +85,114 @@ public class Upnp {
 
   public static synchronized Upnp getInstance() {
     if (Upnp.instance == null) {
+      SpecificationViolationReporter.disableReporting();
       Upnp.instance = new Upnp();
     }
     return Upnp.instance;
+  }
+
+  public static void init() {
+    initialized = true;
   }
 
   public UpnpService getUpnpService() {
     return this.upnpService;
   }
 
-  public LocalDevice getLocalDevice() {
-    return this.localDevice;
-  }
-
   public String getIpAddress() {
     return ipAddress;
   }
 
+  public int getPort() {
+    return upnpPort;
+  }
+
+  public Set<String> getBlockedIps() {
+    return blockedIps;
+  }
+
+  public void addBlockedIp(String ip) {
+    blockedIps.add(ip);
+  }
+
   /**
-   * Starts out UPNP Service / Listener
+   * Starts the UPnP service (JUPnP) and registers the local media server/device. Safe to call multiple times.
    */
-  public void createUpnpService() {
-    if (this.upnpService == null) {
-      this.upnpService = new UpnpServiceImpl(new DefaultUpnpServiceConfiguration(UPNP_PORT) {
-        @Override
-        public StreamClient createStreamClient() {
-          return new TmmStreamClientImpl(new StreamClientConfigurationImpl(getSyncProtocolExecutorService()));
+  private synchronized void createUpnpService() {
+    // only create service if we want it
+    if (Settings.getInstance().isUpnpShareLibrary() || Settings.getInstance().isUpnpRemotePlay()) {
+      if (this.upnpService == null) {
+        this.upnpService = new TmmUpnpService(this.upnpPort, Settings.getInstance().isUpnpShareLibrary());
+        this.upnpService.startup();
+        boolean isStarted;
+
+        try {
+          isStarted = upnpService.getRouter().isEnabled();
         }
-      }, UpnpListener.getListener());
+        catch (RouterException ex) {
+          isStarted = false;
+        }
+
+        if (!isStarted) {
+          LOGGER.error("UPnP fatal error: unable to start UPnP service");
+        }
+        else {
+          LOGGER.debug("UPnP (JUPnP) services are online and listening for media renderers on port {}", this.upnpPort);
+        }
+      }
     }
   }
 
-  private LocalDevice getDevice()
-      throws ValidationException, LocalServiceBindingException, IOException, IllegalArgumentException, URISyntaxException {
+  /**
+   * Update UPnP configuration: enable/disable and port. If port changes while enabled the service will be restarted on the new port.
+   *
+   * @param shareLibrary
+   *          whether to enable the UPnP media server
+   * @param port
+   *          the listen port to use when enabling
+   */
+  public synchronized void updateConfiguration(boolean shareLibrary, boolean remotePlay, int port) {
+    if (!initialized) {
+      // UPnP not initialized yet - ignore changes
+      return;
+    }
 
-    if (localDevice == null) {
-      DeviceIdentity identity = new DeviceIdentity(UDN.uniqueSystemIdentifier("tinyMediaManager"), 600);
-      DeviceType type = new UDADeviceType("MediaServer", 1);
-
-      // nah, stick with IP address
-      // String hostname = NetworkUtil.getMachineHostname();
-      // if (hostname == null) {
-      // hostname = ipAddress;
-      // }
-
-      // @formatter:off
-      DeviceDetails details = new DeviceDetails("tinyMediaManager",
-        new ManufacturerDetails("tinyMediaManager", "https://www.tinymediamanager.org/"),
-        new ModelDetails("tinyMediaManager", "tinyMediaManager - Media Server", ReleaseInfo.getVersion()), 
-        // @Namespace default /dev/<udn>/desc
-        new URI("http://" + ipAddress + ":" + UPNP_PORT + "/dev/" + identity.getUdn().getIdentifierString() + "/desc"),
-        new DLNADoc[] {
-            new DLNADoc("DMS", DLNADoc.Version.V1_5), 
-            new DLNADoc("M-DMS", DLNADoc.Version.V1_5) 
-        },
-        new DLNACaps(new String[] { "av-upload", "image-upload", "audio-upload" }));
-      // @formatter:on
-
-      final ProtocolInfos protocols = new ProtocolInfos();
-      for (DLNAProfiles dlnaProfile : DLNAProfiles.values()) {
-        if (dlnaProfile == DLNAProfiles.NONE) {
-          continue;
-        }
-        try {
-          protocols.add(new DLNAProtocolInfo(dlnaProfile));
-        }
-        catch (Exception e) {
-          // Silently ignored.
-        }
+    // disable
+    if (!shareLibrary && !remotePlay) {
+      if (upnpService != null) {
+        LOGGER.debug("Stopping UPnP service as requested by settings change");
+        upnpService.shutdown();
+        upnpService = null;
       }
+      return;
+    }
 
-      LOGGER.info("UPnP: Hello, i'm " + identity.getUdn().getIdentifierString());
+    // enable
+    if (upnpService == null) {
+      this.upnpPort = port;
+      this.blockedIps.clear();
+      LOGGER.debug("Starting UPnP service on port {} as requested by settings", this.upnpPort);
+      createUpnpService();
+      return;
+    }
 
-      // Content Directory Service
-      LocalService<ContentDirectoryService> cds = new AnnotationLocalServiceBinder().read(ContentDirectoryService.class);
-      cds.setManager(new DefaultServiceManager<>(cds, ContentDirectoryService.class));
-
-      // Connection Manager Service
-      LocalService<ConnectionManagerService> cms = new AnnotationLocalServiceBinder().read(ConnectionManagerService.class);
-      // cms.setManager(new DefaultServiceManager<>(cms, ConnectionManagerService.class));
-      cms.setManager(new DefaultServiceManager<>(cms, ConnectionManagerService.class) {
-        @Override
-        protected ConnectionManagerService createServiceInstance() throws Exception {
-          return new ConnectionManagerService(protocols, null);
-        }
-      });
-
-      LocalService<MSMediaReceiverRegistrarService> mss = new AnnotationLocalServiceBinder().read(MSMediaReceiverRegistrarService.class);
-      mss.setManager(new DefaultServiceManager<>(mss, MSMediaReceiverRegistrarService.class));
-
-      Icon icon = null;
+    // already running but port changed -> restart
+    if (this.upnpPort != port) {
+      LOGGER.debug("Restarting UPnP service on new port {} (was {})", port, this.upnpPort);
       try {
-        // only when deployed
-        icon = new Icon("image/png", 128, 128, 24, new File("tmm.png"));
+        upnpService.shutdown();
       }
       catch (Exception e) {
-        // in eclipse
-        try {
-          icon = new Icon("image/png", 128, 128, 24, new File("AppBundler/tmm.png"));
-        }
-        catch (Exception e2) {
-          LOGGER.debug("Did not find device icon...");
-        }
+        LOGGER.debug("Error while shutting down existing UPnP service", e);
       }
-
-      this.localDevice = new LocalDevice(identity, type, details, new Icon[] { icon }, new LocalService[] { cds, cms, mss });
+      this.upnpPort = port;
+      this.upnpService = null;
+      createUpnpService();
     }
-
-    return this.localDevice;
   }
 
   /**
-   * Sends a UPNP broadcast message, to find some players.<br>
-   * Should be available shortly via getAvailablePlayers()
+   * Sends an SSDP search for MediaRenderer devices. Call {@link #getAvailablePlayers()} after a short delay to retrieve discovered devices.
    */
   public void sendPlayerSearchRequest() {
     createUpnpService();
@@ -217,16 +200,16 @@ public class Upnp {
   }
 
   /**
-   * Finds all available Players (implementing the MediaRenderer stack)<br>
-   * You might want to call sendPlayerSearchRequest() a few secs before, to populate freshly
-   * 
-   * @return List of devices
+   * Collects discovered MediaRenderer devices from the registry.
+   *
+   * @return list of discovered devices (may be empty)
    */
-  public List<Device> getAvailablePlayers() {
+  public List<Device<?, ?, ?>> getAvailablePlayers() {
     createUpnpService();
-    List<Device> ret = new ArrayList<>();
-    for (Device device : this.upnpService.getRegistry().getDevices()) {
+    List<Device<?, ?, ?>> ret = new ArrayList<>();
+    for (Device<?, ?, ?> device : this.upnpService.getRegistry().getDevices()) {
       if (device.getType().getType().equals("MediaRenderer")) {
+        LOGGER.debug("Found MediaRenderer: {}", device.getDisplayString());
         ret.add(device);
       }
     }
@@ -234,34 +217,35 @@ public class Upnp {
   }
 
   /**
-   * Sets a device as our player for play/stop and other services<br>
-   * Use getAvailablePlayers() for a list of them.
-   * 
+   * Selects a renderer device for subsequent control commands. If the device does not expose an AVTransport service the selected player will be null.
+   *
    * @param device
-   *          device for playing
+   *          The device to use as player
    */
-  public void setPlayer(Device device) {
+  public void setPlayer(Device<?, ?, ?> device) {
     this.playerService = device.findService(new UDAServiceId("AVTransport"));
     if (this.playerService == null) {
-      LOGGER.warn("Could not find AVTransportService on UPnP device {}", device.getDisplayString());
+      LOGGER.debug("Could not find AVTransport service on UPnP device: {}", device.getDisplayString());
     }
   }
 
   /**
-   * Plays a file/url
-   * 
+   * Play a media file on the selected renderer. The method will construct DIDL-Lite metadata for known media entity types (Movie, TvShowEpisode). If
+   * a MediaEntity is not provided, the method will use the URL from the MediaFile only (if present).
+   *
    * @param me
-   *          the media entity
+   *          media entity (optional)
    * @param mf
-   *          the media file
+   *          media file (required)
    */
   public void playFile(MediaEntity me, MediaFile mf) {
     if (this.playerService == null) {
-      LOGGER.debug("No UPnP player set - did you call setPlayer(Device) ?");
+      LOGGER.debug("No UPnP player set; did you call setPlayer(Device)?");
       return;
     }
+
     if (mf == null) {
-      LOGGER.debug("parameters empty!");
+      LOGGER.debug("No MediaFile provided to playFile()");
       return;
     }
 
@@ -285,7 +269,7 @@ public class Upnp {
         meta = dip.generate(didl);
       }
       catch (Exception e) {
-        LOGGER.debug("Could not generate metadata / url");
+        LOGGER.debug("Could not generate metadata / URL for UPnP playback", e);
         return;
       }
     }
@@ -293,7 +277,7 @@ public class Upnp {
     ActionCallback setAVTransportURIAction = new SetAVTransportURI(this.playerService, url, meta) {
       @Override
       public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {
-        LOGGER.debug("Setting URL for player failed! " + defaultMsg);
+        LOGGER.warn("Setting URL for player failed: {}", defaultMsg);
       }
     };
     this.upnpService.getControlPoint().execute(setAVTransportURIAction);
@@ -301,14 +285,14 @@ public class Upnp {
     ActionCallback playAction = new Play(this.playerService) {
       @Override
       public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {
-        LOGGER.warn("Playing via UPnP failed - '{}'", defaultMsg);
+        LOGGER.warn("Playing via UPnP failed: {}", defaultMsg);
       }
     };
     this.upnpService.getControlPoint().execute(playAction);
   }
 
   /**
-   * stop the player
+   * Stop playback on the selected renderer (if any).
    */
   public void stopPlay() {
     if (this.playerService == null) {
@@ -318,75 +302,33 @@ public class Upnp {
     ActionCallback stopAction = new Stop(this.playerService) {
       @Override
       public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {
-        LOGGER.warn("Stopping UPnP playback failed - '{}'", defaultMsg);
+        LOGGER.warn("Stopping UPnP playback failed: {}", defaultMsg);
       }
     };
     this.upnpService.getControlPoint().execute(stopAction);
   }
 
-  public String getDeviceDescriptorXML() {
-    String xml = "";
-    try {
-      xml = upnpService.getConfiguration()
-          .getDeviceDescriptorBinderUDA10()
-          .generate(localDevice, new RemoteClientInfo(), upnpService.getConfiguration().getNamespace());
-    }
-    catch (DescriptorBindingException e) {
-      LOGGER.debug("Could not generate UPNP device descriptor", e);
-    }
-    return xml;
+  /**
+   * Ensure the media server is started. This is an alias for {@link #createUpnpService()}.
+   */
+  public void startMediaServer() {
+    createUpnpService();
   }
 
   /**
-   * starts a WebServer for accessing MediaFiles over UPNP<br>
-   * In /upnp/(movie|tvshow)/UUIDofMediaEntity/(folder)/file.ext format
+   * Stop the local UPnP service (shuts down JUPnP internals).
    */
-  public void startWebServer() {
-    try {
-      if (this.webServer == null) {
-        this.webServer = new WebServer(WEBSERVER_PORT);
-      }
-    }
-    catch (IOException e) {
-      LOGGER.warn("Could not start UPnP web server - '{}'", e.getMessage());
-    }
-  }
-
-  public void stopWebServer() {
-    if (this.webServer != null) {
-      this.webServer.closeAllConnections();
-    }
-  }
-
-  public void startMediaServer() {
-    createUpnpService();
-    try {
-      this.upnpService.getRegistry().addDevice(getDevice(), new DiscoveryOptions(true));
-    }
-    catch (RegistrationException | LocalServiceBindingException | ValidationException | IOException | IllegalArgumentException
-        | URISyntaxException e) {
-      LOGGER.warn("Could not start UPnP MediaServer - '{}'", e.getMessage());
-    }
-  }
-
   public void stopMediaServer() {
     if (this.upnpService != null) {
-      this.upnpService.getRegistry().removeAllLocalDevices();
+      this.upnpService.shutdown();
     }
   }
 
+  /**
+   * Shutdown UPnP components (stop playback and media server).
+   */
   public void shutdown() {
     stopPlay();
-    stopWebServer();
     stopMediaServer();
-    if (this.upnpService != null) {
-      try {
-        this.upnpService.getRouter().shutdown();
-      }
-      catch (RouterException e) {
-        LOGGER.debug("Could not shutdown the UPNP router.");
-      }
-      this.upnpService.shutdown();
-    }
   }
 }

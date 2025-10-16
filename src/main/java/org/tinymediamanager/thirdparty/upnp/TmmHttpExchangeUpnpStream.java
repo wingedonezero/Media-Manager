@@ -16,7 +16,23 @@
 
 package org.tinymediamanager.thirdparty.upnp;
 
-import org.jupnp.support.xmicrosoft.AbstractMediaReceiverRegistrarService;
+import org.jupnp.model.message.Connection;
+import org.jupnp.protocol.ProtocolFactory;
+import org.jupnp.transport.impl.HttpExchangeUpnpStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-class MSMediaReceiverRegistrarService extends AbstractMediaReceiverRegistrarService {
+import com.sun.net.httpserver.HttpExchange;
+
+public class TmmHttpExchangeUpnpStream extends HttpExchangeUpnpStream {
+
+  private final Logger logger = LoggerFactory.getLogger(TmmHttpExchangeUpnpStream.class.getName());
+
+  protected TmmHttpExchangeUpnpStream(ProtocolFactory protocolFactory, HttpExchange httpExchange) {
+    super(protocolFactory, httpExchange);
+  }
+
+  protected Connection createConnection() {
+    return null;
+  }
 }

@@ -36,11 +36,11 @@ import javax.swing.SwingUtilities;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tinymediamanager.core.MediaFileHelper;
 import org.tinymediamanager.core.MediaFileType;
 import org.tinymediamanager.core.Message;
 import org.tinymediamanager.core.MessageManager;
 import org.tinymediamanager.core.TmmResourceBundle;
+import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaRating;
 import org.tinymediamanager.core.movie.MovieModuleManager;
@@ -51,7 +51,7 @@ import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.TmmUIHelper;
 import org.tinymediamanager.ui.WrapLayout;
 import org.tinymediamanager.ui.components.NoBorderScrollPane;
-import org.tinymediamanager.ui.components.button.FlatButton;
+import org.tinymediamanager.ui.components.button.UpnpPlayButton;
 import org.tinymediamanager.ui.components.label.LinkLabel;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.panel.IdLinkPanel;
@@ -74,6 +74,8 @@ public class MovieInformationPanel extends InformationPanel {
   private static final Logger        LOGGER                 = LoggerFactory.getLogger(MovieInformationPanel.class);
   private static final String        LAYOUT_ARTWORK_VISIBLE = "[n:100lp:20%, grow][300lp:300lp,grow 350]";
   private static final String        LAYOUT_ARTWORK_HIDDEN  = "[][300lp:300lp,grow 350]";
+
+  private final MovieSelectionModel  selectionModel;
 
   /** UI components */
   private RatingPanel                ratingPanel;
@@ -111,6 +113,8 @@ public class MovieInformationPanel extends InformationPanel {
    *          the movie selection model
    */
   public MovieInformationPanel(MovieSelectionModel movieSelectionModel) {
+    this.selectionModel = movieSelectionModel;
+
     initComponents();
 
     // action listeners
@@ -165,20 +169,6 @@ public class MovieInformationPanel extends InformationPanel {
     };
 
     movieSelectionModel.addPropertyChangeListener(propertyChangeListener);
-
-    btnPlay.addActionListener(e -> {
-      MediaFile mf = movieSelectionModel.getSelectedMovie().getMainVideoFile();
-      if (StringUtils.isNotBlank(mf.getFilename())) {
-        try {
-          TmmUIHelper.openFile(MediaFileHelper.getMainVideoFile(mf));
-        }
-        catch (Exception ex) {
-          LOGGER.error("Could not open file manager - '{}'", ex.getMessage());
-          MessageManager.getInstance()
-              .pushMessage(new Message(Message.MessageLevel.ERROR, mf, "message.erroropenfile", new String[] { ":", ex.getLocalizedMessage() }));
-        }
-      }
-    });
   }
 
   private void changeMovie(Movie movie) {
@@ -276,7 +266,17 @@ public class MovieInformationPanel extends InformationPanel {
         panelTitle.add(lblMovieName, "flowx,cell 0 0,wmin 0,growx");
       }
       {
-        btnPlay = new FlatButton(IconManager.PLAY_LARGE);
+        btnPlay = new UpnpPlayButton() {
+          @Override
+          public MediaFile getMediaFile() {
+            return selectionModel.getSelectedMovie().getMainFile();
+          }
+
+          @Override
+          public MediaEntity getMediaEntity() {
+            return selectionModel.getSelectedMovie();
+          }
+        };
         panelTitle.add(btnPlay, "cell 1 0 1 2,aligny top");
       }
       {

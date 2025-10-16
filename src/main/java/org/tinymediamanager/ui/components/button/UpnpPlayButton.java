@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.tinymediamanager.ui.components.button;
 
 import java.awt.event.ActionEvent;
 import java.util.List;
 
 import javax.swing.AbstractAction;
-import javax.swing.JButton;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 
-import org.fourthline.cling.model.meta.Device;
+import org.jupnp.model.meta.Device;
 import org.tinymediamanager.core.MediaFileHelper;
 import org.tinymediamanager.core.Message;
 import org.tinymediamanager.core.MessageManager;
@@ -34,28 +34,22 @@ import org.tinymediamanager.thirdparty.upnp.Upnp;
 import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.TmmUIHelper;
 
-/**
- * the class UpnpPlayButton is used to create a UPNP aware Play-Button
- * 
- * @author Manuel Laggner
- */
-public abstract class UpnpPlayButton extends JButton {
-
+public abstract class UpnpPlayButton extends FlatButton {
   public UpnpPlayButton() {
-    super();
+    super(IconManager.PLAY_LARGE);
     setAction(new PlayAction());
   }
 
   /**
    * get the media file to be played
-   * 
+   *
    * @return the media file
    */
   public abstract MediaFile getMediaFile();
 
   /**
    * get the media entity for the media file to be played
-   * 
+   *
    * @return the media entity
    */
   public abstract MediaEntity getMediaEntity();
@@ -79,11 +73,11 @@ public abstract class UpnpPlayButton extends JButton {
 
   /**
    * play the media file via UPNP on the chosen device
-   * 
+   *
    * @param device
    *          the device to play the file on
    */
-  private void playViaUpnp(Device device) {
+  private void playViaUpnp(Device<?, ?, ?> device) {
     Upnp instance = Upnp.getInstance();
     instance.setPlayer(device);
     instance.playFile(getMediaEntity(), getMediaFile());
@@ -92,7 +86,7 @@ public abstract class UpnpPlayButton extends JButton {
   private class PlayAction extends AbstractAction {
 
     private PlayAction() {
-      putValue(SMALL_ICON, IconManager.PLAY);
+      putValue(SMALL_ICON, IconManager.PLAY_LARGE);
     }
 
     @Override
@@ -103,7 +97,7 @@ public abstract class UpnpPlayButton extends JButton {
       }
       else {
         // show a popup with upnp devices if some are found in the network
-        List<Device> upnpDevices = Upnp.getInstance().getAvailablePlayers();
+        List<Device<?, ?, ?>> upnpDevices = Upnp.getInstance().getAvailablePlayers();
         if (upnpDevices.isEmpty()) {
           playLocal();
         }
@@ -112,7 +106,7 @@ public abstract class UpnpPlayButton extends JButton {
           menu.add(new DeviceAction("System player", null));
           menu.add(new JSeparator());
 
-          for (Device device : upnpDevices) {
+          for (Device<?, ?, ?> device : upnpDevices) {
             menu.add(new DeviceAction(device.getDetails().getFriendlyName(), device));
           }
 
@@ -124,9 +118,9 @@ public abstract class UpnpPlayButton extends JButton {
   }
 
   private class DeviceAction extends AbstractAction {
-    private Device device;
+    private final Device<?, ?, ?> device;
 
-    private DeviceAction(String title, Device device) {
+    private DeviceAction(String title, Device<?, ?, ?> device) {
       putValue(NAME, title);
       this.device = device;
     }

@@ -73,6 +73,8 @@ import org.tinymediamanager.core.tvshow.TvShowSettingsDefaults;
 import org.tinymediamanager.core.tvshow.TvShowUpgradeTasks;
 import org.tinymediamanager.core.tvshow.tasks.TvShowUpdateDatasourceTask;
 import org.tinymediamanager.license.License;
+import org.tinymediamanager.logging.Log4jBackstop;
+import org.tinymediamanager.logging.TmmLoggingUtils;
 import org.tinymediamanager.scraper.MediaProviders;
 import org.tinymediamanager.scraper.util.LanguageUtils;
 import org.tinymediamanager.thirdparty.ExternalTools;
@@ -93,11 +95,7 @@ import org.tinymediamanager.ui.dialogs.WhatsNewDialog;
 import org.tinymediamanager.ui.images.LogoCircle;
 import org.tinymediamanager.ui.wizard.TinyMediaManagerWizard;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.ConsoleAppender;
 
 /**
  * The class {@link TinyMediaManager} is the main entry point to this application.
@@ -192,7 +190,7 @@ public final class TinyMediaManager {
                 // finished ////////////////////////////////////////////////////
                 updateProgress("finished starting :)", 100);
 
-                stopStartupAppender();
+                TmmLoggingUtils.stopStartupAppender();
                 splashScreen.setVisible(false);
 
                 TmmUILayoutStore.getInstance().loadSettings(window);
@@ -298,7 +296,7 @@ public final class TinyMediaManager {
       }
 
       // should we change the log level for the console? CLI version
-      setConsoleLogLevel();
+      setLogLevels();
 
       TinyMediaManagerCLI.start(args);
       // wait for other tmm threads (artwork download etall)
@@ -472,6 +470,7 @@ public final class TinyMediaManager {
     MessageManager.init();
     YtDlp.init();
     YtDownloader.init();
+    TmmHttpServer.init();
 
     // init http server
     if (Settings.getInstance().isEnableHttpServer()) {
@@ -521,37 +520,26 @@ public final class TinyMediaManager {
     LOGGER.trace("entered loadServices");
 
     updateProgress("splash.services", 70);
+    Upnp.init();
+
     try {
-      if (Settings.getInstance().isUpnpShareLibrary()) {
-        Upnp u = Upnp.getInstance();
-        u.startWebServer();
-        u.createUpnpService();
-        u.startMediaServer();
-      }
-    }
-    catch (Exception e) {
-      LOGGER.error("Could not start UPnP server - '{}'", e.getMessage());
-    }
-    try {
-      if (Settings.getInstance().isUpnpRemotePlay()) {
-        Upnp u = Upnp.getInstance();
-        u.createUpnpService();
-        u.sendPlayerSearchRequest();
-        u.startWebServer();
-      }
+      // Start or configure UPnP according to settings (enable flag and configured port)
+      Upnp.getInstance()
+          .updateConfiguration(Settings.getInstance().isUpnpShareLibrary(), Settings.getInstance().isUpnpRemotePlay(),
+              Settings.getInstance().getUpnpPort());
     }
     catch (Exception e) {
       LOGGER.error("Could not start UPnP server - '{}'", e.getMessage());
     }
 
-    try {
-      if (!Settings.getInstance().getKodiHost().isBlank()) {
+    if (!Settings.getInstance().getKodiHost().isBlank()) {
+      try {
         KodiRPC.getInstance().connect();
       }
-    }
-    catch (Exception e) {
-      // catch all, to not kill JVM on any other exceptions!
-      LOGGER.error("Could not start KodiRPC - '{}'", e.getMessage());
+      catch (Exception e) {
+        // catch all, to not kill JVM on any other exceptions!
+        LOGGER.error("Could not start KodiRPC - '{}'", e.getMessage());
+      }
     }
   }
 
@@ -664,7 +652,7 @@ public final class TinyMediaManager {
 
       // should we change the log level for the console?
       // in GUI mode we set that directly. in CLI mode we set that after startup
-      setConsoleLogLevel();
+      setLogLevels();
     }
 
     TinyMediaManager tinyMediaManager = new TinyMediaManager();
@@ -679,7 +667,8 @@ public final class TinyMediaManager {
     try {
       // persist all stored properties
       TmmProperties.getInstance().writeProperties();
-
+      // Send correct Upnp byebye
+      Upnp.getInstance().shutdown();
       // send shutdown signal
       TmmTaskManager.getInstance().shutdown();
       // save unsaved settings
@@ -699,64 +688,16 @@ public final class TinyMediaManager {
     loggerContext.stop();
   }
 
-  public static void setConsoleLogLevel() {
-    String loglevelAsString = System.getProperty("tmm.consoleloglevel", "");
-    Level level;
-
-    switch (loglevelAsString) {
-      case "OFF":
-        level = null;
-        break;
-
-      case "ERROR":
-        level = Level.ERROR;
-        break;
-
-      case "WARN":
-        level = Level.WARN;
-        break;
-
-      case "INFO":
-        level = Level.INFO;
-        break;
-
-      case "DEBUG":
-        level = Level.DEBUG;
-        break;
-
-      case "TRACE":
-        level = Level.TRACE;
-        break;
-
-      default:
-        return;
-    }
-
-    LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-
-    // get the console appender
-    Appender<ILoggingEvent> consoleAppender = lc.getLogger("ROOT").getAppender("CONSOLE");
-    if (consoleAppender instanceof ConsoleAppender) {
-      if (level == null) {
-        consoleAppender.stop();
-      }
-      else {
-        // and set a filter to drop messages beneath the given level
-        ThresholdLoggerFilter filter = new ThresholdLoggerFilter(level);
-        filter.start();
-        consoleAppender.clearAllFilters();
-        consoleAppender.addFilter(filter);
-      }
-    }
-  }
-
-  private void stopStartupAppender() {
-    LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-
-    // get the console appender
-    Appender<ILoggingEvent> appender = lc.getLogger("ROOT").getAppender("STARTUP");
-    if (appender != null) {
-      appender.stop();
-    }
+  /**
+   * Configure application logging levels.
+   *
+   * <p>
+   * Sets the console log level and adjusts the log level for the UPnP third-party package according to application settings. This method has the side
+   * effect of delegating to {@code TmmLoggingUtils} and should be called during startup or when the logging configuration needs to be refreshed.
+   * </p>
+   */
+  public static void setLogLevels() {
+    TmmLoggingUtils.setConsoleLogLevel();
+    TmmLoggingUtils.setLogLevel("org.tinymediamanager.thirdparty.upnp", "tmm.logging.jupnp");
   }
 }

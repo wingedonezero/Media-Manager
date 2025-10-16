@@ -21,10 +21,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.fourthline.cling.support.model.DIDLObject.Property.DC;
-import org.fourthline.cling.support.model.PersonWithRole;
-import org.fourthline.cling.support.model.Res;
-import org.fourthline.cling.support.model.item.Movie;
+import org.jupnp.support.model.DIDLObject.Property.DC;
+import org.jupnp.support.model.PersonWithRole;
+import org.jupnp.support.model.ProtocolInfo;
+import org.jupnp.support.model.Res;
+import org.jupnp.support.model.item.Movie;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.MediaFileType;
@@ -56,27 +57,28 @@ class Metadata {
       m.setId(tmmMovie.getDbId().toString());
       m.setParentID(Upnp.ID_MOVIES);
       if (tmmMovie.getYear() > 0) {
-        m.addProperty(new DC.DATE(Integer.toString(tmmMovie.getYear()))); // no setDate on Movie (but on other items)???
+        m.addProperty(new DC.DATE(tmmMovie.getReleaseDateFormatted())); // no setDate on Movie (but on other items)???
       }
       m.setTitle(tmmMovie.getTitle());
 
-      List<MediaFile> posters = tmmMovie.getMediaFiles(MediaFileType.POSTER);
-      MediaFile poster = posters.isEmpty() ? null : posters.get(0);
-      if (poster != null) {
-        String rel = tmmMovie.getPathNIO().relativize(poster.getFileAsPath()).toString().replaceAll("\\\\", "/");
-        String url = "http://" + Upnp.getInstance().getIpAddress() + ":" + Upnp.WEBSERVER_PORT + "/upnp/movies/" + tmmMovie.getDbId().toString() + "/"
-            + URLEncoder.encode(rel, StandardCharsets.UTF_8);
-        Res r = new Res(MimeTypes.getMimeType(poster.getExtension()), poster.getFilesize(), url);
+      for (MediaFile mf : tmmMovie.getMediaFiles(MediaFileType.VIDEO)) {
+        String rel = tmmMovie.getPathNIO().relativize(mf.getFileAsPath()).toString().replaceAll("\\\\", "/");
+        String url = "http://" + Upnp.getInstance().getIpAddress() + ":" + Upnp.getInstance().getPort() + "/upnp/movies/"
+            + tmmMovie.getDbId().toString() + "/" + URLEncoder.encode(rel, StandardCharsets.UTF_8);
+        Res r = createRes(url, mf);
         m.addResource(r);
       }
 
-      for (MediaFile mf : tmmMovie.getMediaFiles(MediaFileType.VIDEO)) {
-        String rel = tmmMovie.getPathNIO().relativize(mf.getFileAsPath()).toString().replaceAll("\\\\", "/");
-        String url = "http://" + Upnp.getInstance().getIpAddress() + ":" + Upnp.WEBSERVER_PORT + "/upnp/movies/" + tmmMovie.getDbId().toString() + "/"
-            + URLEncoder.encode(rel, StandardCharsets.UTF_8);
-        Res r = new Res(MimeTypes.getMimeType(mf.getExtension()), mf.getFilesize(), url);
-        m.addResource(r);
-      }
+      // an own res is an own playable file - so it is not a poster the the video :/
+      // List<MediaFile> posters = tmmMovie.getMediaFiles(MediaFileType.POSTER);
+      // MediaFile poster = posters.isEmpty() ? null : posters.get(0);
+      // if (poster != null) {
+      // String rel = tmmMovie.getPathNIO().relativize(poster.getFileAsPath()).toString().replaceAll("\\\\", "/");
+      // String url = "http://" + Upnp.getInstance().getIpAddress() + ":" + Upnp.getInstance().getPort() + "/upnp/movies/"
+      // + tmmMovie.getDbId().toString() + "/" + URLEncoder.encode(rel, StandardCharsets.UTF_8);
+      // Res r = createRes(url, poster);
+      // m.addResource(r);
+      // }
 
       if (full) {
         // TODO: m.setDirectors();
@@ -137,15 +139,15 @@ class Metadata {
       m.setId(Upnp.ID_TVSHOWS + "/" + show.getDbId().toString() + "/" + ep.getSeason() + "/" + ep.getEpisode());
       m.setParentID(Upnp.ID_TVSHOWS + "/" + show.getDbId().toString() + "/" + ep.getSeason());
       if (ep.getYear() > 0) {
-        m.addProperty(new DC.DATE(Integer.toString(ep.getYear()))); // no setDate on Movie (but on other items)???
+        m.addProperty(new DC.DATE(ep.getFirstAiredFormatted())); // no setDate on Movie (but on other items)???
       }
       m.setTitle("S" + lz(ep.getSeason()) + "E" + lz(ep.getEpisode()) + " " + ep.getTitle());
 
       for (MediaFile mf : ep.getMediaFiles(MediaFileType.VIDEO)) {
         String rel = show.getPathNIO().relativize(mf.getFileAsPath()).toString().replaceAll("\\\\", "/");
-        String url = "http://" + Upnp.getInstance().getIpAddress() + ":" + Upnp.WEBSERVER_PORT + "/upnp/tvshows/" + show.getDbId().toString() + "/"
-            + URLEncoder.encode(rel, StandardCharsets.UTF_8);
-        Res r = new Res(MimeTypes.getMimeType(mf.getExtension()), mf.getFilesize(), url);
+        String url = "http://" + Upnp.getInstance().getIpAddress() + ":" + Upnp.getInstance().getPort() + "/upnp/tvshows/" + show.getDbId().toString()
+            + "/" + URLEncoder.encode(rel, StandardCharsets.UTF_8);
+        Res r = createRes(url, mf);
         m.addResource(r);
       }
 
@@ -178,6 +180,28 @@ class Metadata {
     }
 
     return m;
+  }
+
+  private static Res createRes(String url, MediaFile mf) {
+    Res r = new Res();
+    r.setValue(url);
+    r.setProtocolInfo(new ProtocolInfo(MimeTypes.getMimeType(mf.getExtension())));
+    if (mf.getFilesize() > 0) {
+      r.setSize(mf.getFilesize());
+    }
+    if (mf.getVideoWidth() > 0 && mf.getVideoHeight() > 0) {
+      r.setResolution(mf.getVideoWidth(), mf.getVideoHeight());
+    }
+    if (mf.getVideoBitRate() > 0) {
+      r.setBitrate(Long.valueOf(mf.getVideoBitRate()));
+    }
+    if (mf.getAudioChannelCount() > 0) {
+      r.setNrAudioChannels(Long.valueOf(mf.getAudioChannelCount()));
+    }
+    if (mf.getDuration() > 0) {
+      r.setDuration(mf.getDurationHHMMSS());
+    }
+    return r;
   }
 
   /**

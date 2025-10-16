@@ -217,7 +217,8 @@ public abstract class BasicITest {
     movie.addToMediaFiles(mf);
 
     movie.setWatched(true);
-    movie.addToGenres(Arrays.asList(MediaGenres.values()[new Random().nextInt(MediaGenres.values().length)],
+    movie.addToGenres(Arrays.asList(MediaGenres.ADVENTURE, // fixate this genre
+        MediaGenres.values()[new Random().nextInt(MediaGenres.values().length)],
         MediaGenres.values()[new Random().nextInt(MediaGenres.values().length)],
         MediaGenres.values()[new Random().nextInt(MediaGenres.values().length)],
         MediaGenres.values()[new Random().nextInt(MediaGenres.values().length)]));
@@ -247,6 +248,7 @@ public abstract class BasicITest {
 
     Path path = workFolder.resolve(title);
 
+    tvShow.setDataSource(workFolder.toString());
     tvShow.setTitle(title);
     tvShow.setPath(path.toString());
     tvShow.setYear(1950 + ThreadLocalRandom.current().nextInt(20, 60));
@@ -270,6 +272,8 @@ public abstract class BasicITest {
 
     // ========= EPISODE start =========
     TvShowEpisode episode = new TvShowEpisode();
+    episode.setDataSource(workFolder.toString());
+    episode.setPath(path.toString());
     episode.setTvShow(tvShow);
     episode.setTitle(title + "-EP");
     episode.setEpisode(new MediaEpisodeNumber(MediaEpisodeGroup.DEFAULT_AIRED, 1, 2));

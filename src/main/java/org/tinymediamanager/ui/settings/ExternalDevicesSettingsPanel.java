@@ -17,21 +17,19 @@ package org.tinymediamanager.ui.settings;
 
 import static org.tinymediamanager.ui.TmmFontHelper.H3;
 
-import java.util.List;
-
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
 import javax.swing.JTextField;
 
 import org.jdesktop.beansbinding.AutoBinding;
 import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
+import org.jdesktop.beansbinding.Property;
 import org.jdesktop.swingbinding.JTableBinding;
 import org.jdesktop.swingbinding.SwingBindings;
 import org.slf4j.Logger;
@@ -74,6 +72,7 @@ class ExternalDevicesSettingsPanel extends JPanel {
   private JButton             btnAddWolDevice;
   private JButton             btnEditWolDevice;
   private JCheckBox           chckbxUpnpShareLibrary;
+  private JTextField          tfUpnpPort;
   private JCheckBox           chckbxUpnpRemotePlay;
 
   ExternalDevicesSettingsPanel() {
@@ -239,7 +238,7 @@ class ExternalDevicesSettingsPanel extends JPanel {
     }
     {
       JPanel panelUpnp = new JPanel();
-      panelUpnp.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "")); // 16lp ~ width of the
+      panelUpnp.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][][]")); // 16lp ~ width of the
 
       JLabel lblUpnp = new TmmLabel("UPnP", H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelUpnp, lblUpnp, true);
@@ -249,65 +248,83 @@ class ExternalDevicesSettingsPanel extends JPanel {
         chckbxUpnpShareLibrary = new JCheckBox(TmmResourceBundle.getString("Settings.upnp.share"));
         panelUpnp.add(chckbxUpnpShareLibrary, "cell 1 0 2 1");
 
+        JLabel lblPort = new JLabel(TmmResourceBundle.getString("Settings.api.port"));
+        panelUpnp.add(lblPort, "flowx,cell 2 1");
+
+        tfUpnpPort = new JTextField();
+        panelUpnp.add(tfUpnpPort, "cell 2 1");
+        tfUpnpPort.setColumns(10);
+      }
+      {
         chckbxUpnpRemotePlay = new JCheckBox(TmmResourceBundle.getString("Settings.upnp.play"));
-        panelUpnp.add(chckbxUpnpRemotePlay, "cell 1 1 2 1");
+        panelUpnp.add(chckbxUpnpRemotePlay, "cell 1 2 2 1");
       }
     }
   }
 
   protected void initDataBindings() {
-    BeanProperty<Settings, List<WolDevice>> settingsBeanProperty = BeanProperty.create("wolDevices");
-    JTableBinding<WolDevice, Settings, JTable> jTableBinding = SwingBindings.createJTableBinding(UpdateStrategy.READ_WRITE, settings,
-        settingsBeanProperty, tableWolDevices);
+    Property settingsBeanProperty = BeanProperty.create("wolDevices");
+    JTableBinding jTableBinding = SwingBindings.createJTableBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty, tableWolDevices);
     //
-    BeanProperty<WolDevice, String> wolBeanProperty_1 = BeanProperty.create("name");
+    Property wolBeanProperty_1 = BeanProperty.create("name");
     jTableBinding.addColumnBinding(wolBeanProperty_1);
     //
-    BeanProperty<WolDevice, String> wolBeanProperty_2 = BeanProperty.create("macAddress");
+    Property wolBeanProperty_2 = BeanProperty.create("macAddress");
     jTableBinding.addColumnBinding(wolBeanProperty_2);
     //
     jTableBinding.setEditable(false);
     jTableBinding.bind();
     //
-    BeanProperty<Settings, String> settingsBeanProperty_2 = BeanProperty.create("kodiUsername");
-    BeanProperty<JTextField, String> jTextFieldBeanProperty_1 = BeanProperty.create("text");
-    AutoBinding<Settings, String, JTextField, String> autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings,
-        settingsBeanProperty_2, tfKodiUsername, jTextFieldBeanProperty_1);
+    Property settingsBeanProperty_2 = BeanProperty.create("kodiUsername");
+    Property jTextFieldBeanProperty_1 = BeanProperty.create("text");
+    AutoBinding autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_2, tfKodiUsername,
+        jTextFieldBeanProperty_1);
     autoBinding_1.bind();
     //
-    BeanProperty<Settings, String> settingsBeanProperty_3 = BeanProperty.create("kodiPassword");
-    BeanProperty<JPasswordField, String> jPasswordFieldBeanProperty = BeanProperty.create("text");
-    AutoBinding<Settings, String, JPasswordField, String> autoBinding_2 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings,
-        settingsBeanProperty_3, tfKodiPassword, jPasswordFieldBeanProperty);
+    Property settingsBeanProperty_3 = BeanProperty.create("kodiPassword");
+    Property jPasswordFieldBeanProperty = BeanProperty.create("text");
+    AutoBinding autoBinding_2 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_3, tfKodiPassword,
+        jPasswordFieldBeanProperty);
     autoBinding_2.bind();
     //
-    BeanProperty<Settings, Boolean> settingsBeanProperty_4 = BeanProperty.create("upnpRemotePlay");
-    BeanProperty<JCheckBox, Boolean> jCheckBoxBeanProperty = BeanProperty.create("selected");
-    AutoBinding<Settings, Boolean, JCheckBox, Boolean> autoBinding_3 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings,
-        settingsBeanProperty_4, chckbxUpnpRemotePlay, jCheckBoxBeanProperty);
-    autoBinding_3.bind();
-    //
-    BeanProperty<Settings, Boolean> settingsBeanProperty_5 = BeanProperty.create("upnpShareLibrary");
-    AutoBinding<Settings, Boolean, JCheckBox, Boolean> autoBinding_4 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings,
-        settingsBeanProperty_5, chckbxUpnpShareLibrary, jCheckBoxBeanProperty);
+    Property settingsBeanProperty_5 = BeanProperty.create("upnpShareLibrary");
+    Property jCheckBoxBeanProperty = BeanProperty.create("selected");
+    AutoBinding autoBinding_4 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_5, chckbxUpnpShareLibrary,
+        jCheckBoxBeanProperty);
     autoBinding_4.bind();
     //
-    BeanProperty<Settings, String> settingsBeanProperty_1 = BeanProperty.create("kodiHost");
-    BeanProperty<JTextField, String> jTextFieldBeanProperty = BeanProperty.create("text");
-    AutoBinding<Settings, String, JTextField, String> autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings,
-        settingsBeanProperty_1, tfKodiHost, jTextFieldBeanProperty);
+    Property settingsBeanProperty_1 = BeanProperty.create("kodiHost");
+    Property jTextFieldBeanProperty = BeanProperty.create("text");
+    AutoBinding autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_1, tfKodiHost,
+        jTextFieldBeanProperty);
     autoBinding.bind();
     //
-    BeanProperty<Settings, Integer> settingsBeanProperty_6 = BeanProperty.create("kodiHttpPort");
-    BeanProperty<JTextField, String> jTextFieldBeanProperty_2 = BeanProperty.create("text");
-    AutoBinding<Settings, Integer, JTextField, String> autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings,
-        settingsBeanProperty_6, tfKodiHttpPort, jTextFieldBeanProperty_2);
+    Property settingsBeanProperty_6 = BeanProperty.create("kodiHttpPort");
+    Property jTextFieldBeanProperty_2 = BeanProperty.create("text");
+    AutoBinding autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_6, tfKodiHttpPort,
+        jTextFieldBeanProperty_2);
     autoBinding_5.bind();
     //
-    BeanProperty<Settings, Integer> settingsBeanProperty_7 = BeanProperty.create("kodiTcpPort");
-    BeanProperty<JTextField, String> jTextFieldBeanProperty_3 = BeanProperty.create("text");
-    AutoBinding<Settings, Integer, JTextField, String> autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings,
-        settingsBeanProperty_7, tfKodiTcpPort, jTextFieldBeanProperty_3);
+    Property settingsBeanProperty_7 = BeanProperty.create("kodiTcpPort");
+    Property jTextFieldBeanProperty_3 = BeanProperty.create("text");
+    AutoBinding autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_7, tfKodiTcpPort,
+        jTextFieldBeanProperty_3);
     autoBinding_6.bind();
+    //
+    Property settingsBeanProperty_4 = BeanProperty.create("upnpPort");
+    Property jTextFieldBeanProperty_4 = BeanProperty.create("text");
+    AutoBinding autoBinding_3 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_4, tfUpnpPort,
+        jTextFieldBeanProperty_4);
+    autoBinding_3.bind();
+    //
+    Property jTextFieldBeanProperty_5 = BeanProperty.create("enabled");
+    AutoBinding autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ, chckbxUpnpShareLibrary, jCheckBoxBeanProperty, tfUpnpPort,
+        jTextFieldBeanProperty_5);
+    autoBinding_7.bind();
+    //
+    Property settingsBeanProperty_8 = BeanProperty.create("upnpRemotePlay");
+    AutoBinding autoBinding_8 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_8, chckbxUpnpRemotePlay,
+        jCheckBoxBeanProperty);
+    autoBinding_8.bind();
   }
 }
