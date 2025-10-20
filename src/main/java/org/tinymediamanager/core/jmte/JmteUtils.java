@@ -72,6 +72,16 @@ public class JmteUtils {
       }
     }
 
+    // replace ending template entries, like the second part in an IF
+    // ${if originalTitle = englishTile}
+    for (Map.Entry<String, String> entry : tokenMap.entrySet()) {
+      Pattern pattern = Pattern.compile("\\s" + entry.getKey() + "}", Pattern.CASE_INSENSITIVE);
+      Matcher matcher = pattern.matcher(morphedTemplate);
+      while (matcher.find()) {
+        morphedTemplate = morphedTemplate.replace(matcher.group(), " " + entry.getValue() + "}");
+      }
+    }
+
     // last but not least escape single backslashes
     morphedTemplate = morphedTemplate.replaceAll("\\\\(?![{}])", "\\\\\\\\");
 

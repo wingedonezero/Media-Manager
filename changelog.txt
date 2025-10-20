@@ -15,6 +15,7 @@ x [TMDB] to not try to load SVG files (not supported by tinyMediaManager or Kodi
 x [IMDB] fix parsing cast/crew due to site changes #3092 
 x [Emby] re-order crew members after actors in the NFO #2780
 x [Renamer] also remove episode NFO files upon rename, if unwanted in settings
+x [Renamer] Improve 'IF' conditions when having variables on both sides
 
 
 Version 5.2.2
