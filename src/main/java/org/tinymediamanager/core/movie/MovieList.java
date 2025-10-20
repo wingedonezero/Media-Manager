@@ -401,14 +401,15 @@ public final class MovieList extends AbstractModelObject {
    * Load movies from database.
    */
   void loadMoviesFromDatabase(MVMap<UUID, String> movieMap) {
-    LOGGER.info("Loading {} movies from database...", movieMap.size());
+    LOGGER.info("Loading movies from database...");
 
     // load movies
     ObjectReader movieObjectReader = MovieModuleManager.getInstance().getMovieObjectReader();
 
     List<UUID> toRemove = new ArrayList<>();
-    long start = System.nanoTime();
     Set<Movie> loadedMoviesWithoutDuplicates = new HashSet<>();
+
+    long start = System.nanoTime();
 
     new ArrayList<>(movieMap.keyList()).forEach((uuid) -> {
       String json = "";
@@ -448,15 +449,20 @@ public final class MovieList extends AbstractModelObject {
     }
 
     LOGGER.debug("took {} ms", (end - start) / 1000000);
+
+    LOGGER.info("==> Loaded {} movies", loadedMoviesWithoutDuplicates.size());
   }
 
   void loadMovieSetsFromDatabase(MVMap<UUID, String> movieSetMap) {
-    LOGGER.info("Loading {} movie sets from database...", movieSetMap.size());
+    LOGGER.info("Loading movie sets from database...");
     ReadWriteLock lock = new ReentrantReadWriteLock();
 
     // load movie sets
     ObjectReader movieSetObjectReader = MovieModuleManager.getInstance().getMovieSetObjectReader();
+
     List<UUID> toRemove = new ArrayList<>();
+    Set<MovieSet> loadedMovieSetsWithoutDuplicates = new HashSet<>();
+
     long start = System.nanoTime();
 
     new ArrayList<>(movieSetMap.keyList()).parallelStream().forEach((uuid) -> {
@@ -466,7 +472,7 @@ public final class MovieList extends AbstractModelObject {
 
         // for performance reasons we add movies sets directly
         lock.writeLock().lock();
-        movieSetList.add(movieSet);
+        loadedMovieSetsWithoutDuplicates.add(movieSet);
         lock.writeLock().unlock();
       }
       catch (Exception e) {
@@ -480,12 +486,16 @@ public final class MovieList extends AbstractModelObject {
 
     long end = System.nanoTime();
 
+    movieSetList.addAll(loadedMovieSetsWithoutDuplicates);
+
     // remove defect movie sets
     for (UUID uuid : toRemove) {
       movieSetMap.remove(uuid);
     }
 
     LOGGER.debug("took {} ms", (end - start) / 1000000);
+
+    LOGGER.info("==> Loaded {} movie sets", loadedMovieSetsWithoutDuplicates.size());
   }
 
   void initDataAfterLoading() {

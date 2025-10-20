@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.tinymediamanager;
+package org.tinymediamanager.logging;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;

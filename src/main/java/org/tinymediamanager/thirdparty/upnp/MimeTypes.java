@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import org.seamless.util.MimeType;
+import org.jupnp.util.MimeType;
 
 public class MimeTypes {
 

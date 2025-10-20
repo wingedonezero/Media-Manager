@@ -88,6 +88,7 @@ class SystemSettingsPanel extends JPanel {
   private JTextField           tfHttpPort;
   private JTextField           tfHttpApiKey;
   private JCheckBox            chkbxEnableHttpServer;
+  private JLabel               lblHttpPortT;
 
   /**
    * Instantiates a new general settings panel.
@@ -204,7 +205,7 @@ class SystemSettingsPanel extends JPanel {
     }
     {
       JPanel panelMisc = new JPanel();
-      panelMisc.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][][grow]", "[][][][grow]")); // 16lp ~ width of the
+      panelMisc.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][][][grow]")); // 16lp ~ width of the
 
       JLabel lblMiscT = new TmmLabel(TmmResourceBundle.getString("Settings.api"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelMisc, lblMiscT, true);
@@ -213,8 +214,8 @@ class SystemSettingsPanel extends JPanel {
       chkbxEnableHttpServer = new JCheckBox(TmmResourceBundle.getString("Settings.api.enable"));
       panelMisc.add(chkbxEnableHttpServer, "cell 1 0 2 1");
 
-      JLabel lblHttpPortT = new JLabel(TmmResourceBundle.getString("Settings.api.port"));
-      panelMisc.add(lblHttpPortT, "cell 1 1,alignx trailing");
+      lblHttpPortT = new JLabel(TmmResourceBundle.getString("Settings.api.port"));
+      panelMisc.add(lblHttpPortT, "flowx,cell 2 1");
 
       tfHttpPort = new JTextField();
       panelMisc.add(tfHttpPort, "cell 2 1");
@@ -230,7 +231,7 @@ class SystemSettingsPanel extends JPanel {
       });
 
       JLabel lblHttpApiKey = new JLabel(TmmResourceBundle.getString("Settings.api.key"));
-      panelMisc.add(lblHttpApiKey, "cell 1 2,alignx trailing");
+      panelMisc.add(lblHttpApiKey, "flowx,cell 2 2");
 
       tfHttpApiKey = new JTextField();
       panelMisc.add(tfHttpApiKey, "cell 2 2");
@@ -380,7 +381,6 @@ class SystemSettingsPanel extends JPanel {
     AutoBinding autoBinding_3 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_3, tfProxyPassword,
         jPasswordFieldBeanProperty);
     autoBinding_3.bind();
-
     //
     Property jSliderBeanProperty = BeanProperty.create("value");
     Property jLabelBeanProperty = BeanProperty.create("text");
@@ -398,7 +398,6 @@ class SystemSettingsPanel extends JPanel {
     AutoBinding autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_5, spMaximumDownloadThreads,
         jSpinnerBeanProperty);
     autoBinding_5.bind();
-
     //
     Property settingsBeanProperty_9 = BeanProperty.create("enableHttpServer");
     AutoBinding autoBinding_7 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_9, chkbxEnableHttpServer,
@@ -416,5 +415,14 @@ class SystemSettingsPanel extends JPanel {
     AutoBinding autoBinding_12 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, settingsBeanProperty_11, tfHttpApiKey,
         jTextFieldBeanProperty_6);
     autoBinding_12.bind();
+    //
+    Property jTextFieldBeanProperty_3 = BeanProperty.create("enabled");
+    AutoBinding autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ, chkbxEnableHttpServer, jCheckBoxBeanProperty, tfHttpPort,
+        jTextFieldBeanProperty_3);
+    autoBinding_6.bind();
+    //
+    AutoBinding autoBinding_9 = Bindings.createAutoBinding(UpdateStrategy.READ, chkbxEnableHttpServer, jCheckBoxBeanProperty, tfHttpApiKey,
+        jTextFieldBeanProperty_3);
+    autoBinding_9.bind();
   }
 }

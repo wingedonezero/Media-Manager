@@ -39,6 +39,7 @@ import org.tinymediamanager.scraper.http.ProxySettings;
 import org.tinymediamanager.scraper.http.TmmHttpClient;
 import org.tinymediamanager.scraper.util.MetadataUtil;
 import org.tinymediamanager.scraper.util.StrgUtils;
+import org.tinymediamanager.thirdparty.upnp.Upnp;
 
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -131,6 +132,7 @@ public final class Settings extends AbstractSettings {
   private String                                           httpApiKey                   = UUID.randomUUID().toString();
 
   private boolean                                          upnpShareLibrary             = false;
+  private int                                              upnpPort                     = 7879;
   private boolean                                          upnpRemotePlay               = false;
 
   private boolean                                          ignoreSSLProblems            = true;
@@ -541,6 +543,9 @@ public final class Settings extends AbstractSettings {
     // set HTTP API
     setHttpApi();
 
+    // set UPnP
+    setUpnp();
+
     // clear dirty flag
     clearDirty();
   }
@@ -768,7 +773,7 @@ public final class Settings extends AbstractSettings {
   }
 
   /**
-   * share library via UPNP?
+   * share library via UPnP?
    *
    * @param upnpShareLibrary
    *          share library or not
@@ -777,6 +782,25 @@ public final class Settings extends AbstractSettings {
     boolean old = this.upnpShareLibrary;
     this.upnpShareLibrary = upnpShareLibrary;
     firePropertyChange("upnpShareLibrary", old, upnpShareLibrary);
+  }
+
+  public int getUpnpPort() {
+    return upnpPort;
+  }
+
+  public void setUpnpPort(int newValue) {
+    int oldValue = this.upnpPort;
+    this.upnpPort = newValue;
+    firePropertyChange("upnpPort", oldValue, newValue);
+  }
+
+  public void setUpnpPort(String port) {
+    try {
+      setUpnpPort(Integer.parseInt(port));
+    }
+    catch (Exception ingored) {
+      // just ignore
+    }
   }
 
   /**
@@ -801,7 +825,7 @@ public final class Settings extends AbstractSettings {
   }
 
   /**
-   * get Localge.getLanguage() 2 char from settings
+   * get Locale.getLanguage() 2 char from settings
    *
    * @return 2 char string - use "new Locale(getLanguage())"
    */
@@ -902,6 +926,15 @@ public final class Settings extends AbstractSettings {
     int oldValue = this.kodiHttpPort;
     this.kodiHttpPort = kodiHttpPort;
     firePropertyChange("kodiHttpPort", oldValue, kodiHttpPort);
+  }
+
+  public void setKodiHttpPort(String port) {
+    try {
+      setKodiHttpPort(Integer.parseInt(port));
+    }
+    catch (Exception ingored) {
+      // just ignore
+    }
   }
 
   /**
@@ -1329,6 +1362,7 @@ public final class Settings extends AbstractSettings {
       }
     }
     catch (Exception ex) {
+      // ignore
     }
   }
 
@@ -1440,6 +1474,16 @@ public final class Settings extends AbstractSettings {
     }
     catch (Exception e) {
       LOGGER.error("Could not update HTTP server configuration - '{}'", e.getMessage());
+    }
+  }
+
+  private void setUpnp() {
+    try {
+      // delegate to the UPnP manager to start/stop or restart on new port
+      Upnp.getInstance().updateConfiguration(upnpShareLibrary, upnpRemotePlay, upnpPort);
+    }
+    catch (Exception e) {
+      LOGGER.error("Could not update UPnP configuration - '{}'", e.getMessage());
     }
   }
 

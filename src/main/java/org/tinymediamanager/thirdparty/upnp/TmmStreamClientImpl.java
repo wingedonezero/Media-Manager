@@ -1,79 +1,98 @@
+
+/*
+ * Copyright 2012 - 2025 Manuel Laggner
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.tinymediamanager.thirdparty.upnp;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.ProtocolException;
-import java.net.SocketTimeoutException;
-import java.net.URL;
-import java.net.URLStreamHandlerFactory;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+import java.time.Duration;
 
-import org.fourthline.cling.model.ModelUtil;
-import org.fourthline.cling.model.message.StreamRequestMessage;
-import org.fourthline.cling.model.message.StreamResponseMessage;
-import org.fourthline.cling.model.message.UpnpHeaders;
-import org.fourthline.cling.model.message.UpnpMessage;
-import org.fourthline.cling.model.message.UpnpRequest;
-import org.fourthline.cling.model.message.UpnpResponse;
-import org.fourthline.cling.model.message.header.UpnpHeader;
-import org.fourthline.cling.transport.impl.StreamClientConfigurationImpl;
-import org.fourthline.cling.transport.spi.InitializationException;
-import org.fourthline.cling.transport.spi.StreamClient;
-import org.seamless.http.Headers;
-import org.seamless.util.Exceptions;
-import org.seamless.util.URIUtil;
-import org.seamless.util.io.IO;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
+import org.jupnp.model.message.StreamRequestMessage;
+import org.jupnp.model.message.StreamResponseMessage;
+import org.jupnp.model.message.UpnpHeaders;
+import org.jupnp.model.message.UpnpMessage;
+import org.jupnp.model.message.UpnpRequest;
+import org.jupnp.model.message.UpnpResponse;
+import org.jupnp.model.message.header.UpnpHeader;
+import org.jupnp.transport.impl.jetty.StreamClientConfigurationImpl;
+import org.jupnp.transport.spi.InitializationException;
+import org.jupnp.transport.spi.StreamClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Request.Builder;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 // Copy of org.fourthline.cling.transport.impl.StreamClientImpl, to not throw in constructor
-public class TmmStreamClientImpl implements StreamClient {
+public class TmmStreamClientImpl implements StreamClient<StreamClientConfigurationImpl> {
 
-  final static String                           HACK_STREAM_HANDLER_SYSTEM_PROPERTY = "hackStreamHandlerProperty";
-
-  final private static Logger                   log                                 = Logger.getLogger(StreamClient.class.getName());
+  private static final Logger                   LOGGER = LoggerFactory.getLogger(TmmStreamClientImpl.class);
 
   final protected StreamClientConfigurationImpl configuration;
+  final protected OkHttpClient                  client;
 
   public TmmStreamClientImpl(StreamClientConfigurationImpl configuration) throws InitializationException {
     this.configuration = configuration;
+    // client = TmmHttpClient.newBuilder()
+    // .connectTimeout(Duration.ofSeconds(configuration.getTimeoutSeconds()))
+    // .readTimeout(Duration.ofSeconds(configuration.getTimeoutSeconds()))
+    // .build();
 
-    if (ModelUtil.ANDROID_EMULATOR || ModelUtil.ANDROID_RUNTIME) {
-      /*
-       * See the fantastic PERMITTED_USER_METHODS here:
-       * 
-       * https://android.googlesource.com/platform/libcore/+/android-4.0.1_r1.2/luni/src/main/java/java/net/HttpURLConnection.java
-       * 
-       * We'd have to basically copy the whole Android code, and have a dependency on libcore.*, and do much more hacking to allow more HTTP methods.
-       * This is the same problem we are hacking below for the JDK but at least there we don't have a dependency issue for compiling Cling. These guys
-       * all suck, there is no list of "permitted" HTTP methods. HttpURLConnection and the whole stream handler factory stuff is the worst Java API
-       * ever created.
-       */
-      throw new InitializationException("This client does not work on Android. The design of HttpURLConnection is broken, we "
-          + "can not add additional 'permitted' HTTP methods. Read the Cling manual.");
+    try {
+      // Trust manager that accepts all certificates
+      final TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+        @Override
+        public void checkClientTrusted(X509Certificate[] chain, String authType) {
+        }
+
+        @Override
+        public void checkServerTrusted(X509Certificate[] chain, String authType) {
+        }
+
+        @Override
+        public X509Certificate[] getAcceptedIssuers() {
+          return new X509Certificate[0];
+        }
+      } };
+
+      // Install the all-trusting trust manager
+      SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(null, trustAllCerts, new SecureRandom());
+      SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+      X509TrustManager trustManager = (X509TrustManager) trustAllCerts[0];
+
+      client = new OkHttpClient.Builder().connectTimeout(Duration.ofSeconds(configuration.getTimeoutSeconds()))
+          .readTimeout(Duration.ofSeconds(configuration.getTimeoutSeconds()))
+          .sslSocketFactory(sslSocketFactory, trustManager)
+          .hostnameVerifier((hostname, session) -> true)
+          .build();
     }
-
-    log.fine("Using persistent HTTP stream client connections: " + configuration.isUsePersistentConnections());
-    System.setProperty("http.keepAlive", Boolean.toString(configuration.isUsePersistentConnections()));
-
-    // Hack the environment to allow additional HTTP methods
-    if (System.getProperty(HACK_STREAM_HANDLER_SYSTEM_PROPERTY) == null) {
-      log.fine("Setting custom static URLStreamHandlerFactory to work around bad JDK defaults");
-      try {
-        // Use reflection to avoid dependency on sun.net package so this class at least
-        // loads on Android, even if it doesn't work...
-        URL.setURLStreamHandlerFactory(
-            (URLStreamHandlerFactory) Class.forName("org.fourthline.cling.transport.impl.FixedSunURLStreamHandler").newInstance());
-      }
-      catch (Throwable t) {
-        log.warning("Failed to set modified URLStreamHandlerFactory in this environment."
-            + " Can't use bundled default client based on HTTPURLConnection, see manual.");
-        // throw new InitializationException("Failed to set modified URLStreamHandlerFactory in this environment."
-        // + " Can't use bundled default client based on HTTPURLConnection, see manual.");
-      }
-      System.setProperty(HACK_STREAM_HANDLER_SYSTEM_PROPERTY, "alreadyWorkedAroundTheEvilJDK");
+    catch (Exception e) {
+      throw new InitializationException("Failed to create SSL context for OkHttp client", e);
     }
   }
 
@@ -84,179 +103,80 @@ public class TmmStreamClientImpl implements StreamClient {
 
   @Override
   public StreamResponseMessage sendRequest(StreamRequestMessage requestMessage) {
-
-    final UpnpRequest requestOperation = requestMessage.getOperation();
-    log.fine("Preparing HTTP request message with method '" + requestOperation.getHttpMethodName() + "': " + requestMessage);
-
-    URL url = URIUtil.toURL(requestOperation.getURI());
-
-    HttpURLConnection urlConnection = null;
-    InputStream inputStream;
-    try {
-
-      urlConnection = (HttpURLConnection) url.openConnection();
-
-      urlConnection.setRequestMethod(requestOperation.getHttpMethodName());
-
-      // Use the built-in expiration, we can't cancel HttpURLConnection
-      urlConnection.setReadTimeout(configuration.getTimeoutSeconds() * 1000);
-      urlConnection.setConnectTimeout(configuration.getTimeoutSeconds() * 1000);
-
-      applyRequestProperties(urlConnection, requestMessage);
-      applyRequestBody(urlConnection, requestMessage);
-
-      log.fine("Sending HTTP request: " + requestMessage);
-      inputStream = urlConnection.getInputStream();
-      return createResponse(urlConnection, inputStream);
-
-    }
-    catch (ProtocolException ex) {
-      log.log(Level.WARNING, "HTTP request failed: " + requestMessage, Exceptions.unwrap(ex));
+    if (Upnp.getInstance().getBlockedIps().contains(requestMessage.getUri().getHost())) {
+      // throw new UnsupportedDataException("IP on blocklist - skipping");
+      LOGGER.trace("IP on blocklist - skipping");
       return null;
     }
-    catch (IOException ex) {
 
-      if (urlConnection == null) {
-        log.log(Level.WARNING, "HTTP request failed: " + requestMessage, Exceptions.unwrap(ex));
-        return null;
+    final UpnpRequest requestOperation = requestMessage.getOperation();
+    LOGGER.trace("Preparing HTTP request message with method '{}': {}", requestOperation.getHttpMethodName(), requestMessage);
+
+    try {
+      RequestBody body = null;
+      if (requestMessage.getBody() != null) {
+        if (requestMessage.getBodyType().equals(UpnpMessage.BodyType.STRING)) {
+          body = RequestBody.create(requestMessage.getBodyString(), MediaType.parse("text/plain"));
+        }
+        else if (requestMessage.getBodyType().equals(UpnpMessage.BodyType.BYTES)) {
+          body = RequestBody.create(requestMessage.getBodyBytes(), null);
+        }
       }
 
-      if (ex instanceof SocketTimeoutException) {
-        log.info("Timeout of " + getConfiguration().getTimeoutSeconds() + " seconds while waiting for HTTP request to complete, aborting: "
-            + requestMessage);
-        return null;
-      }
+      Builder request = new Request.Builder().url(requestOperation.getURI().toURL())
+          .method(requestOperation.getHttpMethodName(), body)
+          .addHeader(UpnpHeader.Type.USER_AGENT.getHttpName(),
+              configuration.getUserAgentValue(requestMessage.getUdaMajorVersion(), requestMessage.getUdaMinorVersion()));
 
-      if (log.isLoggable(Level.FINE))
-        log.fine("Exception occurred, trying to read the error stream: " + Exceptions.unwrap(ex));
-      try {
-        inputStream = urlConnection.getErrorStream();
-        return createResponse(urlConnection, inputStream);
+      requestMessage.getHeaders().forEach((name, values) -> {
+        for (String value : values) {
+          request.addHeader(name, value);
+        }
+      });
+
+      LOGGER.debug("Sending HTTP request: {}", requestMessage);
+      Response response = client.newCall(request.build()).execute();
+      if (response.isSuccessful()) {
+        LOGGER.debug("HTTP response successful: {}", response);
+        UpnpResponse responseOperation = new UpnpResponse(response.code(), response.message());
+
+        LOGGER.debug("Received response: {}", responseOperation);
+        StreamResponseMessage responseMessage = new StreamResponseMessage(responseOperation);
+        responseMessage.setHeaders(new UpnpHeaders(response.headers().toMultimap()));
+
+        ResponseBody responseBody = response.body();
+        if (responseBody != null && responseBody.contentLength() != 0 && responseMessage.isContentTypeMissingOrText()) {
+          LOGGER.debug("Response contains textual entity body, converting then setting string on message");
+          responseMessage.setBodyCharacters(responseBody.bytes());
+        }
+        else if (responseBody != null && responseBody.contentLength() > 0) {
+          LOGGER.debug("Response contains binary entity body, setting bytes on message");
+          responseMessage.setBody(UpnpMessage.BodyType.BYTES, responseBody.bytes());
+        }
+        else {
+          LOGGER.debug("Response did not contain entity body");
+        }
+
+        LOGGER.debug("Response message complete: {}", responseMessage);
+        return responseMessage;
       }
-      catch (Exception errorEx) {
-        if (log.isLoggable(Level.FINE))
-          log.fine("Could not read error stream: " + errorEx);
-        return null;
+      else {
+        LOGGER.debug("HTTP response failed: {}", response);
+        if (response.code() == 401) {
+          // forbidden? auth required? we can add this to our blocklist...
+          LOGGER.info("We've got a 401 - let's ignore that host from now on! ({})", requestMessage.getUri().getHost());
+          Upnp.getInstance().addBlockedIp(requestMessage.getUri().getHost());
+        }
       }
     }
     catch (Exception ex) {
-      log.log(Level.WARNING, "HTTP request failed: " + requestMessage, Exceptions.unwrap(ex));
-      return null;
-
+      LOGGER.warn("HTTP request failed: {} - {}", requestMessage, ex.getMessage());
     }
-    finally {
-
-      if (urlConnection != null) {
-        // Release any idle persistent connection, or "indicate that we don't want to use this server for a while"
-        urlConnection.disconnect();
-      }
-    }
+    return null;
   }
 
   @Override
   public void stop() {
     // NOOP
   }
-
-  protected void applyRequestProperties(HttpURLConnection urlConnection, StreamRequestMessage requestMessage) {
-
-    urlConnection.setInstanceFollowRedirects(false); // Defaults to true but not needed here
-
-    // HttpURLConnection always adds a "Host" header
-
-    // HttpURLConnection always adds an "Accept" header (not needed but shouldn't hurt)
-
-    // Add the default user agent if not already set on the message
-    if (!requestMessage.getHeaders().containsKey(UpnpHeader.Type.USER_AGENT)) {
-      urlConnection.setRequestProperty(UpnpHeader.Type.USER_AGENT.getHttpName(),
-          getConfiguration().getUserAgentValue(requestMessage.getUdaMajorVersion(), requestMessage.getUdaMinorVersion()));
-    }
-
-    // Other headers
-    applyHeaders(urlConnection, requestMessage.getHeaders());
-  }
-
-  protected void applyHeaders(HttpURLConnection urlConnection, Headers headers) {
-    log.fine("Writing headers on HttpURLConnection: " + headers.size());
-    for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
-      for (String v : entry.getValue()) {
-        String headerName = entry.getKey();
-        log.fine("Setting header '" + headerName + "': " + v);
-        urlConnection.setRequestProperty(headerName, v);
-      }
-    }
-  }
-
-  protected void applyRequestBody(HttpURLConnection urlConnection, StreamRequestMessage requestMessage) throws IOException {
-
-    if (requestMessage.hasBody()) {
-      urlConnection.setDoOutput(true);
-    }
-    else {
-      urlConnection.setDoOutput(false);
-      return;
-    }
-
-    if (requestMessage.getBodyType().equals(UpnpMessage.BodyType.STRING)) {
-      IO.writeUTF8(urlConnection.getOutputStream(), requestMessage.getBodyString());
-    }
-    else if (requestMessage.getBodyType().equals(UpnpMessage.BodyType.BYTES)) {
-      IO.writeBytes(urlConnection.getOutputStream(), requestMessage.getBodyBytes());
-    }
-    urlConnection.getOutputStream().flush();
-  }
-
-  protected StreamResponseMessage createResponse(HttpURLConnection urlConnection, InputStream inputStream) throws Exception {
-
-    if (urlConnection.getResponseCode() == -1) {
-      log.warning("Received an invalid HTTP response: " + urlConnection.getURL());
-      log.warning("Is your Cling-based server sending connection heartbeats with " + "RemoteClientInfo#isRequestCancelled? This client can't handle "
-          + "heartbeats, read the manual.");
-      return null;
-    }
-
-    // Status
-    UpnpResponse responseOperation = new UpnpResponse(urlConnection.getResponseCode(), urlConnection.getResponseMessage());
-
-    log.fine("Received response: " + responseOperation);
-
-    // Message
-    StreamResponseMessage responseMessage = new StreamResponseMessage(responseOperation);
-
-    // Headers
-    responseMessage.setHeaders(new UpnpHeaders(urlConnection.getHeaderFields()));
-
-    // Body
-    byte[] bodyBytes = null;
-    InputStream is = null;
-    try {
-      is = inputStream;
-      if (inputStream != null)
-        bodyBytes = IO.readBytes(is);
-    }
-    finally {
-      if (is != null)
-        is.close();
-    }
-
-    if (bodyBytes != null && bodyBytes.length > 0 && responseMessage.isContentTypeMissingOrText()) {
-
-      log.fine("Response contains textual entity body, converting then setting string on message");
-      responseMessage.setBodyCharacters(bodyBytes);
-
-    }
-    else if (bodyBytes != null && bodyBytes.length > 0) {
-
-      log.fine("Response contains binary entity body, setting bytes on message");
-      responseMessage.setBody(UpnpMessage.BodyType.BYTES, bodyBytes);
-
-    }
-    else {
-      log.fine("Response did not contain entity body");
-    }
-
-    log.fine("Response message complete: " + responseMessage);
-    return responseMessage;
-  }
-
 }

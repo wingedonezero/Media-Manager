@@ -521,7 +521,7 @@ public final class TvShowList extends AbstractModelObject {
    * Load tv shows from database.
    */
   void loadTvShowsFromDatabase(MVMap<UUID, String> tvShowMap, MVMap<UUID, String> seasonMap, MVMap<UUID, String> episodesMap) {
-    LOGGER.info("Loading {} TV shows from database...", tvShowMap.size());
+    LOGGER.info("Loading TV shows from database...");
     TvShowModuleManager module = TvShowModuleManager.getInstance();
 
     //////////////////////////////////////////////////
@@ -529,7 +529,6 @@ public final class TvShowList extends AbstractModelObject {
     //////////////////////////////////////////////////
     Set<TvShow> tvShowsFromDb = new HashSet<>();
     ObjectReader tvShowObjectReader = TvShowModuleManager.getInstance().getTvShowObjectReader();
-    long dummyCnt = 0;
 
     List<UUID> toRemove = new ArrayList<>();
     long start = System.nanoTime();
@@ -576,13 +575,12 @@ public final class TvShowList extends AbstractModelObject {
     Map<UUID, TvShow> tvShowUuidMap = new HashMap<>();
     for (TvShow tvShow : tvShowsFromDb) {
       tvShowUuidMap.put(tvShow.getDbId(), tvShow);
-      dummyCnt += tvShow.getDummyEpisodes().size(); // want the RAW entries
     }
 
     //////////////////////////////////////////////////
     // load all seasons from the database
     //////////////////////////////////////////////////
-    LOGGER.info("Loading {} seasons from database...", seasonMap.size());
+    LOGGER.info("Loading seasons from database...");
     toRemove.clear();
     ObjectReader seasonObjectReader = TvShowModuleManager.getInstance().getSeasonObjectReader();
 
@@ -621,7 +619,7 @@ public final class TvShowList extends AbstractModelObject {
     //////////////////////////////////////////////////
     // load all episodes from the database
     //////////////////////////////////////////////////
-    LOGGER.info("Loading {} episodes from database... (+ {} dummy w/o physical file)", episodesMap.size(), dummyCnt);
+    LOGGER.info("Loading episodes from database...");
     toRemove.clear();
     ObjectReader episodeObjectReader = TvShowModuleManager.getInstance().getEpisodeObjectReader();
 
@@ -685,10 +683,30 @@ public final class TvShowList extends AbstractModelObject {
         toRemove.add(tvShow.getDbId());
       }
     }
+
     for (UUID uuid : toRemove) {
+      tvShowMap.remove(uuid);
+
       TvShow tvShow = tvShowUuidMap.get(uuid);
       tvShowsFromDb.remove(tvShow);
     }
+
+    // calculate the sums
+    int tvShowCount = 0;
+    int seasonCount = 0;
+    int episodeCount = 0;
+    int dummyCount = 0;
+
+    for (TvShow tvShow : tvShowsFromDb) {
+      tvShowCount++;
+      seasonCount += tvShow.getSeasons().size();
+      episodeCount += tvShow.getEpisodeCount();
+      dummyCount += tvShow.getDummyEpisodes().size(); // want the RAW entries
+    }
+
+    LOGGER.info("==> Loaded {} TV shows", tvShowCount);
+    LOGGER.info("==> Loaded {} seasons", seasonCount);
+    LOGGER.info("==> Loaded {} episodes (+ {} dummy w/o physical file)", episodeCount, dummyCount);
 
     // and add all TV shows to the UI
     tvShows.addAll(tvShowsFromDb);

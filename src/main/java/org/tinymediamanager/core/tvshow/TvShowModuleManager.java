@@ -148,6 +148,8 @@ public final class TvShowModuleManager implements ITmmModule {
 
   @Override
   public void startUp() {
+    TvShowSettings.getInstance(); // ensure settings are loaded
+
     // configure JSON
     ObjectMapper objectMapper = JsonMapper.builder()
         .configure(MapperFeature.AUTO_DETECT_GETTERS, false)

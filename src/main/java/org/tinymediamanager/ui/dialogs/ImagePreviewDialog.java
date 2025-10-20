@@ -62,6 +62,7 @@ public class ImagePreviewDialog extends TmmDialog {
 
   private String              imageUrl;
   private String              imagePath;
+  private String              openFolderPath;
 
   private byte[]              originalImageBytes;
 
@@ -77,6 +78,10 @@ public class ImagePreviewDialog extends TmmDialog {
     init();
 
     this.imagePath = pathToImage.toString();
+  }
+
+  public void setOpenFolderPath(String openFolderPath) {
+    this.openFolderPath = openFolderPath;
   }
 
   private void init() {
@@ -190,7 +195,9 @@ public class ImagePreviewDialog extends TmmDialog {
             filename = FilenameUtils.getBaseName(imageUrl);
           }
 
-          Path file = TmmUIHelper.saveFile(TmmResourceBundle.getString("image.savetodisk"), "", filename,
+          String initialPath = openFolderPath != null ? openFolderPath : "";
+
+          Path file = TmmUIHelper.saveFile(TmmResourceBundle.getString("image.savetodisk"), initialPath, filename,
               new FileNameExtensionFilter("Image files", ".jpg", ".png", ".webp"));
           if (file != null) {
             try (FileOutputStream os = new FileOutputStream(file.toFile())) {

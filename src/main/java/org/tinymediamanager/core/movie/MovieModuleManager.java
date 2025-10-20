@@ -142,6 +142,8 @@ public final class MovieModuleManager implements ITmmModule {
 
   @Override
   public void startUp() {
+    MovieSettings.getInstance(); // ensure settings are loaded
+
     // configure JSON
     ObjectMapper objectMapper = JsonMapper.builder()
         .configure(MapperFeature.AUTO_DETECT_GETTERS, false)
