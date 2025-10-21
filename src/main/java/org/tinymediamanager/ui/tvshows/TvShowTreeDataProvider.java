@@ -71,6 +71,13 @@ public class TvShowTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
   }
 
   private void processTvShow(TvShow tvShow, String eventType) {
+    // check if TV show is in the list
+    if (!tvShowList.getTvShows().contains(tvShow)) {
+      // TV show not in list anymore - remove it
+      removeTvShow(tvShow);
+      return;
+    }
+
     // check if existing
     TmmTreeNode tvShowNode = getNodeFromCache(tvShow);
     if (tvShowNode != null) {
@@ -105,6 +112,13 @@ public class TvShowTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
   }
 
   private void updateSeason(TvShowSeason season) {
+    // check if the parent TV show or episode is in the list
+    if (!tvShowList.getTvShows().contains(season.getTvShow()) || !season.getTvShow().getSeasons().contains(season)) {
+      // episode not in list anymore - remove it
+      removeTvShowSeason(season);
+      return;
+    }
+
     TmmTreeNode seasonNode = getNodeFromCache(season);
 
     if (seasonNode == null) {
