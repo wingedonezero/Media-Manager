@@ -18,6 +18,7 @@ x [IMDB] fix parsing cast/crew due to site changes #3092
 x [Emby] re-order crew members after actors in the NFO #2780
 x [Renamer] also remove episode NFO files upon rename, if unwanted in settings
 x [Renamer] Improve 'IF' conditions when having variables on both sides
+x [Threads] fixed a null-check upon starting #3105
 
 
 Version 5.2.2

@@ -410,7 +410,7 @@ public class TmmTaskManager implements TmmTaskListener {
    * @return true/false
    */
   public boolean isMainTaskRunning() {
-    return mainTaskExecutor.getActiveCount() > 0 || !mainTaskExecutor.getQueue().isEmpty();
+    return mainTaskExecutor != null && (mainTaskExecutor.getActiveCount() > 0 || !mainTaskExecutor.getQueue().isEmpty());
   }
 
   /**
@@ -419,7 +419,7 @@ public class TmmTaskManager implements TmmTaskListener {
    * @return true/false
    */
   public boolean isImageDownloadsRunning() {
-    return imageDownloadExecutor.getActiveCount() > 0 || !imageDownloadExecutor.getQueue().isEmpty();
+    return imageDownloadExecutor != null && (imageDownloadExecutor.getActiveCount() > 0 || !imageDownloadExecutor.getQueue().isEmpty());
   }
 
   /**
