@@ -186,6 +186,9 @@ public class TmmStreamServerImpl implements StreamServer<StreamServerConfigurati
             }
           }
         }
+        else {
+          LOGGER.warn("WebServer does not know what to do with this request");
+        }
 
       }).start();
     }
