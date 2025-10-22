@@ -67,7 +67,6 @@ public class TmmLocalDevice extends LocalDevice {
     if (deviceDetailsProvider != null) {
       return deviceDetailsProvider.provide(info);
     }
-    LOGGER.info("UPnP: Hello, I'm {}", TmmDeviceDetails.IDENTITY.getUdn().getIdentifierString());
     // Delegate to superclass implementation instead of recursive call
     return super.getDetails(info);
   }
@@ -101,6 +100,7 @@ public class TmmLocalDevice extends LocalDevice {
    */
   public static TmmLocalDevice createMediaServerDevice() {
     try {
+      LOGGER.info("UPnP: Hello, I'm {}", TmmDeviceDetails.IDENTITY);
       return new TmmLocalDevice();
     }
     catch (ValidationException e) {
