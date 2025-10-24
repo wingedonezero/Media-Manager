@@ -357,7 +357,8 @@ public class TmmUIHelper {
 
     if (SystemUtils.IS_OS_WINDOWS) {
       // on Windows we use the newer API provided via JWindowsFileDialog
-      String path = JWindowsFileDialog.showSaveDialog(null, title, initialPath + File.separator + filename);
+      // we can only set the path here and not pre-set the filename
+      String path = JWindowsFileDialog.showSaveDialog(null, title, initialPath);
       if (StringUtils.isNotBlank(path)) {
         return Paths.get(path);
       }
