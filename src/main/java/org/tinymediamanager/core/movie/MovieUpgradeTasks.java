@@ -134,22 +134,35 @@ public class MovieUpgradeTasks extends UpgradeTasks {
 
     // remove legacy IDs
     if (module.getDbVersion() < 5005) {
+      LOGGER.info("performing upgrade to ver: {}", 5005);
       for (Movie movie : movieList.getMovies()) {
         boolean changed = migrateIds(movie);
-
         if (changed) {
           registerForSaving(movie);
         }
       }
-
       module.setDbVersion(5005);
     }
 
     if (module.getDbVersion() < 5201) {
+      LOGGER.info("performing upgrade to ver: {}", 5201);
       // crew migration - just re-write the DB
       movieList.getMovies().forEach(this::registerForSaving);
-
       module.setDbVersion(5201);
+    }
+
+    if (module.getDbVersion() < 5202) {
+      LOGGER.info("performing upgrade to ver: {}", 5202);
+      // CRC32 must be padded to 8 chars!
+      for (Movie movie : movieList.getMovies()) {
+        for (MediaFile mf : movie.getMediaFiles()) {
+          if (!mf.getCRC32().isEmpty() && mf.getCRC32().length() < 8) {
+            mf.setCRC32(String.format("%8s", mf.getCRC32()).replace(' ', '0'));
+            registerForSaving(movie);
+          }
+        }
+      }
+      module.setDbVersion(5202);
     }
 
     saveAll();
