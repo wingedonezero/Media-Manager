@@ -199,6 +199,8 @@ public class MovieRenamerTest extends BasicMovieTest {
 
     Movie m = new Movie();
     m.setTitle("The Dish");
+    m.setOriginalTitle("The Original Dish");
+    m.setEnglishTitle("The English Dish");
     m.setYear(2000);
     MediaFile mf = new MediaFile(getWorkFolder().resolve("samples").resolve("thx_scarface-DWEU.vob"));
 
@@ -231,6 +233,13 @@ public class MovieRenamerTest extends BasicMovieTest {
     assertEqual("The Dish (2000)", MovieRenamer.createDestinationForFoldername("-${title} (${year})-", m));
     assertEqual("2000-2009", MovieRenamer.createDestinationForFoldername("${decadeLong}", m));
     assertEqual("2000s", MovieRenamer.createDestinationForFoldername("${decadeShort}", m));
+
+    // IF with 2 variables
+    assertEqual("The Original Dish - The English Dish", MovieRenamer.createDestinationForFoldername(
+        "${originalTitle}${if englishTitle}${if englishTitle = originalTitle}${else} - ${englishTitle}${end}${end}", m));
+    m.setEnglishTitle(m.getOriginalTitle());
+    assertEqual("The Original Dish", MovieRenamer.createDestinationForFoldername(
+        "${originalTitle}${if englishTitle}${if englishTitle = originalTitle}${else} - ${englishTitle}${end}${end}", m));
   }
 
   private static class UdsMiRenamerExample {

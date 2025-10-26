@@ -81,10 +81,9 @@ class Metadata {
       // }
 
       if (full) {
-        // TODO: m.setDirectors();
         m.setDescription(tmmMovie.getPlot());
         m.setLanguage(tmmMovie.getSpokenLanguages());
-        m.setRating(String.valueOf(tmmMovie.getRating()));
+        m.setRating(tmmMovie.getCertification().getLocalizedName());
 
         List<String> genres = new ArrayList<>();
         for (MediaGenres g : tmmMovie.getGenres()) {
@@ -95,23 +94,9 @@ class Metadata {
           m.setGenres(arr);
         }
 
-        List<PersonWithRole> persons = new ArrayList<>();
-        for (Person a : tmmMovie.getActors()) {
-          persons.add(new PersonWithRole(a.getName(), a.getRole()));
-        }
-        if (!persons.isEmpty()) {
-          PersonWithRole[] arr = persons.toArray(new PersonWithRole[persons.size()]);
-          m.setActors(arr);
-        }
-
-        persons = new ArrayList<>();
-        // for (Person a : tmmMovie.getProducers()) {
-        // persons.add(new PersonWithRole(a.getName(), a.getRole()));
-        // }
-        if (!persons.isEmpty()) {
-          PersonWithRole[] arr = persons.toArray(new PersonWithRole[persons.size()]);
-          m.setProducers(arr);
-        }
+        m.setActors(morphTmmPersons(tmmMovie.getActors()));
+        m.setProducers(morphTmmPersons(tmmMovie.getProducers()));
+        m.setDirectors(morphTmmPersons(tmmMovie.getDirectors()));
       }
 
     }
@@ -119,6 +104,17 @@ class Metadata {
       LOGGER.error("UPnP: Error getting movie '{}'", e.getMessage());
     }
     return m;
+  }
+
+  private static PersonWithRole[] morphTmmPersons(List<Person> persons) {
+    List<PersonWithRole> ret = new ArrayList<>();
+    for (Person person : persons) {
+      ret.add(new PersonWithRole(person.getName(), person.getRole()));
+    }
+    if (!ret.isEmpty()) {
+      return ret.toArray(new PersonWithRole[ret.size()]);
+    }
+    return new PersonWithRole[] {};
   }
 
   /**

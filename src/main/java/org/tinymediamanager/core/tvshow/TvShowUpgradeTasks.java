@@ -307,6 +307,7 @@ public class TvShowUpgradeTasks extends UpgradeTasks {
 
     // remove legacy IDs
     if (module.getDbVersion() < 5009) {
+      LOGGER.info("performing upgrade to ver: {}", 5009);
       for (TvShow tvShow : tvShowList.getTvShows()) {
         boolean changed = migrateIds(tvShow);
 
@@ -331,13 +332,29 @@ public class TvShowUpgradeTasks extends UpgradeTasks {
     }
 
     if (module.getDbVersion() < 5201) {
+      LOGGER.info("performing upgrade to ver: {}", 5201);
       // crew migration - just re-write the DB
       for (TvShow tvShow : tvShowList.getTvShows()) {
         registerForSaving(tvShow);
         tvShow.getEpisodes().forEach(this::registerForSaving);
       }
-
       module.setDbVersion(5201);
+    }
+
+    if (module.getDbVersion() < 5202) {
+      LOGGER.info("performing upgrade to ver: {}", 5202);
+      // CRC32 must be padded to 8 chars!
+      for (TvShow tvShow : tvShowList.getTvShows()) {
+        for (TvShowEpisode ep : tvShow.getEpisodes()) {
+          for (MediaFile mf : ep.getMediaFiles()) {
+            if (!mf.getCRC32().isEmpty() && mf.getCRC32().length() < 8) {
+              mf.setCRC32(String.format("%8s", mf.getCRC32()).replace(' ', '0'));
+              registerForSaving(ep);
+            }
+          }
+        }
+      }
+      module.setDbVersion(5202);
     }
 
     saveAll();

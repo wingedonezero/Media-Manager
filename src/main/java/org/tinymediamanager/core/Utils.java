@@ -2516,7 +2516,7 @@ public class Utils {
         crc32.update(buffer, 0, bytesRead);
       }
       if (crc32.getValue() > 0) {
-        crc = Long.toHexString(crc32.getValue()).toUpperCase(Locale.ROOT);
+        crc = String.format("%8s", Long.toHexString(crc32.getValue()).toUpperCase(Locale.ROOT).replace(' ', '0'));
         LOGGER.trace("Got CRC32 [{}] for {}", crc, file);
       }
     }

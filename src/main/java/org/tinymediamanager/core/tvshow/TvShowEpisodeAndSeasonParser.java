@@ -405,7 +405,7 @@ public class TvShowEpisodeAndSeasonParser {
     }
 
     // nothing found removing []? try with optionals...
-    if (numbersOnly.size() == 0) {
+    if (numbersOnly.isEmpty()) {
       regex = Pattern.compile(optionals); // only optionals
       m = regex.matcher(basename);
       while (m.find()) {

@@ -113,8 +113,10 @@
 
     <!-- default settings -->
     <logger name="org.tinymediamanager" level="TRACE"/>
-    <logger name="org.jupnp" level="WARN"/>
-    <logger name="org.tinymediamanager.thirdparty.upnp" level="WARN"/>
+    <logger name="org.tinymediamanager.thirdparty.upnp" level="INFO"/>
+    <logger name="org.jupnp" level="INFO"/>
+    <logger name="org.jupnp.transport.impl.DatagramIOImpl" level="WARN"/>
+    <logger name="org.jupnp.transport.spi.MulticastReceiver" level="WARN"/>
 
     <!-- appender activation -->
     <root>

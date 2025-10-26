@@ -82,10 +82,9 @@ public class ITContentDirectoryBrowseTest extends BasicITest {
 
     // ***** MOVIES
     browse(1L, "1", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
-    browse(2L, "1", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
+    browse(3L, "1", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
     browse(1L, "1", BrowseFlag.DIRECT_CHILDREN, "*", 0, 1, SortCriterion.valueOf(""));
-    browse(2L, "1", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
-    browse(1L, "1", BrowseFlag.DIRECT_CHILDREN, "*", 1, 0, SortCriterion.valueOf(""));
+    browse(2L, "1", BrowseFlag.DIRECT_CHILDREN, "*", 1, 0, SortCriterion.valueOf(""));
 
     browse(1L, "1/t", BrowseFlag.METADATA, "*", 0, 0, SortCriterion.valueOf(""));
     browse(4L, "1/t", BrowseFlag.DIRECT_CHILDREN, "*", 0, 0, SortCriterion.valueOf(""));
@@ -135,7 +134,7 @@ public class ITContentDirectoryBrowseTest extends BasicITest {
 
   @Test
   public void browseMovies() throws ContentDirectoryException {
-    browse(2L, "1", BrowseFlag.DIRECT_CHILDREN);
+    browse(3L, "1", BrowseFlag.DIRECT_CHILDREN);
   }
 
   @Test

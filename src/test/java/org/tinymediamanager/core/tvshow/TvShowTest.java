@@ -198,6 +198,8 @@ public class TvShowTest extends BasicTvShowTest {
     assertEqual("S:4 E:204", detectEpisode("4x204.avi"));
     assertEqual("S:1 E:13 E:14 E:15", detectEpisode("Peter Pan S01E13_1x14_1x15 - El Hookato.ts"));
     assertEqual("S:1 E:1", detectEpisode("Better Call Saul - S01E01 - Uno - [2160p-WEB.DL-HEVC.x265-10bit.SDR-DTS.DTS5.1-TrollUHD].mkv"));
+    assertEqual("S:6 E:3", detectEpisode("S06E03 - 33 Kugeln.mkv"));
+    assertEqual("S:1 E:1", detectEpisode("Detective Conan Season 1 E001-E201.mkv")); // range too big, just take the first found EP
 
     // ANIME - https://kodi.wiki/view/Anime
     // PREPEND
