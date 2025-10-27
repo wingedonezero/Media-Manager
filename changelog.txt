@@ -1,3 +1,7 @@
+Version 5.2.4
+=======================
+
+
 Version 5.2.3
 =======================
 + [TV shows] added detection of ranges (e.g. S01E01-02) in multi-episode filenames
