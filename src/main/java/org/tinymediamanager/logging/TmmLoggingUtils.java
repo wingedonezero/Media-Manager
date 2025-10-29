@@ -56,7 +56,7 @@ public class TmmLoggingUtils {
     }
 
     return switch (level.toUpperCase(Locale.ROOT).strip()) {
-      case "OFF" -> Level.OFF;
+      case "OFF", "NONE" -> Level.OFF;
       case "ERROR" -> Level.ERROR;
       case "WARN" -> Level.WARN;
       case "INFO" -> Level.INFO;
