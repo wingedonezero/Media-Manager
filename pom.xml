@@ -354,17 +354,6 @@
     </dependencies>
     <repositories>
         <repository>
-            <id>github-maven</id>
-            <url>https://maven.pkg.github.com/tinyMediaManagerOrg/dependencies/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
-        <repository>
             <id>gitlab-maven</id>
             <url>https://gitlab.com/api/v4/projects/9945251/packages/maven</url>
             <releases>
@@ -374,6 +363,10 @@
                 <enabled>true</enabled>
                 <updatePolicy>always</updatePolicy>
             </snapshots>
+        </repository>
+        <repository>
+            <id>tinyMediaManager</id>
+            <url>https://repo.tinymediamanager.org/maven/repo</url>
         </repository>
     </repositories>
     <distributionManagement>
