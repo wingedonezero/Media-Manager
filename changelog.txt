@@ -1,5 +1,6 @@
 Version 5.2.4
 =======================
++ [UI] added a date format for Croatian style (DD.MM.YYYY.) (thx @milotype)
 
 
 Version 5.2.3
