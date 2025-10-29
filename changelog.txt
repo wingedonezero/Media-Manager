@@ -1,7 +1,8 @@
 Version 5.2.4
 =======================
 + [UI] added a date format for Croatian style (DD.MM.YYYY.) (thx @milotype)
-
+---
+x [HTTP API] fixed loading the HTTP API on startup
 
 Version 5.2.3
 =======================

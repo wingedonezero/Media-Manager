@@ -477,7 +477,8 @@ public final class TinyMediaManager {
       try {
         // no need for start, because after creation the server is
         // automatically started
-        TmmHttpServer.getInstance();
+        Settings settings = Settings.getInstance();
+        TmmHttpServer.getInstance().updateConfiguration(settings.isEnableHttpServer(), settings.getHttpServerPort(), settings.getHttpApiKey());
       }
       catch (Exception e) {
         LOGGER.error("Could not start web server - '{}'", e.getMessage());
@@ -524,9 +525,8 @@ public final class TinyMediaManager {
 
     try {
       // Start or configure UPnP according to settings (enable flag and configured port)
-      Upnp.getInstance()
-          .updateConfiguration(Settings.getInstance().isUpnpShareLibrary(), Settings.getInstance().isUpnpRemotePlay(),
-              Settings.getInstance().getUpnpPort());
+      Settings settings = Settings.getInstance();
+      Upnp.getInstance().updateConfiguration(settings.isUpnpShareLibrary(), settings.isUpnpRemotePlay(), settings.getUpnpPort());
     }
     catch (Exception e) {
       LOGGER.error("Could not start UPnP server - '{}'", e.getMessage());
