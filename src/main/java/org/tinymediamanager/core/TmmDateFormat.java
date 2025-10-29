@@ -52,11 +52,13 @@ public class TmmDateFormat {
     US_LONG("MM/dd/yyyy (12/31/2024)"),
     UK_LONG("dd/MM/yyyy (31/12/2024)"),
     DE_LONG("dd.MM.yyyy (31.12.2024)"),
+    HR_LONG("dd.MM.yyyy. (31.12.2024.)"),
     CN_LONG("yyyy/MM/dd (2024/12/31)"),
 
     US_SHORT("MM/dd/yy (12/31/24)"),
     UK_SHORT("dd/MM/yy (31/12/24)"),
     DE_SHORT("dd.MM.yy (31.12.24)"),
+    HR_SHORT("dd.MM.yy (31.12.24.)"),
     CN_SHORT("yy/MM/dd (24/12/31)");
 
     private final String displayName;
@@ -197,6 +199,7 @@ public class TmmDateFormat {
     return switch (country) {
       case "DE", "AT", "CH", "PL", "CZ", "SK", "HU" -> "dd.MM.yyyy";
       case "FR", "BE", "IT", "ES", "PT", "GB", "IE" -> "dd/MM/yyyy";
+      case "HR", "BA", "SI", "RS", "ME", "MK" -> "dd.MM.yyyy.";
       case "US" -> "MM/dd/yyyy";
       case "CN", "JP", "KR" -> "yyyy/MM/dd";
       default -> "yyyy-MM-dd";
@@ -440,10 +443,12 @@ public class TmmDateFormat {
       case US_LONG -> "MM/dd/yyyy";
       case UK_LONG -> "dd/MM/yyyy";
       case DE_LONG -> "dd.MM.yyyy";
+      case HR_LONG -> "dd.MM.yyyy.";
       case CN_LONG -> "yyyy/MM/dd";
       case US_SHORT -> "MM/dd/yy";
       case UK_SHORT -> "dd/MM/yy";
       case DE_SHORT -> "dd.MM.yy";
+      case HR_SHORT -> "dd.MM.yy.";
       case CN_SHORT -> "yy/MM/dd";
       default -> "yyyy-MM-dd";
     };
