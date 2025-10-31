@@ -142,7 +142,7 @@ public class TvShowTrailerSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("hidemode 0", "[60lp,grow]", "[]"));
+    setLayout(new MigLayout("hidemode 0", "[grow]", "[]"));
     {
       JPanel panelScraper = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][grow]", "[][shrink 0][]"));
 

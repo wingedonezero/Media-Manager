@@ -141,7 +141,7 @@ class TvShowScraperNfoSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[600lp,grow]", "[]"));
+    setLayout(new MigLayout("", "[grow]", "[]"));
     {
       JPanel panelNfo = new JPanel();
       // 16lp ~ width of the checkbox

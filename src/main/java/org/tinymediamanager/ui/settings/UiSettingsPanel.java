@@ -58,9 +58,9 @@ import org.tinymediamanager.ui.TmmFontHelper;
 import org.tinymediamanager.ui.TmmUIHelper;
 import org.tinymediamanager.ui.components.button.DocsButton;
 import org.tinymediamanager.ui.components.combobox.LocaleComboBox;
+import org.tinymediamanager.ui.components.label.LinkLabel;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.panel.CollapsiblePanel;
-import org.tinymediamanager.ui.components.textfield.LinkTextArea;
 import org.tinymediamanager.ui.components.textfield.ReadOnlyTextArea;
 
 import net.miginfocom.swing.MigLayout;
@@ -78,7 +78,7 @@ class UiSettingsPanel extends JPanel {
   private final List<LocaleComboBox> locales            = new ArrayList<>();
 
   private JComboBox                  cbLanguage;
-  private LinkTextArea               lblLinkTranslate;
+  private LinkLabel                  lblLinkTranslate;
   private JComboBox                  cbFontSize;
   private JComboBox                  cbFontFamily;
   private JLabel                     lblLanguageChangeHint;
@@ -245,10 +245,10 @@ class UiSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("hidemode 1", "[600lp,grow]", "[][15lp!][][15lp!][]"));
+    setLayout(new MigLayout("hidemode 1", "[grow]", "[][15lp!][][15lp!][]"));
     {
       JPanel panelUiSettings = new JPanel();
-      panelUiSettings.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][][grow]", "[][][][][5lp!][][][5lp!][][][]"));
+      panelUiSettings.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][50lp][400lp]", "[][][][][5lp!][][][5lp!][][][]"));
 
       JLabel lblUiSettingsT = new TmmLabel(TmmResourceBundle.getString("Settings.ui"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelUiSettings, lblUiSettingsT, true);
@@ -264,7 +264,7 @@ class UiSettingsPanel extends JPanel {
         JLabel lblLanguageHint = new JLabel(TmmResourceBundle.getString("tmm.helptranslate"));
         panelUiSettings.add(lblLanguageHint, "cell 2 1 2 1");
 
-        lblLinkTranslate = new LinkTextArea("https://www.reddit.com/r/tinyMediaManager/comments/kt2iyq/basic_information/");
+        lblLinkTranslate = new LinkLabel("https://www.reddit.com/r/tinyMediaManager/comments/kt2iyq/basic_information/");
         panelUiSettings.add(lblLinkTranslate, "cell 2 2 2 1, grow, wmin 0");
 
         lblLanguageChangeHint = new JLabel("");
@@ -304,8 +304,8 @@ class UiSettingsPanel extends JPanel {
     {
       JPanel panelMisc = new JPanel();
       // 16lp ~ width of the
-      panelMisc.setLayout(
-          new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!,grow][grow]", "[][][10lp!][][][10lp!][][][][10lp!][][][][10lp!][][][][10lp!][][]"));
+      panelMisc
+          .setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][]", "[][][10lp!][][][10lp!][][][][10lp!][][][][10lp!][][][][10lp!][][]"));
 
       JLabel lblMiscT = new TmmLabel(TmmResourceBundle.getString("Settings.misc"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelMisc, lblMiscT, true);

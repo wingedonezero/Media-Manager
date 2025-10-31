@@ -144,7 +144,7 @@ class ExternalServicesSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[600lp,grow]", "[][15lp!][]"));
+    setLayout(new MigLayout("", "[grow]", "[][15lp!][]"));
     {
       JPanel panelTrakt = new JPanel();
       panelTrakt.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][][10lp!][]")); // 16lp ~ width of the

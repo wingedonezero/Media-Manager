@@ -164,7 +164,7 @@ class FileTypesSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[600lp,grow]", "[][15lp!][]"));
+    setLayout(new MigLayout("", "[grow]", "[][15lp!][]"));
     {
       JPanel panelFiletypes = new JPanel(new MigLayout("hidemode 1", "[20lp!][150lp][][50lp][150lp][][50lp][150lp][]", "[][250lp][]"));
 

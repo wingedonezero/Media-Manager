@@ -99,10 +99,10 @@ class TvShowScraperOptionsSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[600lp,grow]", "[][]15lp![][15lp!][][15lp!][]"));
+    setLayout(new MigLayout("", "[grow]", "[][]15lp![][15lp!][][15lp!][]"));
     {
       JPanel panelOptions = new JPanel();
-      panelOptions.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][][][10lp!][][][][10lp!][]")); // 16lp ~ width of the
+      panelOptions.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][]", "[][][][10lp!][][][][10lp!][]")); // 16lp ~ width of the
 
       JLabel lblOptions = new TmmLabel(TmmResourceBundle.getString("Settings.advancedoptions"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelOptions, lblOptions, true);
@@ -158,7 +158,7 @@ class TvShowScraperOptionsSettingsPanel extends JPanel {
     }
     {
       JPanel panelDefaults = new JPanel();
-      panelDefaults.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][]")); // 16lp ~ width of the
+      panelDefaults.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][]", "[][]")); // 16lp ~ width of the
 
       JLabel lblDefaultsT = new TmmLabel(TmmResourceBundle.getString("scraper.metadata.defaults"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelDefaults, lblDefaultsT, true);

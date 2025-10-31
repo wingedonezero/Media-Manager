@@ -140,7 +140,7 @@ public class ArdSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[600lp,grow]", "[]"));
+    setLayout(new MigLayout("", "[grow]", "[]"));
 
     JPanel panelArdSettings = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][20lp!][500lp][grow]", "[][10lp!][][][][][10lp!][][][][]"));
     JLabel lblLanguageT = new TmmLabel(TmmResourceBundle.getString("Settings.ard"), H3);

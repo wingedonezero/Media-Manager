@@ -84,9 +84,9 @@ class SortTitleSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[600lp,grow]", "[]"));
+    setLayout(new MigLayout("", "[grow]", "[]"));
     {
-      JPanel panelSorttitle = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][150lp][][grow]", "[][250lp][]"));
+      JPanel panelSorttitle = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][150lp][][200lp]", "[][250lp][]"));
 
       JLabel lblSorttitleT = new TmmLabel(TmmResourceBundle.getString("Settings.sorting"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelSorttitle, lblSorttitleT, true);
@@ -94,7 +94,7 @@ class SortTitleSettingsPanel extends JPanel {
       add(collapsiblePanel, "cell 0 0,growx, wmin 0");
       {
         JTextArea tpSortingHint = new ReadOnlyTextArea(TmmResourceBundle.getString("Settings.sorting.info")); // $NON-NLS-1$
-        panelSorttitle.add(tpSortingHint, "cell 1 0 3 1,growx");
+        panelSorttitle.add(tpSortingHint, "cell 1 0 3 1,growx, wmin 0");
 
         JScrollPane scrollPane = new JScrollPane();
         panelSorttitle.add(scrollPane, "cell 1 1,grow");
