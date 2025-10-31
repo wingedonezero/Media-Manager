@@ -271,6 +271,7 @@ public class MediaTrailerTable extends TmmEditorTable {
         }, ImageIcon.class);
         col.setColumnResizeable(false);
         col.setColumnComparator(imageComparator);
+        col.setHeaderTooltip(TmmResourceBundle.getString("trailer.download.header"));
         addColumn(col);
       }
 
@@ -280,7 +281,7 @@ public class MediaTrailerTable extends TmmEditorTable {
       col = new Column("", "play", trailer -> IconManager.PLAY, ImageIcon.class);
       col.setColumnResizeable(false);
       col.setColumnComparator(imageComparator);
-
+      col.setHeaderTooltip(TmmResourceBundle.getString("trailer.play.header"));
       addColumn(col);
 
       /*
