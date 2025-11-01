@@ -542,6 +542,10 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
         episodeNumbersForType.forEach(this::setEpisode);
       }
     }
+
+    if (tvShow != null) {
+      tvShow.invalidateEpisodeForDisplayCache();
+    }
   }
 
   public MediaEpisodeGroup getEpisodeGroup() {
@@ -687,6 +691,7 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
 
         // inform the TV show about the change
         if (tvShow != null) {
+          tvShow.invalidateEpisodeForDisplayCache();
           tvShow.updateSeasonForEpisode(this);
         }
 
@@ -736,6 +741,7 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
 
     // inform the TV show about the change
     if (tvShow != null) {
+      tvShow.invalidateEpisodeForDisplayCache();
       tvShow.updateSeasonForEpisode(this);
     }
   }

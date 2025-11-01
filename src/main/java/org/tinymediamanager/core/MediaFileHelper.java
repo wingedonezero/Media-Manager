@@ -1157,7 +1157,7 @@ public class MediaFileHelper {
       mediaInfoFiles = detectRelevantFiles(mediaInfoFiles);
     }
     else {
-      mediaInfoFiles.add(new MediaInfoFile(mediaFile.getFile()));
+      mediaInfoFiles.add(new MediaInfoFile(mediaFile));
     }
 
     for (MediaInfoFile mif : mediaInfoFiles) {

@@ -191,7 +191,7 @@ public class MediaInfoFile implements Comparable<MediaInfoFile> {
   }
 
   public void gatherMediaInformation() {
-    if (snapshot != null) {
+    if (snapshot != null || filesize == 0) {
       return; // already gathered
     }
 
