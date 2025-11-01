@@ -3,7 +3,7 @@ Version 5.2.4
 + [UI] added a date format for Croatian style (DD.MM.YYYY.) (thx @milotype)
 ---
 x [UI] fixed horizontal scrolling in the settings #3116
-x [UI] reduced CPU usage when having many items in the TV show tree
+x [UI] reduced CPU/Memory usage when having many items in the TV show tree
 x [HTTP API] fixed loading the HTTP API on startup
 
 Version 5.2.3

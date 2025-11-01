@@ -358,6 +358,9 @@ public final class TvShowList extends AbstractModelObject {
     tvShows.remove(tvShow);
     readWriteLock.writeLock().unlock();
 
+    // eagerly remove the TV show from the UI to avoid endless UI updates while removing all episodes
+    EventBus.publishEvent(TOPIC_TV_SHOWS, Event.createRemoveEvent(tvShow));
+
     firePropertyChange(TV_SHOWS, null, tvShows);
     firePropertyChange(REMOVED_TV_SHOW, null, tvShow);
     firePropertyChange(TV_SHOW_COUNT, oldValue, tvShows.size());
