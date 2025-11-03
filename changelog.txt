@@ -4,6 +4,7 @@ Version 5.2.4
 ---
 x [UI] fixed horizontal scrolling in the settings #3116
 x [UI] reduced CPU/Memory usage when having many items in the TV show tree
+x [UI] fix FFMpeg open dialog error #3118
 x [HTTP API] fixed loading the HTTP API on startup
 
 Version 5.2.3

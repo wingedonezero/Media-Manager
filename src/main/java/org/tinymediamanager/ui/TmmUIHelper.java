@@ -235,7 +235,7 @@ public class TmmUIHelper {
     if (SystemUtils.IS_OS_WINDOWS) {
       // on Windows we use the newer API provided via JWindowsFileDialog
 
-      FileExtension clonedFilter = null;
+      FileExtension clonedFilter = FileExtension.ALL;
       if (filter != null) {
         clonedFilter = new FileExtension(filter.getDescription(), filter.getExtensions()); // lowercase extension without dot
       }
