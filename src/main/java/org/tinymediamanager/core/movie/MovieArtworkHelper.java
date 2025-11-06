@@ -327,7 +327,11 @@ public class MovieArtworkHelper {
 
     // update DB
     movie.saveToDb();
-    movie.writeNFO(); // rewrite NFO to get the urls into the NFO
+
+    // rewrite NFO to get the urls into the NFO
+    if (MovieModuleManager.getInstance().getSettings().isNfoWriteArtworkUrls()) {
+      movie.writeNFO();
+    }
   }
 
   /**
@@ -906,7 +910,11 @@ public class MovieArtworkHelper {
 
     // update DB
     movie.saveToDb();
-    movie.writeNFO(); // rewrite NFO to get the urls into the NFO
+
+    // rewrite NFO to get the urls into the NFO
+    if (MovieModuleManager.getInstance().getSettings().isNfoWriteArtworkUrls()) {
+      movie.writeNFO();
+    }
   }
 
   /*
