@@ -11,6 +11,7 @@ x [UI] re-aligned path and filename columns in the movie table/TV show tree view
 x [NFO] to not re-write NFO files in the artwork download task if not needed #3128
 x [HTTP API] fixed loading the HTTP API on startup
 x [EP] further improve episode detection, when having conflicting values #3130
+x [Library] upgraded Java to 21.0.9
 
 
 Version 5.2.3
