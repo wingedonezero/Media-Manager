@@ -15,8 +15,6 @@
  */
 package org.tinymediamanager.ui.moviesets.dialogs;
 
-import javax.swing.JOptionPane;
-
 import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.core.PostProcess;
 import org.tinymediamanager.core.TmmResourceBundle;
@@ -37,7 +35,7 @@ public class MovieSetPostProcessDialog extends PostProcessDialog {
   @Override
   public void save() {
     if (StringUtils.isBlank(tfProcessName.getText()) || (StringUtils.isBlank(tfCommand.getText()) && StringUtils.isBlank(tfPath.getText()))) {
-      JOptionPane.showMessageDialog(MovieSetPostProcessDialog.this, TmmResourceBundle.getString("message.missingitems"));
+      showErrorToast(TmmResourceBundle.getString("message.missingitems"));
       return;
     }
 

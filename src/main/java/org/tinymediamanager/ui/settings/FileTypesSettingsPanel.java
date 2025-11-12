@@ -24,7 +24,6 @@ import java.util.regex.PatternSyntaxException;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
@@ -45,6 +44,7 @@ import org.tinymediamanager.ui.components.button.DocsButton;
 import org.tinymediamanager.ui.components.button.SquareIconButton;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.panel.CollapsiblePanel;
+import org.tinymediamanager.ui.components.toast.TmmToastManager;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -141,7 +141,7 @@ class FileTypesSettingsPanel extends JPanel {
           Pattern.compile(tfCleanupFiletype.getText());
         }
         catch (PatternSyntaxException ex) {
-          JOptionPane.showMessageDialog(this, TmmResourceBundle.getString("message.regex.error"));
+          TmmToastManager.showErrorToast(this, TmmResourceBundle.getString("message.regex.error"));
           return;
         }
         Settings.getInstance().addCleanupFileType(tfCleanupFiletype.getText());

@@ -42,6 +42,7 @@ import org.jdesktop.beansbinding.BindingGroup;
 import org.tinymediamanager.ui.EqualsLayout;
 import org.tinymediamanager.ui.MainWindow;
 import org.tinymediamanager.ui.TmmUILayoutStore;
+import org.tinymediamanager.ui.components.toast.TmmToast;
 import org.tinymediamanager.ui.panels.IModalPopupPanelProvider;
 import org.tinymediamanager.ui.panels.ModalPopupPanel;
 
@@ -61,6 +62,8 @@ public abstract class TmmDialog extends JDialog implements IModalPopupPanelProvi
   protected JPanel               topPanel          = null;
   protected JPanel               bottomPanel       = null;
   protected JPanel               buttonPanel       = null;
+
+  private TmmToast               toast             = null;
 
   private int                    popupIndex        = JLayeredPane.MODAL_LAYER;
 
@@ -286,6 +289,11 @@ public abstract class TmmDialog extends JDialog implements IModalPopupPanelProvi
   @Override
   public void dispose() {
     unbind();
+    // uninstall toast to restore previous glass pane and avoid memory leaks
+    if (toast != null || TmmToast.isInstalled(this)) {
+      TmmToast.uninstall(this);
+      toast = null;
+    }
     super.dispose();
   }
 
@@ -327,5 +335,73 @@ public abstract class TmmDialog extends JDialog implements IModalPopupPanelProvi
       Component comp = focusedComponents.pop();
       comp.requestFocusInWindow();
     }
+  }
+
+  /**
+   * Install the toast notification system for this dialog.
+   * <p>
+   * This is automatically called when showing a toast, but can be called explicitly if needed.
+   * </p>
+   */
+  protected void installToast() {
+    if (toast == null) {
+      toast = TmmToast.install(this);
+    }
+  }
+
+  /**
+   * Show a toast message on this dialog.
+   *
+   * @param message
+   *          the message text to display
+   * @param type
+   *          the toast type (INFO, SUCCESS, WARNING, ERROR)
+   * @param durationMs
+   *          the duration in milliseconds before the toast fades out
+   */
+  protected void showToast(String message, TmmToast.ToastType type, int durationMs) {
+    installToast();
+    toast.showToast(message, type, durationMs);
+  }
+
+  /**
+   * Show an INFO toast message with default 3 second duration.
+   *
+   * @param message
+   *          the message text to display
+   */
+  protected void showToast(String message) {
+    installToast();
+    toast.showToast(message);
+  }
+
+  /**
+   * Show a SUCCESS toast message with default 3 second duration.
+   *
+   * @param message
+   *          the message text to display
+   */
+  protected void showSuccessToast(String message) {
+    showToast(message, TmmToast.ToastType.SUCCESS, 3000);
+  }
+
+  /**
+   * Show a WARNING toast message with default 4 second duration.
+   *
+   * @param message
+   *          the message text to display
+   */
+  protected void showWarningToast(String message) {
+    showToast(message, TmmToast.ToastType.WARNING, 4000);
+  }
+
+  /**
+   * Show an ERROR toast message with default 5 second duration.
+   *
+   * @param message
+   *          the message text to display
+   */
+  protected void showErrorToast(String message) {
+    showToast(message, TmmToast.ToastType.ERROR, 5000);
   }
 }

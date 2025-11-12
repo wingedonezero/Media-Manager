@@ -62,6 +62,7 @@ import org.tinymediamanager.ui.components.label.LinkLabel;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.panel.CollapsiblePanel;
 import org.tinymediamanager.ui.components.textfield.ReadOnlyTextArea;
+import org.tinymediamanager.ui.components.toast.TmmToastManager;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -81,10 +82,8 @@ class UiSettingsPanel extends JPanel {
   private LinkLabel                  lblLinkTranslate;
   private JComboBox                  cbFontSize;
   private JComboBox                  cbFontFamily;
-  private JLabel                     lblLanguageChangeHint;
   private JCheckBox                  chckbxStoreWindowPreferences;
   private JComboBox                  cbTheme;
-  private JLabel                     lblThemeHint;
   private JCheckBox                  chckbxShowMemory;
   private JComboBox                  cbDatefield;
   private JRadioButton               rbFileSizeH;
@@ -266,10 +265,6 @@ class UiSettingsPanel extends JPanel {
 
         lblLinkTranslate = new LinkLabel("https://www.reddit.com/r/tinyMediaManager/comments/kt2iyq/basic_information/");
         panelUiSettings.add(lblLinkTranslate, "cell 2 2 2 1, grow, wmin 0");
-
-        lblLanguageChangeHint = new JLabel("");
-        TmmFontHelper.changeFont(lblLanguageChangeHint, Font.BOLD);
-        panelUiSettings.add(lblLanguageChangeHint, "cell 0 3 4 1");
       }
       {
         JLabel lblThemeT = new JLabel(TmmResourceBundle.getString("Settings.uitheme"));
@@ -277,10 +272,6 @@ class UiSettingsPanel extends JPanel {
 
         cbTheme = new JComboBox(new String[] { "Light", "Dark" });
         panelUiSettings.add(cbTheme, "cell 1 5 3 1");
-
-        lblThemeHint = new JLabel("");
-        TmmFontHelper.changeFont(lblThemeHint, Font.BOLD);
-        panelUiSettings.add(lblThemeHint, "cell 0 6 4 1");
       }
       {
         JLabel lblFontFamilyT = new JLabel(TmmResourceBundle.getString("Settings.fontfamily"));
@@ -412,7 +403,7 @@ class UiSettingsPanel extends JPanel {
       Locale actualLocale = Utils.getLocaleFromLanguage(settings.getLanguage());
       if (!locale.equals(actualLocale)) {
         settings.setLanguage(locale.toString());
-        lblLanguageChangeHint.setText(TmmResourceBundle.getString("Settings.languagehint"));
+        TmmToastManager.showWarningToast(this, TmmResourceBundle.getString("Settings.languagehint"));
       }
     }
 
@@ -425,7 +416,7 @@ class UiSettingsPanel extends JPanel {
         TmmUIHelper.updateUI();
       }
       catch (Exception e) {
-        lblThemeHint.setText(TmmResourceBundle.getString("Settings.uitheme.hint"));
+        TmmToastManager.showWarningToast(this, TmmResourceBundle.getString("Settings.uitheme.hint"));
       }
     }
 

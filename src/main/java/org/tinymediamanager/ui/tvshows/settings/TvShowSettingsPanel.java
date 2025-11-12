@@ -17,22 +17,17 @@ package org.tinymediamanager.ui.tvshows.settings;
 
 import static org.tinymediamanager.ui.TmmFontHelper.H3;
 
-import java.awt.GridBagConstraints;
-import java.util.Map;
-
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import org.apache.commons.lang3.StringUtils;
 import org.jdesktop.beansbinding.AutoBinding;
 import org.jdesktop.beansbinding.AutoBinding.UpdateStrategy;
 import org.jdesktop.beansbinding.BeanProperty;
 import org.jdesktop.beansbinding.Bindings;
 import org.jdesktop.beansbinding.Property;
-import org.tinymediamanager.core.ScraperMetadataConfig;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.threading.TmmTask;
 import org.tinymediamanager.core.threading.TmmTaskManager;
@@ -41,11 +36,10 @@ import org.tinymediamanager.core.tvshow.TvShowSettings;
 import org.tinymediamanager.core.tvshow.TvShowSettingsDefaults;
 import org.tinymediamanager.thirdparty.trakttv.TvShowClearTraktTvTask;
 import org.tinymediamanager.ui.IconManager;
-import org.tinymediamanager.ui.MainWindow;
 import org.tinymediamanager.ui.components.button.DocsButton;
-import org.tinymediamanager.ui.components.button.JHintCheckBox;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.panel.CollapsiblePanel;
+import org.tinymediamanager.ui.components.toast.TmmToastManager;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -55,9 +49,7 @@ import net.miginfocom.swing.MigLayout;
  * @author Manuel Laggner
  */
 class TvShowSettingsPanel extends JPanel {
-  private static final int     COL_COUNT = 7;
-
-  private final TvShowSettings settings  = TvShowModuleManager.getInstance().getSettings();
+  private final TvShowSettings settings = TvShowModuleManager.getInstance().getSettings();
 
   private JCheckBox            chckbxImageCache;
   private JCheckBox            chckbxExtractArtworkFromVsmeta;
@@ -105,43 +97,35 @@ class TvShowSettingsPanel extends JPanel {
 
     btnPresetXbmc.addActionListener(evt -> {
       TvShowSettingsDefaults.setDefaultSettingsForXbmc();
-      JOptionPane.showMessageDialog(MainWindow.getFrame(), TmmResourceBundle.getString("Settings.preset.message").replace("{}", "XBMC"),
-          TmmResourceBundle.getString("Settings.preset"), JOptionPane.INFORMATION_MESSAGE);
+      TmmToastManager.showSuccessToast(this, TmmResourceBundle.getString("Settings.preset.message").replace("{}", "XBMC"));
     });
     btnPresetKodi.addActionListener(evt -> {
       TvShowSettingsDefaults.setDefaultSettingsForKodi();
-      JOptionPane.showMessageDialog(MainWindow.getFrame(), TmmResourceBundle.getString("Settings.preset.message").replace("{}", "Kodi"),
-          TmmResourceBundle.getString("Settings.preset"), JOptionPane.INFORMATION_MESSAGE);
+      TmmToastManager.showSuccessToast(this, TmmResourceBundle.getString("Settings.preset.message").replace("{}", "Kodi"));
     });
     btnPresetJellyfin.addActionListener(evt -> {
       TvShowSettingsDefaults.setDefaultSettingsForJellyfin();
-      JOptionPane.showMessageDialog(MainWindow.getFrame(), TmmResourceBundle.getString("Settings.preset.message").replace("{}", "Jellyfin"),
-          TmmResourceBundle.getString("Settings.preset"), JOptionPane.INFORMATION_MESSAGE);
+      TmmToastManager.showSuccessToast(this, TmmResourceBundle.getString("Settings.preset.message").replace("{}", "Jellyfin"));
     });
     btnPresetEmby.addActionListener(evt -> {
       TvShowSettingsDefaults.setDefaultSettingsForEmby();
-      JOptionPane.showMessageDialog(MainWindow.getFrame(), TmmResourceBundle.getString("Settings.preset.message").replace("{}", "Emby"),
-          TmmResourceBundle.getString("Settings.preset"), JOptionPane.INFORMATION_MESSAGE);
+      TmmToastManager.showSuccessToast(this, TmmResourceBundle.getString("Settings.preset.message").replace("{}", "Emby"));
     });
     btnPresetPlex.addActionListener(evt -> {
       TvShowSettingsDefaults.setDefaultSettingsForPlex();
-      JOptionPane.showMessageDialog(MainWindow.getFrame(), TmmResourceBundle.getString("Settings.preset.message").replace("{}", "Plex"),
-          TmmResourceBundle.getString("Settings.preset"), JOptionPane.INFORMATION_MESSAGE);
+      TmmToastManager.showSuccessToast(this, TmmResourceBundle.getString("Settings.preset.message").replace("{}", "Plex"));
     });
     btnPresetMediaPig.addActionListener(evt -> {
       TvShowSettingsDefaults.setDefaultSettingsForMediaPig();
-      JOptionPane.showMessageDialog(MainWindow.getFrame(), TmmResourceBundle.getString("Settings.preset.message").replace("{}", "MediaPIG"),
-          TmmResourceBundle.getString("Settings.preset"), JOptionPane.INFORMATION_MESSAGE);
+      TmmToastManager.showSuccessToast(this, TmmResourceBundle.getString("Settings.preset.message").replace("{}", "MediaPIG"));
     });
     btnPresetMediaPortal1.addActionListener(evt -> {
       TvShowSettingsDefaults.setDefaultSettingsForMediaPortal();
-      JOptionPane.showMessageDialog(MainWindow.getFrame(), TmmResourceBundle.getString("Settings.preset.message").replace("{}", "MediaPortal 1.x"),
-          TmmResourceBundle.getString("Settings.preset"), JOptionPane.INFORMATION_MESSAGE);
+      TmmToastManager.showSuccessToast(this, TmmResourceBundle.getString("Settings.preset.message").replace("{}", "MediaPortal 1.x"));
     });
     btnPresetMediaPortal2.addActionListener(evt -> {
       TvShowSettingsDefaults.setDefaultSettingsForMediaPortal();
-      JOptionPane.showMessageDialog(MainWindow.getFrame(), TmmResourceBundle.getString("Settings.preset.message").replace("{}", "MediaPortal 2.x"),
-          TmmResourceBundle.getString("Settings.preset"), JOptionPane.INFORMATION_MESSAGE);
+      TmmToastManager.showSuccessToast(this, TmmResourceBundle.getString("Settings.preset.message").replace("{}", "MediaPortal 2.x"));
     });
   }
 
@@ -277,27 +261,6 @@ class TvShowSettingsPanel extends JPanel {
         panelMisc.add(lblCreateMissingSeasonItemsHint, "cell 1 8 2 1");
       }
     }
-  }
-
-  private <E extends ScraperMetadataConfig> void addMetadataCheckbox(JPanel panel, E config, Map<E, JCheckBox> map, GridBagConstraints gbc) {
-    JCheckBox checkBox;
-    if (StringUtils.isNotBlank(config.getToolTip())) {
-      checkBox = new JHintCheckBox(config.getDescription());
-      checkBox.setToolTipText(config.getToolTip());
-      ((JHintCheckBox) checkBox).setHintIcon(IconManager.HINT);
-    }
-    else {
-      checkBox = new JCheckBox(config.getDescription());
-    }
-    map.put(config, checkBox);
-
-    if (gbc.gridx >= COL_COUNT) {
-      gbc.gridx = 1;
-      gbc.gridy++;
-    }
-    panel.add(checkBox, gbc.clone());
-
-    gbc.gridx++;
   }
 
   protected void initDataBindings() {

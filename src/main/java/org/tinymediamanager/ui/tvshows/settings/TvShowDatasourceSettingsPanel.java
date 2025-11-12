@@ -52,6 +52,7 @@ import org.tinymediamanager.ui.components.button.DocsButton;
 import org.tinymediamanager.ui.components.button.SquareIconButton;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.panel.CollapsiblePanel;
+import org.tinymediamanager.ui.components.toast.TmmToastManager;
 import org.tinymediamanager.ui.dialogs.ExchangeDatasourceDialog;
 import org.tinymediamanager.ui.panels.IModalPopupPanelProvider;
 import org.tinymediamanager.ui.panels.ModalPopupPanel;
@@ -111,7 +112,7 @@ class TvShowDatasourceSettingsPanel extends JPanel {
         if (decision == JOptionPane.YES_OPTION) {
           // to avoid interfering with active running tasks, we remove the data source as soon as all running main tasks are finished
           if (TmmTaskManager.getInstance().isMainTaskRunning()) {
-            JOptionPane.showMessageDialog(this, TmmResourceBundle.getString("Settings.datasource.remove.hint"));
+            TmmToastManager.showToast(this, TmmResourceBundle.getString("Settings.datasource.remove.hint"));
           }
           TmmTaskManager.getInstance().addMainTask(new TvShowRemoveDatasourceTask(path));
         }
@@ -172,7 +173,7 @@ class TvShowDatasourceSettingsPanel extends JPanel {
           Pattern.compile(tfAddBadword.getText());
         }
         catch (PatternSyntaxException ex) {
-          JOptionPane.showMessageDialog(this, TmmResourceBundle.getString("message.regex.error"));
+          TmmToastManager.showErrorToast(this, TmmResourceBundle.getString("message.regex.error"));
           return;
         }
         TvShowModuleManager.getInstance().getSettings().addBadWord(tfAddBadword.getText());
