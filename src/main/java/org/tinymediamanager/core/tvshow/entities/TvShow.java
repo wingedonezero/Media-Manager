@@ -85,6 +85,7 @@ import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaGenres;
 import org.tinymediamanager.core.entities.MediaRating;
 import org.tinymediamanager.core.entities.MediaSource;
+import org.tinymediamanager.core.entities.MediaStreamInfo;
 import org.tinymediamanager.core.entities.MediaTrailer;
 import org.tinymediamanager.core.entities.Person;
 import org.tinymediamanager.core.threading.TmmTaskManager;
@@ -2445,6 +2446,11 @@ public class TvShow extends MediaEntity implements IMediaInformation {
 
   @Override
   public List<String> getMediaInfoSubtitleCodecList() {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public List<MediaStreamInfo.Flags> getMediaInfoSubtitleTypeList() {
     return Collections.emptyList();
   }
 

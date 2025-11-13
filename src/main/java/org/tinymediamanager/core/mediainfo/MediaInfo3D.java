@@ -23,7 +23,7 @@ public enum MediaInfo3D {
   BLOCK_LR("Both Eyes laced in one block (left eye first)"),
   BLOCK_RL("Both Eyes laced in one block (right eye first)");
 
-  private String desc = "";
+  private final String desc;
 
   MediaInfo3D(String desc) {
     this.desc = desc;

@@ -28,19 +28,30 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class MediaStreamInfo extends AbstractModelObject {
 
   /**
-   * https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/Interface/StreamInfo.h
+   * <a href="https://github.com/xbmc/xbmc/blob/master/xbmc/cores/VideoPlayer/Interface/StreamInfo.h">Kodi reference</a>
    */
   public enum Flags {
     // FLAG_NONE, // just empty
-    FLAG_DEFAULT,
-    FLAG_DUB,
-    FLAG_ORIGINAL,
-    FLAG_COMMENT,
-    FLAG_LYRICS,
-    FLAG_KARAOKE,
-    FLAG_FORCED,
-    FLAG_HEARING_IMPAIRED,
-    FLAG_VISUAL_IMPAIRED
+    FLAG_DEFAULT("Default"),
+    FLAG_DUB("Dubbed"),
+    FLAG_ORIGINAL("Original"),
+    FLAG_COMMENT("Commentary"),
+    FLAG_LYRICS("Lyrics"),
+    FLAG_KARAOKE("Karaoke"),
+    FLAG_FORCED("Forced"),
+    FLAG_HEARING_IMPAIRED("SDH"), // subtitles for the deaf and hard of hearing
+    FLAG_VISUAL_IMPAIRED("Audio description for the visually impaired");
+
+    private final String displayName;
+
+    Flags(String displayName) {
+      this.displayName = displayName;
+    }
+
+    @Override
+    public String toString() {
+      return displayName;
+    }
   }
 
   @JsonProperty

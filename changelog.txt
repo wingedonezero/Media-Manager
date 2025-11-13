@@ -3,6 +3,7 @@ Version 5.2.4
 + [UI] added a date format for Croatian style (DD.MM.YYYY.) (thx @milotype)
 + [UI] added sort title to the movie set and TV show tree #3126 #3127
 + [UI] added popup messages in the settings to show additional information #3108
++ [UI] added a subtitle type filter (default, forces, hearing impaired) #3133
 + [TV shows] added season plot to the TV show NFO files (Kodi v22 compliant)
 ---
 x [UI] fixed horizontal scrolling in the settings #3116
