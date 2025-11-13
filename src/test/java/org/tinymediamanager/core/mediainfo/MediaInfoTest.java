@@ -502,7 +502,12 @@ public class MediaInfoTest extends BasicTest {
     check("en", "en");
     check("eng_sdh", "eng");
     check("moviename.en", "en");
-    check("moviename.en.forced", "en");
+    check("moviename.en.forced", "en"); // if forced can removed in all cases
+    check("moviename.en.FORCED", "en"); // if forced can removed in all cases
+    check("moviename.en.FoRcEd", "en"); // if forced can removed in all cases
+    check("moviename.en.sdh", "en"); // if sdh can removed in all cases
+    check("moviename.en.SDH", "en"); // if sdh can removed in all cases
+    check("moviename.en.SdH", "en"); // if sdh can removed in all cases
     check("moviename.eng", "eng");
     check("moviename.german", "german");
     check("moviename.Deutsch", "deutsch");

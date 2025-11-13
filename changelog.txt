@@ -12,6 +12,7 @@ x [NFO] to not re-write NFO files in the artwork download task if not needed #31
 x [HTTP API] fixed loading the HTTP API on startup
 x [EP] further improve episode detection, when having conflicting values #3130
 x [Library] upgraded Java to 21.0.9
+x [Subtitle] recognize filename flags case insensitive #3132
 
 
 Version 5.2.3

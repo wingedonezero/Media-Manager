@@ -3191,13 +3191,15 @@ public class MediaFileHelper {
 
     // FIRST - remove known flags
     boolean hicc = false;
-    if (shortname.contains("forced")) {
+    String forced = Utils.substr(shortname, "(?i)([\\p{Punct} ]+forced)");// punct + space
+    if (!forced.isEmpty()) {
       flags.add(Flags.FLAG_FORCED);
-      shortname = shortname.replaceAll("[\\p{Punct} ]+forced", ""); // punct + space
+      shortname = shortname.replaceAll(forced, "");
     }
-    if (shortname.contains("sdh")) {
+    String sdh = Utils.substr(shortname, "(?i)([\\p{Punct} ]+sdh)");// punct + space
+    if (!sdh.isEmpty()) {
       flags.add(Flags.FLAG_HEARING_IMPAIRED);
-      shortname = shortname.replaceAll("[\\p{Punct} ]+sdh", ""); // punct + space
+      shortname = shortname.replaceAll(sdh, ""); // punct + space
     }
     if (shortname.contains("cc") || shortname.contains("hi")) {
       // remember this - if we don't find other langu, this IS the langu (and not a flag)
