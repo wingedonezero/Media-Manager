@@ -989,8 +989,14 @@ public class TmmTreeTable extends TmmTable {
     ((TmmTreeModel) treeTableModel.getTreeModel()).setAdjusting(true);
     clearSelection();
     ((TmmTreeModel) treeTableModel.getTreeModel()).setAdjusting(false);
+
     for (int selectedRow : selectedRows) {
-      getSelectionModel().addSelectionInterval(selectedRow, selectedRow);
+      if (selectedRow > 0) {
+        getSelectionModel().addSelectionInterval(selectedRow, selectedRow);
+      }
+      else {
+        getSelectionModel().addSelectionInterval(0, 0);
+      }
     }
   }
 
