@@ -122,7 +122,7 @@ public class ITChecksumPerformanceTest { // NOSONAR squid:S5786
     // System.out.println("sha256: " + sha256w + " [" + StrgUtils.encodeHex(sha256dig) + "] ");
     // System.out.println("sha384: " + sha384w + " [" + StrgUtils.encodeHex(sha384dig) + "] ");
 
-    System.out.println(" crc32: " + crc32w + " [" + HexFormat.of().toHexDigits(crc32.getValue(), 8).toUpperCase(Locale.ROOT) + "] ");
+    System.out.println(" crc32: " + crc32w + " [" + HexFormat.of().withUpperCase().toHexDigits(crc32.getValue(), 8) + "] ");
     System.out.println("   md5: " + md5w + " [" + HexFormat.of().formatHex(md5dig) + "] ");
     System.out.println("  sha1: " + sha1w + " [" + HexFormat.of().formatHex(sha1dig) + "] ");
     System.out.println("sha256: " + sha256w + " [" + HexFormat.of().formatHex(sha256dig) + "] ");

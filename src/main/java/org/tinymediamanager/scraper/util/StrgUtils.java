@@ -38,8 +38,6 @@ public class StrgUtils {
   private static final Map<Integer, String>      INVALID_CHARACTERS    = new HashMap<>(7);
   private static final Map<Integer, String>      SEPARATOR_CHARACTERS  = new HashMap<>(2);
   private static final String[]                  COMMON_TITLE_PREFIXES = buildCommonTitlePrefixes();
-  private static final byte[]                    DIGITS_LOWER          = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
-      'f' };
   private static final Pattern                   NORMALIZE_PATTERN     = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
   private static final char[]                    CAP_DELIMS            = new char[] { ' ', '-', '_', '.', '\'', '(', '[', '*' };
   private static final String[]                  NON_CAP               = new String[] { "'S", "'M", "'Ll", "'T", "'D", "'Ve", "'Re" };
