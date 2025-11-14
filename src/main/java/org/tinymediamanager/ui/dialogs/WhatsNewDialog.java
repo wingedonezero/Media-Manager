@@ -22,6 +22,7 @@ import java.awt.EventQueue;
 import java.awt.Font;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.HexFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -135,7 +136,8 @@ public class WhatsNewDialog extends TmmDialog {
 
     // set the foreground color of the content
     Color foreground = UIManager.getColor("TextPane.foreground");
-    String color = Integer.toHexString(foreground.getRed()) + Integer.toHexString(foreground.getGreen()) + Integer.toHexString(foreground.getBlue());
+    String color = HexFormat.of().toHexDigits(foreground.getRed(), 2) + HexFormat.of().toHexDigits(foreground.getGreen(), 2)
+        + HexFormat.of().toHexDigits(foreground.getBlue(), 2);
 
     return "<html><pre style=\"color: #" + color + "\">" + originalText + "</pre><html>";
   }

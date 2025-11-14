@@ -69,6 +69,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -2517,7 +2518,7 @@ public class Utils {
         crc32.update(buffer, 0, bytesRead);
       }
       if (crc32.getValue() > 0) {
-        crc = String.format("%8s", Long.toHexString(crc32.getValue()).toUpperCase(Locale.ROOT).replace(' ', '0'));
+        crc = HexFormat.of().withUpperCase().toHexDigits(crc32.getValue(), 8); // limit to 8 chars
         LOGGER.trace("Got CRC32 [{}] for {}", crc, file);
       }
     }

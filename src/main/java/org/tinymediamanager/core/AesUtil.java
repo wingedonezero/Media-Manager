@@ -18,6 +18,7 @@ package org.tinymediamanager.core;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
+import java.util.HexFormat;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
@@ -62,7 +63,7 @@ public class AesUtil {
 
   private byte[] doFinal(int encryptMode, SecretKey key, String iv, byte[] bytes) {
     try {
-      cipher.init(encryptMode, key, new IvParameterSpec(hex(iv))); // NOSONAR
+      cipher.init(encryptMode, key, new IvParameterSpec(HexFormat.of().parseHex(iv))); // NOSONAR
       return cipher.doFinal(bytes);
     }
     catch (Exception e) {
@@ -73,7 +74,7 @@ public class AesUtil {
   private SecretKey generateKey(String salt, String passphrase) {
     try {
       SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-      KeySpec spec = new PBEKeySpec(passphrase.toCharArray(), hex(salt), iterationCount, keySize);
+      KeySpec spec = new PBEKeySpec(passphrase.toCharArray(), HexFormat.of().parseHex(salt), iterationCount, keySize);
       return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), "AES");
     }
     catch (Exception e) {
@@ -84,7 +85,7 @@ public class AesUtil {
   protected static String random(int length) {
     byte[] salt = new byte[length];
     new SecureRandom().nextBytes(salt);
-    return hex(salt);
+    return HexFormat.of().formatHex(salt);
   }
 
   protected static String base64(byte[] bytes) {
@@ -93,14 +94,6 @@ public class AesUtil {
 
   protected static byte[] base64(String str) {
     return DatatypeConverter.parseBase64Binary(str);
-  }
-
-  protected static String hex(byte[] bytes) {
-    return DatatypeConverter.printHexBinary(bytes);
-  }
-
-  protected static byte[] hex(String str) {
-    return DatatypeConverter.parseHexBinary(str);
   }
 
   private IllegalStateException fail(Exception e) {

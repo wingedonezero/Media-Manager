@@ -29,6 +29,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.util.Collection;
+import java.util.HexFormat;
 
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -47,7 +48,6 @@ import org.tinymediamanager.core.tasks.ImageCacheTask;
 import org.tinymediamanager.core.threading.ThreadUtils;
 import org.tinymediamanager.core.threading.TmmTaskManager;
 import org.tinymediamanager.scraper.http.Url;
-import org.tinymediamanager.scraper.util.StrgUtils;
 import org.tinymediamanager.scraper.util.UrlUtil;
 
 import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
@@ -155,7 +155,7 @@ public class ImageCache {
       // rate, especially for our limited use
       MessageDigest md = MessageDigest.getInstance("MD5");
       byte[] key = md.digest(path.getBytes());
-      return StrgUtils.bytesToHex(key);
+      return HexFormat.of().withUpperCase().formatHex(key);
     }
     catch (Exception e) {
       LOGGER.debug("Failed to create cached filename for image: {} - {}", path, e.getMessage());
