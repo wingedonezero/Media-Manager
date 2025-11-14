@@ -13,6 +13,7 @@ x [HTTP API] fixed loading the HTTP API on startup
 x [EP] further improve episode detection, when having conflicting values #3130
 x [Library] upgraded Java to 21.0.9
 x [Subtitle] recognize filename flags case insensitive #3132
+x [Subtitle] Remove emtpy values from codecs #3135
 
 
 Version 5.2.3
