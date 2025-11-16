@@ -149,7 +149,7 @@ class MovieImageSettingsPanel extends JPanel {
   private void initComponents() {
     setLayout(new MigLayout("", "[grow]", "[grow]"));
     {
-      JPanel panelScraper = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][grow]", "[][shrink 0][]"));
+      JPanel panelScraper = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][grow]", "[][shrink 0][grow,fill]"));
 
       JLabel lblScraperT = new TmmLabel(TmmResourceBundle.getString("scraper.artwork"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelScraper, lblScraperT, true);
@@ -174,7 +174,7 @@ class MovieImageSettingsPanel extends JPanel {
 
         JPanel panelScraperDetails = new ScrollablePanel();
         panelScraper.add(panelScraperDetails, "cell 1 2,grow");
-        panelScraperDetails.setLayout(new MigLayout("insets 0", "[grow]", "[][grow]"));
+        panelScraperDetails.setLayout(new MigLayout("insets 0", "[400lp,grow]", "[][grow]"));
 
         tpScraperDescription = new ReadOnlyTextPane();
         tpScraperDescription.setEditorKit(new HTMLEditorKit());
@@ -182,7 +182,7 @@ class MovieImageSettingsPanel extends JPanel {
 
         panelScraperOptions = new JPanel();
         panelScraperOptions.setLayout(new FlowLayout(FlowLayout.LEFT));
-        panelScraperDetails.add(panelScraperOptions, "cell 0 1,grow");
+        panelScraperDetails.add(panelScraperOptions, "cell 0 1, growx, wmin 0");
       }
     }
 
