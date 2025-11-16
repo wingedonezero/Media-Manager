@@ -23,10 +23,14 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The class {@link EventBus} is used to deliver messages/events inside the whole application
@@ -34,11 +38,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Manuel Laggner
  */
 public class EventBus {
+  private static final Logger                    LOGGER           = LoggerFactory.getLogger(EventBus.class);
+  private static final EventBus                  INSTANCE         = new EventBus();
+
   public static String                           TOPIC_MOVIES     = "movies";
   public static String                           TOPIC_MOVIE_SETS = "movieSets";
   public static String                           TOPIC_TV_SHOWS   = "tvShows";
-
-  private static final EventBus                  INSTANCE         = new EventBus();
 
   private final ReentrantReadWriteLock           readWriteLock;
   private final Map<String, Set<IEventListener>> listeners;
@@ -51,7 +56,11 @@ public class EventBus {
     listeners = new HashMap<>();
     events = new HashMap<>();
 
-    executor = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "event-bus"));
+    executor = Executors.newSingleThreadScheduledExecutor(r -> {
+      Thread thread = new Thread(r, "event-bus");
+      thread.setDaemon(true); // Prevent hanging on shutdown
+      return thread;
+    });
   }
 
   /**
@@ -63,9 +72,12 @@ public class EventBus {
    *          the {@link IEventListener} to add for this topic
    */
   public static void registerListener(String topic, IEventListener listener) {
+    Objects.requireNonNull(topic, "topic cannot be null");
+    Objects.requireNonNull(listener, "listener cannot be null");
+
     try {
       INSTANCE.readWriteLock.writeLock().lock();
-      Set<IEventListener> listeners = INSTANCE.listeners.computeIfAbsent(topic, k -> new HashSet<>());
+      Set<IEventListener> listeners = INSTANCE.listeners.computeIfAbsent(topic, k -> ConcurrentHashMap.newKeySet());
       listeners.add(listener);
     }
     finally {
@@ -82,11 +94,17 @@ public class EventBus {
    *          the {@link IEventListener} to be removed
    */
   public synchronized static void removeListener(String topic, IEventListener listener) {
+    Objects.requireNonNull(topic, "topic cannot be null");
+    Objects.requireNonNull(listener, "listener cannot be null");
+
     try {
       INSTANCE.readWriteLock.writeLock().lock();
       Set<IEventListener> listeners = INSTANCE.listeners.get(topic);
       if (listeners != null) {
         listeners.remove(listener);
+        if (listeners.isEmpty()) {
+          INSTANCE.listeners.remove(topic); // Clean up empty topics
+        }
       }
     }
     finally {
@@ -103,6 +121,9 @@ public class EventBus {
    *          the {@link Event} to be sent
    */
   public static void publishEvent(String topic, Event event) {
+    Objects.requireNonNull(topic, "topic cannot be null");
+    Objects.requireNonNull(event, "event cannot be null");
+
     try {
       INSTANCE.readWriteLock.writeLock().lock();
       INSTANCE.events.computeIfAbsent(topic, k -> new LinkedHashSet<>()).add(event);
@@ -125,9 +146,16 @@ public class EventBus {
           INSTANCE.readWriteLock.writeLock().unlock();
         }
 
+        // Dispatch events
         for (Event e : events) {
           for (IEventListener listener : listeners) {
-            listener.processEvent(e);
+            try {
+              listener.processEvent(e);
+            }
+            catch (Exception ex) {
+              // Log but don't let one listener failure affect others
+              LOGGER.debug("Error processing event: '{}'", ex.getMessage());
+            }
           }
         }
       };
@@ -137,6 +165,20 @@ public class EventBus {
     }
     finally {
       INSTANCE.readWriteLock.writeLock().unlock();
+    }
+  }
+
+  // Graceful shutdown
+  public static void shutdown() {
+    INSTANCE.executor.shutdown();
+    try {
+      if (!INSTANCE.executor.awaitTermination(1, TimeUnit.SECONDS)) {
+        INSTANCE.executor.shutdownNow();
+      }
+    }
+    catch (InterruptedException e) {
+      INSTANCE.executor.shutdownNow();
+      Thread.currentThread().interrupt();
     }
   }
 }
