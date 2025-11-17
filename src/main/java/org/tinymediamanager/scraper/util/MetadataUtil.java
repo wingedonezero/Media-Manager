@@ -65,8 +65,9 @@ public class MetadataUtil {
     if (searchTitle != null && searchTitle.matches(".* \\d{4}$")) { // ends with space+year
       score3 = Similarity.compareStrings(searchTitle.replaceFirst(" \\d{4}$", ""), matchTitle);
     }
+    float score4 = AdvancedSimilarity.compareStrings(searchTitle, matchTitle);
 
-    return Math.max(score1, Math.max(score3, score2));
+    return Math.max(score1, Math.max(score2, Math.max(score3, score4)));
   }
 
   /**

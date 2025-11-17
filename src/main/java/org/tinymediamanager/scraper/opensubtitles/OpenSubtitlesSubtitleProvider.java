@@ -47,7 +47,7 @@ import org.tinymediamanager.scraper.interfaces.IMediaProvider;
 import org.tinymediamanager.scraper.opensubtitles.model.Info;
 import org.tinymediamanager.scraper.util.LanguageUtils;
 import org.tinymediamanager.scraper.util.MediaIdUtil;
-import org.tinymediamanager.scraper.util.Similarity;
+import org.tinymediamanager.scraper.util.MetadataUtil;
 
 /**
  * OpensubtitlesMetadataProvider provides subtitle scraping from OpenSubtitles.org
@@ -275,7 +275,7 @@ abstract class OpenSubtitlesSubtitleProvider implements IMediaProvider {
         Info info = new Info((Map<String, Object>) methodCall("SearchSubtitles", arrayQuery));
         for (Info.MovieInfo movieInfo : info.getMovieInfo()) {
           // degrade maximal search score of title search to 0.8
-          float score = 0.8f * Similarity.compareStrings(options.getSearchQuery(), movieInfo.movieTitle);
+          float score = 0.8f * MetadataUtil.calculateScore(options.getSearchQuery(), movieInfo.movieTitle);
 
           SubtitleSearchResult result = morphSearchResult(movieInfo);
           result.setScore(score);
