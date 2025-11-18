@@ -141,7 +141,8 @@ class FileTypesSettingsPanel extends JPanel {
           Pattern.compile(tfCleanupFiletype.getText());
         }
         catch (PatternSyntaxException ex) {
-          TmmToastManager.showErrorToast(this, TmmResourceBundle.getString("message.regex.error"));
+          TmmToastManager.showErrorToast(this, TmmResourceBundle.getString("Settings.unwantedfiletypes"),
+              TmmResourceBundle.getString("message.regex.error"));
           return;
         }
         Settings.getInstance().addCleanupFileType(tfCleanupFiletype.getText());

@@ -403,7 +403,8 @@ class UiSettingsPanel extends JPanel {
       Locale actualLocale = Utils.getLocaleFromLanguage(settings.getLanguage());
       if (!locale.equals(actualLocale)) {
         settings.setLanguage(locale.toString());
-        TmmToastManager.showWarningToast(this, TmmResourceBundle.getString("Settings.languagehint"));
+        TmmToastManager.showWarningToast(this, TmmResourceBundle.getString("Settings.language"),
+            TmmResourceBundle.getString("Settings.languagehint"));
       }
     }
 
@@ -416,7 +417,7 @@ class UiSettingsPanel extends JPanel {
         TmmUIHelper.updateUI();
       }
       catch (Exception e) {
-        TmmToastManager.showWarningToast(this, TmmResourceBundle.getString("Settings.uitheme.hint"));
+        TmmToastManager.showWarningToast(this, TmmResourceBundle.getString("Settings.uitheme"), TmmResourceBundle.getString("Settings.uitheme.hint"));
       }
     }
 

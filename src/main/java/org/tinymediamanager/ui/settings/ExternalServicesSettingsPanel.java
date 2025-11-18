@@ -83,10 +83,12 @@ class ExternalServicesSettingsPanel extends JPanel {
     btnTestTraktConnection.addActionListener(e -> {
       try {
         TraktTv.getInstance().refreshAccessToken();
-        TmmToastManager.showSuccessToast(this, TmmResourceBundle.getString("Settings.trakt.testconnection.good"));
+        TmmToastManager.showSuccessToast(this, TmmResourceBundle.getString("Settings.trakttv"),
+            TmmResourceBundle.getString("Settings.trakt.testconnection.good"));
       }
       catch (Exception e1) {
-        TmmToastManager.showErrorToast(this, TmmResourceBundle.getString("Settings.trakt.testconnection.bad"));
+        TmmToastManager.showErrorToast(this, TmmResourceBundle.getString("Settings.trakttv"),
+            TmmResourceBundle.getString("Settings.trakt.testconnection.bad"));
       }
     });
     btnTestTraktConnection.setEnabled(License.getInstance().isValidLicense());
@@ -99,7 +101,8 @@ class ExternalServicesSettingsPanel extends JPanel {
     }
     catch (Exception e1) {
       // browser could not be opened, show a dialog box
-      TmmToastManager.showErrorToast(this, TmmResourceBundle.getString("Settings.trakt.getpin.fallback"));
+      TmmToastManager.showErrorToast(this, TmmResourceBundle.getString("Settings.trakttv"),
+          TmmResourceBundle.getString("Settings.trakt.getpin.fallback"));
     }
 
     // let the user insert the pin

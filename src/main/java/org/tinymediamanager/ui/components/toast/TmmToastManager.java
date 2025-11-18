@@ -61,6 +61,34 @@ public class TmmToastManager {
   }
 
   /**
+   * Show a toast message with an optional title on the window containing the given component.
+   * <p>
+   * The title will be rendered in bold above the message text if provided.
+   * </p>
+   *
+   * @param component
+   *          the component (e.g., a panel) from which to show the toast
+   * @param title
+   *          the optional title (rendered bold); may be null or empty
+   * @param message
+   *          the message text to display
+   * @param type
+   *          the toast type (INFO, SUCCESS, WARNING, ERROR)
+   * @param durationMs
+   *          the duration in milliseconds before the toast fades out
+   */
+  public static void showToast(Component component, String title, String message, TmmToast.ToastType type, int durationMs) {
+    if (component == null) {
+      return;
+    }
+    Window window = SwingUtilities.getWindowAncestor(component);
+    if (window != null) {
+      TmmToast toast = TmmToast.install(window);
+      toast.showToast(title, message, type, durationMs);
+    }
+  }
+
+  /**
    * Show an INFO toast message with default 3 second duration.
    *
    * @param component
@@ -70,6 +98,20 @@ public class TmmToastManager {
    */
   public static void showToast(Component component, String message) {
     showToast(component, message, TmmToast.ToastType.INFO, 3000);
+  }
+
+  /**
+   * Show an INFO toast message with an optional title and default 3 second duration.
+   *
+   * @param component
+   *          the component from which to show the toast
+   * @param title
+   *          the optional title (rendered bold); may be null or empty
+   * @param message
+   *          the message text to display
+   */
+  public static void showToast(Component component, String title, String message) {
+    showToast(component, title, message, TmmToast.ToastType.INFO, 3000);
   }
 
   /**
@@ -85,6 +127,20 @@ public class TmmToastManager {
   }
 
   /**
+   * Show a SUCCESS toast message with an optional title and default 3 second duration.
+   *
+   * @param component
+   *          the component from which to show the toast
+   * @param title
+   *          the optional title (rendered bold); may be null or empty
+   * @param message
+   *          the message text to display
+   */
+  public static void showSuccessToast(Component component, String title, String message) {
+    showToast(component, title, message, TmmToast.ToastType.SUCCESS, 3000);
+  }
+
+  /**
    * Show a WARNING toast message with default 4 second duration.
    *
    * @param component
@@ -97,6 +153,20 @@ public class TmmToastManager {
   }
 
   /**
+   * Show a WARNING toast message with an optional title and default 4 second duration.
+   *
+   * @param component
+   *          the component from which to show the toast
+   * @param title
+   *          the optional title (rendered bold); may be null or empty
+   * @param message
+   *          the message text to display
+   */
+  public static void showWarningToast(Component component, String title, String message) {
+    showToast(component, title, message, TmmToast.ToastType.WARNING, 4000);
+  }
+
+  /**
    * Show an ERROR toast message with default 5 second duration.
    *
    * @param component
@@ -106,6 +176,20 @@ public class TmmToastManager {
    */
   public static void showErrorToast(Component component, String message) {
     showToast(component, message, TmmToast.ToastType.ERROR, 5000);
+  }
+
+  /**
+   * Show an ERROR toast message with an optional title and default 5 second duration.
+   *
+   * @param component
+   *          the component from which to show the toast
+   * @param title
+   *          the optional title (rendered bold); may be null or empty
+   * @param message
+   *          the message text to display
+   */
+  public static void showErrorToast(Component component, String title, String message) {
+    showToast(component, title, message, TmmToast.ToastType.ERROR, 5000);
   }
 
   /**

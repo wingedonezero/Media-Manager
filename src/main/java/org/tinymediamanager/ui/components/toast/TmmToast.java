@@ -18,6 +18,7 @@ package org.tinymediamanager.ui.components.toast;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -59,6 +60,8 @@ public class TmmToast extends JComponent {
   private static final int                           PADDING_H = 16;
   private static final int                           PADDING_V = 12;
   private static final int                           ARC       = 8;
+  /** gap between title and message */
+  private static final int                           TITLE_GAP = 4;
 
   /** the window which owns this toast instance */
   private Window                                     ownerWindow;
@@ -184,7 +187,7 @@ public class TmmToast extends JComponent {
         else if (rpc.getGlassPane() == this) {
           // fallback: set a fresh default glass pane
           JComponent defaultGp = new JComponent() {
-            private static final long serialVersionUID = 1L;
+            // no state
           };
           defaultGp.setVisible(false);
           rpc.getRootPane().setGlassPane(defaultGp);
@@ -217,7 +220,7 @@ public class TmmToast extends JComponent {
     }
     SwingUtilities.invokeLater(() -> {
       synchronized (toasts) {
-        toasts.add(0, new ToastMessage(message, type, durationMs));
+        toasts.add(0, new ToastMessage(null, message, type, durationMs));
       }
       // ensure animator is running
       if (!animator.isRunning()) {
@@ -235,6 +238,48 @@ public class TmmToast extends JComponent {
    */
   public void showToast(final String message) {
     showToast(message, ToastType.INFO, 3000);
+  }
+
+  /**
+   * Show a toast message with an optional title on this glass pane.
+   * <p>
+   * The title is rendered in bold above the message text.
+   * </p>
+   *
+   * @param title
+   *          the optional title (rendered bold); may be null or empty
+   * @param message
+   *          the text to display (required)
+   * @param type
+   *          the toast type (determines color)
+   * @param durationMs
+   *          duration in milliseconds before fade-out begins
+   */
+  public void showToast(final String title, final String message, final ToastType type, final int durationMs) {
+    if (message == null || message.trim().isEmpty()) {
+      return;
+    }
+    SwingUtilities.invokeLater(() -> {
+      synchronized (toasts) {
+        toasts.add(0, new ToastMessage(title, message, type, durationMs));
+      }
+      if (!animator.isRunning()) {
+        animator.start();
+      }
+      repaint();
+    });
+  }
+
+  /**
+   * Show a toast with an optional title, default INFO type and 3 second duration.
+   *
+   * @param title
+   *          the optional title (rendered bold); may be null or empty
+   * @param message
+   *          the text to display (required)
+   */
+  public void showToast(final String title, final String message) {
+    showToast(title, message, ToastType.INFO, 3000);
   }
 
   /**
@@ -336,19 +381,37 @@ public class TmmToast extends JComponent {
    */
   private Dimension calculateToastSize(Graphics2D g2, ToastMessage toast) {
     FontMetrics fm = g2.getFontMetrics();
+    Font titleFont = g2.getFont().deriveFont(g2.getFont().getStyle() | Font.BOLD);
+    FontMetrics tfm = g2.getFontMetrics(titleFont);
+
     int windowWidth = getWidth();
     int maxTextWidth = Math.min(MAX_WIDTH - 2 * PADDING_H, windowWidth - 2 * (MARGIN + PADDING_H));
 
     // calculate text dimensions with word wrapping
-    List<String> lines = wrapText(toast.message, fm, maxTextWidth);
-    int textHeight = lines.size() * fm.getHeight();
-    int textWidth = 0;
-    for (String line : lines) {
-      textWidth = Math.max(textWidth, fm.stringWidth(line));
+    List<String> messageLines = wrapText(toast.message, fm, maxTextWidth);
+    int messageTextHeight = messageLines.size() * fm.getHeight();
+    int messageTextWidth = 0;
+    for (String line : messageLines) {
+      messageTextWidth = Math.max(messageTextWidth, fm.stringWidth(line));
     }
 
-    int width = Math.min(MAX_WIDTH, textWidth + 2 * PADDING_H);
-    int height = textHeight + 2 * PADDING_V;
+    int titleTextHeight = 0;
+    int titleTextWidth = 0;
+    if (toast.title != null && !toast.title.trim().isEmpty()) {
+      List<String> titleLines = wrapText(toast.title, tfm, maxTextWidth);
+      titleTextHeight = titleLines.size() * tfm.getHeight();
+      for (String line : titleLines) {
+        titleTextWidth = Math.max(titleTextWidth, tfm.stringWidth(line));
+      }
+    }
+
+    int contentWidth = Math.max(messageTextWidth, titleTextWidth);
+    int width = Math.min(MAX_WIDTH, contentWidth + 2 * PADDING_H);
+
+    int height = messageTextHeight + 2 * PADDING_V;
+    if (titleTextHeight > 0) {
+      height += titleTextHeight + TITLE_GAP;
+    }
 
     return new Dimension(width, height);
   }
@@ -429,7 +492,25 @@ public class TmmToast extends JComponent {
     int textX = x + PADDING_H;
     int textY = y + PADDING_V + fm.getAscent();
 
-    // draw wrapped text
+    // draw title if present (bold)
+    if (toast.title != null && !toast.title.trim().isEmpty()) {
+      Font original = g2.getFont();
+      Font bold = original.deriveFont(original.getStyle() | Font.BOLD);
+      g2.setFont(bold);
+      FontMetrics tfm = g2.getFontMetrics();
+      List<String> titleLines = wrapText(toast.title, tfm, size.width - 2 * PADDING_H);
+      for (String line : titleLines) {
+        g2.drawString(line, textX, textY);
+        textY += tfm.getHeight();
+      }
+      // gap between title and message
+      textY += TITLE_GAP;
+      // restore normal font for message
+      g2.setFont(original);
+      fm = g2.getFontMetrics();
+    }
+
+    // draw wrapped message text
     List<String> lines = wrapText(toast.message, fm, size.width - 2 * PADDING_H);
     for (String line : lines) {
       g2.drawString(line, textX, textY);
@@ -441,6 +522,8 @@ public class TmmToast extends JComponent {
    * The Class {@link ToastMessage} represents a single toast notification.
    */
   private static class ToastMessage {
+    /** optional title (rendered bold) */
+    final String    title;
     final String    message;
     final ToastType type;
     final long      createdAt;
@@ -451,7 +534,8 @@ public class TmmToast extends JComponent {
     final int       fadeInMs       = 250;
     final int       fadeDurationMs = 600;
 
-    ToastMessage(String message, ToastType type, int durationMs) {
+    ToastMessage(String title, String message, ToastType type, int durationMs) {
+      this.title = title;
       this.message = message;
       this.type = type == null ? ToastType.INFO : type;
       this.createdAt = System.currentTimeMillis();
@@ -480,13 +564,13 @@ public class TmmToast extends JComponent {
     Color getBackgroundColor() {
       switch (this) {
         case SUCCESS:
-          return new Color(67, 160, 71);
+          return new Color(34, 197, 94);
 
         case WARNING:
-          return new Color(251, 140, 0);
+          return new Color(234, 179, 0);
 
         case ERROR:
-          return new Color(229, 57, 53);
+          return new Color(239, 68, 68);
 
         case INFO:
         default:
@@ -527,7 +611,7 @@ public class TmmToast extends JComponent {
      * @return the text color
      */
     Color getTextColor() {
-      return Color.WHITE;
+      return Color.BLACK;
     }
   }
 }

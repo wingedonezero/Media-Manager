@@ -173,7 +173,8 @@ class TvShowDatasourceSettingsPanel extends JPanel {
           Pattern.compile(tfAddBadword.getText());
         }
         catch (PatternSyntaxException ex) {
-          TmmToastManager.showErrorToast(this, TmmResourceBundle.getString("message.regex.error"));
+          TmmToastManager.showErrorToast(this, TmmResourceBundle.getString("Settings.movie.badwords"),
+              TmmResourceBundle.getString("message.regex.error"));
           return;
         }
         TvShowModuleManager.getInstance().getSettings().addBadWord(tfAddBadword.getText());

@@ -11,6 +11,7 @@ The `TmmToast` system provides elegant, non-intrusive toast notifications for Tm
 - **Smooth Animations**: Fade-in, slide-in, and fade-out animations at 60 FPS with easing
 - **Type-based Styling**: Four toast types (INFO, SUCCESS, WARNING, ERROR) with distinct colors
 - **Text Wrapping**: Automatically wraps long messages to multiple lines
+- **Optional Title**: Render an optional bold title above the message
 - **Theme Aware**: Adapts INFO toast colors based on the current UI theme (light/dark)
 - **Optimized Performance**: Timer only runs when toasts are active
 - **Automatic Cleanup**: Automatically uninstalls when TmmDialog is disposed to prevent memory leaks
@@ -23,7 +24,7 @@ The main class that provides the toast functionality. It extends `JComponent` an
 
 **Key Features:**
 - Singleton per window (using WeakHashMap to prevent memory leaks)
-- Timer-based animation system (30 FPS)
+- Timer-based animation system (60 FPS)
 - Supports multiple concurrent toasts with vertical stacking
 - Automatic lifecycle management (fade-in → display → fade-out → removal)
 
@@ -32,9 +33,9 @@ The main class that provides the toast functionality. It extends `JComponent` an
 Defines the visual appearance of toasts:
 
 - **INFO**: Neutral color (adapts to theme)
-- **SUCCESS**: Green (#43A047)
-- **WARNING**: Orange (#FB8C00)
-- **ERROR**: Red (#E53935)
+- **SUCCESS**: Green
+- **WARNING**: Amber/Orange
+- **ERROR**: Red
 
 ## Usage
 
@@ -66,6 +67,8 @@ public class MyDialog extends TmmDialog {
 }
 ```
 
+Note: Title support is available via `TmmToastManager` or direct `TmmToast` usage.
+
 ### Usage from Embedded Panels (TmmToastManager)
 
 When working with panels embedded in dialogs that don't have direct access to the parent dialog, use `TmmToastManager`:
@@ -80,14 +83,17 @@ public class MySettingsPanel extends JPanel {
     
     // Show toast using TmmToastManager - it automatically finds the parent window
     TmmToastManager.showSuccessToast(this, "Settings saved successfully");
+
+    // Show toast with a bold title above the message
+    TmmToastManager.showSuccessToast(this, "Operation complete", "Settings saved successfully");
   }
   
   private void onError() {
-    TmmToastManager.showErrorToast(this, "Failed to validate input");
+    TmmToastManager.showErrorToast(this, "Validation failed", "Failed to validate input");
   }
   
   private void onWarning() {
-    TmmToastManager.showWarningToast(this, "Some values were adjusted");
+    TmmToastManager.showWarningToast(this, "Be careful", "Some values were adjusted");
   }
   
   private void onInfo() {
@@ -102,24 +108,35 @@ public class MySettingsPanel extends JPanel {
 
 #### In TmmDialog (for dialog subclasses)
 
-#### In TmmDialog (for dialog subclasses)
-
 - `showToast(String message)` - Shows an INFO toast with 3 second duration.
 - `showSuccessToast(String message)` - Shows a SUCCESS toast with 3 second duration.
 - `showWarningToast(String message)` - Shows a WARNING toast with 4 second duration.
 - `showErrorToast(String message)` - Shows an ERROR toast with 5 second duration.
 - `showToast(String message, TmmToast.ToastType type, int durationMs)` - Shows a toast with custom type and duration.
 
+#### In TmmToast (instance methods)
+
+- `showToast(String message)` - INFO toast, 3s duration.
+- `showToast(String message, ToastType type, int durationMs)` - Custom type and duration.
+- `showToast(String title, String message)` - INFO toast with a bold title above the message, 3s duration.
+- `showToast(String title, String message, ToastType type, int durationMs)` - Custom type/duration with bold title.
+
 #### In TmmToastManager (for embedded panels and components)
 
-- `TmmToastManager.showToast(Component, String message)` - Shows an INFO toast with 3 second duration.
-- `TmmToastManager.showSuccessToast(Component, String message)` - Shows a SUCCESS toast with 3 second duration.
-- `TmmToastManager.showWarningToast(Component, String message)` - Shows a WARNING toast with 4 second duration.
-- `TmmToastManager.showErrorToast(Component, String message)` - Shows an ERROR toast with 5 second duration.
-- `TmmToastManager.showToast(Component, String message, ToastType type, int durationMs)` - Shows a toast with custom type and duration.
+- `TmmToastManager.showToast(Component, String message)` - INFO toast, 3s duration.
+- `TmmToastManager.showToast(Component, String title, String message)` - INFO toast with bold title, 3s duration.
+- `TmmToastManager.showToast(Component, String message, ToastType type, int durationMs)` - Custom type/duration.
+- `TmmToastManager.showToast(Component, String title, String message, ToastType type, int durationMs)` - Custom
+  type/duration with bold title.
+- `TmmToastManager.showSuccessToast(Component, String message)` - SUCCESS toast, 3s duration.
+- `TmmToastManager.showSuccessToast(Component, String title, String message)` - SUCCESS toast with bold title, 3s
+  duration.
+- `TmmToastManager.showWarningToast(Component, String message)` - WARNING toast, 4s duration.
+- `TmmToastManager.showWarningToast(Component, String title, String message)` - WARNING toast with bold title, 4s
+  duration.
+- `TmmToastManager.showErrorToast(Component, String message)` - ERROR toast, 5s duration.
+- `TmmToastManager.showErrorToast(Component, String title, String message)` - ERROR toast with bold title, 5s duration.
 - `TmmToastManager.getToast(Component)` - Gets the TmmToast instance for advanced usage.
-- `TmmToastManager.uninstall(Component)` - Uninstalls the toast system for the component's window.
-- `TmmToastManager.uninstall(Window)` - Uninstalls the toast system for the specified window.
 
 ### Direct TmmToast Usage (Advanced)
 
@@ -128,7 +145,12 @@ For non-TmmDialog windows, you can use TmmToast directly:
 ```java
 Window myWindow = ...;
 TmmToast toast = TmmToast.install(myWindow);
+
 toast.showToast("Hello", TmmToast.ToastType.INFO, 3000);
+// With title:
+toast.
+
+showToast("Operation complete","All items processed successfully",TmmToast.ToastType.SUCCESS, 3000);
 
 // When done, uninstall to restore previous glass pane
 TmmToast.uninstall(myWindow);
@@ -157,9 +179,6 @@ public class MyDialog extends TmmDialog {
 If you're using toasts outside of TmmDialog or need explicit cleanup:
 
 ```java
-// From a panel
-TmmToastManager.uninstall(this);
-
 // From a window
 TmmToast.uninstall(myWindow);
 ```
@@ -200,6 +219,7 @@ The toast system uses `WeakHashMap` to store window-to-toast mappings, which mea
 - **Padding (horizontal)**: 16px
 - **Padding (vertical)**: 12px
 - **Border radius**: 8px
+- **Title/message gap**: 4px
 
 ## Testing
 
@@ -214,6 +234,7 @@ The test dialog includes buttons to:
 - Show each toast type
 - Show multiple toasts simultaneously
 - Show a long message with text wrapping
+- Show titled toasts
 
 ## Implementation Details
 
@@ -244,7 +265,7 @@ All toast operations are executed on the Event Dispatch Thread (EDT) using `Swin
 
 - Uses `WeakHashMap` to store toast instances per window
 - Automatic cleanup when TmmDialog is disposed
-- Manual uninstall available via `TmmToast.uninstall(window)` or `TmmToastManager.uninstall(component)`
+- Manual uninstall available via `TmmToast.uninstall(window)`
 - Restores previous glass pane on uninstall
 - Removes all listeners and stops timers to prevent memory leaks
 - Weak references allow garbage collection of closed windows
@@ -295,9 +316,9 @@ public class MySettingsPanel extends JPanel {
   private void onApplySettings() {
     if (validateInput()) {
       applySettings();
-      TmmToastManager.showSuccessToast(this, "Settings applied successfully");
+      TmmToastManager.showSuccessToast(this, "All done", "Settings applied successfully");
     } else {
-      TmmToastManager.showWarningToast(this, "Please correct the validation errors");
+      TmmToastManager.showWarningToast(this, "Please review", "Some validation issues found");
     }
   }
 }
@@ -314,11 +335,11 @@ private void processItems() {
     // Process item
     processed++;
     if (processed % 10 == 0) {
-      showToast("Processed " + processed + " of " + total);
+      TmmToastManager.showToast(this, "Progress", "Processed " + processed + " of " + total);
     }
   }
-  
-  showSuccessToast("All items processed!");
+
+  TmmToastManager.showSuccessToast(this, "Completed", "All items processed!");
 }
 ```
 
@@ -327,7 +348,7 @@ private void processItems() {
 ```java
 private void validateInput() {
   if (inputField.getText().isEmpty()) {
-    showWarningToast("Please enter a value");
+    TmmToastManager.showWarningToast(this, "Missing value", "Please enter a value");
     return;
   }
   // Continue processing
