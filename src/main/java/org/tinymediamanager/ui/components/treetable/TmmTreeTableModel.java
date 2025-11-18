@@ -56,6 +56,7 @@ public class TmmTreeTableModel implements ITmmTreeTableModel {
     this.tableModel = new ConnectorTableModel(tableFormat, this);
 
     this.layout = new VariableHeightLayoutCache();
+    this.layout.setRowHeight(1);
     this.layout.setModel(this);
     this.layout.setRootVisible(true);
     this.treePathSupport = new TmmTreeTableTreePathSupport(layout);

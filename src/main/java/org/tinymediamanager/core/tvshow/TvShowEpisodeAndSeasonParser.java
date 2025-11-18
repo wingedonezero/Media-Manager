@@ -308,16 +308,19 @@ public class TvShowEpisodeAndSeasonParser {
     result.stackingMarkerFound = !Utils.getStackingMarker(filename).isEmpty();
     result.name = basename.strip();
 
-    // parse all long named season names, and remove
+    // 1. Parse S/EE patterns first
+    // new: handle ranges like S01E05-07 -> expand to E:5 E:6 E:7 (only when end > start)
+    result = parseSeasonMultiEPRange(result, basename + foldername);
+    result = parseSeasonMultiEP(result, basename + foldername);
+    result = parseSeasonMultiEP2(result, basename + foldername);
+
+    // 2. Parse either S or EE patterns second
+    // parse all long named season names (w/o episodes), and remove
     result = parseSeasonLong(result, basename + foldername);
     if (result.season != -1) {
       basename = basename.replaceAll("(?i)" + SEASON_LONG.toString(), "");
       foldername = foldername.replaceAll("(?i)" + SEASON_LONG.toString(), "");
     }
-    // new: handle ranges like S01E05-07 -> expand to E:5 E:6 E:7 (only when end > start)
-    result = parseSeasonMultiEPRange(result, basename + foldername);
-    result = parseSeasonMultiEP(result, basename + foldername);
-    result = parseSeasonMultiEP2(result, basename + foldername);
     result = parseEpisodePattern(result, basename);
 
     if (result.season == -1 && !StringUtils.isBlank(foldername)) {

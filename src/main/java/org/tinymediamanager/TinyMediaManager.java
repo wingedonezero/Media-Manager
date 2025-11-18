@@ -60,6 +60,7 @@ import org.tinymediamanager.core.TmmModuleManager;
 import org.tinymediamanager.core.TmmProperties;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.Utils;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.entities.MediaGenres;
 import org.tinymediamanager.core.http.TmmHttpServer;
 import org.tinymediamanager.core.movie.MovieModuleManager;
@@ -477,7 +478,8 @@ public final class TinyMediaManager {
       try {
         // no need for start, because after creation the server is
         // automatically started
-        TmmHttpServer.getInstance();
+        Settings settings = Settings.getInstance();
+        TmmHttpServer.getInstance().updateConfiguration(settings.isEnableHttpServer(), settings.getHttpServerPort(), settings.getHttpApiKey());
       }
       catch (Exception e) {
         LOGGER.error("Could not start web server - '{}'", e.getMessage());
@@ -524,9 +526,8 @@ public final class TinyMediaManager {
 
     try {
       // Start or configure UPnP according to settings (enable flag and configured port)
-      Upnp.getInstance()
-          .updateConfiguration(Settings.getInstance().isUpnpShareLibrary(), Settings.getInstance().isUpnpRemotePlay(),
-              Settings.getInstance().getUpnpPort());
+      Settings settings = Settings.getInstance();
+      Upnp.getInstance().updateConfiguration(settings.isUpnpShareLibrary(), settings.isUpnpRemotePlay(), settings.getUpnpPort());
     }
     catch (Exception e) {
       LOGGER.error("Could not start UPnP server - '{}'", e.getMessage());
@@ -665,6 +666,8 @@ public final class TinyMediaManager {
   public static void shutdown() {
     LOGGER.info("Shutting down tinyMediaManager");
     try {
+      // stop all events
+      EventBus.shutdown();
       // persist all stored properties
       TmmProperties.getInstance().writeProperties();
       // Send correct Upnp byebye

@@ -1,11 +1,14 @@
 package org.tinymediamanager.scraper.util;
 
 import java.text.ParseException;
+import java.util.HexFormat;
 
 import org.apache.commons.text.WordUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tinymediamanager.core.BasicTest;
+
+import jakarta.xml.bind.DatatypeConverter;
 
 public class StrgUtilsTest extends BasicTest {
 
@@ -26,7 +29,27 @@ public class StrgUtilsTest extends BasicTest {
 
   @Test
   public void hex() {
-    Assert.assertEquals("6162636465666768", StrgUtils.bytesToHex("abcdefgh".getBytes()));
+    // Assert.assertEquals("6162636465666768", StrgUtils.bytesToHex("abcdefgh".getBytes()));
+    Assert.assertEquals("6162636465666768", HexFormat.of().formatHex("abcdefgh".getBytes()));
+    Assert.assertEquals("6162636465666768", DatatypeConverter.printHexBinary("abcdefgh".getBytes()));
+
+    // AesUtil (lowercase)
+    Assert.assertArrayEquals(DatatypeConverter.parseHexBinary("12ab34cd"), HexFormat.of().parseHex("12ab34cd"));
+
+    // leading zero
+    Assert.assertEquals("105833", Integer.toHexString(1071155)); // old variant, stripping leading zeros
+    Assert.assertEquals("105833", Long.toHexString(1071155L)); // old variant, stripping leading zeros
+    Assert.assertEquals("00105833", HexFormat.of().toHexDigits(1071155));
+    Assert.assertEquals("00105833", HexFormat.of().toHexDigits(1071155L, 8)); // long shortened to 8 chars
+    Assert.assertEquals("0000000000105833", HexFormat.of().toHexDigits(1071155L));
+
+    // HexFormat is lowercase per default
+    Assert.assertEquals(HexFormat.of().toHexDigits(15).toUpperCase(), HexFormat.of().withUpperCase().toHexDigits(15));
+    Assert.assertEquals("f", Integer.toHexString(15)); // old variant, stripping leading zeros
+    Assert.assertEquals("f", Long.toHexString(15L)); // old variant, stripping leading zeros
+    Assert.assertEquals("0000000f", HexFormat.of().toHexDigits(15));
+    Assert.assertEquals("0000000F", HexFormat.of().withUpperCase().toHexDigits(15));
+    Assert.assertEquals("000000000000000f", HexFormat.of().toHexDigits(15L));
   }
 
   @Test

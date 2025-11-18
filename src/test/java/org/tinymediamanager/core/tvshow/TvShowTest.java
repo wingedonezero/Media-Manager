@@ -122,6 +122,8 @@ public class TvShowTest extends BasicTvShowTest {
 
     // ************************************************************************
     // various real world examples
+    assertEqual("S:0 E:1", detectEpisode("Make Some Noise - S00E01 - Cut for Time (Season 1).mkv"));
+    assertEqual("S:0 E:1", detectEpisode("Season 1/Make Some Noise - S00E01 - Cut for Time (Season 1).mkv"));
     assertEqual("S:1 E:6 Split", detectEpisode("Totenfrau： Bis ans Ende (6⧸6).mkv")); // Unicode slash; Split... yes, because of "stacking marker"
     assertEqual("S:2 E:2 Split", detectEpisode("S2/Totenfrau： whatever(2⧸6).mkv")); // ShortSeason
     assertEqual("S:2 E:5 Split", detectEpisode("Season 2/Totenfrau： Bis ans Ende (5⧸6).mkv"));

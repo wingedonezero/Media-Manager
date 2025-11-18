@@ -46,6 +46,7 @@ import org.tinymediamanager.ui.components.button.DocsButton;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.panel.CollapsiblePanel;
 import org.tinymediamanager.ui.components.textfield.ReadOnlyTextArea;
+import org.tinymediamanager.ui.components.toast.TmmToastManager;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -82,12 +83,12 @@ class ExternalServicesSettingsPanel extends JPanel {
     btnTestTraktConnection.addActionListener(e -> {
       try {
         TraktTv.getInstance().refreshAccessToken();
-        JOptionPane.showMessageDialog(MainWindow.getFrame(), TmmResourceBundle.getString("Settings.trakt.testconnection.good"),
-            TmmResourceBundle.getString("Settings.trakt.testconnection"), JOptionPane.INFORMATION_MESSAGE);
+        TmmToastManager.showSuccessToast(this, TmmResourceBundle.getString("Settings.trakttv"),
+            TmmResourceBundle.getString("Settings.trakt.testconnection.good"));
       }
       catch (Exception e1) {
-        JOptionPane.showMessageDialog(MainWindow.getFrame(), TmmResourceBundle.getString("Settings.trakt.testconnection.bad"),
-            TmmResourceBundle.getString("Settings.trakt.testconnection"), JOptionPane.ERROR_MESSAGE);
+        TmmToastManager.showErrorToast(this, TmmResourceBundle.getString("Settings.trakttv"),
+            TmmResourceBundle.getString("Settings.trakt.testconnection.bad"));
       }
     });
     btnTestTraktConnection.setEnabled(License.getInstance().isValidLicense());
@@ -100,8 +101,8 @@ class ExternalServicesSettingsPanel extends JPanel {
     }
     catch (Exception e1) {
       // browser could not be opened, show a dialog box
-      JOptionPane.showMessageDialog(MainWindow.getFrame(), TmmResourceBundle.getString("Settings.trakt.getpin.fallback"),
-          TmmResourceBundle.getString("Settings.trakt.getpin"), JOptionPane.INFORMATION_MESSAGE);
+      TmmToastManager.showErrorToast(this, TmmResourceBundle.getString("Settings.trakttv"),
+          TmmResourceBundle.getString("Settings.trakt.getpin.fallback"));
     }
 
     // let the user insert the pin
@@ -144,7 +145,7 @@ class ExternalServicesSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[600lp,grow]", "[][15lp!][]"));
+    setLayout(new MigLayout("", "[grow]", "[][15lp!][]"));
     {
       JPanel panelTrakt = new JPanel();
       panelTrakt.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][][10lp!][]")); // 16lp ~ width of the

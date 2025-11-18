@@ -222,7 +222,11 @@ public class TvShowArtworkHelper {
 
     // update DB
     tvShow.saveToDb();
-    tvShow.writeNFO(); // rewrite NFO to get the urls into the NFO
+
+    // rewrite NFO to get the urls into the NFO
+    if (TvShowModuleManager.getInstance().getSettings().isNfoWriteArtworkUrls()) {
+      tvShow.writeNFO();
+    }
   }
 
   /**
@@ -987,7 +991,10 @@ public class TvShowArtworkHelper {
       tvShow.getSeasons().forEach(TvShowSeason::writeNfo);
     }
 
-    tvShow.writeNFO(); // to get the artwork urls into the NFO
+    // rewrite NFO to get the urls into the NFO
+    if (TvShowModuleManager.getInstance().getSettings().isNfoWriteArtworkUrls()) {
+      tvShow.writeNFO(); // to get the artwork urls into the NFO
+    }
   }
 
   private static void downloadExtraArtwork(TvShow tvShow, MediaFileType type) {

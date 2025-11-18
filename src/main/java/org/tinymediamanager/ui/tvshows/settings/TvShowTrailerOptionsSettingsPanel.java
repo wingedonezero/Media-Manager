@@ -133,7 +133,7 @@ public class TvShowTrailerOptionsSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("hidemode 0", "[60lp,grow]", "[]"));
+    setLayout(new MigLayout("hidemode 0", "[grow]", "[]"));
     {
       JPanel panelOptions = new JPanel();
       panelOptions.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][][][][][][]")); // 16lp ~ width of the

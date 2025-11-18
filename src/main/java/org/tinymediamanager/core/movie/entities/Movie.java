@@ -66,6 +66,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -87,6 +88,7 @@ import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaGenres;
 import org.tinymediamanager.core.entities.MediaRating;
 import org.tinymediamanager.core.entities.MediaSource;
+import org.tinymediamanager.core.entities.MediaStreamInfo;
 import org.tinymediamanager.core.entities.MediaTrailer;
 import org.tinymediamanager.core.entities.Person;
 import org.tinymediamanager.core.movie.MovieArtworkHelper;
@@ -2589,22 +2591,32 @@ public class Movie extends MediaEntity implements IMediaInformation {
 
   @Override
   public List<String> getMediaInfoSubtitleLanguageList() {
-    List<String> lang = new ArrayList<>(getMainVideoFile().getSubtitleLanguagesList());
+    Set<String> lang = new TreeSet<>(getMainVideoFile().getSubtitleLanguages());
 
     for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO, MediaFileType.SUBTITLE)) {
-      lang.addAll(mf.getSubtitleLanguagesList());
+      lang.addAll(mf.getSubtitleLanguages());
     }
-    return lang;
+    return new ArrayList<>(lang);
   }
 
   @Override
   public List<String> getMediaInfoSubtitleCodecList() {
-    List<String> codecs = new ArrayList<>(getMainVideoFile().getSubtitleCodecList());
+    Set<String> codecs = new TreeSet<>(getMainVideoFile().getSubtitleCodecs());
 
     for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO, MediaFileType.SUBTITLE)) {
-      codecs.addAll(mf.getSubtitleCodecList());
+      codecs.addAll(mf.getSubtitleCodecs());
     }
-    return codecs;
+    return new ArrayList<>(codecs);
+  }
+
+  @Override
+  public List<MediaStreamInfo.Flags> getMediaInfoSubtitleTypeList() {
+    Set<MediaStreamInfo.Flags> types = new TreeSet<>(getMainVideoFile().getSubtitleTypes());
+
+    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO, MediaFileType.SUBTITLE)) {
+      types.addAll(mf.getSubtitleTypes());
+    }
+    return new ArrayList<>(types);
   }
 
   @Override

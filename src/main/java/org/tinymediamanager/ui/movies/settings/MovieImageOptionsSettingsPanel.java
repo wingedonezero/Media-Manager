@@ -116,7 +116,7 @@ class MovieImageOptionsSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[700lp,grow]", "[]"));
+    setLayout(new MigLayout("", "[grow]", "[]"));
 
     {
       JPanel panelOptions = new JPanel();

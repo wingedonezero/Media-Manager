@@ -104,6 +104,7 @@ public class TvShowTreePanel extends TmmListPanel {
   private JLabel                     lblTvShowCountFiltered;
   private JLabel                     lblTvShowCountTotal;
   private SplitButton                btnFilter;
+  private JLabel                     lblSelectedTvShowCount;
   private JLabel                     lblSelectedEpisodeCount;
 
   private JPopupMenu                 popupMenu;
@@ -405,6 +406,9 @@ public class TvShowTreePanel extends TmmListPanel {
       lblTvShowCountTotal = new JLabel("");
       panelTotals.add(lblTvShowCountTotal, "cell 0 0");
 
+      lblSelectedTvShowCount = new JLabel("");
+      panelTotals.add(lblSelectedTvShowCount, "cell 1 0");
+
       JLabel lblEpisodeCount = new JLabel(TmmResourceBundle.getString("metatag.episodes") + ":");
       panelTotals.add(lblEpisodeCount, "flowx,cell 0 1");
 
@@ -514,28 +518,67 @@ public class TvShowTreePanel extends TmmListPanel {
   }
 
   private void updateSelectionSums() {
+    List<TvShow> tvShows = selectionModel.getSelectedTvShows(true);
     List<TvShowEpisode> episodes = selectionModel.getSelectedEpisodes(true);
 
+    // tv show
+    if (tvShows.isEmpty()) {
+      lblSelectedTvShowCount.setVisible(false);
+    }
+    else {
+      String selectedTvShows = TmmResourceBundle.getString("tvshow.selected").replace("{}", String.valueOf(tvShows.size()));
+
+      // Collect all unique media files from selected episodes
+      Set<MediaFile> uniqueMediaFiles = episodes.stream()
+          .filter(e -> tvShows.contains(e.getTvShow()))
+          .flatMap(e -> e.getMediaFiles().stream())
+          .collect(Collectors.toSet());
+
+      uniqueMediaFiles.addAll(tvShows.stream().flatMap(e -> e.getMediaFiles().stream()).collect(Collectors.toSet()));
+
+      double videoFileSize = uniqueMediaFiles.stream()
+          .filter(mediaFile -> mediaFile.getType() == MediaFileType.VIDEO)
+          .mapToLong(MediaFile::getFilesize)
+          .sum() / (1000.0 * 1000.0 * 1000);
+
+      double totalFileSize = uniqueMediaFiles.stream().mapToLong(MediaFile::getFilesize).sum() / (1000.0 * 1000.0 * 1000);
+
+      String text = String.format("%s (%.2f G)", selectedTvShows, totalFileSize);
+      lblSelectedTvShowCount.setText(text);
+      lblSelectedTvShowCount.setVisible(true);
+
+      String selectedEpisodesHint = selectedTvShows + " ("
+          + TmmResourceBundle.getString("tmm.selected.hint1").replace("{}", String.format("%.2f G", videoFileSize)) + " / "
+          + TmmResourceBundle.getString("tmm.selected.hint2").replace("{}", String.format("%.2f G", totalFileSize)) + ")";
+      lblSelectedTvShowCount.setToolTipText(selectedEpisodesHint);
+    }
+
     // episode
-    String selectedEpisodes = TmmResourceBundle.getString("episode.selected").replace("{}", String.valueOf(episodes.size()));
+    if (episodes.isEmpty()) {
+      lblSelectedEpisodeCount.setVisible(false);
+    }
+    else {
+      String selectedEpisodes = TmmResourceBundle.getString("episode.selected").replace("{}", String.valueOf(episodes.size()));
 
-    // Collect all unique media files from selected episodes
-    Set<MediaFile> uniqueMediaFiles = episodes.stream().flatMap(e -> e.getMediaFiles().stream()).collect(Collectors.toSet());
+      // Collect all unique media files from selected episodes
+      Set<MediaFile> uniqueMediaFiles = episodes.stream().flatMap(e -> e.getMediaFiles().stream()).collect(Collectors.toSet());
 
-    double videoFileSize = uniqueMediaFiles.stream()
-        .filter(mediaFile -> mediaFile.getType() == MediaFileType.VIDEO)
-        .mapToLong(MediaFile::getFilesize)
-        .sum() / (1000.0 * 1000.0 * 1000);
+      double videoFileSize = uniqueMediaFiles.stream()
+          .filter(mediaFile -> mediaFile.getType() == MediaFileType.VIDEO)
+          .mapToLong(MediaFile::getFilesize)
+          .sum() / (1000.0 * 1000.0 * 1000);
 
-    double totalFileSize = uniqueMediaFiles.stream().mapToLong(MediaFile::getFilesize).sum() / (1000.0 * 1000.0 * 1000);
+      double totalFileSize = uniqueMediaFiles.stream().mapToLong(MediaFile::getFilesize).sum() / (1000.0 * 1000.0 * 1000);
 
-    String text = String.format("%s (%.2f G)", selectedEpisodes, totalFileSize);
-    lblSelectedEpisodeCount.setText(text);
+      String text = String.format("%s (%.2f G)", selectedEpisodes, totalFileSize);
+      lblSelectedEpisodeCount.setVisible(true);
+      lblSelectedEpisodeCount.setText(text);
 
-    String selectedEpisodesHint = selectedEpisodes + " ("
-        + TmmResourceBundle.getString("tmm.selected.hint1").replace("{}", String.format("%.2f G", videoFileSize)) + " / "
-        + TmmResourceBundle.getString("tmm.selected.hint2").replace("{}", String.format("%.2f G", totalFileSize)) + ")";
-    lblSelectedEpisodeCount.setToolTipText(selectedEpisodesHint);
+      String selectedEpisodesHint = selectedEpisodes + " ("
+          + TmmResourceBundle.getString("tmm.selected.hint1").replace("{}", String.format("%.2f G", videoFileSize)) + " / "
+          + TmmResourceBundle.getString("tmm.selected.hint2").replace("{}", String.format("%.2f G", totalFileSize)) + ")";
+      lblSelectedEpisodeCount.setToolTipText(selectedEpisodesHint);
+    }
   }
 
   public TmmTreeTable getTreeTable() {

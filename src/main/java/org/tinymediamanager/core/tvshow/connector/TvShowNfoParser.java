@@ -95,6 +95,7 @@ public class TvShowNfoParser {
 
   public List<String>               posters             = new ArrayList<>();
   public Map<Integer, String>       seasonTitles        = new HashMap<>();
+  public Map<Integer, String>       seasonPlot          = new HashMap<>();
   public Map<Integer, List<String>> seasonPosters       = new HashMap<>();
   public Map<Integer, List<String>> seasonBanners       = new HashMap<>();
   public Map<Integer, List<String>> seasonThumbs        = new HashMap<>();
@@ -167,6 +168,7 @@ public class TvShowNfoParser {
     parseTag(TvShowNfoParser::parseFanarts);
     parseTag(TvShowNfoParser::parseSeasonArtwork);
     parseTag(TvShowNfoParser::parseSeasonNames);
+    parseTag(TvShowNfoParser::parseSeasonPlot);
     parseTag(TvShowNfoParser::parseCertification);
     parseTag(TvShowNfoParser::parseIds);
     parseTag(TvShowNfoParser::parseReleaseDate);
@@ -911,7 +913,7 @@ public class TvShowNfoParser {
   private Void parseSeasonNames() {
     supportedElements.add("namedseason");
 
-    // get all thumb elements
+    // get all namedseason elements
     Elements namedseasons = root.select(root.tagName() + " > namedseason");
 
     for (Element namedseason : namedseasons) {
@@ -923,6 +925,29 @@ public class TvShowNfoParser {
       }
       catch (Exception e) {
         LOGGER.trace("could not parse named season: {}", e.getMessage());
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * plot season come in the form <seasonplot number="1">plot</seasonplot>
+   */
+  private Void parseSeasonPlot() {
+    supportedElements.add("seasonplot");
+
+    // get all seasonplot elements
+    Elements seasonplots = root.select(root.tagName() + " > seasonplot");
+    for (Element seasonplot : seasonplots) {
+      try {
+        int season = MetadataUtil.parseInt(seasonplot.attr("number"));
+        if (StringUtils.isNotBlank(seasonplot.ownText())) {
+          seasonPlot.put(season, seasonplot.ownText());
+        }
+      }
+      catch (Exception e) {
+        LOGGER.trace("could not parse season plot: {}", e.getMessage());
       }
     }
 
@@ -1538,6 +1563,13 @@ public class TvShowNfoParser {
       if (StringUtils.isNotBlank(entry.getValue())) {
         TvShowSeason tvShowSeason = show.getOrCreateSeason(entry.getKey());
         tvShowSeason.setTitle(entry.getValue());
+      }
+    }
+
+    for (Map.Entry<Integer, String> entry : seasonPlot.entrySet()) {
+      if (StringUtils.isNotBlank(entry.getValue())) {
+        TvShowSeason tvShowSeason = show.getOrCreateSeason(entry.getKey());
+        tvShowSeason.setPlot(entry.getValue());
       }
     }
 

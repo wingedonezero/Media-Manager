@@ -648,6 +648,8 @@ public class TmmTreeModel<E extends TmmTreeNode> extends DefaultTreeModel {
       filteredNodeChildrenCache.remove(child.getId());
     }
 
+    filteredNodeChildrenCache.remove(node.getId());
+
     // and up
     for (Object obj : parent.getPath()) {
       if (obj instanceof TmmTreeNode) {

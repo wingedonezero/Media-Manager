@@ -39,6 +39,9 @@ pom.xml.*
 # KDE plasma
 .directory
 
+# node_modules
+node_modules/
+
 #tinyMediaManager
 addons
 cache

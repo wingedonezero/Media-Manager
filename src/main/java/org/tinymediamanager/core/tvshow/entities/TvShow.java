@@ -85,6 +85,7 @@ import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaGenres;
 import org.tinymediamanager.core.entities.MediaRating;
 import org.tinymediamanager.core.entities.MediaSource;
+import org.tinymediamanager.core.entities.MediaStreamInfo;
 import org.tinymediamanager.core.entities.MediaTrailer;
 import org.tinymediamanager.core.entities.Person;
 import org.tinymediamanager.core.threading.TmmTaskManager;
@@ -174,6 +175,8 @@ public class TvShow extends MediaEntity implements IMediaInformation {
   private final List<TvShowEpisode>               episodes                   = new CopyOnWriteArrayList<>();
   private String                                  titleSortable              = "";
   private Date                                    lastWatched                = null;
+
+  private volatile List<TvShowEpisode>            cachedEpisodesForDisplay;
 
   private static final Comparator<MediaTrailer>   TRAILER_QUALITY_COMPARATOR = new MediaTrailer.QualityComparator();
 
@@ -448,6 +451,8 @@ public class TvShow extends MediaEntity implements IMediaInformation {
       // remove all episodes from all seasons
       seasons.forEach(TvShowSeason::removeAllEpisodes);
 
+      invalidateEpisodeForDisplayCache();
+
       // and rebuild
       for (TvShowEpisode episode : getEpisodesForDisplay()) {
         // add to new season
@@ -631,6 +636,8 @@ public class TvShow extends MediaEntity implements IMediaInformation {
 
     episodes.sort(TvShowEpisode::compareTo);
 
+    invalidateEpisodeForDisplayCache();
+
     firePropertyChange(ADDED_EPISODE, null, episode);
     firePropertyChange(EPISODE_COUNT, oldValue, episodes.size());
 
@@ -670,6 +677,8 @@ public class TvShow extends MediaEntity implements IMediaInformation {
 
     this.dummyEpisodes.sort(TvShowEpisode::compareTo);
 
+    invalidateEpisodeForDisplayCache();
+
     firePropertyChange("dummyEpisodes", null, dummyEpisodes);
     firePropertyChange(EPISODE_COUNT, 0, episodes.size());
   }
@@ -691,6 +700,8 @@ public class TvShow extends MediaEntity implements IMediaInformation {
     // remove from DB
     dummyEpisodes.remove(episode);
     saveToDb();
+
+    invalidateEpisodeForDisplayCache();
   }
 
   /**
@@ -702,7 +713,17 @@ public class TvShow extends MediaEntity implements IMediaInformation {
    * @return a list of _all_ episodes
    */
   public List<TvShowEpisode> getEpisodesForDisplay() {
-    return TvShowHelpers.getEpisodesForDisplay(episodes, dummyEpisodes);
+    if (cachedEpisodesForDisplay == null) {
+      cachedEpisodesForDisplay = Collections.unmodifiableList(TvShowHelpers.getEpisodesForDisplay(episodes, dummyEpisodes));
+    }
+    return cachedEpisodesForDisplay;
+  }
+
+  /**
+   * invalidate the cached episodes for display
+   */
+  void invalidateEpisodeForDisplayCache() {
+    cachedEpisodesForDisplay = null;
   }
 
   /**
@@ -856,6 +877,9 @@ public class TvShow extends MediaEntity implements IMediaInformation {
       int oldValue = episodes.size();
       removeFromSeason(episode);
       episodes.remove(episode);
+
+      invalidateEpisodeForDisplayCache();
+
       TvShowModuleManager.getInstance().getTvShowList().removeEpisodeFromDb(episode);
 
       // and remove the image cache
@@ -891,6 +915,9 @@ public class TvShow extends MediaEntity implements IMediaInformation {
       // just fire the event for updating the UI
       TvShowSeason season = getSeasonForEpisode(episode);
       season.removeEpisode(episode);
+
+      invalidateEpisodeForDisplayCache();
+
       EventBus.publishEvent(TOPIC_TV_SHOWS, Event.createSaveEvent(season));
 
       firePropertyChange(REMOVED_EPISODE, null, episode);
@@ -910,6 +937,9 @@ public class TvShow extends MediaEntity implements IMediaInformation {
       episode.deleteFilesSafely();
       removeFromSeason(episode);
       episodes.remove(episode);
+
+      invalidateEpisodeForDisplayCache();
+
       TvShowModuleManager.getInstance().getTvShowList().removeEpisodeFromDb(episode);
 
       // and remove the image cache
@@ -2416,6 +2446,11 @@ public class TvShow extends MediaEntity implements IMediaInformation {
 
   @Override
   public List<String> getMediaInfoSubtitleCodecList() {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public List<MediaStreamInfo.Flags> getMediaInfoSubtitleTypeList() {
     return Collections.emptyList();
   }
 

@@ -1039,6 +1039,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
     // VIDEO file exchanged - treat this movie as new
     if (videoRemoved && !movie.getMediaFiles(MediaFileType.VIDEO).isEmpty()) {
       movie.setNewlyAdded(true);
+      movie.setOriginalFilename(movie.getMainFile().getFilename());
     }
 
     // set the 3D flag/edition/source from the file/folder name ONLY at first import

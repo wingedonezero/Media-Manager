@@ -23,14 +23,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
@@ -671,12 +674,12 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
   }
 
   /**
-   * gets the subtitle language from all streams as List
+   * gets the subtitle language from all streams as {@link Collection}
    *
-   * @return the subtitle languages as List
+   * @return the subtitle languages as {@link Collection}
    */
-  public List<String> getSubtitleLanguagesList() {
-    List<String> subtitleLanguages = new ArrayList<>();
+  public Collection<String> getSubtitleLanguages() {
+    Set<String> subtitleLanguages = new TreeSet<>();
 
     for (MediaFileSubtitle stream : ListUtils.nullSafe(subtitles)) {
 
@@ -686,26 +689,42 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
       }
       subtitleLanguages.add(stream.getLanguage());
     }
+
     return subtitleLanguages;
   }
 
   /**
-   * gets the subtitle codec from all streams as List
+   * gets the subtitle codec from all streams as {@link Collection}
    *
-   * @return the subtitle languages as List
+   * @return the subtitle languages as {@link Collection}
    */
-  public List<String> getSubtitleCodecList() {
-    List<String> subtitleLanguages = new ArrayList<>();
+  public Collection<String> getSubtitleCodecs() {
+    Set<String> subtitleLanguages = new TreeSet<>();
 
     for (MediaFileSubtitle stream : ListUtils.nullSafe(subtitles)) {
-
       // just in case we couldn't detect the codec name
       if (StringUtils.isBlank(stream.getCodec())) {
         continue;
       }
       subtitleLanguages.add(stream.getCodec());
     }
+
     return subtitleLanguages;
+  }
+
+  /**
+   * gets the subtitle types from all streams as {@link Collection}
+   *
+   * @return the subtitle types as {@link Collection}
+   */
+  public Collection<MediaStreamInfo.Flags> getSubtitleTypes() {
+    Set<MediaStreamInfo.Flags> subtitleTypes = EnumSet.noneOf(MediaStreamInfo.Flags.class);
+
+    for (MediaFileSubtitle stream : ListUtils.nullSafe(subtitles)) {
+      subtitleTypes.addAll(stream.getFlags());
+    }
+
+    return subtitleTypes;
   }
 
   public String getSubtitlesAsString() {

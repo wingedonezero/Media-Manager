@@ -41,9 +41,9 @@ public class MediaSource extends DynaEnum<MediaSource> {
   // the well known and XBMC/Kodi compatible sources
   // tokens taken from http://en.wikipedia.org/wiki/Pirated_movie_release_types
   public static final MediaSource              UHD_BLURAY  = new MediaSource("UHD_BLURAY", 0, "UHD Blu-ray",
-      "(uhd|ultrahd)[ .\\-]?(bluray|blueray|bdrip|brrip|dbrip|bd25|bd50|bdmv|blu\\-ray)");
+      "(uhd|ultrahd)[ .\\-]?(bluray|blueray|bdrip|brrip|dbrip|bd5|bd9|bd25|bd50|bd66|bd100|bdr|bdmv|bdiso|blu\\-ray|remux)");
   public static final MediaSource              BLURAY      = new MediaSource("BLURAY", 1, "Blu-ray",
-      "(bluray|blueray|bdrip|brrip|dbrip|bd25|bd50|bdmv|blu\\-ray)");
+      "(bluray|blueray|bdrip|brrip|dbrip|bd5|bd9|bd25|bd50|bd66|bd100|bdr|bdmv|bdiso|blu\\-ray|bdremux|fullbluray|fullblu-ray)");
   public static final MediaSource              DVD         = new MediaSource("DVD", 2, "DVD", "(dvd|video_ts|dvdrip|dvdr)");
   public static final MediaSource              HDDVD       = new MediaSource("HDDVD", 3, "HDDVD", "(hddvd|hddvdrip)");
   public static final MediaSource              TV          = new MediaSource("TV", 4, "TV",
@@ -59,8 +59,8 @@ public class MediaSource extends DynaEnum<MediaSource> {
   public static final MediaSource              TC          = new MediaSource("TC", 11, "Telecine", "(tc|telecine|hdtc|ht\\-tc)");
   public static final MediaSource              DVDSCR      = new MediaSource("DVDSCR", 12, "DVD Screener", "(dvdscr)");
   public static final MediaSource              R5          = new MediaSource("R5", 13, "R5", "(r5)");
-  public static final MediaSource              WEBRIP      = new MediaSource("WEBRIP", 14, "Webrip", "(webrip)");
-  public static final MediaSource              WEB_DL      = new MediaSource("WEB_DL", 15, "Web-DL", "(web-dl|webdl|web)");
+  public static final MediaSource              WEBRIP      = new MediaSource("WEBRIP", 14, "Webrip", "(webrip|web rip)");
+  public static final MediaSource              WEB_DL      = new MediaSource("WEB_DL", 15, "Web-DL", "(web-dl|webdl|web dl|web|web-dlrip)");
   public static final MediaSource              STREAM      = new MediaSource("STREAM", 16, "Stream");
 
   // and our fallback

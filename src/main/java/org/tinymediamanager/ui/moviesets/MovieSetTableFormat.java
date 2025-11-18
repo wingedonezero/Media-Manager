@@ -67,9 +67,19 @@ public class MovieSetTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     Comparator<String> stringComparator = new StringComparator();
 
     /*
+     * sorttitle (hidden per default)
+     */
+    Column col = new Column(TmmResourceBundle.getString("metatag.sorttitle"), "sortTitle", this::getSortTitle, String.class);
+    col.setColumnComparator(stringComparator);
+    col.setColumnResizeable(true);
+    col.setCellTooltip(this::getSortTitle);
+    col.setDefaultHidden(true);
+    addColumn(col);
+
+    /*
      * movie count
      */
-    Column col = new Column(TmmResourceBundle.getString("movieset.moviecount"), "moviecount", this::getMovieCount, Integer.class);
+    col = new Column(TmmResourceBundle.getString("movieset.moviecount"), "moviecount", this::getMovieCount, Integer.class);
     col.setHeaderIcon(IconManager.COUNT);
     col.setCellRenderer(new IntegerTableCellRenderer());
     col.setColumnResizeable(false);
@@ -286,6 +296,17 @@ public class MovieSetTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     else {
       return super.getColumnName(i);
     }
+  }
+
+  private String getSortTitle(TmmTreeNode node) {
+    Object userObject = node.getUserObject();
+    if (userObject instanceof MovieSet movieSet) {
+      return movieSet.getSortTitle();
+    }
+    else if (userObject instanceof Movie movie) {
+      return movie.getSortTitle();
+    }
+    return null;
   }
 
   private Integer getMovieCount(TmmTreeNode node) {

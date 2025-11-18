@@ -135,7 +135,7 @@ class TvShowImageExtraPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[600lp,grow]", "[]"));
+    setLayout(new MigLayout("", "[grow]", "[]"));
     {
       JPanel panelOptions = new JPanel();
       panelOptions.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][grow][10lp!][][15lp!][]")); // 16lp ~ width

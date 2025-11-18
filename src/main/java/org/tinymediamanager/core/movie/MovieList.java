@@ -1157,12 +1157,14 @@ public final class MovieList extends AbstractModelObject {
     for (Movie movie : movies) {
       for (MediaFile mf : movie.getMediaFiles(MediaFileType.VIDEO, MediaFileType.SUBTITLE)) {
         // subtitle language
-        if (!mf.getSubtitleLanguagesList().isEmpty()) {
-          subtitleLanguages.addAll(mf.getSubtitleLanguagesList());
+        if (!mf.getSubtitleLanguages().isEmpty()) {
+          subtitleLanguages.addAll(mf.getSubtitleLanguages());
         }
         // subtitle formats
         for (MediaFileSubtitle subtitle : mf.getSubtitles()) {
-          subtitleFormats.add(subtitle.getCodec());
+          if (!subtitle.getCodec().isEmpty()) {
+            subtitleFormats.add(subtitle.getCodec());
+          }
         }
       }
     }

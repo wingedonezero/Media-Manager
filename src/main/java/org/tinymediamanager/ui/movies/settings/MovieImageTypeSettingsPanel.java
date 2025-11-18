@@ -363,10 +363,10 @@ class MovieImageTypeSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[600lp,grow]", "[]"));
+    setLayout(new MigLayout("", "[grow]", "[]"));
     {
       JPanel panelFileNaming = new JPanel(
-          new MigLayout("insets 0", "[20lp!][right][][50lp!][right][grow]", "[][][][][][][25lp][][][25lp!][][][][][25lp][][][][][25lp][]"));
+          new MigLayout("insets 0", "[20lp!][right][][50lp!][right][]", "[][][][][][][25lp][][][25lp!][][][][][25lp][][][][][25lp][]"));
 
       JLabel lblFiletypes = new TmmLabel(TmmResourceBundle.getString("Settings.artwork.naming"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelFileNaming, lblFiletypes, true);

@@ -19,32 +19,56 @@ package org.tinymediamanager.core.bus;
 import java.util.Objects;
 
 /**
- * This class represents the event to be published via the EventBus
+ * Represents an event to be published via the EventBus. Contains the sender and the event type.
  *
  * @author Manuel Laggner
  */
 public record Event(Object sender, String eventType) {
-  public static String TYPE_SAVE = "save";
-  public static String TYPE_ADD = "add";
-  public static String TYPE_REMOVE = "remove";
+  public static final String TYPE_SAVE = "save";
+  public static final String TYPE_ADD = "add";
+  public static final String TYPE_REMOVE = "remove";
 
+  /**
+   * Creates a save event with the specified sender.
+   * 
+   * @param sender
+   *          the source of the event
+   * @return a new save event
+   */
   public static Event createSaveEvent(Object sender) {
     return new Event(sender, TYPE_SAVE);
   }
 
+  /**
+   * Creates an add event with the specified sender.
+   * 
+   * @param sender
+   *          the source of the event
+   * @return a new add event
+   */
   public static Event createAddEvent(Object sender) {
     return new Event(sender, TYPE_ADD);
   }
 
+  /**
+   * Creates a remove event with the specified sender.
+   * 
+   * @param sender
+   *          the source of the event
+   * @return a new remove event
+   */
   public static Event createRemoveEvent(Object sender) {
     return new Event(sender, TYPE_REMOVE);
   }
 
   @Override
   public boolean equals(Object o) {
+    if (this == o)
+      return true;
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+
     Event event = (Event) o;
     return Objects.equals(sender, event.sender) && Objects.equals(eventType, event.eventType);
   }

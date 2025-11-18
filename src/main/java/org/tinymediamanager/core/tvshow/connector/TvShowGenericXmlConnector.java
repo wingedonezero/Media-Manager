@@ -151,6 +151,7 @@ public abstract class TvShowGenericXmlConnector implements ITvShowConnector {
         addRuntime();
         addThumb();
         addSeasonName();
+        addSeasonPlot();
         addSeasonPoster();
         addSeasonBanner();
         addSeasonThumb();
@@ -458,6 +459,21 @@ public abstract class TvShowGenericXmlConnector implements ITvShowConnector {
         namedseason.setAttribute("number", String.valueOf(tvShowSeason.getSeason()));
         namedseason.setTextContent(title);
         root.appendChild(namedseason);
+      }
+    }
+  }
+
+  /**
+   * add the season plots in multiple <seasonplot number="ss">xxx</seasonplot> tags
+   */
+  protected void addSeasonPlot() {
+    for (TvShowSeason tvShowSeason : tvShow.getSeasons()) {
+      Element seasonplot = document.createElement("seasonplot");
+      String plot = tvShowSeason.getPlot();
+      if (StringUtils.isNotBlank(plot)) {
+        seasonplot.setAttribute("number", String.valueOf(tvShowSeason.getSeason()));
+        seasonplot.setTextContent(plot);
+        root.appendChild(seasonplot);
       }
     }
   }

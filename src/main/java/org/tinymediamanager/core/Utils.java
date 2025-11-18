@@ -69,6 +69,7 @@ import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.HexFormat;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -226,7 +227,7 @@ public class Utils {
         return isRegularFile(attr);
       }
       catch (IOException e1) {
-        LOGGER.warn("Could not read BasicFileAttributes for '{}'", file, e1);
+        LOGGER.warn("Could not read BasicFileAttributes for '{}' - '{}' [{}]", file, e1.getMessage(), e1.getClass().getSimpleName());
         return false;
       }
     }
@@ -698,7 +699,7 @@ public class Utils {
         }
         catch (AccessDeniedException e) {
           // propagate to UI by logging with error
-          LOGGER.error("ACCESS DENIED (create folder) for '{}' - '{}'", destDir, e.getMessage());
+          LOGGER.error("ACCESS DENIED (create folder) for '{}' - '{}' [{}]", destDir, e.getMessage(), e.getClass().getSimpleName());
           // but we try a move anyway...
         }
         catch (Exception e) {
@@ -717,7 +718,7 @@ public class Utils {
         }
         catch (AccessDeniedException e) {
           // propagate to UI by logging with error
-          LOGGER.error("ACCESS DENIED (move folder) for '{}' to '{}' - '{}'", srcDir, destDir, e.getMessage());
+          LOGGER.error("ACCESS DENIED (move folder) for '{}' to '{}' - '{}' [{}]", srcDir, destDir, e.getMessage(), e.getClass().getSimpleName());
         }
         catch (AtomicMoveNotSupportedException a) {
           // if it fails (b/c not on same file system) use that; original documentation
@@ -753,14 +754,14 @@ public class Utils {
           }
           catch (AccessDeniedException e) {
             // propagate to UI by logging with error
-            LOGGER.error("ACCESS DENIED (move folder) for '{}' - '{}'", srcDir, e.getMessage());
+            LOGGER.error("ACCESS DENIED (move folder) for '{}' - '{}' [{}]", srcDir, e.getMessage(), e.getClass().getSimpleName());
           }
           catch (IOException e) {
-            LOGGER.warn("Rename problem (fallback) for '{}' - '{}'", srcDir, e.getMessage()); // NOSONAR
+            LOGGER.warn("Rename problem (fallback) for '{}' - '{}' [{}]", srcDir, e.getMessage(), e.getClass().getSimpleName());
           }
         }
         catch (IOException e) {
-          LOGGER.warn("Rename problem for '{} - '{}'", srcDir, e.getMessage()); // NOSONAR
+          LOGGER.warn("Rename problem for '{} - '{}' [{}]", srcDir, e.getMessage(), e.getClass().getSimpleName());
         }
         if (rename) {
           break; // ok it worked, step out
@@ -805,7 +806,7 @@ public class Utils {
         tgtView.setTimes(srcAttrs.lastModifiedTime(), srcAttrs.lastAccessTime(), srcAttrs.creationTime());
       }
       catch (Exception e) {
-        LOGGER.trace("could not set date attributes for '{}' - '{}'", destination, e.getMessage());
+        LOGGER.trace("could not set date attributes for '{}' - '{}' [{}]", destination, e.getMessage(), e.getClass().getSimpleName());
       }
     }
   }
@@ -867,7 +868,7 @@ public class Utils {
         }
         catch (AccessDeniedException e) {
           // propagate to UI by logging with error
-          LOGGER.error("ACCESS DENIED (move file) for '{}' to '{}' - '{}'", srcFile, destFile, e.getMessage());
+          LOGGER.error("ACCESS DENIED (move file) for '{}' to '{}' - '{}' [{}]", srcFile, destFile, e.getMessage(), e.getClass().getSimpleName());
         }
         catch (AtomicMoveNotSupportedException a) {
           // if it fails (b/c not on same file system) use that
@@ -879,14 +880,14 @@ public class Utils {
           }
           catch (AccessDeniedException e) {
             // propagate to UI by logging with error
-            LOGGER.error("ACCESS DENIED (move file) for '{}' - '{}'", srcFile, e.getMessage());
+            LOGGER.error("ACCESS DENIED (move file) for '{}' - '{}' [{}]", srcFile, e.getMessage(), e.getClass().getSimpleName());
           }
           catch (IOException e) {
-            LOGGER.warn("Rename problem (fallback) for '{}' - '{}'", srcFile, e.getMessage()); // NOSONAR
+            LOGGER.warn("Rename problem (fallback) for '{}' - '{}' [{}]", srcFile, e.getMessage(), e.getClass().getSimpleName());
           }
         }
         catch (IOException e) {
-          LOGGER.warn("Rename problem for '{}' - '{}'", srcFile, e.getMessage()); // NOSONAR
+          LOGGER.warn("Rename problem for '{}' - '{}' [{}]", srcFile, e.getMessage(), e.getClass().getSimpleName());
         }
         if (rename) {
           break; // ok it worked, step out
@@ -997,7 +998,7 @@ public class Utils {
         }
         catch (AccessDeniedException e) {
           // propagate to UI by logging with error
-          LOGGER.error("ACCESS DENIED (copy file) for '{}' to '{}' - '{}'", srcFile, destFile, e.getMessage());
+          LOGGER.error("ACCESS DENIED (copy file) for '{}' to '{}' - '{}' [{}]", srcFile, destFile, e.getMessage(), e.getClass().getSimpleName());
         }
         catch (UnsupportedOperationException u) {
           // maybe copy with attributes does not work here (across file systems), just try without file attributes
@@ -1009,14 +1010,14 @@ public class Utils {
           }
           catch (AccessDeniedException e) {
             // propagate to UI by logging with error
-            LOGGER.error("ACCESS DENIED (copy file) for '{}' to '{}' - '{}'", srcFile, destFile, e.getMessage());
+            LOGGER.error("ACCESS DENIED (copy file) for '{}' to '{}' - '{}' [{}]", srcFile, destFile, e.getMessage(), e.getClass().getSimpleName());
           }
           catch (IOException e) {
-            LOGGER.warn("Copy did not work (fallback) for '{}' - '{}'", srcFile, e.getMessage());
+            LOGGER.warn("Copy did not work (fallback) for '{}' - '{}' [{}]", srcFile, e.getMessage(), e.getClass().getSimpleName());
           }
         }
         catch (IOException e) {
-          LOGGER.warn("Copy did not work: {}", e.getMessage());
+          LOGGER.warn("Copy did not work: {} [{}]", e.getMessage(), e.getClass().getSimpleName());
         }
 
         if (rename) {
@@ -1096,7 +1097,7 @@ public class Utils {
       }
       catch (AccessDeniedException e) {
         // propagate to UI by logging with error
-        LOGGER.error("ACCESS DENIED (create folder) for '{}' - '{}'", backup, e.getMessage());
+        LOGGER.error("ACCESS DENIED (create folder) for '{}' - '{}' [{}]", backup, e.getMessage(), e.getClass().getSimpleName());
       }
       catch (Exception e) {
         // ignore
@@ -1115,11 +1116,11 @@ public class Utils {
       }
       catch (AccessDeniedException e) {
         // propagate to UI by logging with error
-        LOGGER.error("ACCESS DENIED (delete file) for '{}' - '{}'", file, e.getMessage());
+        LOGGER.error("ACCESS DENIED (delete file) for '{}' - '{}' [{}]", file, e.getMessage(), e.getClass().getSimpleName());
         return false;
       }
       catch (IOException e) {
-        LOGGER.warn("Could not delete file '{}' - {}", file, e.getMessage());
+        LOGGER.warn("Could not delete file '{}' - {} [{}]", file, e.getMessage(), e.getClass().getSimpleName());
         return false;
       }
     }
@@ -1144,11 +1145,11 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (delete file) for '{}' - '{}'", file, e.getMessage());
+      LOGGER.error("ACCESS DENIED (delete file) for '{}' - '{}' [{}]", file, e.getMessage(), e.getClass().getSimpleName());
       return false;
     }
     catch (Exception e) {
-      LOGGER.warn("Could not delete file '{}' - '{}'", file, e.getMessage());
+      LOGGER.warn("Could not delete file '{}' - '{}' [{}]", file, e.getMessage(), e.getClass().getSimpleName());
       return false;
     }
     return true;
@@ -1167,7 +1168,7 @@ public class Utils {
       return true;
     }
     catch (Exception e) {
-      LOGGER.error("Could not delete folder '{}' - '{}'", folder, e.getMessage());
+      LOGGER.error("Could not delete folder '{}' - '{}' [{}]", folder, e.getMessage(), e.getClass().getSimpleName());
       return false;
     }
   }
@@ -1192,7 +1193,7 @@ public class Utils {
         return true;
       }
       catch (Exception e) {
-        LOGGER.error("Could not delete folder '{}' - '{}'", folder, e.getMessage());
+        LOGGER.error("Could not delete folder '{}' - '{}' [{}]", folder, e.getMessage(), e.getClass().getSimpleName());
         return false;
       }
     }
@@ -1242,11 +1243,11 @@ public class Utils {
       }
       catch (AccessDeniedException e) {
         // propagate to UI by logging with error
-        LOGGER.error("ACCESS DENIED (move folder) for '{}' - '{}'", folder, e.getMessage());
+        LOGGER.error("ACCESS DENIED (move folder) for '{}' - '{}' [{}]", folder, e.getMessage(), e.getClass().getSimpleName());
         return false;
       }
       catch (IOException e) {
-        LOGGER.error("Could not delete directory '{}' - '{}'", folder, e.getMessage());
+        LOGGER.error("Could not delete directory '{}' - '{}' [{}]", folder, e.getMessage(), e.getClass().getSimpleName());
         return false;
       }
     }
@@ -1293,7 +1294,7 @@ public class Utils {
       }
     }
     catch (Exception e) {
-      LOGGER.warn("Could not read locales -'{}'", e.getMessage(), e);
+      LOGGER.warn("Could not read locales -'{}' [{}]", e.getMessage(), e.getClass().getSimpleName());
     }
 
     // do not return the original list to avoid external manipulation
@@ -1420,10 +1421,10 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (create backup file) for '{}' - '{}'", file, e.getMessage());
+      LOGGER.error("ACCESS DENIED (create backup file) for '{}' - '{}' [{}]", file, e.getMessage(), e.getClass().getSimpleName());
     }
     catch (IOException e) {
-      LOGGER.error("Could not backup file '{}' - '{}'", file, e.getMessage());
+      LOGGER.error("Could not backup file '{}' - '{}' [{}]", file, e.getMessage(), e.getClass().getSimpleName());
     }
 
   }
@@ -1450,10 +1451,11 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (listing old backups) for '{}' - '{}'", file, e.getMessage());
+      LOGGER.error("ACCESS DENIED (listing old backups) for '{}' - '{}' [{}]", file, e.getMessage(), e.getClass().getSimpleName());
     }
     catch (IOException e) {
-      LOGGER.error("Could not list files from the backup folder '{}' - '{}'", Globals.BACKUP_FOLDER, e.getMessage());
+      LOGGER.error("Could not list files from the backup folder '{}' - '{}' [{}]", Globals.BACKUP_FOLDER, e.getMessage(),
+          e.getClass().getSimpleName());
       return;
     }
 
@@ -1555,7 +1557,7 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (delete complete directory) for '{}' - '{}'", dir, e.getMessage());
+      LOGGER.error("ACCESS DENIED (delete complete directory) for '{}' - '{}' [{}]", dir, e.getMessage(), e.getClass().getSimpleName());
       // re-trow
       throw e;
     }
@@ -1607,7 +1609,7 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (delete empty directories) for '{}' - '{}'", dir, e.getMessage());
+      LOGGER.error("ACCESS DENIED (delete empty directories) for '{}' - '{}' [{}]", dir, e.getMessage(), e.getClass().getSimpleName());
       // re-trow
       throw e;
     }
@@ -1627,7 +1629,7 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (checking for empty folders) for '{}' - '{}'", folder, e.getMessage());
+      LOGGER.error("ACCESS DENIED (checking for empty folders) for '{}' - '{}' [{}]", folder, e.getMessage(), e.getClass().getSimpleName());
       // re-trow
       throw e;
     }
@@ -1666,10 +1668,10 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (creating .zip) for '{}' - '{}'", zipFile, e.getMessage());
+      LOGGER.error("ACCESS DENIED (creating .zip) for '{}' - '{}' [{}]", zipFile, e.getMessage(), e.getClass().getSimpleName());
     }
     catch (Exception e) {
-      LOGGER.error("Failed to create zip file '{}' - '{}'", zipFile, e.getMessage()); // NOSONAR
+      LOGGER.error("Failed to create zip file '{}' - '{}' [{}]", zipFile, e.getMessage(), e.getClass().getSimpleName());
     }
   }
 
@@ -1751,7 +1753,7 @@ public class Utils {
       LOGGER.error("ACCESS DENIED (extracting .zip) - '{}'", e.getMessage());
     }
     catch (Exception e) {
-      LOGGER.error("Failed to create zip file: {}", e.getMessage()); // NOSONAR
+      LOGGER.error("Failed to create zip file: {} [{}]", e.getMessage(), e.getClass().getSimpleName());
     }
   }
 
@@ -1813,7 +1815,7 @@ public class Utils {
       LOGGER.error("ACCESS DENIED (extracting .zip) for '{}' - '{}'", zipFile, e.getMessage());
     }
     catch (Exception e) {
-      LOGGER.error("Failed to create zip file '{}' - '{}'", zipFile, e.getMessage()); // NOSONAR
+      LOGGER.error("Failed to create zip file '{}' - '{}' [{}]", zipFile, e.getMessage(), e.getClass().getSimpleName());
     }
   }
 
@@ -1840,7 +1842,7 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (delete/write file) for '{}' - '{}'", file, e.getMessage());
+      LOGGER.error("ACCESS DENIED (delete/write file) for '{}' - '{}' [{}]", file, e.getMessage(), e.getClass().getSimpleName());
       // re-throw
       throw e;
     }
@@ -1861,7 +1863,7 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (read file) for '{}' - '{}'", file, e.getMessage());
+      LOGGER.error("ACCESS DENIED (read file) for '{}' - '{}' [{}]", file, e.getMessage(), e.getClass().getSimpleName());
       // re-throw
       throw e;
     }
@@ -1884,7 +1886,7 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (copy directory) for '{}' to '{}' - '{}'", from, to, e.getMessage());
+      LOGGER.error("ACCESS DENIED (copy directory) for '{}' to '{}' - '{}' [{}]", from, to, e.getMessage(), e.getClass().getSimpleName());
       // re-throw
       throw e;
     }
@@ -2038,10 +2040,10 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (list files) for '{}' - '{}'", root, e.getMessage());
+      LOGGER.error("ACCESS DENIED (list files) for '{}' - '{}' [{}]", root, e.getMessage(), e.getClass().getSimpleName());
     }
     catch (IOException e) {
-      LOGGER.warn("Could not get a file listing for '{}' - {}", root, e.getMessage());
+      LOGGER.warn("Could not get a file listing for '{}' - {} [{}]", root, e.getMessage(), e.getClass().getSimpleName());
     }
 
     return filesFound;
@@ -2073,7 +2075,7 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (list files) for '{}' - '{}'", root, e.getMessage());
+      LOGGER.error("ACCESS DENIED (list files) for '{}' - '{}' [{}]", root, e.getMessage(), e.getClass().getSimpleName());
     }
     catch (Exception e) {
       LOGGER.warn("Could not get a file listing for '{}' - '{}'", root, e.getMessage());
@@ -2112,10 +2114,10 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (get directory size) for '{}' - '{}'", path, e.getMessage());
+      LOGGER.error("ACCESS DENIED (get directory size) for '{}' - '{}' [{}]", path, e.getMessage(), e.getClass().getSimpleName());
     }
     catch (IOException e) {
-      LOGGER.warn("Could not get folder size for '{}' - '{}' ", path, e.getMessage());
+      LOGGER.warn("Could not get folder size for '{}' - '{}' [{}]", path, e.getMessage(), e.getClass().getSimpleName());
     }
     return size;
   }
@@ -2205,10 +2207,10 @@ public class Utils {
     }
     catch (AccessDeniedException e) {
       // propagate to UI by logging with error
-      LOGGER.error("ACCESS DENIED (list files) for '{}' - '{}'", folder, e.getMessage());
+      LOGGER.error("ACCESS DENIED (list files) for '{}' - '{}' [{}]", folder, e.getMessage(), e.getClass().getSimpleName());
     }
     catch (IOException e) {
-      LOGGER.error("Could not get unknown files from '{}' - '{}'", folder, e.getMessage());
+      LOGGER.error("Could not get unknown files from '{}' - '{}' [{}]", folder, e.getMessage(), e.getClass().getSimpleName());
     }
 
     return visitor.fileList;
@@ -2516,7 +2518,7 @@ public class Utils {
         crc32.update(buffer, 0, bytesRead);
       }
       if (crc32.getValue() > 0) {
-        crc = String.format("%8s", Long.toHexString(crc32.getValue()).toUpperCase(Locale.ROOT).replace(' ', '0'));
+        crc = HexFormat.of().withUpperCase().toHexDigits(crc32.getValue(), 8); // limit to 8 chars
         LOGGER.trace("Got CRC32 [{}] for {}", crc, file);
       }
     }

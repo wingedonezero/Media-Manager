@@ -19,7 +19,6 @@ import static org.tinymediamanager.ui.TmmFontHelper.H3;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
@@ -153,7 +152,7 @@ public class TvShowPostProcessingSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[600lp,grow]", "[]"));
+    setLayout(new MigLayout("", "[grow]", "[]"));
     JPanel panelProcess = new JPanel(
         new MigLayout("hidemode 1, insets 0", "[20lp!][300lp:600lp,grow][]", "[][grow][150lp:200lp,grow][][][grow][150lp:200lp,grow]"));
     JLabel lblProcess = new TmmLabel(TmmResourceBundle.getString("Settings.postprocessing"), H3);
@@ -229,7 +228,7 @@ public class TvShowPostProcessingSettingsPanel extends JPanel {
     @Override
     public void save() {
       if (StringUtils.isBlank(tfProcessName.getText()) || (StringUtils.isBlank(tfCommand.getText()) && StringUtils.isBlank(tfPath.getText()))) {
-        JOptionPane.showMessageDialog(null, TmmResourceBundle.getString("message.missingitems"));
+        showErrorToast(TmmResourceBundle.getString("message.missingitems"));
         return;
       }
       if (process == null) {
@@ -253,7 +252,7 @@ public class TvShowPostProcessingSettingsPanel extends JPanel {
     @Override
     public void save() {
       if (StringUtils.isBlank(tfProcessName.getText()) || (StringUtils.isBlank(tfCommand.getText()) && StringUtils.isBlank(tfPath.getText()))) {
-        JOptionPane.showMessageDialog(null, TmmResourceBundle.getString("message.missingitems"));
+        showErrorToast(TmmResourceBundle.getString("message.missingitems"));
         return;
       }
       if (process == null) {

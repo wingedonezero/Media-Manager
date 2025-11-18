@@ -47,7 +47,7 @@ import org.tinymediamanager.scraper.exceptions.NothingFoundException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
 import org.tinymediamanager.scraper.interfaces.ITvShowArtworkProvider;
 import org.tinymediamanager.scraper.interfaces.ITvShowMetadataProvider;
-import org.tinymediamanager.scraper.util.Similarity;
+import org.tinymediamanager.scraper.util.MetadataUtil;
 
 /**
  * The elements for AniDB's TV Show Metadata Provider. The majority of the work is done in {@link AniDbMetadataParser}.
@@ -210,7 +210,7 @@ public class AniDbTvShowMetadataProvider extends AniDbMetadataProvider implement
         .map(show -> new MediaSearchResult.Builder(MediaType.TV_SHOW).providerId(providerInfo.getId())
             .id(String.valueOf(show.aniDbId))
             .title(show.title)
-            .score(Similarity.compareStrings(show.title, finalSearchString))
+            .score(MetadataUtil.calculateScore(show.title, finalSearchString))
             .build())
         .filter(msr -> msr.getScore() >= 0.75f) // use default
         .collect(Collectors.toCollection(TreeSet::new));

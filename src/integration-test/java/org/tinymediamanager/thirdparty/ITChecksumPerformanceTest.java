@@ -11,13 +11,13 @@ import java.nio.file.StandardOpenOption;
 import java.security.DigestException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.Locale;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
 import org.apache.commons.lang3.time.StopWatch;
 import org.junit.Test;
-import org.tinymediamanager.scraper.util.StrgUtils;
 
 /**
  * A performance test for different CRC32 implementations, found in world weird web<br>
@@ -26,7 +26,7 @@ import org.tinymediamanager.scraper.util.StrgUtils;
 public class ITChecksumPerformanceTest { // NOSONAR squid:S5786
 
   private static final int  BUFFER_SIZE = 1024 * 1024;
-  private static final Path BIG_FILE    = Paths.get("C:\\Users\\mmahnig\\Videos\\TMM\\MI2_ISO\\MI2.iso");
+  private static final Path BIG_FILE    = Paths.get("..\\Videos\\REAL\\MI2_ISO\\MI2.iso");
 
   @Test
   public void testDifferentCRCs() {
@@ -110,11 +110,24 @@ public class ITChecksumPerformanceTest { // NOSONAR squid:S5786
     md5w.stop();
     sha1w.stop();
     sha256w.stop();
-    System.out.println(" crc32: " + crc32w + " [" + Long.toHexString(crc32.getValue()).toUpperCase(Locale.ROOT) + "] ");
-    System.out.println("   md5: " + md5w + " [" + StrgUtils.encodeHex(md5.digest()) + "] ");
-    System.out.println("  sha1: " + sha1w + " [" + StrgUtils.encodeHex(sha1.digest()) + "] ");
-    System.out.println("sha256: " + sha256w + " [" + StrgUtils.encodeHex(sha256.digest()) + "] ");
-    System.out.println("sha384: " + sha384w + " [" + StrgUtils.encodeHex(sha384.digest()) + "] ");
+
+    byte[] md5dig = md5.digest();
+    byte[] sha1dig = sha1.digest();
+    byte[] sha256dig = sha256.digest();
+    byte[] sha384dig = sha384.digest();
+
+    // System.out.println(" crc32: " + crc32w + " [" + Long.toHexString(crc32.getValue()).toUpperCase(Locale.ROOT) + "] ");
+    // System.out.println(" md5: " + md5w + " [" + StrgUtils.encodeHex(md5dig) + "] ");
+    // System.out.println(" sha1: " + sha1w + " [" + StrgUtils.encodeHex(sha1dig) + "] ");
+    // System.out.println("sha256: " + sha256w + " [" + StrgUtils.encodeHex(sha256dig) + "] ");
+    // System.out.println("sha384: " + sha384w + " [" + StrgUtils.encodeHex(sha384dig) + "] ");
+
+    System.out.println(" crc32: " + crc32w + " [" + HexFormat.of().withUpperCase().toHexDigits(crc32.getValue(), 8) + "] ");
+    System.out.println("   md5: " + md5w + " [" + HexFormat.of().formatHex(md5dig) + "] ");
+    System.out.println("  sha1: " + sha1w + " [" + HexFormat.of().formatHex(sha1dig) + "] ");
+    System.out.println("sha256: " + sha256w + " [" + HexFormat.of().formatHex(sha256dig) + "] ");
+    System.out.println("sha384: " + sha384w + " [" + HexFormat.of().formatHex(sha384dig) + "] ");
+
     System.out.println("  took: " + w);
     System.out.println();
   }

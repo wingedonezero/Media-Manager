@@ -19,7 +19,7 @@ import org.tinymediamanager.scraper.exceptions.MissingIdException;
 import org.tinymediamanager.scraper.exceptions.NothingFoundException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
 import org.tinymediamanager.scraper.interfaces.IMovieMetadataProvider;
-import org.tinymediamanager.scraper.util.Similarity;
+import org.tinymediamanager.scraper.util.MetadataUtil;
 
 /**
  * The elements for AniDB's Movie Metadata Provider. The majority of the work is done in {@link AniDbMetadataParser}
@@ -91,7 +91,7 @@ public class AniDbMovieMetadataProvider extends AniDbMetadataProvider implements
         .map(movie -> new MediaSearchResult.Builder(MediaType.MOVIE).providerId(providerInfo.getId())
             .id(String.valueOf(movie.aniDbId))
             .title(movie.title)
-            .score(Similarity.compareStrings(movie.title, finalSearchString))
+            .score(MetadataUtil.calculateScore(movie.title, finalSearchString))
             .build())
         .filter(msr -> msr.getScore() >= 0.75f) // use default
         .collect(Collectors.toCollection(TreeSet::new));

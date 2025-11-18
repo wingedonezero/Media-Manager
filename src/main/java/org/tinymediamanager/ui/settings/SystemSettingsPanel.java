@@ -119,9 +119,9 @@ class SystemSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[600lp,grow]", "[][15lp!][][15lp!][][15lp!][]"));
+    setLayout(new MigLayout("", "[grow]", "[][15lp!][][15lp!][][15lp!][]"));
     {
-      JPanel panelMemory = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][][300lp][grow]", ""));
+      JPanel panelMemory = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][][300lp][100lp:300lp]", ""));
 
       JLabel lblMemoryT = new TmmLabel(TmmResourceBundle.getString("Settings.memoryborder"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelMemory, lblMemoryT, true);
@@ -163,7 +163,7 @@ class SystemSettingsPanel extends JPanel {
     }
     {
       JPanel panelProxy = new JPanel();
-      panelProxy.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][][grow]", "[][][][]")); // 16lp ~ width of the
+      panelProxy.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][][]", "[][][][]")); // 16lp ~ width of the
 
       JLabel lblProxyT = new TmmLabel(TmmResourceBundle.getString("Settings.proxy"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelProxy, lblProxyT, true);
@@ -205,7 +205,7 @@ class SystemSettingsPanel extends JPanel {
     }
     {
       JPanel panelMisc = new JPanel();
-      panelMisc.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][][][grow]")); // 16lp ~ width of the
+      panelMisc.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][200lp:600lp]", "[][][][grow]")); // 16lp ~ width of the
 
       JLabel lblMiscT = new TmmLabel(TmmResourceBundle.getString("Settings.api"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelMisc, lblMiscT, true);
@@ -241,7 +241,7 @@ class SystemSettingsPanel extends JPanel {
     }
     {
       JPanel panelMisc = new JPanel();
-      panelMisc.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][][][][]")); // 16lp ~ width of the
+      panelMisc.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][200lp:600lp]", "[][][][][]")); // 16lp ~ width of the
 
       JLabel lblMiscT = new TmmLabel(TmmResourceBundle.getString("Settings.misc"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelMisc, lblMiscT, true);
@@ -262,7 +262,7 @@ class SystemSettingsPanel extends JPanel {
         JTextPane tpSSLHint = new ReadOnlyTextPane();
         tpSSLHint.setText(TmmResourceBundle.getString("Settings.ignoressl.desc"));
         TmmFontHelper.changeFont(tpSSLHint, L2);
-        panelMisc.add(tpSSLHint, "cell 2 2,grow");
+        panelMisc.add(tpSSLHint, "cell 2 2,growx, wmin 0");
 
         chckbxDisableD3d = new JCheckBox(TmmResourceBundle.getString("Settings.disabled3d"));
         if (!SystemUtils.IS_OS_WINDOWS) {
@@ -273,7 +273,7 @@ class SystemSettingsPanel extends JPanel {
         JTextPane tpD3dHint = new ReadOnlyTextPane();
         tpD3dHint.setText(TmmResourceBundle.getString("Settings.disabled3d.desc"));
         TmmFontHelper.changeFont(tpD3dHint, L2);
-        panelMisc.add(tpD3dHint, "cell 2 4,grow");
+        panelMisc.add(tpD3dHint, "cell 2 4,growx, wmin 0");
       }
     }
   }

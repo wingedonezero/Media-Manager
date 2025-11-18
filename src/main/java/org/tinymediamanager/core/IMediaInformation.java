@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaSource;
+import org.tinymediamanager.core.entities.MediaStreamInfo;
 import org.tinymediamanager.scraper.entities.MediaCertification;
 
 /**
@@ -181,6 +182,13 @@ public interface IMediaInformation {
    * @return the subtitle languages from all streams
    */
   List<String> getMediaInfoSubtitleCodecList();
+
+  /**
+   * gets all subtitle types (e.g, FORCED) from the subtitle streams as List
+   *
+   * @return the subtitle types from all streams
+   */
+  List<MediaStreamInfo.Flags> getMediaInfoSubtitleTypeList();
 
   /**
    * gets the container format

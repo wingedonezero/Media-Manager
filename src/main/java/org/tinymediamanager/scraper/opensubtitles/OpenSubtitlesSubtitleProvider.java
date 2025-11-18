@@ -29,6 +29,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -46,9 +47,7 @@ import org.tinymediamanager.scraper.interfaces.IMediaProvider;
 import org.tinymediamanager.scraper.opensubtitles.model.Info;
 import org.tinymediamanager.scraper.util.LanguageUtils;
 import org.tinymediamanager.scraper.util.MediaIdUtil;
-import org.tinymediamanager.scraper.util.Similarity;
-
-import jakarta.xml.bind.DatatypeConverter;
+import org.tinymediamanager.scraper.util.MetadataUtil;
 
 /**
  * OpensubtitlesMetadataProvider provides subtitle scraping from OpenSubtitles.org
@@ -276,7 +275,7 @@ abstract class OpenSubtitlesSubtitleProvider implements IMediaProvider {
         Info info = new Info((Map<String, Object>) methodCall("SearchSubtitles", arrayQuery));
         for (Info.MovieInfo movieInfo : info.getMovieInfo()) {
           // degrade maximal search score of title search to 0.8
-          float score = 0.8f * Similarity.compareStrings(options.getSearchQuery(), movieInfo.movieTitle);
+          float score = 0.8f * MetadataUtil.calculateScore(options.getSearchQuery(), movieInfo.movieTitle);
 
           SubtitleSearchResult result = morphSearchResult(movieInfo);
           result.setScore(score);
@@ -408,7 +407,7 @@ abstract class OpenSubtitlesSubtitleProvider implements IMediaProvider {
         MessageDigest md = MessageDigest.getInstance("MD5"); // NOSONAR
         md.update(password.getBytes());
         byte[] digest = md.digest();
-        String myHash = DatatypeConverter.printHexBinary(digest).toUpperCase();
+        String myHash = HexFormat.of().withUpperCase().formatHex(digest);
 
         Map<String, Object> response = (Map<String, Object>) client.call("LogIn", username, myHash, "", getApiKey());
 

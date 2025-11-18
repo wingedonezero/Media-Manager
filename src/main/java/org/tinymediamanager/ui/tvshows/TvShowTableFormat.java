@@ -108,6 +108,16 @@ public class TvShowTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     addColumn(col);
 
     /*
+     * sorttitle (hidden per default)
+     */
+    col = new Column(TmmResourceBundle.getString("metatag.sorttitle"), "sortTitle", this::getSortTitle, String.class);
+    col.setColumnComparator(stringComparator);
+    col.setColumnResizeable(true);
+    col.setCellTooltip(this::getSortTitle);
+    col.setDefaultHidden(true);
+    addColumn(col);
+
+    /*
      * year
      */
     col = new Column(TmmResourceBundle.getString("metatag.year"), "year", this::getYear, Integer.class);
@@ -161,18 +171,18 @@ public class TvShowTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     addColumn(col);
 
     /*
-     * file name (hidden per default)
+     * folder name (hidden per default)
      */
-    col = new Column(TmmResourceBundle.getString("metatag.filename"), "filename", this::getFileName, String.class);
+    col = new Column(TmmResourceBundle.getString("metatag.path"), "path", this::getFolderPath, String.class);
+    col.setColumnComparator(stringComparator);
     col.setColumnResizeable(true);
     col.setDefaultHidden(true);
     addColumn(col);
 
     /*
-     * folder name (hidden per default)
+     * file name (hidden per default)
      */
-    col = new Column(TmmResourceBundle.getString("metatag.path"), "path", this::getFolderPath, String.class);
-    col.setColumnComparator(stringComparator);
+    col = new Column(TmmResourceBundle.getString("metatag.filename"), "filename", this::getFileName, String.class);
     col.setColumnResizeable(true);
     col.setDefaultHidden(true);
     addColumn(col);
@@ -1498,6 +1508,14 @@ public class TvShowTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     }
     else if (userObject instanceof TvShowEpisode episode) {
       return episode.getOriginalTitle();
+    }
+    return null;
+  }
+
+  private String getSortTitle(TmmTreeNode node) {
+    Object userObject = node.getUserObject();
+    if (userObject instanceof TvShow tvShow) {
+      return tvShow.getSortTitle();
     }
     return null;
   }

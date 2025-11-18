@@ -180,7 +180,7 @@ class MovieImageExtraPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[600lp,grow]", "[][]"));
+    setLayout(new MigLayout("", "[grow]", "[][]"));
     {
       JPanel panelExtra = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][][][20lp!][][][10lp!][][20lp!][]"));
 

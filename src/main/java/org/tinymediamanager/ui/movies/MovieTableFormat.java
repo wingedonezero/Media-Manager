@@ -145,16 +145,6 @@ public class MovieTableFormat extends TmmTableFormat<Movie> {
     addColumn(col);
 
     /*
-     * file name (hidden per default)
-     */
-    col = new Column(TmmResourceBundle.getString("metatag.filename"), "filename", movie -> movie.getMainVideoFile().getFilename(), String.class);
-    col.setColumnComparator(stringComparator);
-    col.setColumnResizeable(true);
-    col.setCellTooltip(showTooltip(movie -> movie.getMainVideoFile().getFilename()));
-    col.setDefaultHidden(true);
-    addColumn(col);
-
-    /*
      * folder name (hidden per default)
      */
     Function<Movie, String> pathFunction = movie -> movie.getPathNIO().toString();
@@ -162,6 +152,16 @@ public class MovieTableFormat extends TmmTableFormat<Movie> {
     col.setColumnComparator(stringComparator);
     col.setColumnResizeable(true);
     col.setCellTooltip(showTooltip(pathFunction));
+    col.setDefaultHidden(true);
+    addColumn(col);
+
+    /*
+     * file name (hidden per default)
+     */
+    col = new Column(TmmResourceBundle.getString("metatag.filename"), "filename", movie -> movie.getMainVideoFile().getFilename(), String.class);
+    col.setColumnComparator(stringComparator);
+    col.setColumnResizeable(true);
+    col.setCellTooltip(showTooltip(movie -> movie.getMainVideoFile().getFilename()));
     col.setDefaultHidden(true);
     addColumn(col);
 

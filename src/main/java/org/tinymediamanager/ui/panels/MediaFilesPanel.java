@@ -126,6 +126,7 @@ public class MediaFilesPanel extends JPanel {
         return null;
       }, ImageIcon.class);
       col.setColumnResizeable(false);
+      col.setHeaderTooltip(TmmResourceBundle.getString("mediafilepanel.open"));
       addColumn(col);
 
       /*

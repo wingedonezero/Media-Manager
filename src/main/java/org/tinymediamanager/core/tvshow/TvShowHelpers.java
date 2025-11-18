@@ -46,6 +46,7 @@ import org.tinymediamanager.scraper.entities.MediaCertification;
 import org.tinymediamanager.scraper.entities.MediaEpisodeGroup;
 import org.tinymediamanager.scraper.entities.MediaEpisodeNumber;
 import org.tinymediamanager.scraper.imdb.ImdbTvShowTrailerProvider;
+import org.tinymediamanager.scraper.util.ListUtils;
 import org.tinymediamanager.scraper.util.MetadataUtil;
 
 /**
@@ -447,7 +448,7 @@ public class TvShowHelpers {
     List<TvShowEpisode> episodes = new ArrayList<>(existingEpisodes);
 
     // mix in unavailable episodes if the user wants to
-    if (TvShowModuleManager.getInstance().getSettings().isDisplayMissingEpisodes()) {
+    if (TvShowModuleManager.getInstance().getSettings().isDisplayMissingEpisodes() && ListUtils.isNotEmpty(dummyEpisodes)) {
       // build up a set which holds a string representing the S/E indicator
       Set<String> availableEpisodes = new HashSet<>();
 

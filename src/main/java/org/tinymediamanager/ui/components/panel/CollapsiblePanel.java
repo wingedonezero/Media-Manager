@@ -118,7 +118,7 @@ public class CollapsiblePanel extends JPanel {
    *          collapsed?
    */
   public CollapsiblePanel(JComponent content, JLabel lblTitle, boolean collapseButtonAtLeft, boolean isCollapsed) {
-    super(new MigLayout("insets 0", "[grow]", "[][]"));
+    super(new MigLayout("insets 0, fillx", "[grow, fill]", "[][]"));
     this.content = content;
     setBackground(content.getBackground());
 
@@ -155,7 +155,7 @@ public class CollapsiblePanel extends JPanel {
       remove(content);
     }
     else {
-      add(content, "cell 0 1 2 1, grow, wmin 0");
+      add(content, "cell 0 1, grow, pushx, wmin 0");
     }
 
     isCollapsed = collapse;

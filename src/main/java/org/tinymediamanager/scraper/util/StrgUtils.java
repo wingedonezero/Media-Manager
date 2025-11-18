@@ -15,7 +15,6 @@
  */
 package org.tinymediamanager.scraper.util;
 
-import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.HashMap;
 import java.util.Locale;
@@ -39,9 +38,6 @@ public class StrgUtils {
   private static final Map<Integer, String>      INVALID_CHARACTERS    = new HashMap<>(7);
   private static final Map<Integer, String>      SEPARATOR_CHARACTERS  = new HashMap<>(2);
   private static final String[]                  COMMON_TITLE_PREFIXES = buildCommonTitlePrefixes();
-  private static final char[]                    HEX_ARRAY             = "0123456789ABCDEF".toCharArray();
-  private static final byte[]                    DIGITS_LOWER          = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e',
-      'f' };
   private static final Pattern                   NORMALIZE_PATTERN     = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
   private static final char[]                    CAP_DELIMS            = new char[] { ' ', '-', '_', '.', '\'', '(', '[', '*' };
   private static final String[]                  NON_CAP               = new String[] { "'S", "'M", "'Ll", "'T", "'D", "'Ve", "'Re" };
@@ -102,94 +98,6 @@ public class StrgUtils {
    */
   private StrgUtils() {
     throw new IllegalAccessError();
-  }
-
-  /**
-   * Converts a byte array to a hexadecimal string representation. Each byte is converted to two hexadecimal digits.
-   *
-   * @param bytes
-   *          the byte array to convert
-   * @return the hexadecimal string representation
-   */
-  public static String bytesToHex(byte[] bytes) {
-    char[] hexChars = new char[bytes.length * 2];
-    for (int j = 0; j < bytes.length; j++) {
-      int v = bytes[j] & 0xFF;
-      hexChars[j * 2] = HEX_ARRAY[v >>> 4];
-      hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
-    }
-    return new String(hexChars);
-  }
-
-  /**
-   * Converts a byte array to a lowercase hexadecimal string.
-   *
-   * @param data
-   *          the byte array to encode
-   * @return the hexadecimal string in lowercase
-   */
-  public static String encodeHex(byte[] data) {
-    final int dataLength = data.length;
-    final int outLength = dataLength << 1;
-
-    final byte[] out = new byte[outLength];
-    for (int i = 0, j = 0; i < dataLength; i++) {
-      out[(j++)] = DIGITS_LOWER[((0xf0 & data[i]) >>> 4)];
-      out[(j++)] = DIGITS_LOWER[(0x0f & data[i])];
-    }
-    return new String(out, 0, outLength, StandardCharsets.ISO_8859_1);
-  }
-
-  /**
-   * Converts an integer to an 8-character lowercase hexadecimal string.
-   *
-   * @param data
-   *          the integer to encode
-   * @return the 8-character hexadecimal string
-   */
-  public static String encodeHex(int data) {
-    byte[] out = new byte[8];
-
-    out[0] = DIGITS_LOWER[(data >>> 28) & 0x0f];
-    out[1] = DIGITS_LOWER[(data >>> 24) & 0x0f];
-    out[2] = DIGITS_LOWER[(data >>> 20) & 0x0f];
-    out[3] = DIGITS_LOWER[(data >>> 16) & 0x0f];
-    out[4] = DIGITS_LOWER[(data >>> 12) & 0x0f];
-    out[5] = DIGITS_LOWER[(data >>> 8) & 0x0f];
-    out[6] = DIGITS_LOWER[(data >>> 4) & 0x0f];
-    out[7] = DIGITS_LOWER[(data >>> 0) & 0x0f];
-
-    return new String(out, 0, 8, StandardCharsets.ISO_8859_1);
-  }
-
-  /**
-   * Converts a long value to a 16-character lowercase hexadecimal string.
-   *
-   * @param data
-   *          the long value to encode
-   * @return the 16-character hexadecimal string
-   */
-  public static String encodeHex(long data) {
-    byte[] out = new byte[16];
-
-    out[0] = DIGITS_LOWER[(int) ((data >>> 60) & 0x0f)];
-    out[1] = DIGITS_LOWER[(int) ((data >>> 56) & 0x0f)];
-    out[2] = DIGITS_LOWER[(int) ((data >>> 52) & 0x0f)];
-    out[3] = DIGITS_LOWER[(int) ((data >>> 48) & 0x0f)];
-    out[4] = DIGITS_LOWER[(int) ((data >>> 44) & 0x0f)];
-    out[5] = DIGITS_LOWER[(int) ((data >>> 40) & 0x0f)];
-    out[6] = DIGITS_LOWER[(int) ((data >>> 36) & 0x0f)];
-    out[7] = DIGITS_LOWER[(int) ((data >>> 32) & 0x0f)];
-    out[8] = DIGITS_LOWER[(int) ((data >>> 28) & 0x0f)];
-    out[9] = DIGITS_LOWER[(int) ((data >>> 24) & 0x0f)];
-    out[10] = DIGITS_LOWER[(int) ((data >>> 20) & 0x0f)];
-    out[11] = DIGITS_LOWER[(int) ((data >>> 16) & 0x0f)];
-    out[12] = DIGITS_LOWER[(int) ((data >>> 12) & 0x0f)];
-    out[13] = DIGITS_LOWER[(int) ((data >>> 8) & 0x0f)];
-    out[14] = DIGITS_LOWER[(int) ((data >>> 4) & 0x0f)];
-    out[15] = DIGITS_LOWER[(int) ((data >>> 0) & 0x0f)];
-
-    return new String(out, 0, 16, StandardCharsets.ISO_8859_1);
   }
 
   /**

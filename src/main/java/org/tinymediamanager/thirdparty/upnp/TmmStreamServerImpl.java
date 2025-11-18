@@ -25,6 +25,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -203,7 +204,7 @@ public class TmmStreamServerImpl implements StreamServer<StreamServerConfigurati
       Path path = file.getFileAsPath();
 
       long fileLen = Files.size(path);
-      String etag = Integer.toHexString((path.toString() + Files.getLastModifiedTime(path) + fileLen).hashCode());
+      String etag = HexFormat.of().toHexDigits((path.toString() + Files.getLastModifiedTime(path) + fileLen).hashCode());
 
       long startFrom = 0;
       long endAt = fileLen - 1;

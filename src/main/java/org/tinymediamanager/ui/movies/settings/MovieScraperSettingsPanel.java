@@ -165,9 +165,9 @@ class MovieScraperSettingsPanel extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("", "[600lp,grow]", "[400lp,grow]"));
+    setLayout(new MigLayout("", "[grow]", "[400lp,grow]"));
     {
-      JPanel panelScraper = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][grow]", "[][shrink 0][150lp:600lp,grow]"));
+      JPanel panelScraper = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][grow]", "[][shrink 0][grow,fill]"));
 
       JLabel lblScraper = new TmmLabel(TmmResourceBundle.getString("scraper.metadata"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelScraper, lblScraper, true);
@@ -197,12 +197,12 @@ class MovieScraperSettingsPanel extends JPanel {
         scrollPaneScraperDetails.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
         JPanel panelScraperDetails = new ScrollablePanel();
-        panelScraperDetails.setLayout(new MigLayout("insets 0", "[grow]", "[][grow]"));
+        panelScraperDetails.setLayout(new MigLayout("insets 0", "[400lp,grow]", "[][grow]"));
         scrollPaneScraperDetails.setViewportView(panelScraperDetails);
 
         tpScraperDescription = new ReadOnlyTextPane();
         tpScraperDescription.setEditorKit(new HTMLEditorKit());
-        panelScraperDetails.add(tpScraperDescription, "cell 0 0,grow");
+        panelScraperDetails.add(tpScraperDescription, "cell 0 0, growx, wmin 0");
 
         panelScraperOptions = new JPanel();
         panelScraperOptions.setLayout(new BorderLayout());
