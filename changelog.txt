@@ -38,6 +38,7 @@ x [UI] set the correct file filters in the file open/save dialogs
 x [UI] do not re-add deleted TV shows in the tree #3102
 x [Post-Processing] moved post-processing tasks to a background thread
 x [TMDB] to not try to load SVG files (not supported by tinyMediaManager or Kodi) #3085
+x [TMDB] enhanced parsing of crew members #3140
 x [IMDB] fix parsing cast/crew due to site changes #3092 
 x [Emby] re-order crew members after actors in the NFO #2780
 x [Renamer] also remove episode NFO files upon rename, if unwanted in settings

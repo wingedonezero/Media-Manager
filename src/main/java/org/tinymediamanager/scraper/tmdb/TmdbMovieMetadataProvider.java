@@ -36,6 +36,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.Utils;
@@ -919,23 +920,23 @@ public class TmdbMovieMetadataProvider extends TmdbMetadataProvider implements I
         if ("Director".equals(crewMember.job)) {
           cm.setType(DIRECTOR);
         }
-        else if ("Writing".equals(crewMember.department) && ("Screenplay".equals(crewMember.job))) {
+        else if ("Writing".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Screenplay", "Writer", "Story")) {
           // only take the screenplay writers, not the story writers
           cm.setType(WRITER);
         }
-        else if ("Production".equals(crewMember.department) && crewMember.job.contains("Producer")) {
+        else if ("Production".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Producer")) {
           // only take producers, not casting or similar jobs
           cm.setType(PRODUCER);
         }
-        else if ("Editing".equals(crewMember.department) && ("Editor".equals(crewMember.job))) {
+        else if ("Editing".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Editor")) {
           // only take the editors, not the assistant editors
           cm.setType(EDITOR);
         }
-        else if ("Sound".equals(crewMember.department) && ("Original Music Composer".equals(crewMember.job))) {
+        else if ("Sound".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Original Music Composer")) {
           // only take the original music composers, not the sound designers
           cm.setType(COMPOSER);
         }
-        else if ("Camera".equals(crewMember.department) && ("Director of Photography".equals(crewMember.job))) {
+        else if ("Camera".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Director of Photography")) {
           // only take the directors of photography, not the camera operators
           cm.setType(CAMERA);
         }
