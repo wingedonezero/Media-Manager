@@ -425,6 +425,7 @@ public class TvShowBulkEditorDialog extends TmmDialog {
         cbTvShowProperty = new JComboBox();
         cbTvShowProperty.addItem(new BulkEditorProperty("title", TmmResourceBundle.getString("metatag.title")));
         cbTvShowProperty.addItem(new BulkEditorProperty("originalTitle", TmmResourceBundle.getString("metatag.originaltitle")));
+        cbTvShowProperty.addItem(new BulkEditorProperty("englishTitle", TmmResourceBundle.getString("metatag.title.english")));
         cbTvShowProperty.addItem(new BulkEditorProperty("sortTitle", TmmResourceBundle.getString("metatag.sorttitle")));
         cbTvShowProperty.addItem(new BulkEditorProperty("plot", TmmResourceBundle.getString("metatag.plot")));
         cbTvShowProperty.addItem(new BulkEditorProperty("productionCompany", TmmResourceBundle.getString("metatag.production")));
@@ -907,6 +908,7 @@ public class TvShowBulkEditorDialog extends TmmDialog {
         cbEpisodeProperty = new JComboBox();
         cbEpisodeProperty.addItem(new BulkEditorProperty("title", TmmResourceBundle.getString("metatag.title")));
         cbEpisodeProperty.addItem(new BulkEditorProperty("originalTitle", TmmResourceBundle.getString("metatag.originaltitle")));
+        cbEpisodeProperty.addItem(new BulkEditorProperty("englishTitle", TmmResourceBundle.getString("metatag.title.english")));
         cbEpisodeProperty.addItem(new BulkEditorProperty("sortTitle", TmmResourceBundle.getString("metatag.sorttitle")));
         cbEpisodeProperty.addItem(new BulkEditorProperty("tagline", TmmResourceBundle.getString("metatag.tagline")));
         cbEpisodeProperty.addItem(new BulkEditorProperty("plot", TmmResourceBundle.getString("metatag.plot")));

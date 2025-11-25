@@ -594,6 +594,7 @@ public class MovieBulkEditorDialog extends TmmDialog {
         cbProperty = new JComboBox();
         cbProperty.addItem(new MovieProperty("title", TmmResourceBundle.getString("metatag.title")));
         cbProperty.addItem(new MovieProperty("originalTitle", TmmResourceBundle.getString("metatag.originaltitle")));
+        cbProperty.addItem(new MovieProperty("englishTitle", TmmResourceBundle.getString("metatag.title.english")));
         cbProperty.addItem(new MovieProperty("sortTitle", TmmResourceBundle.getString("metatag.sorttitle")));
         cbProperty.addItem(new MovieProperty("tagline", TmmResourceBundle.getString("metatag.tagline")));
         cbProperty.addItem(new MovieProperty("plot", TmmResourceBundle.getString("metatag.plot")));
