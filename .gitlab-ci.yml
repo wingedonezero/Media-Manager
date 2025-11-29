@@ -66,29 +66,6 @@ sonarqube-qa:
       codequality:
         - target/code-quality.json
 
-##########################################
-# nightly
-##########################################
-deploy:nightly:
-  stage: deploy
-  only:
-    variables:
-      - $NIGHTLY_BUILD == "true"
-  trigger:
-    include: .ci/deploy_nightly.yml
-    strategy: depend
-
-##########################################
-# PRE-RELEASE
-##########################################
-deploy:PRE-RELEASE:
-  stage: deploy
-  only:
-    - main@tinyMediaManager/tinyMediaManager
-  when: manual
-  trigger:
-    include: .ci/deploy_prerelease.yml
-    strategy: depend
 
 ##########################################
 # RELEASE
@@ -100,16 +77,4 @@ deploy:RELEASE:
   when: manual
   trigger:
     include: .ci/deploy_release.yml
-    strategy: depend
-
-##########################################
-# TEST
-##########################################
-deploy:test:
-  stage: deploy
-  only:
-    variables:
-      - $TEST_BUILD == "true"
-  trigger:
-    include: .ci/deploy_test.yml
     strategy: depend
