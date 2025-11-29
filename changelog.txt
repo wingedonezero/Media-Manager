@@ -3,22 +3,22 @@ Version 5.2.4
 + [UI] added a date format for Croatian style (DD.MM.YYYY.) (thx @milotype)
 + [UI] added sort title to the movie set and TV show tree #3126 #3127
 + [UI] added popup messages in the settings to show additional information #3108
-+ [UI] added a subtitle type filter (default, forces, hearing impaired) #3133
++ [UI] added a subtitle type filter (default, forced, hearing impaired) #3133
 + [UI] show sums of the selected TV shows too #3136
 + [TV shows] added season plot to the TV show NFO files (Kodi v22 compliant)
 ---
 x [UI] fixed horizontal scrolling in the settings #3116
 x [UI] reduced CPU/Memory usage when having many items in the TV show tree
-x [UI] fix FFMpeg open dialog error #3118
+x [UI] fix FFmpeg open dialog error #3118
 x [UI] re-aligned path and filename columns in the movie table/TV show tree views #3124
 x [UI] fixed updating the trees after applying filters
 x [UI] fixed layout issues in the settings dialog #3138
 x [UI] added English title to the bulk editors
+x [TV shows] further improve episode detection, when having conflicting values #3130
 x [NFO] to not re-write NFO files in the artwork download task if not needed #3128
 x [Metadata] update "original filename" when exchanging a video file
 x [MdbList] fixed mapping of Rotten Tomatoes ratings
 x [HTTP API] fixed loading the HTTP API on startup
-x [EP] further improve episode detection, when having conflicting values #3130
 x [Library] upgraded Java to 21.0.9
 x [Subtitle] recognize filename flags case-insensitive #3132
 x [Subtitle] Remove empty values from codecs #3135
