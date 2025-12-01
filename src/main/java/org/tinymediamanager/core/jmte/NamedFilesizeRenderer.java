@@ -23,8 +23,12 @@ import com.floreysoft.jmte.NamedRenderer;
 import com.floreysoft.jmte.RenderFormatInfo;
 
 /**
- * this renderer is used to render the file size in the given form
- * 
+ * The Class {@link NamedFilesizeRenderer} formats file sizes in different units.
+ * <p>
+ * Supports decimal prefixes (kB, MB, GB) and binary prefixes (KiB, MiB, GiB). The output format is %.2f by default; a target unit can be passed as
+ * renderer parameter.
+ * </p>
+ *
  * @author Manuel Laggner
  */
 public class NamedFilesizeRenderer implements NamedRenderer {
@@ -45,10 +49,10 @@ public class NamedFilesizeRenderer implements NamedRenderer {
     String unit = s;
 
     if (unit == null) {
-      unit = "G";
+      unit = "GB";
     }
 
-    // part 2 is the unit (default = G)
+    // part 2 is the unit (default = GB)
     switch (unit) {
       case "K":
       case "k":
@@ -81,8 +85,9 @@ public class NamedFilesizeRenderer implements NamedRenderer {
         break;
 
       default:
+        // any other - will be forced to GB
         value = value / (1000 * 1000 * 1000f);
-        unit = "G";
+        unit = "GB";
         break;
     }
 

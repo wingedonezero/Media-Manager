@@ -1,5 +1,6 @@
 Version 5.2.5
 =======================
+x [Renamer] changed default file-size unit from G to GB #3151
 
 
 Version 5.2.4
