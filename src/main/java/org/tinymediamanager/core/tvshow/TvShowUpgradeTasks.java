@@ -357,6 +357,22 @@ public class TvShowUpgradeTasks extends UpgradeTasks {
       module.setDbVersion(5202);
     }
 
+    if (module.getDbVersion() < 5203) {
+      LOGGER.info("performing upgrade to ver: {}", 5203);
+      // fix incorrectly written/accepted ratings from mdblist
+      for (TvShow tvShow : tvShowList.getTvShows()) {
+        convertRating("tomatoes", "tomatometerallcritics", tvShow);
+        convertRating("audience", "tomatometeravgcritics", tvShow);
+        convertRating("popcorn", "tomatometeravgcritics", tvShow);
+        for (TvShowEpisode ep : tvShow.getEpisodes()) {
+          convertRating("tomatoes", "tomatometerallcritics", ep);
+          convertRating("audience", "tomatometeravgcritics", ep);
+          convertRating("popcorn", "tomatometeravgcritics", ep);
+        }
+      }
+      module.setDbVersion(5203);
+    }
+
     saveAll();
   }
 

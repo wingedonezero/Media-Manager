@@ -165,6 +165,17 @@ public class MovieUpgradeTasks extends UpgradeTasks {
       module.setDbVersion(5202);
     }
 
+    if (module.getDbVersion() < 5203) {
+      LOGGER.info("performing upgrade to ver: {}", 5203);
+      // fix incorrectly written/accepted ratings from mdblist
+      for (Movie movie : movieList.getMovies()) {
+        convertRating("tomatoes", "tomatometerallcritics", movie);
+        convertRating("audience", "tomatometeravgcritics", movie);
+        convertRating("popcorn", "tomatometeravgcritics", movie);
+      }
+      module.setDbVersion(5203);
+    }
+
     saveAll();
   }
 
