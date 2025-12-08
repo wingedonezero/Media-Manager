@@ -134,7 +134,8 @@ public class MdbListMetadataProvider implements IMediaProvider, IRatingProvider 
     List<MdbRating> ratings = response.body().ratings;
     // Loop over result to get all Ratings and add them to list of media ratings
     for (MdbRating rating : ratings) {
-      if (StringUtils.isBlank(rating.source) || (rating.value == 0f && !rating.source.equals(MediaMetadata.ROGER_EBERT))) {
+      // skip empty ratings
+      if (StringUtils.isBlank(rating.source) || rating.value <= 0f) {
         continue;
       }
 

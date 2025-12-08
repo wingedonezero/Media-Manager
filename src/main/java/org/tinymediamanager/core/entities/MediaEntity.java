@@ -181,6 +181,10 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
     // remove empty tag, null values and case insensitive duplicates
     Utils.removeEmptyStringsFromList(tags);
     Utils.removeDuplicateStringFromCollectionIgnoreCase(tags);
+
+    // remove ratings with invalid values
+    ratings.entrySet()
+        .removeIf(entry -> entry.getValue() == null || entry.getValue().getRating() < 0 || StringUtils.isBlank(entry.getValue().getId()));
   }
 
   /**
