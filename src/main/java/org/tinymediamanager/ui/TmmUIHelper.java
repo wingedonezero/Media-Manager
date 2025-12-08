@@ -16,12 +16,10 @@
 package org.tinymediamanager.ui;
 
 import java.awt.Desktop;
-import java.awt.FileDialog;
 import java.awt.Font;
 import java.awt.Window;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -73,9 +71,7 @@ import org.tinymediamanager.updater.UpdateCheck;
 import org.tinymediamanager.updater.UpdaterTask;
 
 import com.formdev.flatlaf.FlatLaf;
-
-import io.github.jacksonbrienen.jwfd.FileExtension;
-import io.github.jacksonbrienen.jwfd.JWindowsFileDialog;
+import com.formdev.flatlaf.util.SystemFileChooser;
 
 /**
  * The Class TmmUIHelper.
@@ -122,70 +118,39 @@ public class TmmUIHelper {
       return openJFileChooser(JFileChooser.DIRECTORIES_ONLY, title, initialPath, true, null, null);
     }
 
-    if (SystemUtils.IS_OS_WINDOWS) {
-      // on Windows we use the newer API provided via JWindowsFileDialog
-      String path = JWindowsFileDialog.showDirectoryDialog(null, title, initialPath);
-      if (StringUtils.isNotBlank(path)) {
-        return Paths.get(path);
-      }
-      else {
-        return null;
-      }
+    // check if the initialPath is accessible
+    if (StringUtils.isBlank(initialPath) || !Files.exists(Paths.get(initialPath))) {
+      initialPath = System.getProperty("user.home");
     }
-    else if (SystemUtils.IS_OS_MAC) {
-      // on macOS/OSX we simply use the AWT FileDialog
-      try {
-        // open directory chooser
-        return openDirectoryDialog(title, initialPath);
-      }
-      catch (Exception | Error e) {
-        LOGGER.warn("Cannot open AWT directory chooser: '{}'", e.getMessage());
-      }
-      finally {
-        // reset system property
-        System.setProperty("apple.awt.fileDialogForDirectories", "false");
-      }
-    }
-    else {
+
+    Path initialDir = Paths.get(initialPath);
+
+    if (SystemUtils.IS_OS_LINUX) {
       // try to open with tinyfiledialogs
       try {
-        // check if the initialPath is accessible
-        if (StringUtils.isBlank(initialPath) || !Files.exists(Paths.get(initialPath))) {
-          initialPath = System.getProperty("user.home");
-        }
-        return new TinyFileDialogs().chooseDirectory(title, Paths.get(initialPath));
+        return new TinyFileDialogs().chooseDirectory(title, initialDir);
       }
       catch (Exception | Error e) {
         LOGGER.error("Could not call TinyFileDialogs - '{}'", e.getMessage());
       }
     }
 
-    // open JFileChooser
-    return openJFileChooser(JFileChooser.DIRECTORIES_ONLY, title, initialPath, true, null, null);
-  }
-
-  private static Path openDirectoryDialog(String title, String initialPath) throws Exception, Error {
-    // set system property to choose directories
-    System.setProperty("apple.awt.fileDialogForDirectories", "true");
-
-    FileDialog chooser = new FileDialog(MainWindow.getFrame(), title);
-    if (StringUtils.isNotBlank(initialPath)) {
-      Path path = Paths.get(initialPath);
-      if (Files.exists(path)) {
-        chooser.setDirectory(path.toFile().getAbsolutePath());
+    // try with FlatLaf native file chooser
+    try {
+      SystemFileChooser fc = new SystemFileChooser();
+      fc.setFileSelectionMode(SystemFileChooser.DIRECTORIES_ONLY);
+      fc.setCurrentDirectory(initialDir.toFile());
+      if (fc.showOpenDialog(null) == SystemFileChooser.APPROVE_OPTION) {
+        File directory = fc.getSelectedFile();
+        return directory.toPath();
       }
     }
-    chooser.setVisible(true);
-
-    // reset system property
-    System.setProperty("apple.awt.fileDialogForDirectories", "false");
-
-    if (StringUtils.isNotEmpty(chooser.getFile())) {
-      return Paths.get(chooser.getDirectory(), chooser.getFile());
+    catch (Exception | Error e) {
+      LOGGER.error("Could not call FlatFlaf SystemFileChooser - '{}'", e.getMessage());
     }
-    else {
-      return null;
-    }
+
+    // open JFileChooser
+    return openJFileChooser(JFileChooser.DIRECTORIES_ONLY, title, initialPath, true, null, null);
   }
 
   private static Path openJFileChooser(int mode, String dialogTitle, String initialPath, boolean open, String filename,
@@ -232,43 +197,8 @@ public class TmmUIHelper {
       return openJFileChooser(JFileChooser.FILES_ONLY, title, initialPath, true, null, filter);
     }
 
-    if (SystemUtils.IS_OS_WINDOWS) {
-      // on Windows we use the newer API provided via JWindowsFileDialog
-
-      FileExtension clonedFilter = FileExtension.ALL;
-      if (filter != null) {
-        clonedFilter = new FileExtension(filter.getDescription(), filter.getExtensions()); // lowercase extension without dot
-      }
-      String path = JWindowsFileDialog.showOpenDialog(null, title, initialPath, clonedFilter);
-      if (StringUtils.isNotBlank(path)) {
-        return Paths.get(path);
-      }
-      else {
-        return null;
-      }
-    }
-    else if (SystemUtils.IS_OS_MAC) {
-      // on macOS/OSX we simply use the AWT FileDialog
-      try {
-        // open file chooser
-        FilenameFilter clonedFilter = null;
-        if (filter != null) {
-          clonedFilter = (dir, name) -> {
-            for (String ext : filter.getExtensions()) {
-              if (name.endsWith(ext)) {
-                return true;
-              }
-            }
-            return false;
-          };
-        }
-        return openFileDialog(title, initialPath, FileDialog.LOAD, null, clonedFilter);
-      }
-      catch (Exception | Error e) {
-        LOGGER.warn("Cannot open AWT filechooser - '{}'", e.getMessage());
-      }
-    }
-    else {
+    if (SystemUtils.IS_OS_LINUX) {
+      // use TinyFileDialogs
       try {
         // check if the initialPath is accessible
         if (StringUtils.isBlank(initialPath) || !Files.exists(Paths.get(initialPath))) {
@@ -292,6 +222,23 @@ public class TmmUIHelper {
       catch (Exception | Error e) {
         LOGGER.error("Could not call TinyFileDialogs - '{}'", e.getMessage());
       }
+    }
+
+    // try with FlatLaf native file chooser
+    try {
+      SystemFileChooser fc = new SystemFileChooser();
+      fc.setMultiSelectionEnabled(false);
+      if (initialPath != null) {
+        fc.setCurrentDirectory(new File(initialPath));
+      }
+      fc.setFileFilter(convertFilter(filter));
+      if (fc.showOpenDialog(null) == SystemFileChooser.APPROVE_OPTION) {
+        File file = fc.getSelectedFile();
+        return file.toPath();
+      }
+    }
+    catch (Exception | Error e) {
+      LOGGER.error("Could not call FlatFlaf SystemFileChooser - '{}'", e.getMessage());
     }
 
     // open JFileChooser
@@ -327,56 +274,15 @@ public class TmmUIHelper {
     }
   }
 
-  private static Path openFileDialog(String title, String initialPath, int mode, String filename, FilenameFilter filter) throws Exception, Error {
-    FileDialog chooser = new FileDialog(MainWindow.getFrame(), title, mode);
-    if (StringUtils.isNotBlank(initialPath)) {
-      Path path = Paths.get(initialPath);
-      if (Files.exists(path)) {
-        chooser.setDirectory(path.toFile().getAbsolutePath());
-      }
-    }
-    if (mode == FileDialog.SAVE) {
-      chooser.setFile(filename);
-    }
-    chooser.setFilenameFilter(filter);
-    chooser.setVisible(true);
-
-    if (StringUtils.isNotEmpty(chooser.getFile())) {
-      return Paths.get(chooser.getDirectory(), chooser.getFile());
-    }
-    else {
-      return null;
-    }
-  }
-
   public static Path saveFile(String title, String initialPath, String filename, FileNameExtensionFilter filter) {
     // are we forced to open the legacy file chooser?
     if ("true".equalsIgnoreCase(System.getProperty("tmm.legacy.filechooser"))) {
       return openJFileChooser(JFileChooser.FILES_ONLY, title, initialPath, false, filename, filter);
     }
 
-    if (SystemUtils.IS_OS_WINDOWS) {
-      // on Windows we use the newer API provided via JWindowsFileDialog
-      // we can only set the path here and not pre-set the filename
-      String path = JWindowsFileDialog.showSaveDialog(null, title, initialPath);
-      if (StringUtils.isNotBlank(path)) {
-        return Paths.get(path);
-      }
-      else {
-        return null;
-      }
-    }
-    if (SystemUtils.IS_OS_MAC) {
-      // on macOS/OSX we simply use the AWT FileDialog
-      try {
-        // open file chooser
-        return openFileDialog(title, initialPath, FileDialog.SAVE, filename, null);
-      }
-      catch (Exception | Error e) {
-        LOGGER.warn("Cannot open AWT filechooser - '{}'", e.getMessage());
-      }
-    }
-    else {
+    Path selectedFile = Paths.get(initialPath, filename);
+
+    if (SystemUtils.IS_OS_LINUX) {
       // try to open with TinyFileDialogs
       try {
         String[] filterList = null;
@@ -391,16 +297,58 @@ public class TmmUIHelper {
           filterList = extensions.toArray(new String[0]);
         }
 
-        return new TinyFileDialogs().saveFile(title, Paths.get(initialPath, filename), filterList, filterDescription);
+        return new TinyFileDialogs().saveFile(title, selectedFile, filterList, filterDescription);
       }
       catch (Exception | Error e) {
         LOGGER.error("Could not call TinyFileDialogs - '{}'", e.getMessage());
       }
     }
 
+    // try with FlatLaf native file chooser
+    try {
+      SystemFileChooser fc = new SystemFileChooser();
+      if (initialPath != null) {
+        fc.setCurrentDirectory(new File(initialPath));
+      }
+      fc.setFileFilter(convertFilter(filter));
+      fc.setSelectedFile(selectedFile.toFile());
+      if (fc.showSaveDialog(null) == SystemFileChooser.APPROVE_OPTION) {
+        return fc.getSelectedFile().toPath();
+      }
+    }
+    catch (Exception | Error e) {
+      LOGGER.error("Could not call FlatFlaf SystemFileChooser - '{}'", e.getMessage());
+    }
+
     return openJFileChooser(JFileChooser.FILES_ONLY, title, initialPath, false, filename, filter);
   }
 
+  /**
+   * Convert a Swing FileNameExtensionFilter to a FlatLaf SystemFileChooser.FileNameExtensionFilter
+   * 
+   * @param filter
+   *          the Swing filter
+   * @return the FlatLaf filter
+   */
+  private static SystemFileChooser.FileNameExtensionFilter convertFilter(FileNameExtensionFilter filter) {
+    if (filter == null) {
+      return null;
+    }
+    String[] extensions = filter.getExtensions();
+    for (int i = 0; i < extensions.length; i++) {
+      extensions[i] = extensions[i].replace(".", "");
+    }
+    return new SystemFileChooser.FileNameExtensionFilter(filter.getDescription(), extensions);
+  }
+
+  /**
+   * opens a file with the default application
+   * 
+   * @param file
+   *          the {@link Path} to the file to open
+   * @throws Exception
+   *           any exception occurred
+   */
   public static void openFile(Path file) throws Exception {
     if (file == null) {
       return;
@@ -416,7 +364,7 @@ public class TmmUIHelper {
       rootFolder = true;
     }
 
-    String fileType = rootFolder == true ? ".mkv" : "." + FilenameUtils.getExtension(file.getFileName().toString().toLowerCase(Locale.ROOT));
+    String fileType = rootFolder ? ".mkv" : "." + FilenameUtils.getExtension(file.getFileName().toString().toLowerCase(Locale.ROOT));
     if (!rootFolder && StringUtils.isNotBlank(Settings.getInstance().getMediaPlayer())
         && Settings.getInstance().getAllSupportedFileTypes().contains(fileType)) {
       if (SystemUtils.IS_OS_MAC) {
@@ -625,6 +573,15 @@ public class TmmUIHelper {
     }
   }
 
+  /**
+   * Enhance a {@link LinkLabel} which shows an image preview dialog on click
+   *
+   * @param linklabel
+   *          the {@link LinkLabel} to add the action listener to
+   * @param image
+   *          the image
+   * @return the {@link LinkLabel} containing the action listener
+   */
   public static LinkLabel createLinkForImage(LinkLabel linklabel, ImageLabel image) {
     linklabel.addActionListener(e -> {
       if (StringUtils.isNotBlank(image.getImagePath())) {
@@ -654,6 +611,12 @@ public class TmmUIHelper {
     IconManager.updateIcons();
   }
 
+  /**
+   * sets the theme according to the settings
+   *
+   * @throws Exception
+   *           any exception occurred
+   */
   public static void setTheme() throws Exception {
 
     switch (Settings.getInstance().getTheme()) {
