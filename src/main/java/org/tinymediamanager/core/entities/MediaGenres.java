@@ -38,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * @author Manuel Laggner
  * @since 1.0
  */
-public class MediaGenres extends DynaEnum<MediaGenres> {
+public class MediaGenres extends DynaEnum<MediaGenres> implements Comparable<MediaGenres> {
   private static final Comparator<MediaGenres> COMPARATOR      = new MediaGenres.MediaGenresComparator();
 
   public static final MediaGenres              ACTION          = new MediaGenres("ACTION", 0, "Action");

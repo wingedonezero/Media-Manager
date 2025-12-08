@@ -80,7 +80,7 @@ public class MovieGenreFilter extends AbstractCheckComboBoxMovieUIFilter<MediaGe
   }
 
   private void buildAndInstallMediaGenres() {
-    ArrayList<MediaGenres> usedGenres = new ArrayList<>(movieList.getUsedGenres());
+    List<MediaGenres> usedGenres = new ArrayList<>(movieList.getUsedGenres());
     usedGenres.sort(comparator);
     setValues(usedGenres);
   }

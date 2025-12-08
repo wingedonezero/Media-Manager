@@ -61,6 +61,7 @@ import org.tinymediamanager.core.MessageManager;
 import org.tinymediamanager.core.Utils;
 import org.tinymediamanager.core.bus.Event;
 import org.tinymediamanager.core.bus.EventBus;
+import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaFileAudioStream;
 import org.tinymediamanager.core.entities.MediaFileSubtitle;
@@ -137,6 +138,22 @@ public final class TvShowList extends AbstractModelObject {
     hdrFormatInEpisodes = new CopyOnWriteArrayList<>();
     audioTitlesInEpisodes = new CopyOnWriteArrayList<>();
     subtitleFormatsInEpisodes = new CopyOnWriteArrayList<>();
+
+    // eventbus listener
+    EventBus.registerListener(EventBus.TOPIC_TV_SHOWS, event -> {
+      if (event.eventType().equals(Event.TYPE_REMOVE) || event.eventType().equals(Event.TYPE_SAVE)) {
+        // full sync of lists - to remove unused items
+        TmmTaskManager.getInstance().addUiTask(() -> {
+          if (event.sender() instanceof TvShow) {
+            updateTvShowTags();
+            updateCertification();
+          }
+          else if (event.sender() instanceof TvShowEpisode) {
+            updateEpisodeTags();
+          }
+        });
+      }
+    });
   }
 
   /**
@@ -260,7 +277,7 @@ public final class TvShowList extends AbstractModelObject {
    * @return the unscraped TvShows
    */
   public List<TvShow> getUnscrapedTvShows() {
-    return tvShows.parallelStream().filter(tvShow -> !tvShow.isScraped()).collect(Collectors.toList());
+    return tvShows.parallelStream().filter(tvShow -> !tvShow.isScraped()).sorted().collect(Collectors.toList());
   }
 
   /**
@@ -817,7 +834,6 @@ public final class TvShowList extends AbstractModelObject {
       try {
         TvShowModuleManager.getInstance().persistEpisode(episode);
         EventBus.publishEvent(TOPIC_TV_SHOWS, Event.createSaveEvent(episode));
-        updateEpisodeLists(Collections.singleton(episode));
       }
       catch (Exception e) {
         LOGGER.error("Failed to persist episode S{} E{} of '{}' - '{}'", episode.getSeason(), episode.getEpisode(), episode.getTvShow().getTitle(),
@@ -1048,7 +1064,7 @@ public final class TvShowList extends AbstractModelObject {
   }
 
   private void updateTvShowTags(Collection<TvShow> tvShows) {
-    Set<String> tags = new HashSet<>();
+    Set<String> tags = new TreeSet<>();
     tvShows.forEach(tvShow -> tags.addAll(tvShow.getTags()));
 
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(tagsInTvShows, tags)) {
@@ -1057,8 +1073,23 @@ public final class TvShowList extends AbstractModelObject {
     }
   }
 
+  /**
+   * Update tags used in TV shows - used to sync all tags
+   */
+  private void updateTvShowTags() {
+    Set<String> tags = new TreeSet<>();
+    tvShows.forEach(tvShow -> tags.addAll(tvShow.getTags()));
+
+    if (tags.hashCode() != tagsInTvShows.hashCode()) {
+      tagsInTvShows.clear();
+      tagsInTvShows.addAll(tags);
+      Utils.removeDuplicateStringFromCollectionIgnoreCase(tagsInTvShows);
+      firePropertyChange(TAGS, null, tagsInTvShows);
+    }
+  }
+
   private void updateCertification(Collection<TvShow> tvShows) {
-    Set<MediaCertification> certifications = new HashSet<>();
+    Set<MediaCertification> certifications = new TreeSet<>();
     tvShows.forEach(tvShow -> certifications.add(tvShow.getCertification()));
 
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(certificationsInTvShows, certifications)) {
@@ -1066,8 +1097,27 @@ public final class TvShowList extends AbstractModelObject {
     }
   }
 
+  /**
+   * Update certifications used in TV shows - used to sync all certifications
+   */
+  private void updateCertification() {
+    Set<MediaCertification> certifications = new TreeSet<>();
+    tvShows.forEach(tvShow -> certifications.add(tvShow.getCertification()));
+
+    if (certifications.hashCode() != certificationsInTvShows.hashCode()) {
+      certificationsInTvShows.clear();
+      certificationsInTvShows.addAll(certifications);
+      firePropertyChange(Constants.CERTIFICATION, null, certificationsInTvShows);
+    }
+  }
+
+  /**
+   * get a {@link List} of all tags in TV shows
+   *
+   * @return a {@link List} of all tags
+   */
   public List<String> getTagsInTvShows() {
-    return tagsInTvShows;
+    return Collections.unmodifiableList(tagsInTvShows);
   }
 
   private void updateEpisodeLists(Collection<TvShowEpisode> episodes) {
@@ -1078,7 +1128,7 @@ public final class TvShowList extends AbstractModelObject {
   }
 
   private void updateEpisodeTags(Collection<TvShowEpisode> episodes) {
-    Set<String> tags = new HashSet<>();
+    Set<String> tags = new TreeSet<>();
     episodes.forEach(episode -> tags.addAll(episode.getTags()));
 
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(tagsInEpisodes, tags)) {
@@ -1087,8 +1137,24 @@ public final class TvShowList extends AbstractModelObject {
     }
   }
 
+  private void updateEpisodeTags() {
+    Set<String> tags = new TreeSet<>();
+    for (TvShow tvShow : tvShows) {
+      for (TvShowEpisode episode : tvShow.getEpisodes()) {
+        tags.addAll(episode.getTags());
+      }
+    }
+
+    if (tags.hashCode() != tagsInEpisodes.hashCode()) {
+      tagsInEpisodes.clear();
+      tagsInEpisodes.addAll(tags);
+      Utils.removeDuplicateStringFromCollectionIgnoreCase(tagsInEpisodes);
+      firePropertyChange(TAGS, null, tagsInEpisodes);
+    }
+  }
+
   public Collection<String> getTagsInEpisodes() {
-    return tagsInEpisodes;
+    return Collections.unmodifiableList(tagsInEpisodes);
   }
 
   private void updateMediaInformationLists(Collection<TvShowEpisode> episodes) {
@@ -1359,13 +1425,7 @@ public final class TvShowList extends AbstractModelObject {
    * @return the new TvShows
    */
   public List<TvShow> getNewTvShows() {
-    List<TvShow> newShows = new ArrayList<>();
-    for (TvShow show : tvShows) {
-      if (show.isNewlyAdded()) {
-        newShows.add(show);
-      }
-    }
-    return newShows;
+    return tvShows.parallelStream().filter(MediaEntity::isNewlyAdded).sorted().collect(Collectors.toList());
   }
 
   /**

@@ -173,6 +173,22 @@ public final class MovieList extends AbstractModelObject {
           break;
       }
     });
+
+    // eventbus listener
+    EventBus.registerListener(EventBus.TOPIC_MOVIES, event -> {
+      if (event.sender() instanceof Movie) {
+        if (event.eventType().equals(Event.TYPE_REMOVE) || event.eventType().equals(Event.TYPE_SAVE)) {
+          // full sync of lists - to remove unused items
+          TmmTaskManager.getInstance().addUiTask(() -> {
+            updateYear();
+            updateDecades();
+            updateTags();
+            updateGenres();
+            updateCertifications();
+          });
+        }
+      }
+    });
   }
 
   /**
@@ -206,7 +222,7 @@ public final class MovieList extends AbstractModelObject {
       int oldValue = movieList.size();
       movieList.add(movie);
 
-      updateLists(Collections.singletonList(movie));
+      updateLists(movie);
       firePropertyChange("movies", null, movieList);
       firePropertyChange("movieCount", oldValue, movieList.size());
     }
@@ -276,7 +292,7 @@ public final class MovieList extends AbstractModelObject {
    * @return the unscraped movies
    */
   public List<Movie> getUnscrapedMovies() {
-    return movieList.parallelStream().filter(movie -> !movie.isScraped()).collect(Collectors.toList());
+    return movieList.parallelStream().filter(movie -> !movie.isScraped()).sorted().collect(Collectors.toList());
   }
 
   /**
@@ -285,7 +301,7 @@ public final class MovieList extends AbstractModelObject {
    * @return the new movies
    */
   public List<Movie> getNewMovies() {
-    return movieList.parallelStream().filter(MediaEntity::isNewlyAdded).collect(Collectors.toList());
+    return movieList.parallelStream().filter(MediaEntity::isNewlyAdded).sorted().collect(Collectors.toList());
   }
 
   /**
@@ -555,7 +571,6 @@ public final class MovieList extends AbstractModelObject {
       try {
         MovieModuleManager.getInstance().persistMovie(movie);
         EventBus.publishEvent(TOPIC_MOVIES, Event.createSaveEvent(movie));
-        updateLists(Collections.singletonList(movie));
       }
       catch (Exception e) {
         LOGGER.error("Failed to persist movie '{}' - '{}'", movie.getTitle(), e.getMessage());
@@ -1061,6 +1076,10 @@ public final class MovieList extends AbstractModelObject {
     return count;
   }
 
+  private void updateLists(Movie movie) {
+    updateLists(Collections.singletonList(movie));
+  }
+
   private void updateLists(Collection<Movie> movies) {
     TmmTaskManager.getInstance().addUiTask(() -> {
       updateYear(movies);
@@ -1073,13 +1092,13 @@ public final class MovieList extends AbstractModelObject {
   }
 
   /**
-   * Update year in movies
+   * Update year in movies - used for newly added movies
    *
    * @param movies
    *          all movies to update
    */
   private void updateYear(Collection<Movie> movies) {
-    Set<Integer> years = new HashSet<>();
+    Set<Integer> years = new TreeSet<>();
     movies.forEach(movie -> years.add(movie.getYear()));
 
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(yearsInMovies, years)) {
@@ -1088,13 +1107,28 @@ public final class MovieList extends AbstractModelObject {
   }
 
   /**
-   * Update decades in movies
+   * Update year in movies - used to sync all years
+   *
+   */
+  private void updateYear() {
+    Set<Integer> years = new TreeSet<>();
+    movieSetList.forEach(movie -> years.add(movie.getYear()));
+
+    if (years.hashCode() != yearsInMovies.hashCode()) {
+      yearsInMovies.clear();
+      yearsInMovies.addAll(years);
+      firePropertyChange(YEAR, null, yearsInMovies);
+    }
+  }
+
+  /**
+   * Update decades in movies - used for newly added movies
    *
    * @param movies
    *          all movies to update
    */
   private void updateDecades(Collection<Movie> movies) {
-    Set<String> decades = new HashSet<>();
+    Set<String> decades = new TreeSet<>();
     movies.forEach(movie -> decades.add(movie.getDecadeShort()));
 
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(decadeInMovies, decades)) {
@@ -1103,13 +1137,27 @@ public final class MovieList extends AbstractModelObject {
   }
 
   /**
-   * Update genres used in movies.
+   * Update decades in movies - used to sync all decades
+   */
+  private void updateDecades() {
+    Set<String> decades = new TreeSet<>();
+    movieList.forEach(movie -> decades.add(movie.getDecadeShort()));
+
+    if (decades.hashCode() != decadeInMovies.hashCode()) {
+      decadeInMovies.clear();
+      decadeInMovies.addAll(decades);
+      firePropertyChange(DECADE, null, decadeInMovies);
+    }
+  }
+
+  /**
+   * Update genres used in movies - used for newly added movies
    *
    * @param movies
    *          all movies to update
    */
   private void updateGenres(Collection<Movie> movies) {
-    Set<MediaGenres> genres = new HashSet<>();
+    Set<MediaGenres> genres = new TreeSet<>();
     movies.forEach(movie -> genres.addAll(movie.getGenres()));
 
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(genresInMovies, genres)) {
@@ -1118,16 +1166,45 @@ public final class MovieList extends AbstractModelObject {
   }
 
   /**
-   * Update tags used in movies.
+   * Update genres used in movies - used to sync all genres
+   */
+  private void updateGenres() {
+    Set<MediaGenres> genres = new TreeSet<>();
+    movieList.forEach(movie -> genres.addAll(movie.getGenres()));
+
+    if (genres.hashCode() != genresInMovies.hashCode()) {
+      genresInMovies.clear();
+      genresInMovies.addAll(genres);
+      firePropertyChange(GENRE, null, genresInMovies);
+    }
+  }
+
+  /**
+   * Update tags used in movies - used for newly added movies
    *
    * @param movies
    *          all movies to update
    */
   private void updateTags(Collection<Movie> movies) {
-    Set<String> tags = new HashSet<>();
+    Set<String> tags = new TreeSet<>();
     movies.forEach(movie -> tags.addAll(movie.getTags()));
 
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(tagsInMovies, tags)) {
+      Utils.removeDuplicateStringFromCollectionIgnoreCase(tagsInMovies);
+      firePropertyChange(TAGS, null, tagsInMovies);
+    }
+  }
+
+  /**
+   * Update tags used in movies - used to sync all tags
+   */
+  private void updateTags() {
+    Set<String> tags = new TreeSet<>();
+    movieList.forEach(movie -> tags.addAll(movie.getTags()));
+
+    if (tags.hashCode() != tagsInMovies.hashCode()) {
+      tagsInMovies.clear();
+      tagsInMovies.addAll(tags);
       Utils.removeDuplicateStringFromCollectionIgnoreCase(tagsInMovies);
       firePropertyChange(TAGS, null, tagsInMovies);
     }
@@ -1285,16 +1362,30 @@ public final class MovieList extends AbstractModelObject {
   }
 
   /**
-   * Update certifications used in movies.
+   * Update certifications used in movies - used for newly added movies
    *
    * @param movies
    *          all movies to update
    */
   private void updateCertifications(Collection<Movie> movies) {
-    Set<MediaCertification> certifications = new HashSet<>();
+    Set<MediaCertification> certifications = new TreeSet<>();
     movies.forEach(movie -> certifications.add(movie.getCertification()));
 
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(certificationsInMovies, certifications)) {
+      firePropertyChange(Constants.CERTIFICATION, null, certificationsInMovies);
+    }
+  }
+
+  /**
+   * Update certifications used in movies - used to sync all certifications
+   */
+  private void updateCertifications() {
+    Set<MediaCertification> certifications = new TreeSet<>();
+    movieList.forEach(movie -> certifications.add(movie.getCertification()));
+
+    if (certifications.hashCode() != certificationsInMovies.hashCode()) {
+      certificationsInMovies.clear();
+      certificationsInMovies.addAll(certifications);
       firePropertyChange(Constants.CERTIFICATION, null, certificationsInMovies);
     }
   }
