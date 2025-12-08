@@ -144,6 +144,9 @@ public class TmmUIHelper {
         File directory = fc.getSelectedFile();
         return directory.toPath();
       }
+      else {
+        return null;
+      }
     }
     catch (Exception | Error e) {
       LOGGER.error("Could not call FlatFlaf SystemFileChooser - '{}'", e.getMessage());
@@ -228,13 +231,16 @@ public class TmmUIHelper {
     try {
       SystemFileChooser fc = new SystemFileChooser();
       fc.setMultiSelectionEnabled(false);
-      if (initialPath != null) {
+      if (StringUtils.isNotBlank(initialPath)) {
         fc.setCurrentDirectory(new File(initialPath));
       }
       fc.setFileFilter(convertFilter(filter));
       if (fc.showOpenDialog(null) == SystemFileChooser.APPROVE_OPTION) {
         File file = fc.getSelectedFile();
         return file.toPath();
+      }
+      else {
+        return null;
       }
     }
     catch (Exception | Error e) {
@@ -307,13 +313,16 @@ public class TmmUIHelper {
     // try with FlatLaf native file chooser
     try {
       SystemFileChooser fc = new SystemFileChooser();
-      if (initialPath != null) {
+      if (StringUtils.isNotBlank(initialPath)) {
         fc.setCurrentDirectory(new File(initialPath));
       }
       fc.setFileFilter(convertFilter(filter));
       fc.setSelectedFile(selectedFile.toFile());
       if (fc.showSaveDialog(null) == SystemFileChooser.APPROVE_OPTION) {
         return fc.getSelectedFile().toPath();
+      }
+      else {
+        return null;
       }
     }
     catch (Exception | Error e) {
@@ -325,7 +334,7 @@ public class TmmUIHelper {
 
   /**
    * Convert a Swing FileNameExtensionFilter to a FlatLaf SystemFileChooser.FileNameExtensionFilter
-   * 
+   *
    * @param filter
    *          the Swing filter
    * @return the FlatLaf filter
@@ -343,7 +352,7 @@ public class TmmUIHelper {
 
   /**
    * opens a file with the default application
-   * 
+   *
    * @param file
    *          the {@link Path} to the file to open
    * @throws Exception
