@@ -22,6 +22,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyDescriptor;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,6 +37,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
@@ -205,6 +207,20 @@ public class TvShowBulkEditorDialog extends TmmDialog {
           }
           setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
+
+        JButton btnRemoveAllGenres = new SquareIconButton(IconManager.DELETE);
+        btnRemoveAllGenres.setToolTipText(TmmResourceBundle.getString("bulkeditor.removeall"));
+        btnRemoveAllGenres.addActionListener(e -> {
+          if (isDeleteConfirmed(TmmResourceBundle.getString("metatag.genre"))) {
+            tvShowsChanged = true;
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            for (TvShow tvShow : tvShowsToEdit) {
+              tvShow.removeAllGenres();
+            }
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          }
+        });
+        panelContent.add(btnRemoveAllGenres, "cell 3 0");
       }
 
       {
@@ -249,6 +265,20 @@ public class TvShowBulkEditorDialog extends TmmDialog {
           }
           setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
+
+        JButton btnRemoveAllTags = new SquareIconButton(IconManager.DELETE);
+        btnRemoveAllTags.setToolTipText(TmmResourceBundle.getString("bulkeditor.removeall"));
+        btnRemoveAllTags.addActionListener(e -> {
+          if (isDeleteConfirmed(TmmResourceBundle.getString("metatag.tags"))) {
+            tvShowsChanged = true;
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            for (TvShow tvShow : tvShowsToEdit) {
+              tvShow.removeAllTags();
+            }
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          }
+        });
+        panelContent.add(btnRemoveAllTags, "cell 3 1");
       }
 
       {
@@ -617,6 +647,20 @@ public class TvShowBulkEditorDialog extends TmmDialog {
           }
           setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
+
+        JButton btnRemoveAllTagsEpisode = new SquareIconButton(IconManager.DELETE);
+        btnRemoveAllTagsEpisode.setToolTipText(TmmResourceBundle.getString("bulkeditor.removeall"));
+        btnRemoveAllTagsEpisode.addActionListener(e -> {
+          if (isDeleteConfirmed(TmmResourceBundle.getString("metatag.tags"))) {
+            episodesChanged = true;
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            for (TvShowEpisode episode : tvShowEpisodesToEdit) {
+              episode.removeAllTags();
+            }
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          }
+        });
+        panelContent.add(btnRemoveAllTagsEpisode, "cell 3 5");
       }
 
       {
@@ -985,6 +1029,19 @@ public class TvShowBulkEditorDialog extends TmmDialog {
 
         scrollPane.setViewportView(tableValues);
       }
+    }
+  }
+
+  private boolean isDeleteConfirmed(String attribute) {
+    Object[] options = { TmmResourceBundle.getString("Button.yes"), TmmResourceBundle.getString("Button.no") };
+    int dialogResult = JOptionPane.showOptionDialog(TvShowBulkEditorDialog.this,
+        MessageFormat.format(TmmResourceBundle.getString("message.bulkedit.delete"), attribute),
+        TmmResourceBundle.getString("message.bulkedit.warning"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
+    if (dialogResult == JOptionPane.YES_OPTION) {
+      return true;
+    }
+    else {
+      return false;
     }
   }
 

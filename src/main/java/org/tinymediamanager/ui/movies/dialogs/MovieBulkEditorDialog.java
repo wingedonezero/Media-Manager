@@ -198,6 +198,7 @@ public class MovieBulkEditorDialog extends TmmDialog {
         panelContent.add(btnRemoveGenre, "cell 3 1");
 
         JButton btnRemoveAllGenres = new SquareIconButton(IconManager.DELETE);
+        btnRemoveAllGenres.setToolTipText(TmmResourceBundle.getString("bulkeditor.removeall"));
         btnRemoveAllGenres.addActionListener(e -> {
           if (isDeleteConfirmed(TmmResourceBundle.getString("metatag.genre"))) {
             changed = true;
@@ -254,6 +255,7 @@ public class MovieBulkEditorDialog extends TmmDialog {
         panelContent.add(btnRemoveTag, "cell 3 2");
 
         JButton btnRemoveAllTags = new SquareIconButton(IconManager.DELETE);
+        btnRemoveAllTags.setToolTipText(TmmResourceBundle.getString("bulkeditor.removeall"));
         btnRemoveAllTags.addActionListener(e -> {
           if (isDeleteConfirmed(TmmResourceBundle.getString("metatag.tags"))) {
             changed = true;
