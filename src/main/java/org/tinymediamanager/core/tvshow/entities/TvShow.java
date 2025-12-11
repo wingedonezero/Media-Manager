@@ -1454,16 +1454,8 @@ public class TvShow extends MediaEntity implements IMediaInformation {
    * @return the checks for trailer
    */
   public Boolean getHasTrailer() {
-    if (ListUtils.isNotEmpty(trailer)) {
-      return true;
-    }
-
     // check if there is a mediafile (trailer)
-    if (!getMediaFiles(MediaFileType.TRAILER).isEmpty()) {
-      return true;
-    }
-
-    return false;
+    return !getMediaFiles(MediaFileType.TRAILER).isEmpty();
   }
 
   /**
