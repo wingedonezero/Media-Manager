@@ -155,10 +155,6 @@ abstract class FanartTvMetadataProvider implements IMediaProvider {
         artworks.addAll(prepareArtwork(images.seasonthumb, ImageType.SEASONTHUMB));
         break;
 
-      case SEASON_FANART:
-        artworks.addAll(prepareArtwork(images.seasonthumb, ImageType.SEASONFANART));
-        break;
-
       case THUMB:
         artworks.addAll(prepareArtwork(images.moviethumb, ImageType.MOVIETHUMB));
         artworks.addAll(prepareArtwork(images.tvthumb, ImageType.TVTHUMB));
@@ -194,7 +190,6 @@ abstract class FanartTvMetadataProvider implements IMediaProvider {
         artworks.addAll(prepareArtwork(images.seasonbanner, ImageType.SEASONBANNER));
         artworks.addAll(prepareArtwork(images.seasonposter, ImageType.SEASONPOSTER));
         artworks.addAll(prepareArtwork(images.seasonthumb, ImageType.SEASONTHUMB));
-        artworks.addAll(prepareArtwork(images.seasonthumb, ImageType.SEASONFANART));
 
         artworks.addAll(prepareArtwork(images.moviethumb, ImageType.MOVIETHUMB));
         artworks.addAll(prepareArtwork(images.tvthumb, ImageType.TVTHUMB));
@@ -272,7 +267,6 @@ abstract class FanartTvMetadataProvider implements IMediaProvider {
     SEASONBANNER(1000, 185, MediaArtworkType.SEASON_BANNER, FanartSizes.MEDIUM.getOrder()),
     SEASONPOSTER(1000, 1426, MediaArtworkType.SEASON_POSTER, MediaArtwork.PosterSizes.LARGE.getOrder()),
     SEASONTHUMB(1000, 562, MediaArtworkType.SEASON_THUMB, ThumbSizes.BIG.getOrder()),
-    SEASONFANART(1000, 562, MediaArtworkType.SEASON_FANART, FanartSizes.MEDIUM.getOrder()), // just duplicate - there is no real type
     SHOWBACKGROUND(1920, 1080, MediaArtworkType.BACKGROUND, FanartSizes.LARGE.getOrder()),
     TVBANNER(1000, 185, MediaArtworkType.BANNER, FanartSizes.MEDIUM.getOrder()),
     TVKEYART(1000, 1426, MediaArtworkType.KEYART, PosterSizes.LARGE.getOrder()),

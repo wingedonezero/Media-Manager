@@ -15,6 +15,8 @@
  */
 package org.tinymediamanager.scraper.thetvdb;
 
+import static org.tinymediamanager.scraper.entities.MediaArtwork.MediaArtworkType.ALL;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +36,7 @@ import org.tinymediamanager.scraper.exceptions.ScrapeException;
 import org.tinymediamanager.scraper.interfaces.ITvShowArtworkProvider;
 import org.tinymediamanager.scraper.thetvdb.entities.ArtworkBaseRecord;
 import org.tinymediamanager.scraper.thetvdb.entities.SeasonBaseRecord;
+import org.tinymediamanager.scraper.thetvdb.entities.SeasonExtendedResponse;
 import org.tinymediamanager.scraper.thetvdb.entities.SeriesExtendedResponse;
 import org.tinymediamanager.scraper.util.ListUtils;
 
@@ -58,7 +61,7 @@ public class TheTvDbTvShowArtworkProvider extends TheTvDbArtworkProvider impleme
   }
 
   @Override
-  protected List<ArtworkBaseRecord> fetchArtwork(int id) throws ScrapeException {
+  protected List<ArtworkBaseRecord> fetchArtwork(int id, ArtworkSearchAndScrapeOptions options) throws ScrapeException {
     List<ArtworkBaseRecord> images = new ArrayList<>();
     try {
       // get all types of artwork we can get
@@ -71,28 +74,38 @@ public class TheTvDbTvShowArtworkProvider extends TheTvDbArtworkProvider impleme
       }
 
       if (response.body() != null && response.body().data != null) {
-        for (ArtworkBaseRecord image : ListUtils.nullSafe(response.body().data.artworks)) {
-          // mix in the season number for season artwork
-          if (image.season != null) {
-            try {
-              SeasonBaseRecord season = response.body().data.seasons.stream()
-                  .filter(seasonBaseRecord -> seasonBaseRecord.id.equals(image.season))
-                  .findFirst()
-                  .orElse(null);
-              if (season != null) {
-                image.season = season.number;
+        // for any season based artwork, we need to call the season endpoint
+        if (options.getArtworkType() == ALL || options.getArtworkType().name().startsWith("SEASON_")) {
+          int seasonNumber = options.getIdAsIntOrDefault("tvShowSeason", -1); // -1 = all seasons
+          for (SeasonBaseRecord season : ListUtils.nullSafe(response.body().data.seasons)) {
+            if (seasonNumber == -1 || season.number == seasonNumber) {
+              try {
+                Response<SeasonExtendedResponse> seasonImagesResponse = tvdb.getSeasonsService().getSeasonExtended(season.id).execute();
+                if (seasonImagesResponse.isSuccessful() && seasonImagesResponse.body() != null) {
+                  for (ArtworkBaseRecord image : seasonImagesResponse.body().data.artwork) {
+                    // mix in the season number for season artwork
+                    image.season = season.number;
+                    images.add(image);
+                  }
+                }
               }
-              else {
-                image.season = null;
+              catch (Exception e) {
+                LOGGER.debug("failed to get season artwork for season {}: {}", season.number, e.getMessage());
               }
-            }
-            catch (Exception e) {
-              // just do not crash
-              image.season = null;
             }
           }
+        }
 
-          images.add(image);
+        // now add all non-season based artwork
+        if (options.getArtworkType() == ALL || !options.getArtworkType().name().startsWith("SEASON_")) {
+          for (ArtworkBaseRecord image : ListUtils.nullSafe(response.body().data.artworks)) {
+            // mix in the season number for season artwork - LEGACY
+            if (image.season != null) {
+              continue;
+            }
+
+            images.add(image);
+          }
         }
       }
     }

@@ -72,7 +72,7 @@ public abstract class TheTvDbArtworkProvider extends TheTvDbMetadataProvider imp
     // get artwork from thetvdb
     List<ArtworkBaseRecord> images = null;
     try {
-      images = fetchArtwork(id);
+      images = fetchArtwork(id, options);
     }
     catch (MissingIdException | NothingFoundException e) {
       // no valid ID given or nothing has been found - just do nothing
@@ -113,11 +113,13 @@ public abstract class TheTvDbArtworkProvider extends TheTvDbMetadataProvider imp
    * 
    * @param id
    *          the tvdbid to fetch the artwork for
+   * @param options
+   *          the scrape options
    * @return a {@link List} of {@link ArtworkBaseRecord}
    * @throws ScrapeException
    *           any exception occurred while scraping
    */
-  protected abstract List<ArtworkBaseRecord> fetchArtwork(int id) throws ScrapeException;
+  protected abstract List<ArtworkBaseRecord> fetchArtwork(int id, ArtworkSearchAndScrapeOptions options) throws ScrapeException;
 
   /**********************************************************************
    * local helper classes
