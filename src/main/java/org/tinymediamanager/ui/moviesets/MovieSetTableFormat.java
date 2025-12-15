@@ -32,6 +32,8 @@ import org.tinymediamanager.core.Utils;
 import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaRating;
+import org.tinymediamanager.core.entities.MediaSource;
+import org.tinymediamanager.core.movie.MovieEdition;
 import org.tinymediamanager.core.movie.MovieList;
 import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.MovieScraperMetadataConfig;
@@ -259,6 +261,25 @@ public class MovieSetTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     addColumn(col);
 
     /*
+     * Edition (hidden per default)
+     */
+    col = new Column(TmmResourceBundle.getString("metatag.edition"), "edition", this::getEdition, String.class);
+    col.setColumnComparator(stringComparator);
+    col.setHeaderIcon(IconManager.EDITION);
+    col.setDefaultHidden(true);
+    addColumn(col);
+
+    /*
+     * Source (hidden per default)
+     */
+    col = new Column(TmmResourceBundle.getString("metatag.source"), "mediaSource", this::getMediaSource, String.class);
+    col.setColumnComparator(stringComparator);
+    col.setHeaderIcon(IconManager.SOURCE);
+    col.setMinWidth(fontMetrics.stringWidth("Blu-ray") + getCellPadding());
+    col.setDefaultHidden(true);
+    addColumn(col);
+
+    /*
      * metadata
      */
     col = new Column(TmmResourceBundle.getString("tmm.metadata"), "metadata", this::hasMetadata, ImageIcon.class);
@@ -365,6 +386,36 @@ public class MovieSetTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     else if (userObject instanceof Movie movie) {
       return Utils.formatFileSizeForDisplay(movie.getTotalFilesize());
     }
+    return null;
+  }
+
+  private String getEdition(TmmTreeNode node) {
+    Object userObject = node.getUserObject();
+    if (userObject instanceof MovieSet.MovieSetMovie) {
+      return null;
+    }
+    else if (userObject instanceof Movie movie) {
+      MovieEdition edition = movie.getEdition();
+      if (edition != null) {
+        return edition.toString();
+      }
+    }
+
+    return null;
+  }
+
+  private String getMediaSource(TmmTreeNode node) {
+    Object userObject = node.getUserObject();
+    if (userObject instanceof MovieSet.MovieSetMovie) {
+      return null;
+    }
+    else if (userObject instanceof Movie movie) {
+      MediaSource mediaSource = movie.getMediaSource();
+      if (mediaSource != null) {
+        return mediaSource.toString();
+      }
+    }
+
     return null;
   }
 
