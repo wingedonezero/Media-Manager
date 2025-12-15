@@ -243,7 +243,7 @@ public class MovieSetTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     col.setHeaderIcon(IconManager.FILE_SIZE);
     col.setCellRenderer(new RightAlignTableCellRenderer());
     col.setColumnResizeable(false);
-    col.setMinWidth(fontMetrics.stringWidth("50000M") + getCellPadding());
+    col.setMinWidth(fontMetrics.stringWidth("500.00 MB") + getCellPadding());
     col.setDefaultHidden(true);
     addColumn(col);
 
@@ -254,7 +254,7 @@ public class MovieSetTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     col.setHeaderIcon(IconManager.FILE_SIZE);
     col.setCellRenderer(new RightAlignTableCellRenderer());
     col.setColumnResizeable(false);
-    col.setMinWidth(fontMetrics.stringWidth("50000M") + getCellPadding());
+    col.setMinWidth(fontMetrics.stringWidth("500.00 MB") + getCellPadding());
     col.setDefaultHidden(true);
     addColumn(col);
 

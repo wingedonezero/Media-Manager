@@ -434,7 +434,7 @@ public class TvShowTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     col.setHeaderIcon(IconManager.FILE_SIZE);
     col.setCellRenderer(new RightAlignTableCellRenderer());
     col.setColumnResizeable(false);
-    col.setMinWidth(fontMetrics.stringWidth("500.00 M") + getCellPadding());
+    col.setMinWidth(fontMetrics.stringWidth("500.00 MB") + getCellPadding());
     col.setDefaultHidden(true);
     col.setColumnComparator(fileSizeComparator);
     addColumn(col);
@@ -446,7 +446,7 @@ public class TvShowTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     col.setHeaderIcon(IconManager.FILE_SIZE);
     col.setCellRenderer(new RightAlignTableCellRenderer());
     col.setColumnResizeable(false);
-    col.setMinWidth(fontMetrics.stringWidth("500.00 M") + getCellPadding());
+    col.setMinWidth(fontMetrics.stringWidth("500.00 MB") + getCellPadding());
     col.setDefaultHidden(true);
     col.setColumnComparator(fileSizeComparator);
     addColumn(col);

@@ -55,7 +55,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.security.CodeSource;
 import java.text.CharacterIterator;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.text.StringCharacterIterator;
 import java.time.Instant;
@@ -2470,16 +2470,17 @@ public class Utils {
     if (!Settings.getInstance().isFileSizeDisplayHumanReadable()) {
       // in MB
       double sizeInMb = filesize / (base * base);
-      DecimalFormat df;
+      NumberFormat df = NumberFormat.getInstance();
 
       if (sizeInMb < 1) {
-        df = new DecimalFormat("#0.00");
+        df.setMaximumFractionDigits(2);
+        df.setMinimumFractionDigits(2);
       }
       else {
-        df = new DecimalFormat("#0");
+        df.setMaximumFractionDigits(0);
       }
 
-      return df.format(sizeInMb) + " M";
+      return df.format(sizeInMb) + " MB";
     }
 
     long bytes = filesize;
@@ -2494,8 +2495,11 @@ public class Utils {
       ci.next();
     }
 
-    DecimalFormat df = new DecimalFormat("#0.00");
-    return df.format(bytes / base) + " " + ci.current();
+    NumberFormat df = NumberFormat.getInstance();
+    df.setMaximumFractionDigits(2);
+    df.setMinimumFractionDigits(2);
+
+    return df.format(bytes / base) + " " + ci.current() + "B";
   }
 
   /**

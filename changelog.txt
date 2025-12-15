@@ -5,6 +5,7 @@ Version 5.2.5
 ---
 x [UI] remove unused items from several combo boxes (genres, tags, decades, year)
 x [UI] changed the trailer column in the TV show module to only show downloaded trailers (same behavior as in the movie module)
+x [UI] format file sizes in the correct/language dependent style #3151
 x [TV shows] fixed scraping of season fanart & reverted mix-in of season thumbs #3161 #3101
 x [Renamer] changed default file-size unit from G to GB #3151
 x [MdbList] fixed mapping of Rotten Tomatoes ratings
