@@ -18,7 +18,9 @@ package org.tinymediamanager.ui.components.table;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.event.TableColumnModelEvent;
 import javax.swing.table.DefaultTableColumnModel;
@@ -244,6 +246,42 @@ public class TmmTableColumnModel extends DefaultTableColumnModel {
    */
   public boolean isColumnHidden(TableColumn tc) {
     return hiddenColumns.contains(tc);
+  }
+
+  /**
+   * Sets the visible columns with their widths. All columns not in the visible list will be hidden.
+   *
+   * @param visibleColumnsWithWidths
+   *          a list of column states containing column identifiers and their widths
+   */
+  public void setVisibleColumnsWithWidths(List<TmmTable.ColumnState> visibleColumnsWithWidths) {
+    disableColumnEvents = true;
+
+    // create a map for quick lookup of visible columns and their widths
+    Map<String, Integer> visibleColumnsMap = new HashMap<>();
+    for (TmmTable.ColumnState state : visibleColumnsWithWidths) {
+      visibleColumnsMap.put(state.getIdentifier(), state.getWidth());
+    }
+
+    // process all columns
+    for (TableColumn col : getAllColumns()) {
+      String identifier = (String) col.getIdentifier();
+      if (visibleColumnsMap.containsKey(identifier)) {
+        // make column visible and set its width
+        setColumnHidden(col, false);
+        int width = visibleColumnsMap.get(identifier);
+        if (width > 0) {
+          col.setPreferredWidth(width);
+          col.setWidth(width);
+        }
+      }
+      else {
+        // hide column
+        setColumnHidden(col, true);
+      }
+    }
+
+    disableColumnEvents = false;
   }
 
   public void setHiddenColumns(List<String> columnIdentifiers) {

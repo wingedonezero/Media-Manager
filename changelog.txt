@@ -3,6 +3,7 @@ Version 5.2.5
 + [UI] added native file dialogs from FlatLaf for better OS integration (Windows and macOS)
 + [UI] added "remove all genres" and "remove all tags" to the TV show bulk editor
 + [UI] added edition and media source to the movie set tree view #3152
++ [UI] reworked table column configuration - visibility and width are now stored
 ---
 x [UI] remove unused items from several combo boxes (genres, tags, decades, year)
 x [UI] changed the trailer column in the TV show module to only show downloaded trailers (same behavior as in the movie module)

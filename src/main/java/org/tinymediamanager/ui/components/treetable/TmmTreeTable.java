@@ -108,7 +108,7 @@ public class TmmTreeTable extends TmmTable {
    *          the column to add
    */
   @Override
-  public void addColumn(TableColumn aColumn) {
+  public void addColumn(@NotNull TableColumn aColumn) {
     if (aColumn.getIdentifier() == null && getModel() instanceof TmmTreeTableModel) {
       aColumn.setHeaderRenderer(new SortableIconHeaderRenderer());
 
@@ -221,11 +221,12 @@ public class TmmTreeTable extends TmmTable {
   }
 
   /**
-   * Sets the default hidden columns based on the table format.
+   * Sets the default column visibility based on the table format. Columns marked as default hidden in the table format will be hidden, all others
+   * will be visible with their default widths.
    */
   @Override
-  public void setDefaultHiddenColumns() {
-    if (getColumnModel() instanceof TmmTableColumnModel && getModel() instanceof TmmTreeTableModel) {
+  public void setDefaultColumnVisibility() {
+    if (getColumnModel() instanceof TmmTableColumnModel tmmTableColumnModel && getModel() instanceof TmmTreeTableModel) {
       TmmTreeTableModel tableModel = (TmmTreeTableModel) getModel();
       TmmTableFormat<TmmTreeNode> tableFormat = tableModel.getTableModel().getTableFormat();
 
@@ -237,8 +238,22 @@ public class TmmTreeTable extends TmmTable {
         }
       }
 
-      readHiddenColumns(hiddenColumns);
+      tmmTableColumnModel.setHiddenColumns(hiddenColumns);
+
+      // adjust column widths after setting visibility
+      adjustColumnPreferredWidths(3);
     }
+  }
+
+  /**
+   * Sets the default hidden columns (legacy method for backward compatibility).
+   *
+   * @deprecated Use {@link #setDefaultColumnVisibility()} instead
+   */
+  @Deprecated
+  @Override
+  public void setDefaultHiddenColumns() {
+    setDefaultColumnVisibility();
   }
 
   /**
