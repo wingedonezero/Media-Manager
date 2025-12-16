@@ -65,7 +65,12 @@ public class TvShowTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
 
     TvShowModuleManager.getInstance().getSettings().addPropertyChangeListener(evt -> {
       switch (evt.getPropertyName()) {
-        case "displayMissingEpisodes", "displayMissingSpecials", "displayMissingNotAired" -> updateDummyEpisodes();
+        case "displayMissingEpisodes", "displayMissingSpecials", "displayMissingNotAired" -> {
+          for (TvShow tvShow : tvShowList.getTvShows()) {
+            tvShow.invalidateEpisodeForDisplayCache();
+            updateDummyEpisodesForTvShow(tvShow);
+          }
+        }
       }
     });
   }
@@ -88,7 +93,7 @@ public class TvShowTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
       else {
         // TV show updated
         nodeChanged(tvShow);
-        updateDummyEpisodes();
+        updateDummyEpisodesForTvShow(tvShow);
       }
     }
     else {
@@ -186,15 +191,6 @@ public class TvShowTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
         // episode is on UI, season is the same - reorder
         firePropertyChange(NODE_CHANGED, null, episodeNode);
       }
-    }
-  }
-
-  /**
-   * add the dummy episodes to the tree is the setting has been activated
-   */
-  private void updateDummyEpisodes() {
-    for (TvShow tvShow : tvShowList.getTvShows()) {
-      updateDummyEpisodesForTvShow(tvShow);
     }
   }
 

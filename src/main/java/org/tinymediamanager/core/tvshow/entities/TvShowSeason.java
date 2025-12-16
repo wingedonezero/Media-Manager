@@ -196,6 +196,10 @@ public class TvShowSeason extends MediaEntity implements Comparable<TvShowSeason
     episodesForDisplay.clear();
   }
 
+  void invalidateEpisodeForDisplayCache() {
+    episodesForDisplay.clear();
+  }
+
   boolean isEmpty() {
     return episodes.isEmpty() && dummyEpisodes.isEmpty();
   }
@@ -396,7 +400,7 @@ public class TvShowSeason extends MediaEntity implements Comparable<TvShowSeason
       episodesForDisplay.addAll(TvShowHelpers.getEpisodesForDisplay(episodes, dummyEpisodes));
     }
 
-    return new ArrayList<>(episodesForDisplay);
+    return Collections.unmodifiableList(episodesForDisplay);
   }
 
   /**

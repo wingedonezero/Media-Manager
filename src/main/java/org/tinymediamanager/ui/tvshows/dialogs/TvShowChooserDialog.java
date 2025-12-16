@@ -640,15 +640,13 @@ public class TvShowChooserDialog extends TmmDialog implements ActionListener {
           tvShowToScrape.setLastScrapeLanguage(model.getLanguage().name());
 
           // get the episode list for display?
-          if (TvShowModuleManager.getInstance().getSettings().isDisplayMissingEpisodes()) {
-            model.addTask(new TmmTask(TmmResourceBundle.getString("tvshow.scrape.missingepisodes"), 1, TmmTaskHandle.TaskType.BACKGROUND_TASK) {
-              @Override
-              protected void doInBackground() {
-                tvShowToScrape.setDummyEpisodes(model.getEpisodesForDisplay());
-                tvShowToScrape.saveToDb();
-              }
-            });
-          }
+          model.addTask(new TmmTask(TmmResourceBundle.getString("tvshow.scrape.missingepisodes"), 1, TmmTaskHandle.TaskType.BACKGROUND_TASK) {
+            @Override
+            protected void doInBackground() {
+              tvShowToScrape.setDummyEpisodes(model.getEpisodesForDisplay());
+              tvShowToScrape.saveToDb();
+            }
+          });
 
           // automatic rename? rename the TV show itself
           if (TvShowModuleManager.getInstance().getSettings().isRenameAfterScrape()) {
