@@ -83,7 +83,7 @@ public interface ITmmUIFilter<E> {
         case EQ -> string = "=";
         case GE -> string = "≥";
         case GT -> string = ">";
-        case BT -> string = "[]";
+        case BT -> string = "[ ]";
       }
 
       return string;

@@ -13,36 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinymediamanager.ui.movies.filters;
+package org.tinymediamanager.ui.tvshows.filters;
+
+import java.util.Date;
 
 import javax.swing.JLabel;
 
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.movie.entities.Movie;
+import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
- * The class {@link MovieDateAddedFilter} is used for a date added movie filter with comparison options.
+ * The class {@link TvShowFirstAiredFilter} is used to filter TV show episodes by their first aired date with comparison options.
  * <p>
- * Supports filtering by date added with options: less than, less than or equal, equal, greater than, greater than or equal, and between.
+ * Supports filtering by first aired date with options: less than, less than or equal, equal, greater than, greater than or equal, and between.
  * </p>
  *
  * @author Manuel Laggner
  */
-public class MovieDateAddedFilter extends AbstractDateMovieFilter {
-
-  @Override
-  public String getId() {
-    return "movieDateAdded";
-  }
-
-  @Override
-  public boolean accept(Movie movie) {
-    return matchDate(movie.getDateAddedForUi());
-  }
+public class TvShowFirstAiredFilter extends AbstractDateTvShowFilter {
 
   @Override
   protected JLabel createLabel() {
-    return new TmmLabel(TmmResourceBundle.getString("metatag.dateadded"));
+    return new TmmLabel(TmmResourceBundle.getString("metatag.aired"));
+  }
+
+  @Override
+  public String getId() {
+    return "tvShowFirstAired";
+  }
+
+  @Override
+  protected Date getDateFromEpisode(TvShowEpisode episode) {
+    return episode.getFirstAired();
   }
 }

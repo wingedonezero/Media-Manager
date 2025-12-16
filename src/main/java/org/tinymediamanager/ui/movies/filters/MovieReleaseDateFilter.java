@@ -22,27 +22,27 @@ import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
- * The class {@link MovieDateAddedFilter} is used for a date added movie filter with comparison options.
+ * The class {@link MovieReleaseDateFilter} is used for a release date movie filter with comparison options.
  * <p>
- * Supports filtering by date added with options: less than, less than or equal, equal, greater than, greater than or equal, and between.
+ * Supports filtering by release date with options: less than, less than or equal, equal, greater than, greater than or equal, and between.
  * </p>
  *
  * @author Manuel Laggner
  */
-public class MovieDateAddedFilter extends AbstractDateMovieFilter {
+public class MovieReleaseDateFilter extends AbstractDateMovieFilter {
 
   @Override
   public String getId() {
-    return "movieDateAdded";
+    return "movieReleaseDate";
   }
 
   @Override
   public boolean accept(Movie movie) {
-    return matchDate(movie.getDateAddedForUi());
+    return matchDate(movie.getReleaseDate());
   }
 
   @Override
   protected JLabel createLabel() {
-    return new TmmLabel(TmmResourceBundle.getString("metatag.dateadded"));
+    return new TmmLabel(TmmResourceBundle.getString("metatag.releasedate"));
   }
 }

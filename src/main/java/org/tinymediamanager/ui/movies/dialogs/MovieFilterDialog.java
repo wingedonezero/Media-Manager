@@ -96,6 +96,7 @@ import org.tinymediamanager.ui.movies.filters.MovieNoteFilter;
 import org.tinymediamanager.ui.movies.filters.MoviePathFilter;
 import org.tinymediamanager.ui.movies.filters.MoviePosterSizeFilter;
 import org.tinymediamanager.ui.movies.filters.MovieProductionCompanyFilter;
+import org.tinymediamanager.ui.movies.filters.MovieReleaseDateFilter;
 import org.tinymediamanager.ui.movies.filters.MovieRuntimeFilter;
 import org.tinymediamanager.ui.movies.filters.MovieSubtitleFormatFilter;
 import org.tinymediamanager.ui.movies.filters.MovieSubtitleLanguageFilter;
@@ -185,6 +186,7 @@ public class MovieFilterDialog extends TmmDialog {
         tabbedPane.addTab(TmmResourceBundle.getString("tmm.metadata"), createTabPanel(panelMetadata));
 
         addFilter(new MovieYearFilter(), panelMetadata);
+        addFilter(new MovieReleaseDateFilter(), panelMetadata);
         addFilter(new MovieDecadesFilter(), panelMetadata);
         addFilter(new MovieGenreFilter(), panelMetadata);
         addFilter(new MovieCertificationFilter(), panelMetadata);
