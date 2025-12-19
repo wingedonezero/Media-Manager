@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -50,17 +51,19 @@ import org.tinymediamanager.thirdparty.FFmpeg;
  * @author Manuel Laggner
  */
 abstract class FFmpegArtworkProvider implements IMediaProvider {
-  private static final Logger     LOGGER    = LoggerFactory.getLogger(FFmpegArtworkProvider.class);
+  private static final Logger          LOGGER    = LoggerFactory.getLogger(FFmpegArtworkProvider.class);
 
-  private static final long       IMAGE_TTL = 10 * 60 * 1000L;                                     // 10 min
-  static final String             ID        = "ffmpeg";
+  private static final long            IMAGE_TTL = 10 * 60 * 1000L;                                     // 10 min
+  static final String                  ID        = "ffmpeg";
 
-  private final MediaProviderInfo providerInfo;
-  private final Map<String, Long> createdStills;
+  private final MediaProviderInfo      providerInfo;
+  private final Map<String, Long>      createdStills;
+  private final ReentrantReadWriteLock lock;
 
   FFmpegArtworkProvider() {
     providerInfo = createMediaProviderInfo();
     createdStills = new HashMap<>();
+    lock = new ReentrantReadWriteLock();
 
     TimerTask databaseWriteTask = new TimerTask() {
       @Override
@@ -198,7 +201,10 @@ abstract class FFmpegArtworkProvider implements IMediaProvider {
             throw e;
           }
         }
+
+        lock.writeLock().lock();
         createdStills.put(tempFile.toString(), System.currentTimeMillis());
+        lock.writeLock().unlock();
 
         // get the resolution from the created still (for anamorphic videos this could differ from the video file resolution)
         MediaFile imageMediaFile = new MediaFile(tempFile);
@@ -308,7 +314,9 @@ abstract class FFmpegArtworkProvider implements IMediaProvider {
             }
           }
 
+          lock.writeLock().lock();
           createdStills.put(tempFile.toString(), System.currentTimeMillis());
+          lock.writeLock().unlock();
 
           // get the resolution from the created still (for anamorphic videos this could differ from the video file resolution)
           MediaFile imageMediaFile = new MediaFile(tempFile);
@@ -407,7 +415,10 @@ abstract class FFmpegArtworkProvider implements IMediaProvider {
               throw e;
             }
           }
+
+          lock.writeLock().lock();
           createdStills.put(tempFile.toString(), System.currentTimeMillis());
+          lock.writeLock().unlock();
 
           // get the resolution from the created still (for anamorphic videos this could differ from the video file resolution)
           MediaFile imageMediaFile = new MediaFile(tempFile);
@@ -466,11 +477,17 @@ abstract class FFmpegArtworkProvider implements IMediaProvider {
   private void cleanupOldStills() {
     long now = System.currentTimeMillis();
 
+    lock.readLock().lock();
     Map<String, Long> pending = new HashMap<>(createdStills);
+    lock.readLock().unlock();
+
     for (var entry : pending.entrySet()) {
       if (entry.getValue() < (now - IMAGE_TTL)) {
         Utils.deleteFileSafely(Paths.get(entry.getKey()));
+
+        lock.writeLock().lock();
         createdStills.remove(entry.getKey());
+        lock.writeLock().unlock();
       }
     }
   }

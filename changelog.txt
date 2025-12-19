@@ -15,6 +15,7 @@ x [Renamer] changed default file-size unit from G to GB #3151
 x [MdbList] fixed mapping of Rotten Tomatoes ratings
 x [Library] upgraded FlatLaf to 3.7
 x [MediaInfo] do not prepare ISO files if mediainfo is not available #3163
+x [FFmpeg] fixed an occasional crash when cleaning up old stills #3169
 
 
 Version 5.2.4
