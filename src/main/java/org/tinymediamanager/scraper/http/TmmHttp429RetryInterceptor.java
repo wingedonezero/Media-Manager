@@ -18,6 +18,7 @@ package org.tinymediamanager.scraper.http;
 
 import java.io.IOException;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +33,8 @@ import okhttp3.Response;
 public class TmmHttp429RetryInterceptor implements Interceptor {
   private static final Logger LOGGER = LoggerFactory.getLogger(TmmHttp429RetryInterceptor.class);
 
-  public Response intercept(Chain chain) throws IOException {
+  @NotNull
+  public Response intercept(@NotNull Chain chain) throws IOException {
     return handleIntercept(chain);
   }
 
@@ -46,18 +48,20 @@ public class TmmHttp429RetryInterceptor implements Interceptor {
       if (retryHeader != null) {
         try {
           int retry = Integer.parseInt(retryHeader);
-          LOGGER.debug("Hold your horses! The server is asking us to wait {} seconds before retrying", retry);
-          Thread.sleep((int) ((retry + 0.5) * 1000));
+          if (retry > 0) {
+            LOGGER.debug("Hold your horses! The server is asking us to wait {} seconds before retrying", retry);
+            Thread.sleep((int) ((retry + 0.5) * 1000));
 
-          // close body of unsuccessful response
-          if (response.body() != null) {
-            response.body().close();
+            // close body of unsuccessful response
+            if (response.body() != null) {
+              response.body().close();
+            }
+            // is fine because, unlike a network interceptor, an application interceptor can re-try requests
+            return handleIntercept(chain);
           }
-          // is fine because, unlike a network interceptor, an application interceptor can re-try requests
-          return handleIntercept(chain);
         }
         catch (NumberFormatException | InterruptedException ignored) {
-          LOGGER.warn("Invalid Retry-After header: {}", retryHeader);
+          LOGGER.debug("Invalid Retry-After header: {}", retryHeader);
         }
       }
     }
