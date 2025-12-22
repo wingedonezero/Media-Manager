@@ -16,6 +16,7 @@
 
 package org.tinymediamanager.ui.plaf;
 
+import java.awt.BasicStroke;
 import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -24,6 +25,8 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.lang.reflect.Field;
+import java.util.Dictionary;
+import java.util.Enumeration;
 
 import javax.swing.JComponent;
 import javax.swing.JSlider;
@@ -84,7 +87,48 @@ public class TmmRangeSliderUI extends FlatSliderUI {
 
   protected void adjustSnapHighValue() {
     int sliderValue = ((RangeSlider) slider).getHighValue();
-    int snappedValue = sliderValue;
+    int snappedValue = snapToNearestLabeledTick(sliderValue);
+
+    if (snappedValue != sliderValue) {
+      ((RangeSlider) slider).setHighValue(snappedValue);
+    }
+  }
+
+  protected void adjustSnapLowValue() {
+    int sliderValue = ((RangeSlider) slider).getLowValue();
+    int snappedValue = snapToNearestLabeledTick(sliderValue);
+
+    if (snappedValue != sliderValue) {
+      ((RangeSlider) slider).setLowValue(snappedValue);
+    }
+  }
+
+  /**
+   * Snap to the nearest tick position (labeled or unlabeled). Checks both labeled ticks and calculated major/minor tick positions.
+   *
+   * @param value
+   *          the value to snap
+   * @return the nearest tick value
+   */
+  private int snapToNearestLabeledTick(int value) {
+    int nearest = value;
+    int minDistance = Integer.MAX_VALUE;
+
+    // First, check labeled tick positions (custom well-known sizes)
+    Dictionary<Integer, ?> labels = slider.getLabelTable();
+    if (labels != null && !labels.isEmpty()) {
+      Enumeration<Integer> keys = labels.keys();
+      while (keys.hasMoreElements()) {
+        int tickValue = keys.nextElement();
+        int distance = Math.abs(value - tickValue);
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearest = tickValue;
+        }
+      }
+    }
+
+    // Also check major and minor tick spacing positions
     int majorTickSpacing = slider.getMajorTickSpacing();
     int minorTickSpacing = slider.getMinorTickSpacing();
     int tickSpacing = 0;
@@ -96,18 +140,23 @@ public class TmmRangeSliderUI extends FlatSliderUI {
       tickSpacing = majorTickSpacing;
     }
 
-    if (tickSpacing != 0) {
-      // If it's not on a tick, change the value
-      if ((sliderValue - slider.getMinimum()) % tickSpacing != 0) {
-        float temp = (float) (sliderValue - slider.getMinimum()) / (float) tickSpacing;
-        int whichTick = Math.round(temp);
-        snappedValue = slider.getMinimum() + (whichTick * tickSpacing);
-      }
+    if (tickSpacing > 0) {
+      // Calculate the nearest tick based on spacing
+      float temp = (float) (value - slider.getMinimum()) / (float) tickSpacing;
+      int whichTick = Math.round(temp);
+      int snappedToSpacing = slider.getMinimum() + (whichTick * tickSpacing);
 
-      if (snappedValue != sliderValue) {
-        ((RangeSlider) slider).setHighValue(snappedValue);
+      // Clamp to bounds
+      snappedToSpacing = Math.max(slider.getMinimum(), Math.min(slider.getMaximum(), snappedToSpacing));
+
+      int distance = Math.abs(value - snappedToSpacing);
+      // Simply snap to whichever is closest - labeled or spacing
+      if (distance < minDistance) {
+        nearest = snappedToSpacing;
       }
     }
+
+    return nearest;
   }
 
   public void paintTrack(Graphics g) {
@@ -120,13 +169,13 @@ public class TmmRangeSliderUI extends FlatSliderUI {
     if (this.slider.getOrientation() == SwingConstants.HORIZONTAL) {
       float y = (float) this.trackRect.y + ((float) this.trackRect.height - tw) / 2.0F;
 
-      int lowThumbX = xPositionForValue(((RangeSlider) slider).getLowValue()) - (thumbRect.width / 2);
-      int highThumbX = xPositionForValue(((RangeSlider) slider).getHighValue()) - (thumbRect.width / 2);
+      int lowThumbX = xPositionForValue(((RangeSlider) slider).getLowValue());
+      int highThumbX = xPositionForValue(((RangeSlider) slider).getHighValue());
 
       if (enabled) {
-        coloredTrack = new RoundRectangle2D.Float((float) this.trackRect.x + lowThumbX, y, (float) (highThumbX - lowThumbX), tw, tw, tw);
-        trackLow = new RoundRectangle2D.Float((float) this.trackRect.x, y, (float) (lowThumbX), tw, tw, tw);
-        trackHigh = new RoundRectangle2D.Float((float) (this.trackRect.x + highThumbX), y, (float) (this.trackRect.width - highThumbX), tw, tw, tw);
+        coloredTrack = new RoundRectangle2D.Float((float) lowThumbX, y, (float) (highThumbX - lowThumbX), tw, tw, tw);
+        trackLow = new RoundRectangle2D.Float((float) this.trackRect.x, y, (float) (lowThumbX - this.trackRect.x), tw, tw, tw);
+        trackHigh = new RoundRectangle2D.Float((float) highThumbX, y, (float) (this.trackRect.x + this.trackRect.width - highThumbX), tw, tw, tw);
       }
       else {
         trackLow = trackHigh = new RoundRectangle2D.Float((float) this.trackRect.x, y, (float) this.trackRect.width, tw, tw, tw);
@@ -159,11 +208,64 @@ public class TmmRangeSliderUI extends FlatSliderUI {
   }
 
   @Override
+  public void paintTicks(Graphics g) {
+    // Call the parent implementation first to paint all standard ticks
+    super.paintTicks(g);
+
+    // Then highlight labeled ticks with thicker lines
+    Dictionary<Integer, ?> labels = slider.getLabelTable();
+    if (labels == null || labels.isEmpty()) {
+      return;
+    }
+
+    Graphics2D g2d = (Graphics2D) g;
+    g2d.setColor(this.getTrackValueColor());
+    g2d.setStroke(new BasicStroke(1.5f));
+
+    if (slider.getOrientation() == SwingConstants.HORIZONTAL) {
+      // For horizontal sliders, draw thicker vertical lines at labeled positions
+      int y1 = tickRect.y;
+      int y2 = tickRect.y + tickRect.height;
+
+      Enumeration<Integer> keys = labels.keys();
+      while (keys.hasMoreElements()) {
+        int tickValue = keys.nextElement();
+        int x = xPositionForValue(tickValue);
+        g2d.drawLine(x, y1, x, y2);
+      }
+    }
+    else {
+      // For vertical sliders, draw thicker horizontal lines at labeled positions
+      int x1 = tickRect.x;
+      int x2 = tickRect.x + tickRect.width;
+
+      Enumeration<Integer> keys = labels.keys();
+      while (keys.hasMoreElements()) {
+        int tickValue = keys.nextElement();
+        int y = yPositionForValue(tickValue);
+        g2d.drawLine(x1, y, x2, y);
+      }
+    }
+  }
+
   protected void calculateThumbLocation() {
+    // Only snap if snap-to-ticks is enabled
     if (slider.getSnapToTicks()) {
+      adjustSnapLowValue();
       adjustSnapHighValue();
     }
-    super.calculateThumbLocation();
+    if (slider.getOrientation() == JSlider.HORIZONTAL) {
+      int valuePosition = xPositionForValue(slider.getValue());
+
+      thumbRect.x = valuePosition - (thumbRect.width / 2);
+      thumbRect.y = trackRect.y;
+    }
+    else {
+      int valuePosition = yPositionForValue(slider.getValue());
+
+      thumbRect.x = trackRect.x;
+      thumbRect.y = valuePosition - (thumbRect.height / 2);
+    }
   }
 
   @Override
