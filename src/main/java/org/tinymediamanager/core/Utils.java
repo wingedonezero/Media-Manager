@@ -1687,10 +1687,18 @@ public class Utils {
    *           if the io fails
    */
   private static String getEntryName(File source, File file) throws IOException {
-    int index = source.getAbsoluteFile().getParentFile().getAbsolutePath().length() + 1;
-    String path = file.getCanonicalPath();
+    Path sourcePath = source.getCanonicalFile().getParentFile().toPath();
+    Path filePath = file.getCanonicalFile().toPath();
 
-    return path.substring(index);
+    try {
+      Path relativePath = sourcePath.relativize(filePath);
+      return relativePath.toString();
+    }
+    catch (IllegalArgumentException e) {
+      // File is not under source directory
+      LOGGER.debug("File '{}' is not under source directory '{}'", file, source);
+      return file.getName();
+    }
   }
 
   /**
