@@ -376,6 +376,12 @@ public class TmmTreeTableModel implements ITmmTreeTableModel {
    *          the column to be set up
    */
   public void setUpColumn(TableColumn column) {
+    if (column.getModelIndex() == 0) {
+      // tree node
+      column.setIdentifier("node");
+      return;
+    }
+
     int columnIndex = column.getModelIndex() - 1;
     if (columnIndex < 0) {
       return;

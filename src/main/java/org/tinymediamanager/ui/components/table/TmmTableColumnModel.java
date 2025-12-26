@@ -266,10 +266,10 @@ public class TmmTableColumnModel extends DefaultTableColumnModel {
     // process all columns
     for (TableColumn col : getAllColumns()) {
       String identifier = (String) col.getIdentifier();
-      if (visibleColumnsMap.containsKey(identifier)) {
+      if ("node".equalsIgnoreCase(identifier) || visibleColumnsMap.containsKey(identifier)) { // node column is always visible
         // make column visible and set its width
         setColumnHidden(col, false);
-        int width = visibleColumnsMap.get(identifier);
+        int width = visibleColumnsMap.getOrDefault(identifier, 0);
         if (width > 0) {
           col.setPreferredWidth(width);
           col.setWidth(width);
