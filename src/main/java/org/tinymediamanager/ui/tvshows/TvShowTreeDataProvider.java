@@ -198,6 +198,11 @@ public class TvShowTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
    * update dummy episodes after changing S/E of existing episodes
    */
   private void updateDummyEpisodesForTvShow(TvShow tvShow) {
+    // skip if the TV show is not in the tree anymore
+    if (getNodeFromCache(tvShow) == null) {
+      return;
+    }
+
     List<TvShowEpisode> dummyEpisodes = tvShow.getDummyEpisodes();
     List<TvShowEpisode> episodesForDisplay = tvShow.getEpisodesForDisplay();
 
