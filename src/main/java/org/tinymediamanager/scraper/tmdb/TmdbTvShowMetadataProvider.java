@@ -635,6 +635,7 @@ public class TmdbTvShowMetadataProvider extends TmdbMetadataProvider implements 
 
     md.setReleaseDate(complete.first_air_date);
     md.setPlot(complete.overview);
+    md.setTagline(complete.tagline);
     for (String country : ListUtils.nullSafe(complete.origin_country)) {
       if (Boolean.TRUE.equals(getProviderInfo().getConfig().getValueAsBool("scrapeLanguageNames"))) {
         md.addCountry(LanguageUtils.getLocalizedCountryForLanguage(options.getLanguage().toLocale(), country));

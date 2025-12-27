@@ -110,6 +110,7 @@ public class TvShowInformationPanel extends InformationPanel {
   private JTextPane                  taNote;
   private JLabel                     lblTvShowName;
   private JTextPane                  taOverview;
+  private JLabel                     lblTagline;
   private MediaInformationLogosPanel panelLogos;
   private JLabel                     lblOriginalTitle;
   private JScrollPane                scrollPane;
@@ -274,7 +275,8 @@ public class TvShowInformationPanel extends InformationPanel {
     }
     {
       JPanel panelRight = new JPanel();
-      panelRight.setLayout(new MigLayout("insets n 0 n n, hidemode 2", "[100lp,grow]", "[][shrink 0][][shrink 0][][shrink 0][][grow][][]"));
+      panelRight
+          .setLayout(new MigLayout("insets n 0 n n, hidemode 2", "[100lp,grow]", "[][shrink 0][][shrink 0][][shrink 0][][]15lp[][grow,top][][][][]"));
 
       scrollPane = new NoBorderScrollPane(panelRight);
       scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -382,20 +384,27 @@ public class TvShowInformationPanel extends InformationPanel {
         panelRight.add(new JSeparator(), "cell 0 5,growx");
       }
       {
+        JLabel lblTaglineT = new TmmLabel(TmmResourceBundle.getString("metatag.tagline"));
+        panelRight.add(lblTaglineT, "cell 0 6,alignx left,aligny top");
+
+        lblTagline = new JLabel();
+        panelRight.add(lblTagline, "cell 0 7,growx,wmin 0,aligny top");
+      }
+      {
         JLabel lblPlot = new TmmLabel(TmmResourceBundle.getString("metatag.plot"));
-        panelRight.add(lblPlot, "cell 0 6");
+        panelRight.add(lblPlot, "cell 0 8");
         TmmFontHelper.changeFont(lblPlot, Font.BOLD);
 
         taOverview = new ReadOnlyTextPaneHTML();
-        panelRight.add(taOverview, "cell 0 7,growx,wmin 0,aligny top");
+        panelRight.add(taOverview, "cell 0 9,growx,wmin 0,aligny top");
       }
       {
-        panelRight.add(new JSeparator(), "cell 0 8,growx");
+        panelRight.add(new JSeparator(), "cell 0 10,growx");
       }
       {
         JPanel panelBottomDetails = new JPanel();
         panelBottomDetails.setLayout(new MigLayout("insets 0", "[][grow]", "[]2lp[]2lp[]2lp[]"));
-        panelRight.add(panelBottomDetails, "cell 0 9,grow");
+        panelRight.add(panelBottomDetails, "cell 0 11,grow");
 
         {
           JLabel lblEpisodegroupT = new TmmLabel(TmmResourceBundle.getString("metatag.episode.group"));
@@ -466,6 +475,11 @@ public class TvShowInformationPanel extends InformationPanel {
     AutoBinding autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ, tvShowSelectionModel, tvShowSelectionModelBeanProperty_1, taOverview,
         jTextPaneBeanProperty);
     autoBinding_1.bind();
+    //
+    Property tvShowSelectionModelBeanProperty_21 = BeanProperty.create("selectedTvShow.tagline");
+    AutoBinding autoBinding_21 = Bindings.createAutoBinding(UpdateStrategy.READ, tvShowSelectionModel, tvShowSelectionModelBeanProperty_21,
+        lblTagline, jLabelBeanProperty);
+    autoBinding_21.bind();
     //
     Property tvShowSelectionModelBeanProperty_4 = BeanProperty.create("selectedTvShow.originalTitle");
     AutoBinding autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ, tvShowSelectionModel, tvShowSelectionModelBeanProperty_4,

@@ -12,6 +12,7 @@ public class TvShow extends BaseTvShow {
   public List<Integer>     episode_run_time;
   public List<Genre>       genres;
   public String            homepage;
+  public String            tagline;
   public boolean           in_production;
   public List<String>      languages;
   public Date              last_air_date;

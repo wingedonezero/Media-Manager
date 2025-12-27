@@ -177,7 +177,7 @@ public class ImdbTvShowParser extends ImdbParser {
         doc = futureReference.get();
         if (doc != null) {
           parseReferencePage(doc, options, md2);
-          md.setTagline(md2.getTagline());
+          // md.setTagline(md2.getTagline()); // looks like an English tagline from the first season is returned in the JSON
           md.setCastMembers(md2.getCastMembers()); // overwrite all
           md.setTop250(md2.getTop250());
           md2.getCertifications().forEach(md::addCertification); // reference page has more certifications

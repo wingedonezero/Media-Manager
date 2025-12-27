@@ -290,7 +290,7 @@ public class MovieInformationPanel extends InformationPanel {
     {
       JPanel panelRight = new JPanel();
       panelRight
-          .setLayout(new MigLayout("insets n 0 n n, hidemode 3", "[100lp,grow]", "[shrink 0][][shrink 0][][][][][shrink 0][][grow,top][shrink 0][]"));
+          .setLayout(new MigLayout("insets n 0 n n, hidemode 3", "[100lp,grow]", "[shrink 0][][shrink 0][][][][][]15lp[][grow,top][shrink 0][]"));
 
       scrollPane = new NoBorderScrollPane(panelRight);
       scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

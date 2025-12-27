@@ -1,5 +1,6 @@
 Version 5.2.5
 =======================
++ [TV shows] added taglines for TV shows #3173
 + [UI] added native file dialogs from FlatLaf for better OS integration (Windows and macOS)
 + [UI] added "remove all genres" and "remove all tags" to the TV show bulk editor
 + [UI] added edition and media source to the movie set tree view #3152

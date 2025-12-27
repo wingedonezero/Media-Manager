@@ -458,6 +458,7 @@ public class TvShowBulkEditorDialog extends TmmDialog {
         cbTvShowProperty.addItem(new BulkEditorProperty("englishTitle", TmmResourceBundle.getString("metatag.title.english")));
         cbTvShowProperty.addItem(new BulkEditorProperty("sortTitle", TmmResourceBundle.getString("metatag.sorttitle")));
         cbTvShowProperty.addItem(new BulkEditorProperty("plot", TmmResourceBundle.getString("metatag.plot")));
+        cbTvShowProperty.addItem(new BulkEditorProperty("tagline", TmmResourceBundle.getString("metatag.tagline")));
         cbTvShowProperty.addItem(new BulkEditorProperty("productionCompany", TmmResourceBundle.getString("metatag.production")));
         cbTvShowProperty.addItem(new BulkEditorProperty("country", TmmResourceBundle.getString("metatag.country")));
         cbTvShowProperty.addItem(new BulkEditorProperty("note", TmmResourceBundle.getString("metatag.note")));

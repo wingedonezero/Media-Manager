@@ -136,6 +136,8 @@ public class TvShow extends MediaEntity implements IMediaInformation {
   @JsonProperty
   private String                                  englishTitle               = "";
   @JsonProperty
+  private String                                  tagline                    = "";
+  @JsonProperty
   private int                                     runtime                    = 0;
   @JsonProperty
   @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
@@ -249,6 +251,7 @@ public class TvShow extends MediaEntity implements IMediaInformation {
     super.merge(other, force);
 
     setEnglishTitle(StringUtils.isEmpty(englishTitle) || force ? other.englishTitle : englishTitle);
+    setTagline(StringUtils.isEmpty(tagline) || force ? other.tagline : tagline);
     setEpisodeGroup(episodeGroup == MediaEpisodeGroup.DEFAULT_AIRED || force ? other.episodeGroup : episodeGroup);
     setSortTitle(StringUtils.isEmpty(sortTitle) || force ? other.sortTitle : sortTitle);
     setRuntime(runtime == 0 || force ? other.runtime : runtime);
@@ -366,8 +369,29 @@ public class TvShow extends MediaEntity implements IMediaInformation {
    */
   public void setEnglishTitle(String newValue) {
     String oldValue = this.englishTitle;
-    this.englishTitle = newValue;
+    this.englishTitle = StrgUtils.strip(newValue);
     firePropertyChange("englishTitle", oldValue, newValue);
+  }
+
+  /**
+   * Gets the tagline.
+   *
+   * @return the tagline
+   */
+  public String getTagline() {
+    return tagline;
+  }
+
+  /**
+   * Sets the tagline.
+   *
+   * @param newValue
+   *          the new tagline
+   */
+  public void setTagline(String newValue) {
+    String oldValue = this.tagline;
+    this.tagline = StrgUtils.strip(newValue);
+    firePropertyChange("tagline", oldValue, newValue);
   }
 
   /**
@@ -1193,6 +1217,11 @@ public class TvShow extends MediaEntity implements IMediaInformation {
     if (config.contains(TvShowScraperMetadataConfig.PLOT) && StringUtils.isNotBlank(metadata.getPlot())
         && (overwriteExistingItems || StringUtils.isBlank(getPlot()))) {
       setPlot(metadata.getPlot());
+    }
+
+    if (config.contains(TvShowScraperMetadataConfig.TAGLINE) && StringUtils.isNotBlank(metadata.getTagline())
+        && (overwriteExistingItems || StringUtils.isBlank(getTagline()))) {
+      setTagline(metadata.getTagline());
     }
 
     if (config.contains(TvShowScraperMetadataConfig.YEAR) && metadata.getYear() > 0 && (overwriteExistingItems || getYear() <= 0)) {
@@ -2274,6 +2303,7 @@ public class TvShow extends MediaEntity implements IMediaInformation {
   protected float calculateScrapeScore() {
     float score = super.calculateScrapeScore();
 
+    score = score + returnOneWhenFilled(tagline);
     score = score + returnOneWhenFilled(runtime);
     score = score + returnOneWhenFilled(firstAired);
     if (status != MediaAiredStatus.UNKNOWN) {
