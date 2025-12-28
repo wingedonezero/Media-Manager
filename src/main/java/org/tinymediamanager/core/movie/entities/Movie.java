@@ -1072,7 +1072,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
     // set preferred trailer
     if (MovieModuleManager.getInstance().getSettings().isUseTrailerPreference()) {
       TrailerQuality desiredQuality = MovieModuleManager.getInstance().getSettings().getTrailerQuality();
-      TrailerSources desiredSource = TrailerSources.YOUTUBE;
+      TrailerSources desiredSource = MovieModuleManager.getInstance().getSettings().getTrailerSource();
 
       // search for quality and provider
       for (MediaTrailer trailer : trailers) {

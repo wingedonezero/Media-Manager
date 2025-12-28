@@ -72,6 +72,7 @@ public abstract class TrailerDownloadTask extends DownloadTask {
         return;
       }
       mediaTrailer.setUrl(url);
+      this.url = url;
     }
 
     super.doInBackground();

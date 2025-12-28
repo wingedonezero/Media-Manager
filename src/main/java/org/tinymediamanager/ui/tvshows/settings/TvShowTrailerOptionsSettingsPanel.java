@@ -39,6 +39,7 @@ import org.jdesktop.beansbinding.Property;
 import org.tinymediamanager.addon.YtDlpAddon;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.TrailerQuality;
+import org.tinymediamanager.core.TrailerSources;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.TvShowSettings;
 import org.tinymediamanager.core.tvshow.filenaming.TvShowTrailerNaming;
@@ -56,6 +57,7 @@ public class TvShowTrailerOptionsSettingsPanel extends JPanel {
   private final ItemListener        checkBoxListener;
   private final ButtonGroup         trailerFilenameButtonGroup = new ButtonGroup();
 
+  private JComboBox<TrailerSources> cbTrailerSource;
   private JComboBox<TrailerQuality> cbTrailerQuality;
   private JCheckBox                 checkBox;
   private JCheckBox                 chckbxAutomaticTrailerDownload;
@@ -154,6 +156,10 @@ public class TvShowTrailerOptionsSettingsPanel extends JPanel {
         JLabel lblTrailerSource = new JLabel(TmmResourceBundle.getString("Settings.trailer.source"));
         panelOptions.add(lblTrailerSource, "cell 2 2");
 
+        cbTrailerSource = new JComboBox();
+        cbTrailerSource.setModel(new DefaultComboBoxModel<>(TrailerSources.values()));
+        panelOptions.add(cbTrailerSource, "cell 2 2");
+
         JLabel lblTrailerQuality = new JLabel(TmmResourceBundle.getString("Settings.trailer.quality"));
         panelOptions.add(lblTrailerQuality, "cell 2 3");
 
@@ -197,6 +203,12 @@ public class TvShowTrailerOptionsSettingsPanel extends JPanel {
   }
 
   protected void initDataBindings() {
+    BeanProperty<TvShowSettings, TrailerSources> tvShowSettingsBeanProperty = BeanProperty.create("trailerSource");
+    BeanProperty<JComboBox<TrailerSources>, Object> jComboBoxBeanProperty = BeanProperty.create("selectedItem");
+    AutoBinding<TvShowSettings, TrailerSources, JComboBox<TrailerSources>, Object> autoBinding_1 = Bindings
+        .createAutoBinding(AutoBinding.UpdateStrategy.READ_WRITE, settings, tvShowSettingsBeanProperty, cbTrailerSource, jComboBoxBeanProperty);
+    autoBinding_1.bind();
+    //
     Property tvShowSettingsBeanProperty_1 = BeanProperty.create("trailerQuality");
     Property jComboBoxBeanProperty_1 = BeanProperty.create("selectedItem");
     AutoBinding autoBinding_2 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, tvShowSettingsBeanProperty_1, cbTrailerQuality,
@@ -214,9 +226,9 @@ public class TvShowTrailerOptionsSettingsPanel extends JPanel {
         chckbxAutomaticTrailerDownload, jCheckBoxBeanProperty);
     autoBinding_4.bind();
     //
-    Property tvShowSettingsBeanProperty = BeanProperty.create("useYtDlp");
-    AutoBinding autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, tvShowSettingsBeanProperty, chckbxUseYtDlp,
+    Property tvShowSettingsBeanProperty_4 = BeanProperty.create("useYtDlp");
+    AutoBinding autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, tvShowSettingsBeanProperty_4, chckbxUseYtDlp,
         jCheckBoxBeanProperty);
-    autoBinding_1.bind();
+    autoBinding_5.bind();
   }
 }

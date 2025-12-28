@@ -25,14 +25,16 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @author Manuel Laggner
  */
-@Deprecated
 public enum TrailerSources {
 
   //@formatter:off
   YOUTUBE("Youtube", Collections.singletonList("youtube")),
   IMDB("IMDb", Collections.singletonList("imdb")),
+  @Deprecated
   APPLE("Apple", Collections.singletonList("apple")),
+  @Deprecated
   AOL("Aol", Collections.singletonList("aol")),
+  @Deprecated
   HDTRAILERS("HD Trailers", Collections.singletonList("hdtrailers"));  // @formatter:on
 
   private final String       displayText;
