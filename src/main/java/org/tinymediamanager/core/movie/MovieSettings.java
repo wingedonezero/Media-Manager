@@ -264,6 +264,7 @@ public final class MovieSettings extends AbstractSettings {
   String                                    movieSetDataFolder                     = "";
   boolean                                   scrapeBestImageMovieSet                = true;
   String                                    movieSetTitleCharacterReplacement      = "_";
+  boolean                                   movieSetAppendTmdbId                   = false;
 
   // movie set artwork
   final List<MovieSetPosterNaming>          movieSetPosterFilenames                = new ArrayList<>();
@@ -1110,6 +1111,16 @@ public final class MovieSettings extends AbstractSettings {
     String oldValue = this.movieSetTitleCharacterReplacement;
     this.movieSetTitleCharacterReplacement = newValue;
     firePropertyChange("movieSetTitleCharacterReplacement", oldValue, newValue);
+  }
+
+  public boolean isMovieSetAppendTmdbId() {
+    return movieSetAppendTmdbId;
+  }
+
+  public void setMovieSetAppendTmdbId(boolean newValue) {
+    boolean oldValue = this.movieSetAppendTmdbId;
+    this.movieSetAppendTmdbId = newValue;
+    firePropertyChange("movieSetAppendTmdbId", oldValue, newValue);
   }
 
   public void addMovieTrailerScraper(String newValue) {

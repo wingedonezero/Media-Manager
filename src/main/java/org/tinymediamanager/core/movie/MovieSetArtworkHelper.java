@@ -264,9 +264,15 @@ public class MovieSetArtworkHelper {
     String movieSetName = getMovieSetTitleForStorage(movieSet);
 
     for (IMovieSetFileNaming fileNaming : filenamings) {
+      String foldername = movieSetName;
+      // append TMDB ID if enabled (new Emby style)
+      if (MovieModuleManager.getInstance().getSettings().isMovieSetAppendTmdbId() && movieSet.getTmdbId() > 0) {
+        foldername = foldername + "-tmdb-" + movieSet.getTmdbId();
+      }
+
       if (fileNaming.getFolderLocation() == IMovieSetFileNaming.Location.KODI_STYLE_FOLDER) {
         // Kodi style: <movie set artwork folder>/<movie set name>/<artwork type>.ext
-        paths.add(Paths.get(artworkFolder.toString(), movieSetName, fileNaming.getFilename(movieSetName, extension)));
+        paths.add(Paths.get(artworkFolder.toString(), foldername, fileNaming.getFilename(movieSetName, extension)));
       }
       else if (fileNaming.getFolderLocation() == IMovieSetFileNaming.Location.AUTOMATOR_STYLE_FOLDER) {
         // Artwork Automator style: <movie set artwork folder>/<movie set name>-<artwork type>.ext
@@ -322,6 +328,21 @@ public class MovieSetArtworkHelper {
 
           if (isMediaFileInArtworkFolder(movieSetName, artworkFolder, fileNaming, mediaFile)) {
             return mediaFile;
+          }
+
+          // fourth, if TMDB ID is available, try with new Emby style
+          if (movieSet.getTmdbId() > 0) {
+            // try Kodi style with TMDB ID
+            movieSetName = getMovieSetTitleForStorage(movieSet, "_") + "-tmdb-" + movieSet.getTmdbId();
+            if (isMediaFileInArtworkFolder(movieSetName, artworkFolder, fileNaming, mediaFile)) {
+              return mediaFile;
+            }
+
+            // try Emby style with TMDB ID
+            movieSetName = getMovieSetTitleForStorage(movieSet, " ") + "-tmdb-" + movieSet.getTmdbId();
+            if (isMediaFileInArtworkFolder(movieSetName, artworkFolder, fileNaming, mediaFile)) {
+              return mediaFile;
+            }
           }
         }
       }
@@ -389,6 +410,17 @@ public class MovieSetArtworkHelper {
       // Emby style
       movieSetName = getMovieSetTitleForStorage(movieSet, " ");
       findArtworkForType(movieSet, artworkFolder, movieSetName, type);
+
+      // also try with TMDB ID for new Emby style
+      if (movieSet.getTmdbId() > 0) {
+        // Kodi style with TMDB ID
+        movieSetName = getMovieSetTitleForStorage(movieSet, "_") + "-tmdb-" + movieSet.getTmdbId();
+        findArtworkForType(movieSet, artworkFolder, movieSetName, type);
+
+        // Emby style with TMDB ID
+        movieSetName = getMovieSetTitleForStorage(movieSet, " ") + "-tmdb-" + movieSet.getTmdbId();
+        findArtworkForType(movieSet, artworkFolder, movieSetName, type);
+      }
     }
 
     // b)
@@ -410,6 +442,17 @@ public class MovieSetArtworkHelper {
       // Emby style
       movieSetName = getMovieSetTitleForStorage(movieSet, " ");
       findArtworkForType(movieSet, artworkFolder, movieSetName, type);
+
+      // also try wit TMDB ID for backward compatibility when TMDB ID appending is enabled
+      if (movieSet.getTmdbId() > 0) {
+        // Kodi style without TMDB ID
+        movieSetName = getMovieSetTitleForStorage(movieSet, "_") + "-tmdb-" + movieSet.getTmdbId();
+        findArtworkForType(movieSet, artworkFolder, movieSetName, type);
+
+        // Emby style without TMDB ID
+        movieSetName = getMovieSetTitleForStorage(movieSet, " ") + "-tmdb-" + movieSet.getTmdbId();
+        findArtworkForType(movieSet, artworkFolder, movieSetName, type);
+      }
     }
   }
 
