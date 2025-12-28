@@ -205,6 +205,11 @@ public class Movie extends MediaEntity implements IMediaInformation {
   private String                                localizedSpokenLanguages   = "";
 
   /**
+   * Cached main video file to avoid expensive recalculation.
+   */
+  private transient MediaFile                   cachedMainVideoFile        = null;
+
+  /**
    * Instantiates a new movie. To initialize the propertychangesupport after loading
    */
   public Movie() {
@@ -232,6 +237,9 @@ public class Movie extends MediaEntity implements IMediaInformation {
     if (movieSetId != null) {
       movieSet = MovieModuleManager.getInstance().getMovieList().lookupMovieSet(movieSetId);
     }
+
+    // initialize cached main video file
+    updateCachedMainVideoFile();
   }
 
   /**
@@ -306,6 +314,32 @@ public class Movie extends MediaEntity implements IMediaInformation {
     return MEDIA_FILE_COMPARATOR;
   }
 
+  /**
+   * Updates the cached main video file and path. Called whenever VIDEO media files or path changes.
+   */
+  private void updateCachedMainVideoFile() {
+    // compute current main video file using existing logic
+    MediaFile vid = null;
+    if (stacked) {
+      vid = getMediaFiles(MediaFileType.VIDEO).stream().min(Comparator.comparingInt(MediaFile::getStacking)).orElse(MediaFile.EMPTY_MEDIAFILE);
+    }
+    else {
+      if (isDisc()) {
+        vid = getMainDVDVideoFile();
+      }
+    }
+    if (vid == null || vid.getFilename().isEmpty()) {
+      vid = getBiggestMediaFile(MediaFileType.VIDEO);
+    }
+
+    if (vid != null && !vid.getFilename().isEmpty()) {
+      cachedMainVideoFile = vid;
+    }
+    else {
+      cachedMainVideoFile = null;
+    }
+  }
+
   @Override
   public void addToMediaFiles(MediaFile mediaFile) {
     super.addToMediaFiles(mediaFile);
@@ -313,6 +347,11 @@ public class Movie extends MediaEntity implements IMediaInformation {
     // if we have added a trailer, also update the trailer list
     if (mediaFile.getType() == MediaFileType.TRAILER) {
       mixinLocalTrailers();
+    }
+
+    // update cached main video file if a VIDEO file was added
+    if (mediaFile.getType() == MediaFileType.VIDEO) {
+      updateCachedMainVideoFile();
     }
   }
 
@@ -335,6 +374,13 @@ public class Movie extends MediaEntity implements IMediaInformation {
     score = score + returnOneWhenFilled(trailer);
 
     return score;
+  }
+
+  @Override
+  public void setPath(String newValue) {
+    super.setPath(newValue);
+    // update cached main video file when path changes
+    updateCachedMainVideoFile();
   }
 
   /**
@@ -2371,6 +2417,9 @@ public class Movie extends MediaEntity implements IMediaInformation {
         mf.removeStackingInformation();
       }
     }
+
+    // changing the stacking marker may change the main video file!
+    updateCachedMainVideoFile();
   }
 
   /**
@@ -2404,29 +2453,19 @@ public class Movie extends MediaEntity implements IMediaInformation {
 
   @Override
   public MediaFile getMainVideoFile() {
-    MediaFile vid = null;
-
-    if (stacked) {
-      // search the first stacked media file (e.g. CD1)
-      vid = getMediaFiles(MediaFileType.VIDEO).stream().min(Comparator.comparingInt(MediaFile::getStacking)).orElse(MediaFile.EMPTY_MEDIAFILE);
-    }
-    else {
-      // try to find correct main movie file (DVD only)
-      if (isDisc()) {
-        vid = getMainDVDVideoFile();
-      }
-    }
-    // we didn't find one, so get the biggest one
-    if (vid == null || vid.getFilename().isEmpty()) {
-      vid = getBiggestMediaFile(MediaFileType.VIDEO);
+    // return cached value if present
+    if (cachedMainVideoFile != null) {
+      return cachedMainVideoFile;
     }
 
-    if (vid != null) {
-      return vid;
+    // cache not initialized yet (e.g., during early lifecycle) -> compute and cache once
+    updateCachedMainVideoFile();
+
+    if (cachedMainVideoFile != null) {
+      return cachedMainVideoFile;
     }
 
     LOGGER.debug("Movie without video file? {} | {}", getPathNIO(), getTitle());
-    // cannot happen - movie MUST always have a video file
     return MediaFile.EMPTY_MEDIAFILE;
   }
 
@@ -2533,7 +2572,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
 
   @Override
   public List<String> getMediaInfoAudioCodecList() {
-    List<String> lang = new ArrayList<String>();
+    List<String> lang = new ArrayList<>();
     lang.addAll(getMainVideoFile().getAudioCodecList());
 
     for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
@@ -2549,7 +2588,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
 
   @Override
   public List<String> getMediaInfoAudioChannelList() {
-    List<String> lang = new ArrayList<String>();
+    List<String> lang = new ArrayList<>();
     lang.addAll(getMainVideoFile().getAudioChannelsList());
 
     for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
@@ -2565,7 +2604,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
 
   @Override
   public List<String> getMediaInfoAudioChannelDotList() {
-    List<String> lang = new ArrayList<String>();
+    List<String> lang = new ArrayList<>();
     lang.addAll(getMainVideoFile().getAudioChannelsDotList());
 
     for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
@@ -2919,12 +2958,12 @@ public class Movie extends MediaEntity implements IMediaInformation {
     }
 
     Movie movie = (Movie) o;
-    return path.equals(movie.path) && getMainFile().getFile().equals(movie.getMainFile().getFile());
+    return path.equals(movie.path) && Objects.equals(cachedMainVideoFile, movie.cachedMainVideoFile);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(path, getMainFile().getFile());
+    return Objects.hash(path, cachedMainVideoFile);
   }
 
   /**
