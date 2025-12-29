@@ -2958,12 +2958,12 @@ public class Movie extends MediaEntity implements IMediaInformation {
     }
 
     Movie movie = (Movie) o;
-    return path.equals(movie.path) && Objects.equals(cachedMainVideoFile, movie.cachedMainVideoFile);
+    return path.equals(movie.path) && Objects.equals(getMainVideoFile(), movie.getMainVideoFile());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(path, cachedMainVideoFile);
+    return Objects.hash(path, getMainVideoFile());
   }
 
   /**
