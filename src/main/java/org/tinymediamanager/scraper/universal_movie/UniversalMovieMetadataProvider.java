@@ -114,7 +114,7 @@ public class UniversalMovieMetadataProvider implements IMovieMetadataProvider {
     config.addLabel("movieLabel", "tmm.metadata");
     config.addSelect("title", "metatag.title", compatibleScraperIds, UNDEFINED);
     config.addSelect("originalTitle", "metatag.originaltitle", compatibleScraperIds, UNDEFINED);
-    config.addSelect("englishTitle", "metatag.title.english", Arrays.asList(UNDEFINED, MediaMetadata.TMDB, MediaMetadata.IMDB), UNDEFINED);
+    config.addSelect("englishTitle", "metatag.title.english", only(MediaMetadata.TMDB, MediaMetadata.IMDB), UNDEFINED);
     config.addSelect("tagline", "metatag.tagline", compatibleScraperIds, UNDEFINED);
     config.addSelect("year", "metatag.year", compatibleScraperIds, UNDEFINED);
     config.addSelect("releaseDate", "metatag.releasedate", compatibleScraperIds, UNDEFINED);
@@ -123,8 +123,7 @@ public class UniversalMovieMetadataProvider implements IMovieMetadataProvider {
     config.addSelect(RATINGS, "metatag.rating", scrapersWithout(compatibleScraperIds, MediaMetadata.TVDB), UNDEFINED); // all but tvdb
 
     config.addSelect("top250", "metatag.top250",
-        compatibleScraperIds.contains(MediaMetadata.IMDB) ? Arrays.asList(UNDEFINED, MediaMetadata.IMDB) : Collections.singletonList(UNDEFINED),
-        UNDEFINED);
+        compatibleScraperIds.contains(MediaMetadata.IMDB) ? only(MediaMetadata.IMDB) : Collections.singletonList(UNDEFINED), UNDEFINED);
     config.addSelect("genres", "metatag.genre", compatibleScraperIds, UNDEFINED);
     config.addSelect("certifications", "metatag.certification", compatibleScraperIds, UNDEFINED);
     config.addSelect("productionCompanies", "metatag.production", compatibleScraperIds, UNDEFINED);
@@ -133,8 +132,7 @@ public class UniversalMovieMetadataProvider implements IMovieMetadataProvider {
     config.addSelect("countries", "metatag.country", compatibleScraperIds, UNDEFINED);
     config.addSelect("tags", "metatag.tags", compatibleScraperIds, UNDEFINED);
     config.addSelect("collectionName", "metatag.movieset",
-        compatibleScraperIds.contains(MediaMetadata.TMDB) ? Arrays.asList(UNDEFINED, MediaMetadata.TMDB) : Collections.singletonList(UNDEFINED),
-        UNDEFINED);
+        compatibleScraperIds.contains(MediaMetadata.TMDB) ? only(MediaMetadata.TMDB) : Collections.singletonList(UNDEFINED), UNDEFINED);
 
     config.addLabel("fallbackLabel", "scraper.universal_movie.scraperstouse");
     config.addMultiSelect(FALLBACK_SCRAPERS, "scraper.universal_movie.scrapers", scrapersWithout(compatibleScraperIds, UNDEFINED));
@@ -148,6 +146,15 @@ public class UniversalMovieMetadataProvider implements IMovieMetadataProvider {
     for (String scraperToExclude : excludes) {
       newScrapers.remove(scraperToExclude);
     }
+
+    return newScrapers;
+  }
+
+  private List<String> only(String... includes) {
+    List<String> newScrapers = new ArrayList<>();
+
+    newScrapers.add(UNDEFINED);
+    Collections.addAll(newScrapers, includes);
 
     return newScrapers;
   }

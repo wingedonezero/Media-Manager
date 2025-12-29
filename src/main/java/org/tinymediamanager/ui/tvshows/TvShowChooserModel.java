@@ -84,6 +84,7 @@ public class TvShowChooserModel extends AbstractModelObject {
   private float                          score         = 0;
   private String                         title         = "";
   private String                         originalTitle = "";
+  private String                         tagline       = "";
   private String                         overview      = "";
   private int                            year          = 0;
   private String                         id            = "";
@@ -147,6 +148,12 @@ public class TvShowChooserModel extends AbstractModelObject {
     firePropertyChange("originalTitle", oldValue, this.originalTitle);
   }
 
+  public void setTagline(String newValue) {
+    String oldValue = this.tagline;
+    this.tagline = StrgUtils.getNonNullString(newValue);
+    firePropertyChange("tagline", oldValue, newValue);
+  }
+
   public void setOverview(String overview) {
     String oldValue = this.overview;
     this.overview = StrgUtils.getNonNullString(overview);
@@ -159,6 +166,10 @@ public class TvShowChooserModel extends AbstractModelObject {
 
   public String getOriginalTitle() {
     return originalTitle;
+  }
+
+  public String getTagline() {
+    return tagline;
   }
 
   public String getOverview() {
@@ -302,6 +313,7 @@ public class TvShowChooserModel extends AbstractModelObject {
         episodeGroup = episodeGroups.get(0);
       }
 
+      setTagline(metadata.getTagline());
       setOverview(metadata.getPlot());
 
       if (StringUtils.isBlank(posterUrl) && !metadata.getMediaArt(MediaArtworkType.POSTER).isEmpty()) {

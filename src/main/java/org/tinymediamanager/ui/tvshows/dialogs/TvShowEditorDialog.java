@@ -260,6 +260,7 @@ public class TvShowEditorDialog extends AbstractEditorDialog {
       tfOriginalTitle.setText(tvShow.getOriginalTitle());
       tfEnglishTitle.setText(tvShow.getEnglishTitle());
       tfSorttitle.setText(tvShow.getSortTitle());
+      tfTagline.setText(tvShow.getTagline());
       taPlot.setText(tvShow.getPlot());
       lblPoster.setImagePath(tvShow.getArtworkFilename(MediaFileType.POSTER));
       lblFanart.setImagePath(tvShow.getArtworkFilename(MediaFileType.FANART));
