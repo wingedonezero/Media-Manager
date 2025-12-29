@@ -2576,6 +2576,9 @@ public class TvShow extends MediaEntity implements IMediaInformation {
       case ENGLISH_TITLE:
         return getEnglishTitle();
 
+      case TAGLINE:
+        return getTagline();
+
       case PLOT:
         return getPlot();
 
