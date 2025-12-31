@@ -1038,7 +1038,10 @@ public final class TvShowList extends AbstractModelObject {
     LOGGER.debug("Searching with scraper: {}", provider.getProviderInfo().getId());
     LOGGER.debug("options: {}", options);
     LOGGER.debug("=====================================================");
-    results.addAll(provider.search(options));
+    results.addAll(provider.search(options)
+        .stream()
+        .filter(mediaSearchResult -> !mediaSearchResult.getIds().isEmpty() && StringUtils.isNotBlank(mediaSearchResult.getTitle()))
+        .toList());
 
     // Fallback:
     // check if title starts with a year, and remove/retry...
@@ -1049,7 +1052,10 @@ public final class TvShowList extends AbstractModelObject {
       LOGGER.debug("Searching again without year in title: {}", provider.getProviderInfo().getId());
       LOGGER.debug("options: {}", o);
       LOGGER.debug("=====================================================");
-      results.addAll(provider.search(o));
+      results.addAll(provider.search(o)
+          .stream()
+          .filter(mediaSearchResult -> !mediaSearchResult.getIds().isEmpty() && StringUtils.isNotBlank(mediaSearchResult.getTitle()))
+          .toList());
     }
 
     return new ArrayList<>(results);

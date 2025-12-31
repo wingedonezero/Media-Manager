@@ -843,7 +843,10 @@ public final class MovieList extends AbstractModelObject {
     LOGGER.debug("Searching with scraper: {}", provider.getProviderInfo().getId());
     LOGGER.debug("options: {}", options);
     LOGGER.debug("=====================================================");
-    sr.addAll(provider.search(options));
+    sr.addAll(provider.search(options)
+        .stream()
+        .filter(mediaSearchResult -> !mediaSearchResult.getIds().isEmpty() && StringUtils.isNotBlank(mediaSearchResult.getTitle()))
+        .toList());
 
     // Before retrying ALL scrapers, use this as first fallback:
     // check if title starts with a year, and remove/retry...
@@ -857,7 +860,10 @@ public final class MovieList extends AbstractModelObject {
       LOGGER.debug("Searching again without year in title: {}", provider.getProviderInfo().getId());
       LOGGER.debug("options: {}", o);
       LOGGER.debug("=====================================================");
-      sr.addAll(provider.search(o));
+      sr.addAll(provider.search(o)
+          .stream()
+          .filter(mediaSearchResult -> !mediaSearchResult.getIds().isEmpty() && StringUtils.isNotBlank(mediaSearchResult.getTitle()))
+          .toList());
     }
 
     // if result is empty, try all scrapers
@@ -875,7 +881,10 @@ public final class MovieList extends AbstractModelObject {
           LOGGER.debug("Searching with alternate scraper: '{}', '{}'", ms.getMediaProvider().getId(), provider.getProviderInfo().getVersion());
           LOGGER.debug("options: {}", options);
           LOGGER.debug("=====================================================");
-          sr.addAll(((IMovieMetadataProvider) ms.getMediaProvider()).search(options));
+          sr.addAll(((IMovieMetadataProvider) ms.getMediaProvider()).search(options)
+              .stream()
+              .filter(mediaSearchResult -> !mediaSearchResult.getIds().isEmpty() && StringUtils.isNotBlank(mediaSearchResult.getTitle()))
+              .toList());
         }
         catch (ScrapeException e) {
           LOGGER.error("Could not search for movie '{}' with '{}' - '{}'", searchTerm, ms.getId(), e.getMessage());
