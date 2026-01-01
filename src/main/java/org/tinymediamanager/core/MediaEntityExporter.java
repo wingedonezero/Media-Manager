@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,6 @@ public abstract class MediaEntityExporter {
     MOVIE_SET,
     TV_SHOW
   }
-
 
   protected MediaEntityExporter(Path templatePath, TemplateType type) throws Exception {
     templateDir = templatePath;
