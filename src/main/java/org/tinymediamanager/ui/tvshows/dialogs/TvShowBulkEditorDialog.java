@@ -63,6 +63,7 @@ import org.tinymediamanager.core.jmte.JmteUtils;
 import org.tinymediamanager.core.movie.MovieRenamer;
 import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.core.threading.TmmTaskManager;
+import org.tinymediamanager.core.tvshow.TvShowEpisodeEdition;
 import org.tinymediamanager.core.tvshow.TvShowList;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.TvShowRenamer;
@@ -537,7 +538,7 @@ public class TvShowBulkEditorDialog extends TmmDialog {
      ********************/
     {
       JPanel panelContent = new JPanel();
-      panelContent.setLayout(new MigLayout("", "[][200lp:350lp,grow][]", "[][][][][][][][][][][]"));
+      panelContent.setLayout(new MigLayout("", "[][200lp:350lp,grow][][]", "[][][][][][][][][][][][]"));
       tabbedPane.add(TmmResourceBundle.getString("metatag.episode"), panelContent);
 
       JTextArea textArea = new ReadOnlyTextArea(TmmResourceBundle.getString("tvshow.bulkedit.episodesfromshows"));
@@ -606,6 +607,39 @@ public class TvShowBulkEditorDialog extends TmmDialog {
         });
       }
 
+      {
+        JLabel lblEditionT = new TmmLabel(TmmResourceBundle.getString("metatag.edition"));
+        panelContent.add(lblEditionT, "cell 0 4,alignx right");
+
+        JComboBox<TvShowEpisodeEdition> cbEdition = new AutocompleteComboBox(TvShowEpisodeEdition.values());
+        panelContent.add(cbEdition, "cell 1 4,growx");
+
+        JButton btnEdition = new SquareIconButton(IconManager.APPLY_INV);
+        panelContent.add(btnEdition, "cell 2 4");
+
+        btnEdition.addActionListener(e -> {
+          Object obj = cbEdition.getSelectedItem();
+          TvShowEpisodeEdition edition = null;
+
+          // edition
+          if (obj instanceof TvShowEpisodeEdition tvShowEpisodeEdition) {
+            edition = tvShowEpisodeEdition;
+          }
+          else if (obj instanceof String string) {
+            // newly created edition?
+            edition = TvShowEpisodeEdition.getTvShowEpisodeEdition(string);
+          }
+
+          if (edition != null) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            for (TvShowEpisode episode : tvShowEpisodesToEdit) {
+              episode.setEdition(edition);
+              episodesChanged = true;
+            }
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          }
+        });
+      }
       {
         JLabel lblTagsEpisode = new TmmLabel(TmmResourceBundle.getString("metatag.tags"));
         panelContent.add(lblTagsEpisode, "cell 0 5,alignx right");

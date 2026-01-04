@@ -7,6 +7,7 @@ Version 5.2.5
 + [UI] added edition and media source to the movie set tree view #3152
 + [UI] reworked table column configuration - visibility and width are now stored
 + [UI] added enhanced filter options for date fields #3159
++ [UI] added TV show episode editions to the bulk editor #3176
 + [Trailer] re-added the preferred trailer source, because IMDB is also delivering good trailers nowadays
 ---
 x [UI] remove unused items from several combo boxes (genres, tags, decades, year)
