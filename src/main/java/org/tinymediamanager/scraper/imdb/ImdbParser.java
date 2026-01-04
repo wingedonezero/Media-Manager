@@ -448,7 +448,7 @@ public abstract class ImdbParser {
             }
             sr.setOriginalTitle(result.originalTitleText);
             sr.setOverview(result.plot);
-            if (sr.getIMDBId().equals(options.getImdbId())) {
+            if (!sr.getIMDBId().isEmpty() && sr.getIMDBId().equals(options.getImdbId())) {
               // perfect match
               sr.setScore(1);
             }
@@ -508,7 +508,7 @@ public abstract class ImdbParser {
             }
           }
 
-          if (sr.getIMDBId().equals(options.getImdbId())) {
+          if (!sr.getIMDBId().isEmpty() && sr.getIMDBId().equals(options.getImdbId())) {
             // perfect match
             sr.setScore(1);
           }
@@ -574,10 +574,14 @@ public abstract class ImdbParser {
         }
         else {
           for (ImdbSearchResult result : JsonUtils.parseList(mapper, resultsNode, ImdbSearchResult.class)) {
+            if (result.listItem == null || StringUtils.isAnyBlank(result.listItem.id, result.listItem.titleNameText)) {
+              getLogger().debug("Could not parse search result: {}", result);
+              continue;
+            }
             MediaSearchResult sr = new MediaSearchResult(ImdbMetadataProvider.ID, options.getMediaType());
-            sr.setIMDBId(result.id);
-            sr.setTitle(result.titleNameText);
-            String year = result.titleReleaseText;
+            sr.setIMDBId(result.listItem.id);
+            sr.setTitle(result.listItem.titleNameText);
+            String year = result.listItem.titleReleaseText;
             if (!year.isEmpty()) {
               if (year.length() == 4) {
                 sr.setYear(MetadataUtil.parseInt(year, 0));
@@ -588,10 +592,10 @@ public abstract class ImdbParser {
                 }
               }
             }
-            if (result.titlePosterImageModel != null) {
-              sr.setPosterUrl(result.titlePosterImageModel.url);
+            if (result.listItem.titlePosterImageModel != null) {
+              sr.setPosterUrl(result.listItem.titlePosterImageModel.url);
             }
-            if (sr.getIMDBId().equals(options.getImdbId())) {
+            if (!sr.getIMDBId().isEmpty() && sr.getIMDBId().equals(options.getImdbId())) {
               // perfect match
               sr.setScore(1);
             }
