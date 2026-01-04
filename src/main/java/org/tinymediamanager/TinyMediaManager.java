@@ -353,7 +353,7 @@ public final class TinyMediaManager {
   public static String[] generateLogHeader() {
     List<String> lines = new ArrayList<>();
     lines.add("=======================================================");
-    lines.add("=== tinyMediaManager (c) 2012 - 2025 Manuel Laggner ===");
+    lines.add("=== tinyMediaManager (c) 2012 - 2026 Manuel Laggner ===");
     lines.add("=======================================================");
     lines.add("tmm.version      : " + ReleaseInfo.getRealVersion());
     if (!ReleaseInfo.isGitBuild()) {
