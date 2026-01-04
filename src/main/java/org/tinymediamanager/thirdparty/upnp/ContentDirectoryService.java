@@ -218,7 +218,10 @@ public class ContentDirectoryService extends AbstractContentDirectoryService {
 
           // get em fresh from DB, for FULL metadata
           if (path[0].equals(Upnp.ID_MOVIES) && isUUID(request)) {
-            org.tinymediamanager.core.movie.entities.Movie m = MovieModuleManager.getInstance().getMovieList().lookupMovie(UUID.fromString(request));
+            org.tinymediamanager.core.movie.entities.Movie m = MovieModuleManager.getInstance()
+                .getMovieList()
+                .findByDbId(UUID.fromString(request))
+                .orElse(null);
             if (m != null) {
               Movie um = Metadata.getUpnpMovie(m, true);
               um.setId(parent + "/" + um.getId());

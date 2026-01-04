@@ -145,7 +145,7 @@ public class MovieRenamerTest extends BasicMovieTest {
     MovieList movieList = MovieList.getInstance();
     Path datasource = Paths.get(MovieModuleManager.getInstance().getSettings().getMovieDataSource().get(0));
 
-    Movie movie = movieList.getMovieByPath(datasource.resolve(example.oldFolder));
+    Movie movie = movieList.findFirstByPath(datasource.resolve(example.oldFolder));
     assertThat(movie.getTitle()).isEqualTo(example.title);
     assertThat(movie.getYear()).isEqualTo(example.year);
 

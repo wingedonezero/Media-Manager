@@ -2266,18 +2266,42 @@ public class Utils {
   }
 
   /**
-   * check if the given folder contains any of the well known skip files (tmmignore, .tmmignore, .nomedia)
+   * check if the given folder contains any of the well known skip files (tmmignore, .tmmignore, .nomedia) using a filesystem attribute cache to avoid
+   * redundant I/O on remote datasources.
+   * <p>
+   * This method checks the provided cache first; if a skip file is not found in the cache, it is assumed to not exist (no fallback to Files.exists).
+   * This is intended for optimized update datasource tasks where all files are pre-cached during the initial recursive walk.
+   * </p>
    *
    * @param dir
-   *          the folder to check#
+   *          the folder to check
    * @param readNomedia
    *          read .nomedia files
-   * @return true/false
+   * @param fsCache
+   *          filesystem attribute cache populated during recursive walk; if null, falls back to {@link Files#exists}
+   * @return true if any skip file is found in cache (or on filesystem if cache is null), false otherwise
    */
-  @Deprecated
-  public static boolean containsSkipFile(Path dir, boolean readNomedia) {
-    return Files.exists(dir.resolve(".tmmignore")) || Files.exists(dir.resolve("tmmignore"))
-        || (readNomedia && Files.exists(dir.resolve(".nomedia")));
+  public static boolean containsSkipFile(Path dir, boolean readNomedia, Map<Path, BasicFileAttributes> fsCache) {
+    if (dir == null || fsCache == null) {
+      return false;
+    }
+
+    // check well-known skip files against the cache (no fallback to Files.exists)
+    Path tmmIgnore = dir.resolve(".tmmignore");
+    Path tmmIgnore2 = dir.resolve("tmmignore");
+    Path nomedia = dir.resolve(".nomedia");
+
+    if (fsCache.containsKey(tmmIgnore.toAbsolutePath())) {
+      return true;
+    }
+    if (fsCache.containsKey(tmmIgnore2.toAbsolutePath())) {
+      return true;
+    }
+    if (readNomedia && fsCache.containsKey(nomedia.toAbsolutePath())) {
+      return true;
+    }
+
+    return false;
   }
 
   /**

@@ -285,6 +285,7 @@ String message = TmmResourceBundle.getString("movie.scrape.success");
 - UI tests for critical user workflows
 - Test with different OS environments (Windows, Linux, macOS)
 - Test with different data scenarios (empty, corrupted, large datasets)
+- Run unit tests with Maven using `-DskipTests=false` as all unit tests are disabled by default
 
 ### 11. Performance Considerations
 
@@ -535,4 +536,3 @@ When working with tinyMediaManager:
 
 This is a mature, production-grade application with thousands of users. Every change should be made with care and
 consideration for the existing user base and their data.
-

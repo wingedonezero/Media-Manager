@@ -122,7 +122,7 @@ public class MovieSet extends MediaEntity {
 
     // link with movies
     for (UUID uuid : movieIds) {
-      Movie movie = MovieModuleManager.getInstance().getMovieList().lookupMovie(uuid);
+      Movie movie = MovieModuleManager.getInstance().getMovieList().findByDbId(uuid).orElse(null);
       if (movie != null && movie.getMovieSet() == this) {
         movies.add(movie);
       }
