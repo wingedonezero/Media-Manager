@@ -439,6 +439,10 @@ public abstract class ImdbParser {
         }
         else {
           for (ImdbAdvancedSearchResult result : JsonUtils.parseList(mapper, resultsNode, ImdbAdvancedSearchResult.class)) {
+            if (StringUtils.isAnyBlank(result.titleId, result.titleText)) {
+              getLogger().debug("Could not parse search result: {}", result);
+              continue;
+            }
             MediaSearchResult sr = new MediaSearchResult(ImdbMetadataProvider.ID, options.getMediaType());
             sr.setIMDBId(result.titleId);
             sr.setTitle(result.titleText);
