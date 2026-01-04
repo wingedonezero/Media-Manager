@@ -69,7 +69,7 @@ public class TvShowSeason extends MediaEntity implements Comparable<TvShowSeason
   private TvShow                    tvShow             = null;
   private final List<TvShowEpisode> episodes           = new CopyOnWriteArrayList<>();
   private final List<TvShowEpisode> dummyEpisodes      = new CopyOnWriteArrayList<>();
-  private final List<TvShowEpisode> episodesForDisplay = new ArrayList<>();
+  private final List<TvShowEpisode> episodesForDisplay = new CopyOnWriteArrayList<>();
 
   private PropertyChangeListener    listener;
 
