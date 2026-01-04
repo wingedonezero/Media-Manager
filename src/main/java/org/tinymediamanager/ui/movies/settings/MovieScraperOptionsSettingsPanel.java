@@ -212,7 +212,7 @@ class MovieScraperOptionsSettingsPanel extends JPanel {
       panelDefaults.add(chckbxDoNotOverwrite, "cell 1 1 2 1");
     }
     {
-      JPanel panelAutomaticScrape = new JPanel(new MigLayout("hidemode 1, insets 0, debug", "[20lp!][][300lp][200lp]", ""));
+      JPanel panelAutomaticScrape = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][][300lp][200lp]", ""));
 
       JLabel lblAutomaticScrapeT = new TmmLabel(TmmResourceBundle.getString("Settings.automaticscraper"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelAutomaticScrape, lblAutomaticScrapeT, true);
