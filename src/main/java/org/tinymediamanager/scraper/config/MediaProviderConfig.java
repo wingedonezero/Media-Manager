@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -490,6 +491,42 @@ public class MediaProviderConfig {
    *          the default value
    */
   public void addSelect(String key, List<String> possibleValues, String defaultValue) {
+    addSelect(key, "", possibleValues, defaultValue);
+  }
+
+  /**
+   * adds a value selection to the configuration (Enum version)
+   *
+   * @param key
+   *          the config key
+   * @param keyDescription
+   *          the key description
+   * @param possibleValues
+   *          an array of possible values
+   * @param defaultValue
+   *          the default value
+   */
+  public void addSelect(String key, String keyDescription, Enum<?>[] possibleValues, Enum<?> defaultValue) {
+    List<String> values = new ArrayList<>();
+
+    for (Enum<?> e : possibleValues) {
+      values.add(e.name());
+    }
+
+    addSelect(key, keyDescription, values, defaultValue.name());
+  }
+
+  /**
+   * adds a value selection to the configuration (Enum version)
+   *
+   * @param key
+   *          the config key
+   * @param possibleValues
+   *          an array of possible values
+   * @param defaultValue
+   *          the default value
+   */
+  public void addSelect(String key, Enum<?>[] possibleValues, Enum<?> defaultValue) {
     addSelect(key, "", possibleValues, defaultValue);
   }
 

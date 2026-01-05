@@ -115,6 +115,7 @@ public class TmdbTvShowMetadataProvider extends TmdbMetadataProvider implements 
     info.getConfig().addBoolean("scrapeLanguageNames", true);
     info.getConfig().addBoolean("titleFallback", false);
     info.getConfig().addSelect("titleFallbackLanguage", PT, "en-US");
+    info.getConfig().addSelect("titleFallbackLanguage2", FALLBACK_LANGUAGE.values(), FALLBACK_LANGUAGE.ORIGINAL);
     info.getConfig().load();
 
     return info;
@@ -399,6 +400,16 @@ public class TmdbTvShowMetadataProvider extends TmdbMetadataProvider implements 
     // 3. fallback language
     boolean titleFallback = getProviderInfo().getConfig().getValueAsBool("titleFallback");
     String fallbackLanguage = getProviderInfo().getConfig().getValue("titleFallbackLanguage");
+    FALLBACK_LANGUAGE fallbackLanguage2 = FALLBACK_LANGUAGE.ORIGINAL;
+    if (StringUtils.isNotBlank(getProviderInfo().getConfig().getValue("titleFallbackLanguage2"))) {
+      try {
+        fallbackLanguage2 = FALLBACK_LANGUAGE.valueOf(getProviderInfo().getConfig().getValue("titleFallbackLanguage2"));
+      }
+      catch (Exception ignored) {
+        // stick to default
+      }
+    }
+
     if (titleFallback) {
       localizedEpisodeData.putIfAbsent(fallbackLanguage, new HashMap<>());
     }
@@ -484,24 +495,29 @@ public class TmdbTvShowMetadataProvider extends TmdbMetadataProvider implements 
         md.setTitle(fallback.getTitle());
       }
 
-      // fallback was also generic? (or not scraped)? Try original one...
+      // original was also generic? Use the second fallback
       generic = isGenericTitle(md.getTitle());
-      if (original != null && (generic || StringUtils.isBlank(md.getTitle()) && StringUtils.isNotBlank(original.getTitle()))) {
-        md.setTitle(original.getTitle());
-      }
+      if (generic || StringUtils.isBlank(md.getTitle())) {
+        switch (fallbackLanguage2) {
+          case NONE:
+            // nothing to do
+            break;
 
-      // original was also generic? Try english one...
-      generic = isGenericTitle(md.getTitle());
-      if (english != null && (generic || StringUtils.isBlank(md.getTitle()) && StringUtils.isNotBlank(english.getTitle()))) {
-        md.setTitle(english.getTitle());
-      }
+          case ENGLISH:
+            if (english != null && StringUtils.isNotBlank(english.getTitle())) {
+              md.setTitle(english.getTitle());
+            }
+            break;
 
-      // uh-oh.
-      // our scraped, fallback, original and even English titles were all generic
-      // in this case, we can set it back to the "translated" generic title as it was before....
-      generic = isGenericTitle(md.getTitle());
-      if (generic) {
-        md.setTitle(scrapedTitle);
+          case ORIGINAL:
+            if (original != null && StringUtils.isNotBlank(original.getTitle())) {
+              md.setTitle(original.getTitle());
+            }
+            break;
+        }
+        if (fallbackLanguage2 == FALLBACK_LANGUAGE.NONE) {
+          // nothing to do
+        }
       }
 
       // original title
