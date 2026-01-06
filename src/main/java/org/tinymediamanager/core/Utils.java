@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.security.CodeSource;
 import java.text.CharacterIterator;
 import java.text.DateFormat;
-import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.text.StringCharacterIterator;
 import java.time.Instant;
@@ -1687,10 +1687,18 @@ public class Utils {
    *           if the io fails
    */
   private static String getEntryName(File source, File file) throws IOException {
-    int index = source.getAbsoluteFile().getParentFile().getAbsolutePath().length() + 1;
-    String path = file.getCanonicalPath();
+    Path sourcePath = source.getCanonicalFile().getParentFile().toPath();
+    Path filePath = file.getCanonicalFile().toPath();
 
-    return path.substring(index);
+    try {
+      Path relativePath = sourcePath.relativize(filePath);
+      return relativePath.toString();
+    }
+    catch (IllegalArgumentException e) {
+      // File is not under source directory
+      LOGGER.debug("File '{}' is not under source directory '{}'", file, source);
+      return file.getName();
+    }
   }
 
   /**
@@ -2258,18 +2266,42 @@ public class Utils {
   }
 
   /**
-   * check if the given folder contains any of the well known skip files (tmmignore, .tmmignore, .nomedia)
+   * check if the given folder contains any of the well known skip files (tmmignore, .tmmignore, .nomedia) using a filesystem attribute cache to avoid
+   * redundant I/O on remote datasources.
+   * <p>
+   * This method checks the provided cache first; if a skip file is not found in the cache, it is assumed to not exist (no fallback to Files.exists).
+   * This is intended for optimized update datasource tasks where all files are pre-cached during the initial recursive walk.
+   * </p>
    *
    * @param dir
-   *          the folder to check#
+   *          the folder to check
    * @param readNomedia
    *          read .nomedia files
-   * @return true/false
+   * @param fsCache
+   *          filesystem attribute cache populated during recursive walk; if null, falls back to {@link Files#exists}
+   * @return true if any skip file is found in cache (or on filesystem if cache is null), false otherwise
    */
-  @Deprecated
-  public static boolean containsSkipFile(Path dir, boolean readNomedia) {
-    return Files.exists(dir.resolve(".tmmignore")) || Files.exists(dir.resolve("tmmignore"))
-        || (readNomedia && Files.exists(dir.resolve(".nomedia")));
+  public static boolean containsSkipFile(Path dir, boolean readNomedia, Map<Path, BasicFileAttributes> fsCache) {
+    if (dir == null || fsCache == null) {
+      return false;
+    }
+
+    // check well-known skip files against the cache (no fallback to Files.exists)
+    Path tmmIgnore = dir.resolve(".tmmignore");
+    Path tmmIgnore2 = dir.resolve("tmmignore");
+    Path nomedia = dir.resolve(".nomedia");
+
+    if (fsCache.containsKey(tmmIgnore.toAbsolutePath())) {
+      return true;
+    }
+    if (fsCache.containsKey(tmmIgnore2.toAbsolutePath())) {
+      return true;
+    }
+    if (readNomedia && fsCache.containsKey(nomedia.toAbsolutePath())) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -2470,16 +2502,17 @@ public class Utils {
     if (!Settings.getInstance().isFileSizeDisplayHumanReadable()) {
       // in MB
       double sizeInMb = filesize / (base * base);
-      DecimalFormat df;
+      NumberFormat df = NumberFormat.getInstance();
 
       if (sizeInMb < 1) {
-        df = new DecimalFormat("#0.00");
+        df.setMaximumFractionDigits(2);
+        df.setMinimumFractionDigits(2);
       }
       else {
-        df = new DecimalFormat("#0");
+        df.setMaximumFractionDigits(0);
       }
 
-      return df.format(sizeInMb) + " M";
+      return df.format(sizeInMb) + " MB";
     }
 
     long bytes = filesize;
@@ -2494,8 +2527,11 @@ public class Utils {
       ci.next();
     }
 
-    DecimalFormat df = new DecimalFormat("#0.00");
-    return df.format(bytes / base) + " " + ci.current();
+    NumberFormat df = NumberFormat.getInstance();
+    df.setMaximumFractionDigits(2);
+    df.setMinimumFractionDigits(2);
+
+    return df.format(bytes / base) + " " + ci.current() + "B";
   }
 
   /**

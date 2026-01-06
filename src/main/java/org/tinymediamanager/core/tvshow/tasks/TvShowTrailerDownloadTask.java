@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class TvShowTrailerDownloadTask extends TmmTask {
 
     // store the trailer settings at the start of this task (to do not suffer from changes while the task is running)
     trailernames.addAll(TvShowModuleManager.getInstance().getSettings().getTrailerFilenames());
-    desiredSource = TrailerSources.YOUTUBE;
+    desiredSource = TvShowModuleManager.getInstance().getSettings().getTrailerSource();
     desiredQuality = TvShowModuleManager.getInstance().getSettings().getTrailerQuality();
   }
 

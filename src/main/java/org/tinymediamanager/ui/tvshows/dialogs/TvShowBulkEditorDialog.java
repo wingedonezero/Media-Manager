@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.awt.event.FocusListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyDescriptor;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,6 +37,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
@@ -61,6 +63,7 @@ import org.tinymediamanager.core.jmte.JmteUtils;
 import org.tinymediamanager.core.movie.MovieRenamer;
 import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.core.threading.TmmTaskManager;
+import org.tinymediamanager.core.tvshow.TvShowEpisodeEdition;
 import org.tinymediamanager.core.tvshow.TvShowList;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.TvShowRenamer;
@@ -205,6 +208,20 @@ public class TvShowBulkEditorDialog extends TmmDialog {
           }
           setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
+
+        JButton btnRemoveAllGenres = new SquareIconButton(IconManager.DELETE);
+        btnRemoveAllGenres.setToolTipText(TmmResourceBundle.getString("bulkeditor.removeall"));
+        btnRemoveAllGenres.addActionListener(e -> {
+          if (isDeleteConfirmed(TmmResourceBundle.getString("metatag.genre"))) {
+            tvShowsChanged = true;
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            for (TvShow tvShow : tvShowsToEdit) {
+              tvShow.removeAllGenres();
+            }
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          }
+        });
+        panelContent.add(btnRemoveAllGenres, "cell 3 0");
       }
 
       {
@@ -249,6 +266,20 @@ public class TvShowBulkEditorDialog extends TmmDialog {
           }
           setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
+
+        JButton btnRemoveAllTags = new SquareIconButton(IconManager.DELETE);
+        btnRemoveAllTags.setToolTipText(TmmResourceBundle.getString("bulkeditor.removeall"));
+        btnRemoveAllTags.addActionListener(e -> {
+          if (isDeleteConfirmed(TmmResourceBundle.getString("metatag.tags"))) {
+            tvShowsChanged = true;
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            for (TvShow tvShow : tvShowsToEdit) {
+              tvShow.removeAllTags();
+            }
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          }
+        });
+        panelContent.add(btnRemoveAllTags, "cell 3 1");
       }
 
       {
@@ -428,6 +459,7 @@ public class TvShowBulkEditorDialog extends TmmDialog {
         cbTvShowProperty.addItem(new BulkEditorProperty("englishTitle", TmmResourceBundle.getString("metatag.title.english")));
         cbTvShowProperty.addItem(new BulkEditorProperty("sortTitle", TmmResourceBundle.getString("metatag.sorttitle")));
         cbTvShowProperty.addItem(new BulkEditorProperty("plot", TmmResourceBundle.getString("metatag.plot")));
+        cbTvShowProperty.addItem(new BulkEditorProperty("tagline", TmmResourceBundle.getString("metatag.tagline")));
         cbTvShowProperty.addItem(new BulkEditorProperty("productionCompany", TmmResourceBundle.getString("metatag.production")));
         cbTvShowProperty.addItem(new BulkEditorProperty("country", TmmResourceBundle.getString("metatag.country")));
         cbTvShowProperty.addItem(new BulkEditorProperty("note", TmmResourceBundle.getString("metatag.note")));
@@ -506,7 +538,7 @@ public class TvShowBulkEditorDialog extends TmmDialog {
      ********************/
     {
       JPanel panelContent = new JPanel();
-      panelContent.setLayout(new MigLayout("", "[][200lp:350lp,grow][]", "[][][][][][][][][][][]"));
+      panelContent.setLayout(new MigLayout("", "[][200lp:350lp,grow][][]", "[][][][][][][][][][][][]"));
       tabbedPane.add(TmmResourceBundle.getString("metatag.episode"), panelContent);
 
       JTextArea textArea = new ReadOnlyTextArea(TmmResourceBundle.getString("tvshow.bulkedit.episodesfromshows"));
@@ -576,6 +608,39 @@ public class TvShowBulkEditorDialog extends TmmDialog {
       }
 
       {
+        JLabel lblEditionT = new TmmLabel(TmmResourceBundle.getString("metatag.edition"));
+        panelContent.add(lblEditionT, "cell 0 4,alignx right");
+
+        JComboBox<TvShowEpisodeEdition> cbEdition = new AutocompleteComboBox(TvShowEpisodeEdition.values());
+        panelContent.add(cbEdition, "cell 1 4,growx");
+
+        JButton btnEdition = new SquareIconButton(IconManager.APPLY_INV);
+        panelContent.add(btnEdition, "cell 2 4");
+
+        btnEdition.addActionListener(e -> {
+          Object obj = cbEdition.getSelectedItem();
+          TvShowEpisodeEdition edition = null;
+
+          // edition
+          if (obj instanceof TvShowEpisodeEdition tvShowEpisodeEdition) {
+            edition = tvShowEpisodeEdition;
+          }
+          else if (obj instanceof String string) {
+            // newly created edition?
+            edition = TvShowEpisodeEdition.getTvShowEpisodeEdition(string);
+          }
+
+          if (edition != null) {
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            for (TvShowEpisode episode : tvShowEpisodesToEdit) {
+              episode.setEdition(edition);
+              episodesChanged = true;
+            }
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          }
+        });
+      }
+      {
         JLabel lblTagsEpisode = new TmmLabel(TmmResourceBundle.getString("metatag.tags"));
         panelContent.add(lblTagsEpisode, "cell 0 5,alignx right");
 
@@ -617,6 +682,20 @@ public class TvShowBulkEditorDialog extends TmmDialog {
           }
           setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
+
+        JButton btnRemoveAllTagsEpisode = new SquareIconButton(IconManager.DELETE);
+        btnRemoveAllTagsEpisode.setToolTipText(TmmResourceBundle.getString("bulkeditor.removeall"));
+        btnRemoveAllTagsEpisode.addActionListener(e -> {
+          if (isDeleteConfirmed(TmmResourceBundle.getString("metatag.tags"))) {
+            episodesChanged = true;
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+            for (TvShowEpisode episode : tvShowEpisodesToEdit) {
+              episode.removeAllTags();
+            }
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          }
+        });
+        panelContent.add(btnRemoveAllTagsEpisode, "cell 3 5");
       }
 
       {
@@ -985,6 +1064,19 @@ public class TvShowBulkEditorDialog extends TmmDialog {
 
         scrollPane.setViewportView(tableValues);
       }
+    }
+  }
+
+  private boolean isDeleteConfirmed(String attribute) {
+    Object[] options = { TmmResourceBundle.getString("Button.yes"), TmmResourceBundle.getString("Button.no") };
+    int dialogResult = JOptionPane.showOptionDialog(TvShowBulkEditorDialog.this,
+        MessageFormat.format(TmmResourceBundle.getString("message.bulkedit.delete"), attribute),
+        TmmResourceBundle.getString("message.bulkedit.warning"), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
+    if (dialogResult == JOptionPane.YES_OPTION) {
+      return true;
+    }
+    else {
+      return false;
     }
   }
 

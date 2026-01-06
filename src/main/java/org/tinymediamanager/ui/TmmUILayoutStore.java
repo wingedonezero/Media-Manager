@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,10 +113,11 @@ public class TmmUILayoutStore {
 
     componentSet.add(componentName);
 
-    String hiddenColumnsAsString = properties.getProperty(componentName + ".hiddenColumns");
-    if (StringUtils.isNotBlank(hiddenColumnsAsString)) {
-      List<String> hiddenColumns = Arrays.asList(hiddenColumnsAsString.split(","));
-      table.readHiddenColumns(hiddenColumns);
+    // try to load new visible columns format first
+    String visibleColumnsAsString = properties.getProperty(componentName + ".visibleColumns");
+    if (StringUtils.isNotBlank(visibleColumnsAsString)) {
+      List<TmmTable.ColumnState> visibleColumns = parseVisibleColumns(visibleColumnsAsString);
+      table.setVisibleColumnsWithWidths(visibleColumns);
 
       if (table instanceof TmmTreeTable treeTable) {
         if (treeTable.getSortStrategy() != null && StringUtils.isNotBlank(properties.getProperty(componentName + ".sortState"))) {
@@ -129,10 +130,81 @@ public class TmmUILayoutStore {
         }
       }
     }
-    else if (hiddenColumnsAsString == null) {
-      // set the default hidden columns of the table model
-      table.setDefaultHiddenColumns();
+    // fall back to legacy hidden columns format for backward compatibility
+    else {
+      String hiddenColumnsAsString = properties.getProperty(componentName + ".hiddenColumns");
+      if (StringUtils.isNotBlank(hiddenColumnsAsString)) {
+        List<String> hiddenColumns = Arrays.asList(hiddenColumnsAsString.split(","));
+        table.readHiddenColumns(hiddenColumns);
+
+        if (table instanceof TmmTreeTable treeTable) {
+          if (treeTable.getSortStrategy() != null && StringUtils.isNotBlank(properties.getProperty(componentName + ".sortState"))) {
+            treeTable.setSortStrategy(properties.getProperty(componentName + ".sortState"));
+          }
+        }
+        else {
+          if (table.getTableComparatorChooser() != null && StringUtils.isNotBlank(properties.getProperty(componentName + ".sortState"))) {
+            table.getTableComparatorChooser().fromString(properties.getProperty(componentName + ".sortState"));
+          }
+        }
+
+        // migrate to new format: convert hidden columns to visible columns with widths
+        List<TmmTable.ColumnState> visibleColumns = table.getVisibleColumnsWithWidths();
+        addParam(componentName + ".visibleColumns", serializeVisibleColumns(visibleColumns));
+        // remove old property
+        properties.putProperty(componentName + ".hiddenColumns", "");
+      }
+      else if (hiddenColumnsAsString == null) {
+        // no stored state - use default visibility
+        table.setDefaultColumnVisibility();
+      }
     }
+  }
+
+  /**
+   * Parses a string of visible columns in format "identifier1:width1,identifier2:width2,..."
+   *
+   * @param visibleColumnsAsString
+   *          the string to parse
+   * @return the list of column states
+   */
+  private List<TmmTable.ColumnState> parseVisibleColumns(String visibleColumnsAsString) {
+    List<TmmTable.ColumnState> visibleColumns = new ArrayList<>();
+    if (StringUtils.isBlank(visibleColumnsAsString)) {
+      return visibleColumns;
+    }
+
+    String[] parts = visibleColumnsAsString.split(",");
+    for (String part : parts) {
+      String[] colData = part.split(":");
+      if (colData.length == 2) {
+        String identifier = colData[0];
+        try {
+          int width = Integer.parseInt(colData[1]);
+          visibleColumns.add(new TmmTable.ColumnState(identifier, width));
+        }
+        catch (NumberFormatException e) {
+          // skip invalid entries
+        }
+      }
+    }
+
+    return visibleColumns;
+  }
+
+  /**
+   * Serializes a list of visible columns to a string in format "identifier1:width1,identifier2:width2,..."
+   *
+   * @param visibleColumns
+   *          the list of column states
+   * @return the serialized string
+   */
+  private String serializeVisibleColumns(List<TmmTable.ColumnState> visibleColumns) {
+    List<String> parts = new ArrayList<>();
+    for (TmmTable.ColumnState state : visibleColumns) {
+      parts.add(state.getIdentifier() + ":" + state.getWidth());
+    }
+    return String.join(",", parts);
   }
 
   /**
@@ -343,7 +415,8 @@ public class TmmUILayoutStore {
 
   private void saveTmmTable(TmmTable table) {
     String componentName = table.getName();
-    addParam(componentName + ".hiddenColumns", String.join(",", table.getHiddenColumns()));
+    List<TmmTable.ColumnState> visibleColumns = table.getVisibleColumnsWithWidths();
+    addParam(componentName + ".visibleColumns", serializeVisibleColumns(visibleColumns));
 
     if (table.getTableComparatorChooser() != null) {
       addParam(componentName + ".sortState", table.getTableComparatorChooser().toString());
@@ -352,7 +425,8 @@ public class TmmUILayoutStore {
 
   private void saveTmmTreeTable(TmmTreeTable table) {
     String componentName = table.getName();
-    addParam(componentName + ".hiddenColumns", String.join(",", table.getHiddenColumns()));
+    List<TmmTable.ColumnState> visibleColumns = table.getVisibleColumnsWithWidths();
+    addParam(componentName + ".visibleColumns", serializeVisibleColumns(visibleColumns));
 
     if (table.getSortStrategy() != null) {
       addParam(componentName + ".sortState", table.getSortStrategy().toString());
@@ -372,14 +446,26 @@ public class TmmUILayoutStore {
       return;
     }
 
-    String hiddenColumnsAsString = properties.getProperty(tableIdentifier + ".hiddenColumns");
-    if (StringUtils.isNotBlank(hiddenColumnsAsString)) {
-      List<String> hiddenColumns = new ArrayList<>(Arrays.asList(hiddenColumnsAsString.split(",")));
-      if (!hiddenColumns.contains(columnName)) {
-        hiddenColumns.add(columnName);
-      }
-      addParam(tableIdentifier + ".hiddenColumns", String.join(",", hiddenColumns));
+    // try new visible columns format first
+    String visibleColumnsAsString = properties.getProperty(tableIdentifier + ".visibleColumns");
+    if (StringUtils.isNotBlank(visibleColumnsAsString)) {
+      List<TmmTable.ColumnState> visibleColumns = parseVisibleColumns(visibleColumnsAsString);
+      // remove the column from visible list
+      visibleColumns.removeIf(state -> state.getIdentifier().equals(columnName));
+      addParam(tableIdentifier + ".visibleColumns", serializeVisibleColumns(visibleColumns));
       properties.writeProperties();
+    }
+    // fall back to legacy hidden columns format
+    else {
+      String hiddenColumnsAsString = properties.getProperty(tableIdentifier + ".hiddenColumns");
+      if (StringUtils.isNotBlank(hiddenColumnsAsString)) {
+        List<String> hiddenColumns = new ArrayList<>(Arrays.asList(hiddenColumnsAsString.split(",")));
+        if (!hiddenColumns.contains(columnName)) {
+          hiddenColumns.add(columnName);
+        }
+        addParam(tableIdentifier + ".hiddenColumns", String.join(",", hiddenColumns));
+        properties.writeProperties();
+      }
     }
   }
 

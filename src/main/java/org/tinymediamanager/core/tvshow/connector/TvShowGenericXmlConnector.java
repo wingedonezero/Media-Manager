@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -394,8 +394,7 @@ public abstract class TvShowGenericXmlConnector implements ITvShowConnector {
    */
   protected void addTagline() {
     Element tagline = document.createElement("tagline");
-    // FIXME tbc how we should fill that field
-    // tagline.setTextContent();
+    tagline.setTextContent(tvShow.getTagline());
     root.appendChild(tagline);
   }
 

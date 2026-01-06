@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public class TvShowSeason extends MediaEntity implements Comparable<TvShowSeason
   private TvShow                    tvShow             = null;
   private final List<TvShowEpisode> episodes           = new CopyOnWriteArrayList<>();
   private final List<TvShowEpisode> dummyEpisodes      = new CopyOnWriteArrayList<>();
-  private final List<TvShowEpisode> episodesForDisplay = new ArrayList<>();
+  private final List<TvShowEpisode> episodesForDisplay = new CopyOnWriteArrayList<>();
 
   private PropertyChangeListener    listener;
 
@@ -193,6 +193,10 @@ public class TvShowSeason extends MediaEntity implements Comparable<TvShowSeason
     dummyEpisodes.clear();
 
     // invalidate cache
+    episodesForDisplay.clear();
+  }
+
+  void invalidateEpisodeForDisplayCache() {
     episodesForDisplay.clear();
   }
 
@@ -396,7 +400,7 @@ public class TvShowSeason extends MediaEntity implements Comparable<TvShowSeason
       episodesForDisplay.addAll(TvShowHelpers.getEpisodesForDisplay(episodes, dummyEpisodes));
     }
 
-    return new ArrayList<>(episodesForDisplay);
+    return Collections.unmodifiableList(episodesForDisplay);
   }
 
   /**

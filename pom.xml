@@ -82,7 +82,7 @@
         <release.version>3.1.1</release.version>
         <jre.version>21.0.9-b895</jre.version>
         <launcher.version>5.0.12</launcher.version>
-        <flatlaf.version>3.6.2</flatlaf.version>
+        <flatlaf.version>3.7</flatlaf.version>
         <jackson.version>2.20.0</jackson.version>
         <sonar.java.source>17</sonar.java.source>
     </properties>
@@ -325,11 +325,6 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
             <version>1.14.1</version>
-        </dependency>
-        <dependency>
-            <groupId>io.github.jacksonbrienen</groupId>
-            <artifactId>jwfd</artifactId>
-            <version>0.9.0</version>
         </dependency>
         <!-- testing -->
         <dependency>

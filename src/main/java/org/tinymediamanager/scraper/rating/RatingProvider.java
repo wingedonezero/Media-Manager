@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -263,8 +263,8 @@ public class RatingProvider {
       case MediaMetadata.METACRITIC_USER -> RatingSource.METACRITIC_USER;
       case MediaMetadata.IMDB -> RatingSource.IMDB;
       case MediaMetadata.TMDB -> RatingSource.TMDB;
-      case "tomatometerallcritics", "tomatoes" -> RatingSource.ROTTEN_TOMATOES_TOMATOMETER;
-      case "tomatometeravgcritics", "audience", "popcorn" -> RatingSource.ROTTEN_TOMATOES_AVG_RATING;
+      case "tomatometerallcritics" -> RatingSource.ROTTEN_TOMATOES_TOMATOMETER;
+      case "tomatometeravgcritics" -> RatingSource.ROTTEN_TOMATOES_AVG_RATING;
       case MediaMetadata.TRAKT_TV -> RatingSource.TRAKT_TV;
       case MediaMetadata.LETTERBOXD -> RatingSource.LETTERBOXD;
       case MediaMetadata.MY_ANIME_LIST -> RatingSource.MAL;

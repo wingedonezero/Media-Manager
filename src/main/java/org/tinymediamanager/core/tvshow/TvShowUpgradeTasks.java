@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,16 @@ public class TvShowUpgradeTasks extends UpgradeTasks {
       settings.setEpisodeScraperMetadataConfig(new ArrayList<>(episodeMetadataConfig));
 
       settings.setVersion(5201);
+    }
+
+    if (settings.getVersion() < 5202) {
+      LOGGER.info("performing upgrade to ver: {}", 5202);
+
+      List<TvShowScraperMetadataConfig> showScraperMetadataConfig = new ArrayList<>(settings.getTvShowScraperMetadataConfig());
+      showScraperMetadataConfig.add(TvShowScraperMetadataConfig.TAGLINE);
+      settings.setTvShowScraperMetadataConfig(showScraperMetadataConfig);
+
+      settings.setVersion(5202);
     }
 
     settings.saveSettings();
@@ -355,6 +365,22 @@ public class TvShowUpgradeTasks extends UpgradeTasks {
         }
       }
       module.setDbVersion(5202);
+    }
+
+    if (module.getDbVersion() < 5203) {
+      LOGGER.info("performing upgrade to ver: {}", 5203);
+      // fix incorrectly written/accepted ratings from mdblist
+      for (TvShow tvShow : tvShowList.getTvShows()) {
+        convertRating("tomatoes", "tomatometerallcritics", tvShow);
+        convertRating("audience", "tomatometeravgcritics", tvShow);
+        convertRating("popcorn", "tomatometeravgcritics", tvShow);
+        for (TvShowEpisode ep : tvShow.getEpisodes()) {
+          convertRating("tomatoes", "tomatometerallcritics", ep);
+          convertRating("audience", "tomatometeravgcritics", ep);
+          convertRating("popcorn", "tomatometeravgcritics", ep);
+        }
+      }
+      module.setDbVersion(5203);
     }
 
     saveAll();

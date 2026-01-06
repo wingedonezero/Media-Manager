@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package org.tinymediamanager.scraper.mdblist;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.FeatureNotEnabledException;
@@ -132,10 +134,21 @@ public class MdbListMetadataProvider implements IMediaProvider, IRatingProvider 
     List<MdbRating> ratings = response.body().ratings;
     // Loop over result to get all Ratings and add them to list of media ratings
     for (MdbRating rating : ratings) {
-      if (rating.source == null || (rating.value == 0f && !rating.source.equals(MediaMetadata.ROGER_EBERT))) {
+      // skip empty ratings
+      if (StringUtils.isBlank(rating.source) || rating.value <= 0f) {
         continue;
       }
-      MediaRating mediaRating = new MediaRating(rating.source, rating.value, rating.votes);
+
+      String ratingSource;
+
+      // remap rating sources
+      switch (rating.source.toLowerCase(Locale.ROOT)) {
+        case "tomatoes" -> ratingSource = "tomatometerallcritics";
+        case "audience", "popcorn" -> ratingSource = "tomatometeravgcritics";
+        default -> ratingSource = rating.source;
+      }
+
+      MediaRating mediaRating = new MediaRating(ratingSource, rating.value, rating.votes);
       switch (rating.source) {
         case MediaMetadata.LETTERBOXD: {
           mediaRating.setMaxValue(5);

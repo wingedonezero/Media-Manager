@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,6 +81,7 @@ import org.tinymediamanager.ui.tvshows.filters.TvShowEpisodeCountFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowEpisodeCrc32Filter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowFanartSizeFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowFilenameFilter;
+import org.tinymediamanager.ui.tvshows.filters.TvShowFirstAiredFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowFrameRateFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowGenreFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowHDRFormatFilter;
@@ -178,6 +179,7 @@ public class TvShowFilterDialog extends TmmDialog {
 
         addFilter(new TvShowYearFilter(), panelMetadata);
         addFilter(new TvShowDecadeFilter(), panelMetadata);
+        addFilter(new TvShowFirstAiredFilter(), panelMetadata);
         addFilter(new TvShowGenreFilter(), panelMetadata);
         addFilter(new TvShowCertificationFilter(), panelMetadata);
         addFilter(new TvShowCastFilter(), panelMetadata);

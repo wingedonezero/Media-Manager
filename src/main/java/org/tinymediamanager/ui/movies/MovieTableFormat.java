@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -494,7 +494,7 @@ public class MovieTableFormat extends TmmTableFormat<Movie> {
     col.setHeaderIcon(IconManager.FILE_SIZE);
     col.setCellRenderer(new RightAlignTableCellRenderer());
     col.setColumnResizeable(false);
-    col.setMinWidth(fontMetrics.stringWidth("500.00 M") + getCellPadding());
+    col.setMinWidth(fontMetrics.stringWidth("500.00 MB") + getCellPadding());
     col.setDefaultHidden(true);
     addColumn(col);
 
@@ -507,7 +507,7 @@ public class MovieTableFormat extends TmmTableFormat<Movie> {
     col.setHeaderIcon(IconManager.FILE_SIZE);
     col.setCellRenderer(new RightAlignTableCellRenderer());
     col.setColumnResizeable(false);
-    col.setMinWidth(fontMetrics.stringWidth("500.00 M") + getCellPadding());
+    col.setMinWidth(fontMetrics.stringWidth("500.00 MB") + getCellPadding());
     col.setDefaultHidden(true);
     addColumn(col);
 

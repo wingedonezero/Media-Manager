@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,12 @@ public class TvShowTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
 
     TvShowModuleManager.getInstance().getSettings().addPropertyChangeListener(evt -> {
       switch (evt.getPropertyName()) {
-        case "displayMissingEpisodes", "displayMissingSpecials", "displayMissingNotAired" -> updateDummyEpisodes();
+        case "displayMissingEpisodes", "displayMissingSpecials", "displayMissingNotAired" -> {
+          for (TvShow tvShow : tvShowList.getTvShows()) {
+            tvShow.invalidateEpisodeForDisplayCache();
+            updateDummyEpisodesForTvShow(tvShow);
+          }
+        }
       }
     });
   }
@@ -88,7 +93,7 @@ public class TvShowTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
       else {
         // TV show updated
         nodeChanged(tvShow);
-        updateDummyEpisodes();
+        updateDummyEpisodesForTvShow(tvShow);
       }
     }
     else {
@@ -190,18 +195,14 @@ public class TvShowTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
   }
 
   /**
-   * add the dummy episodes to the tree is the setting has been activated
-   */
-  private void updateDummyEpisodes() {
-    for (TvShow tvShow : tvShowList.getTvShows()) {
-      updateDummyEpisodesForTvShow(tvShow);
-    }
-  }
-
-  /**
    * update dummy episodes after changing S/E of existing episodes
    */
   private void updateDummyEpisodesForTvShow(TvShow tvShow) {
+    // skip if the TV show is not in the tree anymore
+    if (getNodeFromCache(tvShow) == null) {
+      return;
+    }
+
     List<TvShowEpisode> dummyEpisodes = tvShow.getDummyEpisodes();
     List<TvShowEpisode> episodesForDisplay = tvShow.getEpisodesForDisplay();
 

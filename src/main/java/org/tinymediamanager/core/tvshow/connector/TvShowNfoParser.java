@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -501,6 +501,20 @@ public class TvShowNfoParser {
   }
 
   /**
+   * the tagline usually comes in the tagline tag
+   */
+  private Void parseTagline() {
+    supportedElements.add("tagline");
+
+    Element element = getSingleElement(root, "tagline");
+    if (element != null) {
+      tagline = element.wholeText();
+    }
+
+    return null;
+  }
+
+  /**
    * the outline usually comes in the outline tag as an integer (or empty)
    */
   private Void parseOutline() {
@@ -509,20 +523,6 @@ public class TvShowNfoParser {
     Element element = getSingleElement(root, "outline");
     if (element != null) {
       outline = element.wholeText();
-    }
-
-    return null;
-  }
-
-  /**
-   * the tagline usually comes in the tagline tag as an integer (or empty)
-   */
-  private Void parseTagline() {
-    supportedElements.add("tagline");
-
-    Element element = getSingleElement(root, "tagline");
-    if (element != null) {
-      tagline = element.wholeText();
     }
 
     return null;
@@ -1553,6 +1553,7 @@ public class TvShowNfoParser {
       show.setDateAdded(dateadded);
     }
     show.setPlot(plot);
+    show.setTagline(tagline);
     show.setRuntime(runtime);
 
     if (!posters.isEmpty()) {

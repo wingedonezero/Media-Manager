@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,11 @@ public class TvShowEpisodeEdition extends DynaEnum<TvShowEpisodeEdition> {
   public static final TvShowEpisodeEdition              NONE          = new TvShowEpisodeEdition("NONE", 0, "", "");
   public static final TvShowEpisodeEdition              DIRECTORS_CUT = new TvShowEpisodeEdition("DIRECTORS_CUT", 1, "Director's Cut",
       ".Director.?s.(Cut|Edition|Version)");
+  public static final TvShowEpisodeEdition              UNCUT         = new TvShowEpisodeEdition("UNCUT", 2, "Uncut",
+      ".Uncut.(Cut|Edition|Version)?");
+
+  public static final TvShowEpisodeEdition              REMASTERED    = new TvShowEpisodeEdition("REMASTERED", 3, "Remastered",
+      ".Remastered.(Cut|Edition|Version)?");
 
   private final String                                  title;
   private final Pattern                                 pattern;

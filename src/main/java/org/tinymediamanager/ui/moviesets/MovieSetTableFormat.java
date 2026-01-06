@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import org.tinymediamanager.core.Utils;
 import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaRating;
+import org.tinymediamanager.core.entities.MediaSource;
+import org.tinymediamanager.core.movie.MovieEdition;
 import org.tinymediamanager.core.movie.MovieList;
 import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.MovieScraperMetadataConfig;
@@ -243,7 +245,7 @@ public class MovieSetTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     col.setHeaderIcon(IconManager.FILE_SIZE);
     col.setCellRenderer(new RightAlignTableCellRenderer());
     col.setColumnResizeable(false);
-    col.setMinWidth(fontMetrics.stringWidth("50000M") + getCellPadding());
+    col.setMinWidth(fontMetrics.stringWidth("500.00 MB") + getCellPadding());
     col.setDefaultHidden(true);
     addColumn(col);
 
@@ -254,7 +256,26 @@ public class MovieSetTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     col.setHeaderIcon(IconManager.FILE_SIZE);
     col.setCellRenderer(new RightAlignTableCellRenderer());
     col.setColumnResizeable(false);
-    col.setMinWidth(fontMetrics.stringWidth("50000M") + getCellPadding());
+    col.setMinWidth(fontMetrics.stringWidth("500.00 MB") + getCellPadding());
+    col.setDefaultHidden(true);
+    addColumn(col);
+
+    /*
+     * Edition (hidden per default)
+     */
+    col = new Column(TmmResourceBundle.getString("metatag.edition"), "edition", this::getEdition, String.class);
+    col.setColumnComparator(stringComparator);
+    col.setHeaderIcon(IconManager.EDITION);
+    col.setDefaultHidden(true);
+    addColumn(col);
+
+    /*
+     * Source (hidden per default)
+     */
+    col = new Column(TmmResourceBundle.getString("metatag.source"), "mediaSource", this::getMediaSource, String.class);
+    col.setColumnComparator(stringComparator);
+    col.setHeaderIcon(IconManager.SOURCE);
+    col.setMinWidth(fontMetrics.stringWidth("Blu-ray") + getCellPadding());
     col.setDefaultHidden(true);
     addColumn(col);
 
@@ -365,6 +386,36 @@ public class MovieSetTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     else if (userObject instanceof Movie movie) {
       return Utils.formatFileSizeForDisplay(movie.getTotalFilesize());
     }
+    return null;
+  }
+
+  private String getEdition(TmmTreeNode node) {
+    Object userObject = node.getUserObject();
+    if (userObject instanceof MovieSet.MovieSetMovie) {
+      return null;
+    }
+    else if (userObject instanceof Movie movie) {
+      MovieEdition edition = movie.getEdition();
+      if (edition != null) {
+        return edition.toString();
+      }
+    }
+
+    return null;
+  }
+
+  private String getMediaSource(TmmTreeNode node) {
+    Object userObject = node.getUserObject();
+    if (userObject instanceof MovieSet.MovieSetMovie) {
+      return null;
+    }
+    else if (userObject instanceof Movie movie) {
+      MediaSource mediaSource = movie.getMediaSource();
+      if (mediaSource != null) {
+        return mediaSource.toString();
+      }
+    }
+
     return null;
   }
 

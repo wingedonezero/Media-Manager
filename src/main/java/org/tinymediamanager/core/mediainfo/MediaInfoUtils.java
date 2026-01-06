@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package org.tinymediamanager.core.mediainfo;
+
+import org.tinymediamanager.thirdparty.MediaInfo;
 
 /**
  * common helpers for Mediainfo
@@ -34,6 +36,6 @@ public class MediaInfoUtils {
    * @return true/false
    */
   public static boolean useMediaInfo() {
-    return USE_LIBMEDIAINFO;
+    return USE_LIBMEDIAINFO && MediaInfo.isMediaInfoAvailable();
   }
 }

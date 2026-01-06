@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,7 @@ import org.tinymediamanager.ui.movies.filters.MovieNoteFilter;
 import org.tinymediamanager.ui.movies.filters.MoviePathFilter;
 import org.tinymediamanager.ui.movies.filters.MoviePosterSizeFilter;
 import org.tinymediamanager.ui.movies.filters.MovieProductionCompanyFilter;
+import org.tinymediamanager.ui.movies.filters.MovieReleaseDateFilter;
 import org.tinymediamanager.ui.movies.filters.MovieRuntimeFilter;
 import org.tinymediamanager.ui.movies.filters.MovieSubtitleFormatFilter;
 import org.tinymediamanager.ui.movies.filters.MovieSubtitleLanguageFilter;
@@ -185,6 +186,7 @@ public class MovieFilterDialog extends TmmDialog {
         tabbedPane.addTab(TmmResourceBundle.getString("tmm.metadata"), createTabPanel(panelMetadata));
 
         addFilter(new MovieYearFilter(), panelMetadata);
+        addFilter(new MovieReleaseDateFilter(), panelMetadata);
         addFilter(new MovieDecadesFilter(), panelMetadata);
         addFilter(new MovieGenreFilter(), panelMetadata);
         addFilter(new MovieCertificationFilter(), panelMetadata);

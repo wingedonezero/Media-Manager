@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2020 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@ import java.awt.KeyboardFocusManager;
 import javax.swing.JTextArea;
 
 /**
- * The class {@link TmmTextArea} is an enhancement to the {@link JTextArea} which provides some enhancements like a better focus traversal and an undo manager
+ * The class {@link TmmTextArea} is an enhancement to the {@link JTextArea} which provides some enhancements like a better focus traversal and an undo
+ * manager
  *
  * @author Manuel Laggner
  */

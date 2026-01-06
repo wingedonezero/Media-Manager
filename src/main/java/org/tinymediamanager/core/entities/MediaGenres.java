@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * @author Manuel Laggner
  * @since 1.0
  */
-public class MediaGenres extends DynaEnum<MediaGenres> {
+public class MediaGenres extends DynaEnum<MediaGenres> implements Comparable<MediaGenres> {
   private static final Comparator<MediaGenres> COMPARATOR      = new MediaGenres.MediaGenresComparator();
 
   public static final MediaGenres              ACTION          = new MediaGenres("ACTION", 0, "Action");

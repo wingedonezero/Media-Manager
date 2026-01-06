@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,11 +97,9 @@ public class TmmTable extends JTable {
   }
 
   @Override
-  public void addColumn(TableColumn aColumn) {
-    if (aColumn.getIdentifier() == null && getModel() instanceof TmmTableModel) {
+  public void addColumn(@NotNull TableColumn aColumn) {
+    if (aColumn.getIdentifier() == null && getModel() instanceof TmmTableModel<?> tableModel) {
       aColumn.setHeaderRenderer(new SortableIconHeaderRenderer());
-
-      TmmTableModel<?> tableModel = ((TmmTableModel<?>) getModel());
       tableModel.setUpColumn(aColumn);
     }
     super.addColumn(aColumn);
@@ -159,6 +157,85 @@ public class TmmTable extends JTable {
     return tableComparatorChooser;
   }
 
+  /**
+   * The Class {@link ColumnState} represents the state of a table column including its identifier and width.
+   *
+   * @author Manuel Laggner
+   */
+  public static class ColumnState {
+    private final String identifier;
+    private final int    width;
+
+    /**
+     * Creates a new column state.
+     *
+     * @param identifier
+     *          the column identifier
+     * @param width
+     *          the column width in pixels
+     */
+    public ColumnState(String identifier, int width) {
+      this.identifier = identifier;
+      this.width = width;
+    }
+
+    /**
+     * Gets the column identifier.
+     *
+     * @return the column identifier
+     */
+    public String getIdentifier() {
+      return identifier;
+    }
+
+    /**
+     * Gets the column width.
+     *
+     * @return the column width in pixels
+     */
+    public int getWidth() {
+      return width;
+    }
+  }
+
+  /**
+   * Gets the list of visible columns with their current widths.
+   *
+   * @return the list of visible columns with their widths
+   */
+  public List<ColumnState> getVisibleColumnsWithWidths() {
+    List<ColumnState> visibleColumns = new ArrayList<>();
+
+    TableColumnModel columnModel = getColumnModel();
+    for (int i = 0; i < columnModel.getColumnCount(); i++) {
+      TableColumn col = columnModel.getColumn(i);
+      if (col.getIdentifier() instanceof String identifier && StringUtils.isNotBlank(identifier)) {
+        visibleColumns.add(new ColumnState(identifier, col.getWidth()));
+      }
+    }
+
+    return visibleColumns;
+  }
+
+  /**
+   * Sets the visible columns with their widths. All columns not in the list will be hidden.
+   *
+   * @param visibleColumns
+   *          the list of visible columns with their widths
+   */
+  public void setVisibleColumnsWithWidths(List<ColumnState> visibleColumns) {
+    if (getColumnModel() instanceof TmmTableColumnModel tmmTableColumnModel) {
+      tmmTableColumnModel.setVisibleColumnsWithWidths(visibleColumns);
+    }
+  }
+
+  /**
+   * Gets the list of hidden column identifiers (legacy method for backward compatibility).
+   *
+   * @return the list of hidden column identifiers
+   * @deprecated Use {@link #getVisibleColumnsWithWidths()} instead
+   */
+  @Deprecated
   public List<String> getHiddenColumns() {
     List<String> hiddenColumns = new ArrayList<>();
 
@@ -174,14 +251,26 @@ public class TmmTable extends JTable {
     return hiddenColumns;
   }
 
+  /**
+   * Sets the hidden columns (legacy method for backward compatibility).
+   *
+   * @param hiddenColumns
+   *          the list of column identifiers to hide
+   * @deprecated Use {@link #setVisibleColumnsWithWidths(List)} instead
+   */
+  @Deprecated
   public void readHiddenColumns(List<String> hiddenColumns) {
     if (getColumnModel() instanceof TmmTableColumnModel tmmTableColumnModel) {
       tmmTableColumnModel.setHiddenColumns(hiddenColumns);
     }
   }
 
-  public void setDefaultHiddenColumns() {
-    if (getColumnModel() instanceof TmmTableColumnModel && getModel() instanceof TmmTableModel<?> tableModel) {
+  /**
+   * Sets the default column visibility based on the table format. Columns marked as default hidden in the table format will be hidden, all others
+   * will be visible with their default widths.
+   */
+  public void setDefaultColumnVisibility() {
+    if (getColumnModel() instanceof TmmTableColumnModel tmmTableColumnModel && getModel() instanceof TmmTableModel<?> tableModel) {
       TmmTableFormat<?> tableFormat = (TmmTableFormat<?>) tableModel.getTableFormat();
 
       List<String> hiddenColumns = new ArrayList<>();
@@ -192,8 +281,21 @@ public class TmmTable extends JTable {
         }
       }
 
-      readHiddenColumns(hiddenColumns);
+      tmmTableColumnModel.setHiddenColumns(hiddenColumns);
+
+      // adjust column widths after setting visibility
+      adjustColumnPreferredWidths(3);
     }
+  }
+
+  /**
+   * Sets the default hidden columns (legacy method for backward compatibility).
+   *
+   * @deprecated Use {@link #setDefaultColumnVisibility()} instead
+   */
+  @Deprecated
+  public void setDefaultHiddenColumns() {
+    setDefaultColumnVisibility();
   }
 
   /**

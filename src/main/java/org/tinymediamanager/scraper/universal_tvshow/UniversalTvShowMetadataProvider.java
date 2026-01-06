@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,8 @@ public class UniversalTvShowMetadataProvider implements ITvShowMetadataProvider 
     config.addLabel("tvShowLabel", "tmm.tvshow");
     config.addSelect("title", "metatag.title", compatibleScraperIds, UNDEFINED);
     config.addSelect("originalTitle", "metatag.originaltitle", compatibleScraperIds, UNDEFINED);
-    config.addSelect("englishTitle", "metatag.title.english", Arrays.asList(UNDEFINED, MediaMetadata.TMDB, MediaMetadata.IMDB), UNDEFINED);
+    config.addSelect("englishTitle", "metatag.title.english", only(MediaMetadata.TMDB, MediaMetadata.IMDB), UNDEFINED);
+    config.addSelect("tagline", "metatag.tagline", only(MediaMetadata.TMDB), UNDEFINED);
     config.addSelect("year", "metatag.year", compatibleScraperIds, UNDEFINED);
     config.addSelect("releaseDate", "metatag.releasedate", compatibleScraperIds, UNDEFINED);
     config.addSelect("plot", "metatag.plot", compatibleScraperIds, UNDEFINED);
@@ -166,9 +167,7 @@ public class UniversalTvShowMetadataProvider implements ITvShowMetadataProvider 
     List<String> newScrapers = new ArrayList<>();
 
     newScrapers.add(UNDEFINED);
-    for (String scraperToInclude : includes) {
-      newScrapers.add(scraperToInclude);
-    }
+    Collections.addAll(newScrapers, includes);
 
     return newScrapers;
   }

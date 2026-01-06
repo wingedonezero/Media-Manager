@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,7 +197,7 @@ public abstract class UpgradeTasks {
     boolean changed = false;
     for (MediaFile mf : me.getMediaFiles()) {
       if (mf.isHDR()) {
-        List<String> hdrs = new ArrayList<String>(Arrays.asList(mf.getHdrFormat().split(", "))); // modifyable
+        List<String> hdrs = new ArrayList<>(Arrays.asList(mf.getHdrFormat().split(", "))); // modifyable
         if (hdrs.contains("HDR10+") && hdrs.contains("HDR10")) {
           hdrs.remove("HDR10");
           mf.setHdrFormat(String.join(", ", hdrs));
@@ -206,6 +206,15 @@ public abstract class UpgradeTasks {
       }
     }
     return changed;
+  }
+
+  protected void convertRating(String oldId, String newId, MediaEntity entity) {
+    Map<String, MediaRating> ratingMap = entity.getRatings();
+    MediaRating rating = ratingMap.remove(oldId);
+    if (rating != null) {
+      ratingMap.putIfAbsent(newId, new MediaRating(newId, rating.getRating(), rating.getVotes(), rating.getMaxValue()));
+      registerForSaving(entity);
+    }
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,12 +39,21 @@ import org.tinymediamanager.scraper.util.MetadataUtil;
 import retrofit2.Response;
 
 /**
- * The Class TmdbMetadataProvider. A meta data, artwork and trailer provider for the site themoviedb.org
+ * The Class TmdbMetadataProvider. A metadata, artwork and trailer provider for the site themoviedb.org
  *
  * @author Manuel Laggner
  */
 abstract class TmdbMetadataProvider implements IMediaProvider {
-  static final String             ID            = "tmdb";
+  static final String ID = "tmdb";
+
+  /**
+   * the last resort fallback language
+   */
+  enum FALLBACK_LANGUAGE {
+    ENGLISH,
+    ORIGINAL,
+    NONE
+  }
 
   // Use primary translations, not just our internal MediaLanguages (we need the country!)
   // https://api.themoviedb.org/3/configuration/primary_translations?api_key=XXXX

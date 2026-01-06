@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -290,7 +290,7 @@ public class MovieInformationPanel extends InformationPanel {
     {
       JPanel panelRight = new JPanel();
       panelRight
-          .setLayout(new MigLayout("insets n 0 n n, hidemode 3", "[100lp,grow]", "[shrink 0][][shrink 0][][][][][shrink 0][][grow,top][shrink 0][]"));
+          .setLayout(new MigLayout("insets n 0 n n, hidemode 3", "[100lp,grow]", "[shrink 0][][shrink 0][][][][][]15lp[][grow,top][shrink 0][]"));
 
       scrollPane = new NoBorderScrollPane(panelRight);
       scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);

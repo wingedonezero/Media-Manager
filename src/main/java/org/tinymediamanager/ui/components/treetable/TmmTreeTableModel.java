@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -376,6 +376,12 @@ public class TmmTreeTableModel implements ITmmTreeTableModel {
    *          the column to be set up
    */
   public void setUpColumn(TableColumn column) {
+    if (column.getModelIndex() == 0) {
+      // tree node
+      column.setIdentifier("node");
+      return;
+    }
+
     int columnIndex = column.getModelIndex() - 1;
     if (columnIndex < 0) {
       return;

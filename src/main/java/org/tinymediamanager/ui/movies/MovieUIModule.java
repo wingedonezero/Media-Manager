@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +153,6 @@ public class MovieUIModule extends AbstractTmmUIModule {
     tabbedPane.add(TmmResourceBundle.getString("metatag.artwork"), new MovieArtworkPanel(selectionModel));
     tabbedPane.add(TmmResourceBundle.getString("metatag.trailer"), new MovieTrailerPanel(selectionModel));
     dataPanel.add(tabbedPane);
-
 
     createActions();
     createMenus();

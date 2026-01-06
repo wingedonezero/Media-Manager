@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ public class MovieGenreFilter extends AbstractCheckComboBoxMovieUIFilter<MediaGe
   }
 
   private void buildAndInstallMediaGenres() {
-    ArrayList<MediaGenres> usedGenres = new ArrayList<>(movieList.getUsedGenres());
+    List<MediaGenres> usedGenres = new ArrayList<>(movieList.getUsedGenres());
     usedGenres.sort(comparator);
     setValues(usedGenres);
   }

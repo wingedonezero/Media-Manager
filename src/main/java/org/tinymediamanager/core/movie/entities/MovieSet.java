@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ public class MovieSet extends MediaEntity {
 
     // link with movies
     for (UUID uuid : movieIds) {
-      Movie movie = MovieModuleManager.getInstance().getMovieList().lookupMovie(uuid);
+      Movie movie = MovieModuleManager.getInstance().getMovieList().findByDbId(uuid).orElse(null);
       if (movie != null && movie.getMovieSet() == this) {
         movies.add(movie);
       }

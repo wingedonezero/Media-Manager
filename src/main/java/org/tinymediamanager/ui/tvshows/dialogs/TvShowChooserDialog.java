@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,6 +175,7 @@ public class TvShowChooserDialog extends TmmDialog implements ActionListener {
   private final JButton                                                                okButton;
   private final JLabel                                                                 lblPath;
   private final JLabel                                                                 lblOriginalTitle;
+  private final JLabel                                                                 lblTagline;
   private final JComboBox<MediaEpisodeGroup>                                           cbEpisodeGroup;
   private final JLabel                                                                 lblEpisodeGroup;
   private final JButton                                                                btnCompareEpisodeGroup;
@@ -303,8 +304,8 @@ public class TvShowChooserDialog extends TmmDialog implements ActionListener {
       {
         JPanel panelSearchDetail = new JPanel();
         splitPane.setRightComponent(panelSearchDetail);
-        panelSearchDetail
-            .setLayout(new MigLayout("", "[150lp:15%:25%,grow][15lp!][300lp:500lp,grow]", "[][][15lp!][150lp:25%:50%,grow][100lp:25%:35%,grow]"));
+        panelSearchDetail.setLayout(
+            new MigLayout("", "[150lp:15%:25%,grow][15lp!][300lp:500lp,grow]", "[][][8lp!][][15lp!][150lp:25%:50%,grow][100lp:25%:35%,grow]"));
         {
           lblTtitle = new JLabel("");
           TmmFontHelper.changeFont(lblTtitle, 1.166, Font.BOLD);
@@ -313,15 +314,19 @@ public class TvShowChooserDialog extends TmmDialog implements ActionListener {
         {
           lblTvShowPoster = new ImageLabel(false);
           lblTvShowPoster.setDesiredAspectRatio(2 / 3f);
-          panelSearchDetail.add(lblTvShowPoster, "cell 0 0 1 4,grow");
+          panelSearchDetail.add(lblTvShowPoster, "cell 0 0 1 6,grow");
         }
         {
           lblOriginalTitle = new JLabel("");
           panelSearchDetail.add(lblOriginalTitle, "cell 2 1,wmin 0");
         }
         {
+          lblTagline = new JLabel("");
+          panelSearchDetail.add(lblTagline, "cell 2 3");
+        }
+        {
           JScrollPane scrollPane = new NoBorderScrollPane();
-          panelSearchDetail.add(scrollPane, "cell 2 3,grow");
+          panelSearchDetail.add(scrollPane, "cell 2 5,grow");
 
           taOverview = new ReadOnlyTextArea();
           scrollPane.setViewportView(taOverview);
@@ -347,7 +352,7 @@ public class TvShowChooserDialog extends TmmDialog implements ActionListener {
           btnCompareEpisodeGroup.setVisible(false);
           panelEpisodeGroup.add(btnCompareEpisodeGroup);
 
-          panelSearchDetail.add(panelEpisodeGroup, "cell 2 4,aligny bottom");
+          panelSearchDetail.add(panelEpisodeGroup, "cell 2 6,aligny bottom");
         }
       }
     }
@@ -458,6 +463,7 @@ public class TvShowChooserDialog extends TmmDialog implements ActionListener {
         if (row > -1) {
           TvShowChooserModel model = searchResultEventList.get(row);
           lblOriginalTitle.setText(model.getOriginalTitle());
+          lblTagline.setText(model.getTagline());
           if (!model.getPosterUrl().equals(lblTvShowPoster.getImageUrl())) {
             lblTvShowPoster.setImageUrl(model.getPosterUrl());
           }
@@ -495,6 +501,7 @@ public class TvShowChooserDialog extends TmmDialog implements ActionListener {
         lblTvShowPoster.setImageUrl(model.getPosterUrl());
         lblTtitle.setText(model.getCombinedName());
         lblOriginalTitle.setText(model.getOriginalTitle());
+        lblTagline.setText(model.getTagline());
         taOverview.setText(model.getOverview());
 
         lblEpisodeGroup.setVisible(false);
@@ -640,15 +647,13 @@ public class TvShowChooserDialog extends TmmDialog implements ActionListener {
           tvShowToScrape.setLastScrapeLanguage(model.getLanguage().name());
 
           // get the episode list for display?
-          if (TvShowModuleManager.getInstance().getSettings().isDisplayMissingEpisodes()) {
-            model.addTask(new TmmTask(TmmResourceBundle.getString("tvshow.scrape.missingepisodes"), 1, TmmTaskHandle.TaskType.BACKGROUND_TASK) {
-              @Override
-              protected void doInBackground() {
-                tvShowToScrape.setDummyEpisodes(model.getEpisodesForDisplay());
-                tvShowToScrape.saveToDb();
-              }
-            });
-          }
+          model.addTask(new TmmTask(TmmResourceBundle.getString("tvshow.scrape.missingepisodes"), 1, TmmTaskHandle.TaskType.BACKGROUND_TASK) {
+            @Override
+            protected void doInBackground() {
+              tvShowToScrape.setDummyEpisodes(model.getEpisodesForDisplay());
+              tvShowToScrape.saveToDb();
+            }
+          });
 
           // automatic rename? rename the TV show itself
           if (TvShowModuleManager.getInstance().getSettings().isRenameAfterScrape()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public class TmmStreamServerImpl implements StreamServer<StreamServerConfigurati
               UUID uuid = UUID.fromString(path[2]);
               MediaEntity m = null;
               if ("movies".equals(path[1])) {
-                m = MovieModuleManager.getInstance().getMovieList().lookupMovie(uuid);
+                m = MovieModuleManager.getInstance().getMovieList().findByDbId(uuid).orElse(null);
               }
               else if ("tvshows".equals(path[1])) {
                 m = TvShowModuleManager.getInstance().getTvShowList().lookupTvShow(uuid);

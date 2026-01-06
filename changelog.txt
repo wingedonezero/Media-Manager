@@ -1,3 +1,31 @@
+Version 5.2.5
+=======================
++ [TV shows] added taglines for TV shows #3173
++ [Movie sets] added option to append TMDB ID to movie set folder names (Emby style) #3137
++ [UI] added native file dialogs from FlatLaf for better OS integration (Windows and macOS)
++ [UI] added "remove all genres" and "remove all tags" to the TV show bulk editor
++ [UI] added edition and media source to the movie set tree view #3152
++ [UI] reworked table column configuration - visibility and width are now stored
++ [UI] added enhanced filter options for date fields #3159
++ [UI] added TV show episode editions to the bulk editor #3176
++ [Trailer] re-added the preferred trailer source, because IMDB is also delivering good trailers nowadays
+---
+x [UI] remove unused items from several combo boxes (genres, tags, decades, year)
+x [UI] changed the trailer column in the TV show module to only show downloaded trailers (same behavior as in the movie module)
+x [UI] format file sizes in the correct/language dependent style #3151
+x [UI] fixed showing/hiding of missing episodes
+x [UI] enhanced filtering in the image chooser dialog
+x [UI] also open FFmpeg generated via the image preview dialog
+x [Performance] improved update data sources for really large movie libraries
+x [TV shows] fixed scraping of season fanart & reverted mix-in of season thumbs #3161 #3101
+x [TMDB] enhanced scraping titles in fallback language for episodes #3171
+x [Renamer] changed default file-size unit from G to GB #3151
+x [MdbList] fixed mapping of Rotten Tomatoes ratings
+x [Library] upgraded FlatLaf to 3.7
+x [MediaInfo] do not prepare ISO files if mediainfo is not available #3163
+x [FFmpeg] fixed an occasional crash when cleaning up old stills #3169
+
+
 Version 5.2.4
 =======================
 + [UI] added a date format for Croatian style (DD.MM.YYYY.) (thx @milotype)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,6 +163,17 @@ public class MovieUpgradeTasks extends UpgradeTasks {
         }
       }
       module.setDbVersion(5202);
+    }
+
+    if (module.getDbVersion() < 5203) {
+      LOGGER.info("performing upgrade to ver: {}", 5203);
+      // fix incorrectly written/accepted ratings from mdblist
+      for (Movie movie : movieList.getMovies()) {
+        convertRating("tomatoes", "tomatometerallcritics", movie);
+        convertRating("audience", "tomatometeravgcritics", movie);
+        convertRating("popcorn", "tomatometeravgcritics", movie);
+      }
+      module.setDbVersion(5203);
     }
 
     saveAll();

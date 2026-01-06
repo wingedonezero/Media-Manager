@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,6 +181,10 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
     // remove empty tag, null values and case insensitive duplicates
     Utils.removeEmptyStringsFromList(tags);
     Utils.removeDuplicateStringFromCollectionIgnoreCase(tags);
+
+    // remove ratings with invalid values
+    ratings.entrySet()
+        .removeIf(entry -> entry.getValue() == null || entry.getValue().getRating() < 0 || StringUtils.isBlank(entry.getValue().getId()));
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -377,7 +377,7 @@ public class ImageChooserDialog extends TmmDialog {
 
         cbScraper = new MediaScraperCheckComboBox(artworkScrapers);
         cbScraper.setFocusable(false);
-        panelFilter.add(cbScraper, "cell 1 0,growx,wmin 0");
+        panelFilter.add(cbScraper, "cell 1 0, growx, wmin 0, top");
 
         JLabel lblLanguageT = new TmmLabel(TmmResourceBundle.getString("metatag.language"));
         panelFilter.add(lblLanguageT, "cell 0 1");
@@ -385,7 +385,7 @@ public class ImageChooserDialog extends TmmDialog {
         cbLanguage = new TmmCheckComboBox();
         cbLanguage.setFocusable(false);
         cbLanguage.setSingleLineEditor(); // looks weird when preselecting langu?
-        panelFilter.add(cbLanguage, "cell 1 1,growx,wmin 0");
+        panelFilter.add(cbLanguage, "cell 1 1, growx, wmin 0, top");
       }
       {
         JLabel lblWidthT = new TmmLabel(TmmResourceBundle.getString("metatag.width"));
@@ -396,6 +396,7 @@ public class ImageChooserDialog extends TmmDialog {
         panelFilter.add(lblMinWidth, "cell 4 0");
 
         widthSlider = new RangeSlider(0, 4000);
+        configureInitialSlider(widthSlider, true);
         panelFilter.add(widthSlider, "cell 5 0,growx");
 
         lblMaxWidth = new JLabel("0");
@@ -410,6 +411,7 @@ public class ImageChooserDialog extends TmmDialog {
         panelFilter.add(lblMinHeight, "cell 4 1,alignx right");
 
         heightSlider = new RangeSlider(0, 4000);
+        configureInitialSlider(heightSlider, false);
         panelFilter.add(heightSlider, "cell 5 1,growx");
 
         lblMaxHeight = new JLabel("");
@@ -944,6 +946,23 @@ public class ImageChooserDialog extends TmmDialog {
     });
   }
 
+  /**
+   * Configures the initial state of a RangeSlider including maximum value, high value, ticks, and a listener for dynamic reconfiguration.
+   *
+   * @param slider
+   *          the RangeSlider to configure
+   * @param isWidth
+   *          true to configure width slider; false for height slider
+   */
+  private void configureInitialSlider(RangeSlider slider, boolean isWidth) {
+    // cap maximum slightly above well-known max for the type
+    slider.setMaximum(getSuggestedMax(isWidth));
+    configureSliderTicks(slider, isWidth);
+    slider.setHighValue(slider.getMaximum());
+    // Add listener to reconfigure ticks when maximum changes
+    slider.addPropertyChangeListener("maximum", evt -> configureSliderTicks(slider, isWidth));
+  }
+
   @NotNull
   private Comparator<JPanel> getImagePanelComparator() {
     return (o1, o2) -> {
@@ -1013,8 +1032,11 @@ public class ImageChooserDialog extends TmmDialog {
       }
     }
 
-    if (widthSlider.getMaximum() < maxWidth) { // in case we have more than 4000px
-      widthSlider.setMaximum(maxWidth);
+    // default suggested cap based on type
+    int suggestedWidthMax = getSuggestedMax(true);
+    int targetWidthMax = Math.max(suggestedWidthMax, maxWidth);
+    if (widthSlider.getMaximum() != targetWidthMax) {
+      widthSlider.setMaximum(targetWidthMax);
     }
 
     int maxHeight = 0;
@@ -1024,9 +1046,15 @@ public class ImageChooserDialog extends TmmDialog {
       }
     }
 
-    if (heightSlider.getMaximum() < maxHeight) { // in case we have more than 4000px
-      heightSlider.setMaximum(maxHeight);
+    int suggestedHeightMax = getSuggestedMax(false);
+    int targetHeightMax = Math.max(suggestedHeightMax, maxHeight);
+    if (heightSlider.getMaximum() != targetHeightMax) {
+      heightSlider.setMaximum(targetHeightMax);
     }
+
+    // reconfigure ticks when range changes
+    configureSliderTicks(widthSlider, true);
+    configureSliderTicks(heightSlider, false);
   }
 
   private void updateLanguageCombobox() {
@@ -1105,6 +1133,8 @@ public class ImageChooserDialog extends TmmDialog {
 
           if (child instanceof JToggleButton button) {
             buttonGroup.add(button);
+            // Update the resolution combobox to show all sizes
+            updateResolutionCombobox(button, false);
           }
         }
       }
@@ -1129,7 +1159,6 @@ public class ImageChooserDialog extends TmmDialog {
         // on size
         if (!widthSlider.isUnchanged() || !heightSlider.isUnchanged()) {
           sizeMatch = false;
-          List<String> sizes = new ArrayList<>();
 
           for (ImageSizeAndUrl imageSizeAndUrl : mediaArtwork.getImageSizes()) {
             if (widthSlider.contains(imageSizeAndUrl.getWidth()) && heightSlider.contains(imageSizeAndUrl.getHeight())) {
@@ -1161,6 +1190,16 @@ public class ImageChooserDialog extends TmmDialog {
 
         if (scraperMatch && sizeMatch && languageMatch) {
           panelImages.add(panel);
+          for (Component child : panel.getComponents()) {
+            if (child instanceof JCheckBox) {
+              continue;
+            }
+
+            if (child instanceof JToggleButton button) {
+              // Update the resolution combobox to only show matching sizes
+              updateResolutionCombobox(button, !widthSlider.isUnchanged() || !heightSlider.isUnchanged());
+            }
+          }
         }
       }
     }
@@ -1175,6 +1214,55 @@ public class ImageChooserDialog extends TmmDialog {
     getContentPane().revalidate();
     getContentPane().repaint();
     viewport.setLocked(false);
+  }
+
+  /**
+   * Update the resolution combobox for a button to show only sizes matching the current filter.
+   *
+   * @param button
+   *          the button containing the combobox
+   * @param filterBySizeRange
+   *          true to filter by size range, false to show all
+   */
+  private void updateResolutionCombobox(JToggleButton button, boolean filterBySizeRange) {
+    Object comboboxProperty = button.getClientProperty("MediaArtworkSize");
+    Object artworkProperty = button.getClientProperty("MediaArtwork");
+
+    if (!(comboboxProperty instanceof JComboBox) || !(artworkProperty instanceof MediaArtwork)) {
+      return;
+    }
+
+    @SuppressWarnings("rawtypes")
+    JComboBox cb = (JComboBox) comboboxProperty;
+    MediaArtwork artwork = (MediaArtwork) artworkProperty;
+
+    // Remove all items
+    cb.removeAllItems();
+
+    if (artwork.getImageSizes().isEmpty()) {
+      // No sizes available, show nothing or default
+      return;
+    }
+
+    // Add items based on filter
+    for (ImageSizeAndUrl sizeAndUrl : artwork.getImageSizes()) {
+      if (!filterBySizeRange) {
+        // No filter active - add all sizes
+        cb.addItem(sizeAndUrl);
+      }
+      else {
+        // Filter by size range
+        if (widthSlider.contains(sizeAndUrl.getWidth()) && heightSlider.contains(sizeAndUrl.getHeight())) {
+          cb.addItem(sizeAndUrl);
+        }
+      }
+    }
+
+    // Restore selection if it's still in the list
+    if (cb.getItemCount() > 0) {
+      // Select first item if previous selection is no longer available
+      cb.setSelectedIndex(0);
+    }
   }
 
   private void downloadAndPreviewImage(String url) {
@@ -1877,5 +1965,171 @@ public class ImageChooserDialog extends TmmDialog {
     public String toString() {
       return width + "x" + height;
     }
+  }
+
+  /**
+   * Configure major/minor tick marks and labels on a RangeSlider depending on artwork type.
+   *
+   * @param slider
+   *          the RangeSlider to configure
+   * @param isWidth
+   *          true to configure width ticks; false for height
+   */
+  private void configureSliderTicks(RangeSlider slider, boolean isWidth) {
+    // ensure ticks are painted
+    slider.setPaintTicks(true);
+    slider.setPaintLabels(true);
+    slider.setSnapToTicks(true);
+
+    // select well-known sizes based on type
+    int[] majors = getWellKnownSizes(isWidth);
+
+    // build label table within current slider min/max
+    java.util.Hashtable<Integer, javax.swing.JComponent> table = new java.util.Hashtable<>();
+    int min = slider.getMinimum();
+    int max = slider.getMaximum();
+
+    List<Integer> majorsInRange = new ArrayList<>();
+    for (int v : majors) {
+      if (v >= min && v <= max && !majorsInRange.contains(v)) { // dedupe
+        majorsInRange.add(v);
+      }
+    }
+
+    List<Integer> filteredMajors = new ArrayList<>();
+    // If only a few presets are visible, keep them all to avoid hiding common sizes (e.g. 1080 for fanart)
+    if (majorsInRange.size() <= 6) {
+      filteredMajors.addAll(majorsInRange);
+    }
+    else {
+      // downsample labels to avoid overlap when the range is much larger than the presets
+      double minSeparation = 0.18d; // normalized spacing
+      double lastNorm = -1d;
+      for (int v : majorsInRange) {
+        double norm = (double) (v - min) / Math.max(1d, (double) (max - min));
+        if (lastNorm < 0 || norm - lastNorm >= minSeparation) {
+          filteredMajors.add(v);
+          lastNorm = norm;
+        }
+      }
+      // always try to keep the largest preset label if available and not overlapping
+      if (!majorsInRange.isEmpty()) {
+        int last = majorsInRange.get(majorsInRange.size() - 1);
+        double normLast = (double) (last - min) / Math.max(1d, (double) (max - min));
+        double normPrev = filteredMajors.isEmpty() ? -1d
+            : (double) (filteredMajors.get(filteredMajors.size() - 1) - min) / Math.max(1d, (double) (max - min));
+        if (filteredMajors.isEmpty() || normLast - normPrev >= minSeparation) {
+          if (!filteredMajors.contains(last)) {
+            filteredMajors.add(last);
+          }
+        }
+      }
+    }
+
+    for (int v : filteredMajors) {
+      table.put(v, new JLabel(String.valueOf(v)));
+    }
+
+    // set a reasonable major/minor spacing based on range and cap tick density
+    int range = Math.max(1, max - min);
+    int majorSpacing;
+    int minorSpacing;
+
+    if (majors.length >= 2) {
+      int step = Math.abs(majors[1] - majors[0]);
+      majorSpacing = Math.max(50, step);
+    }
+    else {
+      majorSpacing = Math.max(100, range / 5);
+    }
+    // limit to ~12 major ticks across the range to reduce clutter
+    int maxMajorTicks = 12;
+    majorSpacing = Math.max(majorSpacing, (int) Math.ceil(range / (double) maxMajorTicks));
+
+    // Calculate minor spacing - provide 3-5 minor ticks between major ticks for better granularity
+    if (majorSpacing > 0) {
+      minorSpacing = Math.max(10, majorSpacing / 5);
+    }
+    else {
+      minorSpacing = Math.max(20, range / 20);
+    }
+
+    slider.setMajorTickSpacing(majorSpacing);
+    slider.setMinorTickSpacing(minorSpacing);
+    slider.setLabelTable(table);
+  }
+
+  /**
+   * Returns an array of well known sizes for the current artwork type (TMDb/fanart.tv conventions).
+   *
+   * @param isWidth
+   *          true to return width values; false to return height values
+   * @return int[] of sizes
+   */
+  private int[] getWellKnownSizes(boolean isWidth) {
+    // Defaults if type is unknown
+    int[] fallback = isWidth ? new int[] { 640, 1280, 1920, 3840 } : new int[] { 360, 720, 1080, 2160 };
+
+    switch (type) {
+      case POSTER:
+      case SEASON_POSTER:
+      case KEYART:
+        // TMDb posters: typically 500x750, 1000x1500, 2000x3000
+        return isWidth ? new int[] { 500, 1000, 2000 } : new int[] { 750, 1500, 3000 };
+
+      case BACKGROUND:
+      case SEASON_FANART:
+        // Backdrops/Fanart: 1280x720, 1920x1080, 3840x2160
+        return isWidth ? new int[] { 1280, 1920, 3840 } : new int[] { 720, 1080, 2160 };
+
+      case THUMB:
+      case SEASON_THUMB:
+        // Thumbs: vary widely; use practical steps
+        return isWidth ? new int[] { 320, 640, 1280 } : new int[] { 180, 360, 720 };
+
+      case BANNER:
+      case SEASON_BANNER:
+        // Banners often 1000x185 or 1920x360
+        return isWidth ? new int[] { 1000, 1920 } : new int[] { 185, 360 };
+
+      case CLEARLOGO:
+      case LOGO:
+        // Logos commonly around 800x310
+        return isWidth ? new int[] { 800 } : new int[] { 310 };
+
+      case CLEARART:
+      case CHARACTERART:
+      case DISC:
+        // Artwork types with flexible sizes; provide broader ranges
+        return isWidth ? new int[] { 1000, 1500, 2000 } : new int[] { 1000, 1500, 2000 };
+
+      default:
+        return fallback;
+    }
+  }
+
+  /**
+   * Suggested maximum value for slider: slightly above the well-known max for type, but not lower than current dynamic sizes.
+   *
+   * @param isWidth
+   *          true for width, false for height
+   * @return suggested max value
+   */
+  private int getSuggestedMax(boolean isWidth) {
+    int[] known = getWellKnownSizes(isWidth);
+    int knownMax = 0;
+    for (int v : known) {
+      if (v > knownMax) {
+        knownMax = v;
+      }
+    }
+    // add small headroom: 3840->4000; 3000->3100; else +100
+    if (knownMax >= 3840) {
+      return 4000;
+    }
+    if (knownMax >= 3000) {
+      return 3100;
+    }
+    return knownMax + 100;
   }
 }

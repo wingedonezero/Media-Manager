@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public interface ITmmUIFilter<E> {
         case EQ -> string = "=";
         case GE -> string = "≥";
         case GT -> string = ">";
-        case BT -> string = "[]";
+        case BT -> string = "[ ]";
       }
 
       return string;

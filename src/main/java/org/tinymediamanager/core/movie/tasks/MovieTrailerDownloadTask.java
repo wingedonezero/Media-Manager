@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class MovieTrailerDownloadTask extends TmmTask {
       trailernames.addAll(MovieModuleManager.getInstance().getSettings().getTrailerFilenames());
     }
 
-    desiredSource = TrailerSources.YOUTUBE;
+    desiredSource = MovieModuleManager.getInstance().getSettings().getTrailerSource();
     desiredQuality = MovieModuleManager.getInstance().getSettings().getTrailerQuality();
   }
 

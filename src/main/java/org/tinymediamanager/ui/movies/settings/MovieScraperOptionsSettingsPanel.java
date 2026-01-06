@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,7 +212,7 @@ class MovieScraperOptionsSettingsPanel extends JPanel {
       panelDefaults.add(chckbxDoNotOverwrite, "cell 1 1 2 1");
     }
     {
-      JPanel panelAutomaticScrape = new JPanel(new MigLayout("hidemode 1, insets 0, debug", "[20lp!][][300lp][200lp]", ""));
+      JPanel panelAutomaticScrape = new JPanel(new MigLayout("hidemode 1, insets 0", "[20lp!][][300lp][200lp]", ""));
 
       JLabel lblAutomaticScrapeT = new TmmLabel(TmmResourceBundle.getString("Settings.automaticscraper"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelAutomaticScrape, lblAutomaticScrapeT, true);

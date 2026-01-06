@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2025 Manuel Laggner
+ * Copyright 2012 - 2026 Manuel Laggner
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class MovieSetSettingsPanel extends JPanel {
   private final MovieSettings                                 settings  = MovieModuleManager.getInstance().getSettings();
 
   private JCheckBox                                           chckbxShowMissingMovies;
-  private JCheckBox                                           chckbxTvShowTableTooltips;
+  private JCheckBox                                           chckbxMovieSetTableTooltips;
   private JCheckBox                                           chckbxDisplayAllMissingMetadata;
   private JCheckBox                                           chckbxDisplayAllMissingArtwork;
   private JTextField                                          tfMovieSetArtworkFolder;
@@ -206,7 +206,7 @@ public class MovieSetSettingsPanel extends JPanel {
 
       JLabel lblUiSettings = new TmmLabel(TmmResourceBundle.getString("Settings.ui"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelUiSettings, lblUiSettings, true);
-      collapsiblePanel.addExtraTitleComponent(new DocsButton("/tvshows/settings#ui-settings"));
+      collapsiblePanel.addExtraTitleComponent(new DocsButton("/moviesets/settings#ui-settings"));
       add(collapsiblePanel, "cell 0 0,growx,wmin 0");
       {
         chckbxStoreFilter = new JCheckBox(TmmResourceBundle.getString("Settings.movie.persistuifilter"));
@@ -217,8 +217,8 @@ public class MovieSetSettingsPanel extends JPanel {
         panelUiSettings.add(chckbxShowMissingMovies, "cell 1 1 2 1");
       }
       {
-        chckbxTvShowTableTooltips = new JCheckBox(TmmResourceBundle.getString("Settings.movieset.showtabletooltips"));
-        panelUiSettings.add(chckbxTvShowTableTooltips, "cell 1 2 2 1");
+        chckbxMovieSetTableTooltips = new JCheckBox(TmmResourceBundle.getString("Settings.movieset.showtabletooltips"));
+        panelUiSettings.add(chckbxMovieSetTableTooltips, "cell 1 2 2 1");
       }
     }
     {
@@ -362,7 +362,7 @@ public class MovieSetSettingsPanel extends JPanel {
     //
     Property movieSettingsBeanProperty_1 = BeanProperty.create("showMovieSetTableTooltips");
     AutoBinding autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, movieSettingsBeanProperty_1,
-        chckbxTvShowTableTooltips, jCheckBoxBeanProperty);
+        chckbxMovieSetTableTooltips, jCheckBoxBeanProperty);
     autoBinding_1.bind();
     //
     Property movieSettingsBeanProperty_2 = BeanProperty.create("storeMovieSetUiFilters");
