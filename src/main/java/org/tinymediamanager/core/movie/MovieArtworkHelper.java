@@ -429,6 +429,12 @@ public class MovieArtworkHelper {
       if (MovieModuleManager.getInstance().getSettings().getFanartFilenames().contains(MovieFanartNaming.FILENAME_FANART2)) {
         fanartnames.add(MovieFanartNaming.FILENAME_FANART2);
       }
+      if (MovieModuleManager.getInstance().getSettings().getFanartFilenames().contains(MovieFanartNaming.FILENAME_BACKDROP)) {
+        fanartnames.add(MovieFanartNaming.FILENAME_BACKDROP);
+      }
+      if (MovieModuleManager.getInstance().getSettings().getFanartFilenames().contains(MovieFanartNaming.FILENAME_BACKDROP2)) {
+        fanartnames.add(MovieFanartNaming.FILENAME_BACKDROP2);
+      }
       if (fanartnames.isEmpty() && !MovieModuleManager.getInstance().getSettings().getFanartFilenames().isEmpty()) {
         fanartnames.add(MovieFanartNaming.FILENAME_FANART);
       }
