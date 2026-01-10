@@ -28,6 +28,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tinymediamanager.core.movie.MovieEdition;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 
 /**
@@ -107,6 +108,18 @@ public class ParserUtils {
       fname = fname.replaceAll("(?i)" + badword, ""); // keep case, but replace insensitive
     }
 
+    // try to remove edition parts
+    for (MovieEdition edition : MovieEdition.values()) {
+      Pattern editionPattern = edition.getPattern();
+      if (editionPattern != null) {
+        Matcher matcher = editionPattern.matcher(fname);
+        if (matcher.find()) {
+          LOGGER.trace("Removed edition part: {}", matcher.group());
+          fname = matcher.replaceAll("");
+        }
+      }
+    }
+
     // do not clean the whole term!
     if (StringUtils.isBlank(fname)) {
       // revert using badwords
@@ -153,7 +166,7 @@ public class ParserUtils {
 
     int firstFoundStopwordPosition = s.length;
 
-    // iterate over all splitted items
+    // iterate over all split items
     for (int i = 0; i < s.length; i++) {
       // search for stopword position
       for (String stop : HARD_STOPWORDS) {
@@ -205,8 +218,8 @@ public class ParserUtils {
       }
     }
 
-    // iterate over all splitted items (if we found a year, start from that position)
-    int start = yearPosition > 0 ? yearPosition : 0;
+    // iterate over all split items (if we found a year, start from that position)
+    int start = Math.max(yearPosition, 0);
     for (int i = start; i < s.length; i++) {
       // search for stopword position
       for (String stop : SOFT_STOPWORDS) {
@@ -266,7 +279,7 @@ public class ParserUtils {
       }
     }
 
-    if (name.length() == 0) {
+    if (name.isEmpty()) {
       // started with a badword - return name unchanged
       ret[0] = fname;
     }
