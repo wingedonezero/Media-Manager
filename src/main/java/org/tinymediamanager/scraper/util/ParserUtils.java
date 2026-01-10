@@ -108,18 +108,6 @@ public class ParserUtils {
       fname = fname.replaceAll("(?i)" + badword, ""); // keep case, but replace insensitive
     }
 
-    // try to remove edition parts
-    for (MovieEdition edition : MovieEdition.values()) {
-      Pattern editionPattern = edition.getPattern();
-      if (editionPattern != null) {
-        Matcher matcher = editionPattern.matcher(fname);
-        if (matcher.find()) {
-          LOGGER.trace("Removed edition part: {}", matcher.group());
-          fname = matcher.replaceAll("");
-        }
-      }
-    }
-
     // do not clean the whole term!
     if (StringUtils.isBlank(fname)) {
       // revert using badwords
@@ -165,6 +153,31 @@ public class ParserUtils {
     }
 
     int firstFoundStopwordPosition = s.length;
+
+    // find edition names in the chunks and remove them
+    for (int i = 1; i < s.length; i++) {
+      if (isEditionName(s[i])) {
+        // single worded edition names
+        LOGGER.trace("removed edition name: {}", s[i]);
+        s[i] = "";
+        firstFoundStopwordPosition = i;
+      }
+      else if (i > 1 && isEditionName(s[i - 1] + " " + s[i])) {
+        // two worded edition names
+        LOGGER.trace("removed edition name: {} {}", s[i - 1], s[i]);
+        s[i - 1] = "";
+        s[i] = "";
+        firstFoundStopwordPosition = i - 1;
+      }
+      else if (i > 2 && isEditionName(s[i - 2] + " " + s[i - 1] + " " + s[i])) {
+        // three worded edition names
+        LOGGER.trace("removed edition name: {} {} {}", s[i - 2], s[i - 1], s[i]);
+        s[i - 2] = "";
+        s[i - 1] = "";
+        s[i] = "";
+        firstFoundStopwordPosition = i - 2;
+      }
+    }
 
     // iterate over all split items
     for (int i = 0; i < s.length; i++) {
@@ -292,6 +305,26 @@ public class ParserUtils {
     LOGGER.trace("Movie title should be: \"{}\", from {}", ret[0], ret[1]);
 
     return ret;
+  }
+
+  /**
+   * checks if a word is an edition name
+   * 
+   * @param word
+   *          the word to check
+   * @return true/false
+   */
+  private static boolean isEditionName(String word) {
+    for (MovieEdition edition : MovieEdition.values()) {
+      Pattern editionPattern = edition.getPattern();
+      if (editionPattern != null) {
+        Matcher matcher = editionPattern.matcher(word);
+        if (matcher.matches() && StringUtils.isNotBlank(matcher.group())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
