@@ -16,9 +16,12 @@ x [UI] format file sizes in the correct/language dependent style #3151
 x [UI] fixed showing/hiding of missing episodes
 x [UI] enhanced filtering in the image chooser dialog
 x [UI] also open FFmpeg generated via the image preview dialog
+x [Movies] added <movie filename>-backdrop.ext and <movie filename>.backdrop.ext to allowed backdrop filenames for multi movie folders
+x [Movies] enhanced title cleanup in the update data sources task
 x [Performance] improved update data sources for really large movie libraries
 x [TV shows] fixed scraping of season fanart & reverted mix-in of season thumbs #3161 #3101
 x [TMDB] enhanced scraping titles in fallback language for episodes #3171
+x [IMDB] readd parsing top250 on normal scrape
 x [Renamer] changed default file-size unit from G to GB #3151
 x [MdbList] fixed mapping of Rotten Tomatoes ratings
 x [Library] upgraded FlatLaf to 3.7

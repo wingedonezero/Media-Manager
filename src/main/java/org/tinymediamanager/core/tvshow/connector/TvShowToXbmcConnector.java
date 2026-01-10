@@ -49,11 +49,13 @@ public class TvShowToXbmcConnector extends TvShowGenericXmlConnector {
    * add the <top250>xxx</top250> just before the <ratings>xxx</ratings>
    */
   private void addTop250() {
-    Element top250 = document.createElement("top250");
-    top250.setTextContent(Integer.toString(tvShow.getTop250()));
-    Element set = NfoUtils.getSingleElementByTag(document, "ratings");
-    if (set != null) {
-      root.insertBefore(top250, set);
+    if (tvShow.getTop250() > 0) {
+      Element top250 = document.createElement("top250");
+      top250.setTextContent(Integer.toString(tvShow.getTop250()));
+      Element set = NfoUtils.getSingleElementByTag(document, "ratings");
+      if (set != null) {
+        root.insertBefore(top250, set);
+      }
     }
   }
 

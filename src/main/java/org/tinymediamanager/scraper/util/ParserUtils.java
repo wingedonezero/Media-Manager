@@ -28,6 +28,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tinymediamanager.core.movie.MovieEdition;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 
 /**
@@ -153,7 +154,33 @@ public class ParserUtils {
 
     int firstFoundStopwordPosition = s.length;
 
-    // iterate over all splitted items
+    // find edition names in the chunks and remove them
+    for (int i = 1; i < s.length; i++) {
+      // put a space in front to match the pattern
+      if (isEditionName(" " + s[i])) {
+        // single worded edition names
+        LOGGER.trace("removed edition name: {}", s[i]);
+        s[i] = "";
+        firstFoundStopwordPosition = i;
+      }
+      else if (i > 1 && isEditionName(" " + s[i - 1] + " " + s[i])) {
+        // two worded edition names
+        LOGGER.trace("removed edition name: {} {}", s[i - 1], s[i]);
+        s[i - 1] = "";
+        s[i] = "";
+        firstFoundStopwordPosition = i - 1;
+      }
+      else if (i > 2 && isEditionName(" " + s[i - 2] + " " + s[i - 1] + " " + s[i])) {
+        // three worded edition names
+        LOGGER.trace("removed edition name: {} {} {}", s[i - 2], s[i - 1], s[i]);
+        s[i - 2] = "";
+        s[i - 1] = "";
+        s[i] = "";
+        firstFoundStopwordPosition = i - 2;
+      }
+    }
+
+    // iterate over all split items
     for (int i = 0; i < s.length; i++) {
       // search for stopword position
       for (String stop : HARD_STOPWORDS) {
@@ -205,8 +232,8 @@ public class ParserUtils {
       }
     }
 
-    // iterate over all splitted items (if we found a year, start from that position)
-    int start = yearPosition > 0 ? yearPosition : 0;
+    // iterate over all split items (if we found a year, start from that position)
+    int start = Math.max(yearPosition, 0);
     for (int i = start; i < s.length; i++) {
       // search for stopword position
       for (String stop : SOFT_STOPWORDS) {
@@ -266,7 +293,7 @@ public class ParserUtils {
       }
     }
 
-    if (name.length() == 0) {
+    if (name.isEmpty()) {
       // started with a badword - return name unchanged
       ret[0] = fname;
     }
@@ -279,6 +306,26 @@ public class ParserUtils {
     LOGGER.trace("Movie title should be: \"{}\", from {}", ret[0], ret[1]);
 
     return ret;
+  }
+
+  /**
+   * checks if a word is an edition name
+   * 
+   * @param word
+   *          the word to check
+   * @return true/false
+   */
+  private static boolean isEditionName(String word) {
+    for (MovieEdition edition : MovieEdition.values()) {
+      Pattern editionPattern = edition.getPattern();
+      if (editionPattern != null) {
+        Matcher matcher = editionPattern.matcher(word);
+        if (matcher.matches() && StringUtils.isNotBlank(matcher.group())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**

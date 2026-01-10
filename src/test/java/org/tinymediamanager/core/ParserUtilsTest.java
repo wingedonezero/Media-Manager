@@ -107,6 +107,9 @@ public class ParserUtilsTest extends BasicTest {
     assertEqual("Wehe wenn sie losgelassen | 1958", detectTY("Wehe.wenn.sie.losgelassen.1958.German.HDTVRip.x264-AIDA"));
     assertEqual("Z for Zachariah | 2015", detectTY("Z.for.Zachariah.3D.2015.German.DL.1080p.BluRay.x264-STEREOSCOPiC"));
     assertEqual("Transformers | 2007", detectTY("Transformers.2007.2160p.BluRay.REMUX.HEVC.DTS-HD.MA.TrueHD.7.1.Atmos.mkv"));
+    assertEqual("Transformers | 2007", detectTY("Transformers.Directors.Cut.2007.2160p.BluRay.REMUX.HEVC.DTS-HD.MA.TrueHD.7.1.Atmos.mkv"));
+    assertEqual("Transformers | 2007", detectTY("Transformers.Uncut.2007.2160p.BluRay.REMUX.HEVC.DTS-HD.MA.TrueHD.7.1.Atmos.mkv"));
+    assertEqual("Transformers | 2007", detectTY("Transformers.Imax.Version.2007.2160p.BluRay.REMUX.HEVC.DTS-HD.MA.TrueHD.7.1.Atmos.mkv"));
     // assertEqual("What the Waters Left Behind | 2017", detectTY("What.the.Waters.Left.Behind.2017.SPANISH.ENSUBBED"));
 
     // OTR recording naming

@@ -96,7 +96,7 @@ public abstract class AniDbMetadataProvider implements TmmFeature {
     Url animeList;
 
     try {
-      animeList = new OnDiskCachedUrl("http://anidb.net/api/anime-titles.dat.gz", 2, TimeUnit.DAYS); // use 2 days instead of 1
+      animeList = new OnDiskCachedUrl("https://anidb.net/api/anime-titles.dat.gz", 2, TimeUnit.DAYS); // use 2 days instead of 1
     }
     catch (Exception e) {
       LOGGER.debug("Error getting AniDB index: {}", e.getMessage());

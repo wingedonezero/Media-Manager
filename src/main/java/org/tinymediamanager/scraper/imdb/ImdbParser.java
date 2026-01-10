@@ -1149,6 +1149,11 @@ public abstract class ImdbParser {
           if (rating.getRating() > 0) {
             md.addRating(rating);
           }
+
+          // add top250 rating
+          if (agg.topRanking != null && agg.topRanking.rank > 0) {
+            md.setTop250(agg.topRanking.rank);
+          }
         }
 
         JsonNode genreNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/genres/genres");

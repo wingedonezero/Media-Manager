@@ -30,7 +30,15 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * This enum represents all different types of movie editions
+ * The Class {@link MovieEdition} models different editions/versions of a movie (e.g., Director's Cut, Extended Edition).
+ * <p>
+ * This class extends {@link DynaEnum} to allow dynamic addition of new editions at runtime while preserving enum-like behavior, ordering, and
+ * comparison semantics. It provides helper methods to parse edition information from user-provided strings, filenames, and localized titles.
+ * </p>
+ *
+ * <p>
+ * Instances are globally registered when constructed via {@link #addElement()} to make them discoverable through {@link #values()}.
+ * </p>
  *
  * @author Manuel Laggner
  */
@@ -66,6 +74,22 @@ public class MovieEdition extends DynaEnum<MovieEdition> {
   private final String                          title;
   private final Pattern                         pattern;
 
+  /**
+   * Creates a new {@link MovieEdition} with the provided metadata and registers it for global discovery.
+   * <p>
+   * This constructor is intentionally private to control creation via predefined constants and dynamic parsing paths.
+   * </p>
+   *
+   * @param enumName
+   *          the internal enum-style name used for identification and persistence (e.g., "DIRECTORS_CUT")
+   * @param ordinal
+   *          the ordinal used for ordering and stable comparison
+   * @param title
+   *          the human-readable title (localized label shown to users)
+   * @param pattern
+   *          a case-insensitive regular expression that matches occurrences of this edition in file names or free text; if blank, no regex matching
+   *          is performed for this edition
+   */
   private MovieEdition(String enumName, int ordinal, String title, String pattern) {
     super(enumName, ordinal);
     this.title = title;
@@ -79,24 +103,51 @@ public class MovieEdition extends DynaEnum<MovieEdition> {
     addElement();
   }
 
+  /**
+   * Returns the human-readable title of this edition.
+   *
+   * @return the localized title string; may be empty for {@link #NONE}
+   */
   @Override
   public String toString() {
     return title;
   }
 
+  /**
+   * Gets the human-readable title associated with this edition.
+   *
+   * @return the title string
+   */
   public String getTitle() {
     return title;
   }
 
+  /**
+   * Gets the case-insensitive regular expression used to detect this edition in filenames or text.
+   *
+   * @return the compiled {@link Pattern}, or {@code null} if no regex is defined
+   */
+  public Pattern getPattern() {
+    return pattern;
+  }
+
+  /**
+   * Gets the enum-style name used for serialization and persistence.
+   * <p>
+   * Annotated with {@link JsonValue} to serialize this edition by its internal name.
+   * </p>
+   *
+   * @return the internal enum-style name (e.g., "DIRECTORS_CUT")
+   */
   @JsonValue
   public String getName() {
     return name();
   }
 
   /**
-   * get all movie editions
+   * Gets all known {@link MovieEdition} values, sorted in a localized fashion via {@link #COMPARATOR}.
    *
-   * @return an array of all movie editions
+   * @return an array of all editions currently registered
    */
   public static MovieEdition[] values() {
     MovieEdition[] movieEditions = values(MovieEdition.class);
@@ -105,11 +156,20 @@ public class MovieEdition extends DynaEnum<MovieEdition> {
   }
 
   /**
-   * Parse the given string for an appropriate movie edition (via name & regexp)
+   * Parses the given input string to resolve the best matching {@link MovieEdition}.
+   * <p>
+   * Matching is performed in multiple phases for performance and accuracy:
+   * </p>
+   * <ul>
+   * <li>Exact match against the internal {@link #name()} (enum-style name).</li>
+   * <li>Case-insensitive match against the human-readable {@link #getTitle()}.</li>
+   * <li>Regex match using {@link #getPattern()} for each known edition.</li>
+   * <li>Special filename pattern parsing: {@code {edition-...}} yielding a dynamic edition if not found.</li>
+   * </ul>
    *
    * @param name
-   *          the string to parse out the movie edition
-   * @return the found edition
+   *          the input string, typically a free text or filename snippet
+   * @return the resolved edition; returns {@link #NONE} when no match is found
    */
   public static MovieEdition getMovieEditionFromString(String name) {
     // sort editions by ordinal
@@ -156,11 +216,15 @@ public class MovieEdition extends DynaEnum<MovieEdition> {
   }
 
   /**
-   * Gets the right movie edition for the given string.
+   * Resolves or creates a {@link MovieEdition} from the provided name in a non-strict manner.
+   * <p>
+   * This method delegates to {@link #getMovieEditionFromString(String)} and, if the resolved edition is {@link #NONE}, it dynamically creates and
+   * returns a new edition using the provided name.
+   * </p>
    *
    * @param name
-   *          the name
-   * @return the movie edition
+   *          the input edition name (free text or enum-style name)
+   * @return a matching or dynamically created edition; never {@code null}
    */
   public static MovieEdition getMovieEdition(String name) {
     // empty or strict loading of NONE
@@ -178,11 +242,15 @@ public class MovieEdition extends DynaEnum<MovieEdition> {
   }
 
   /**
-   * Gets the right movie edition for the given string - strict version. Only check the enum name()
+   * Resolves or creates a {@link MovieEdition} from the provided name in a strict manner.
+   * <p>
+   * Only exact matches against the internal enum-style {@link #name()} are considered a hit. When no predefined edition matches, a new dynamic
+   * edition is created with the provided name.
+   * </p>
    *
    * @param name
-   *          the name
-   * @return the movie edition
+   *          the enum-style name to resolve (e.g., "DIRECTORS_CUT"); blank or "NONE" returns {@link #NONE}
+   * @return the matching or dynamically created edition; never {@code null}
    */
   @JsonCreator
   public static MovieEdition getMovieEditionStrict(String name) {
@@ -209,11 +277,23 @@ public class MovieEdition extends DynaEnum<MovieEdition> {
   }
 
   /**
-   * Comparator for sorting our MovieEditions in a localized fashion
+   * Comparator for sorting {@link MovieEdition} values by their localized titles using a {@link RuleBasedCollator}.
    */
   public static class MovieEditionComparator implements Comparator<MovieEdition> {
     private final RuleBasedCollator stringCollator = (RuleBasedCollator) RuleBasedCollator.getInstance();
 
+    /**
+     * Compares two {@link MovieEdition} instances by their {@link #toString()} values (case-insensitive, locale-aware).
+     * <p>
+     * Null titles are handled by placing non-null titles first.
+     * </p>
+     *
+     * @param o1
+     *          the first edition
+     * @param o2
+     *          the second edition
+     * @return a negative integer, zero, or a positive integer as the first argument is less than, equal to, or greater than the second
+     */
     @Override
     public int compare(MovieEdition o1, MovieEdition o2) {
       // toString is localized name
@@ -231,20 +311,20 @@ public class MovieEdition extends DynaEnum<MovieEdition> {
   }
 
   /**
-   * add a new DynaEnumEventListener. This listener will be informed if any new value has been added
+   * Adds a new {@link DynaEnumEventListener} to be notified when new {@link MovieEdition} values are added dynamically.
    *
    * @param listener
-   *          the new listener to be added
+   *          the listener to register; must not be {@code null}
    */
   public static void addListener(DynaEnumEventListener<MovieEdition> listener) {
     addListener(MovieEdition.class, listener);
   }
 
   /**
-   * remove the given DynaEnumEventListener
+   * Removes a previously registered {@link DynaEnumEventListener}.
    *
    * @param listener
-   *          the listener to be removed
+   *          the listener to unregister; must not be {@code null}
    */
   public static void removeListener(DynaEnumEventListener<MovieEdition> listener) {
     removeListener(MovieEdition.class, listener);
