@@ -156,20 +156,21 @@ public class ParserUtils {
 
     // find edition names in the chunks and remove them
     for (int i = 1; i < s.length; i++) {
-      if (isEditionName(s[i])) {
+      // put a space in front to match the pattern
+      if (isEditionName(" " + s[i])) {
         // single worded edition names
         LOGGER.trace("removed edition name: {}", s[i]);
         s[i] = "";
         firstFoundStopwordPosition = i;
       }
-      else if (i > 1 && isEditionName(s[i - 1] + " " + s[i])) {
+      else if (i > 1 && isEditionName(" " + s[i - 1] + " " + s[i])) {
         // two worded edition names
         LOGGER.trace("removed edition name: {} {}", s[i - 1], s[i]);
         s[i - 1] = "";
         s[i] = "";
         firstFoundStopwordPosition = i - 1;
       }
-      else if (i > 2 && isEditionName(s[i - 2] + " " + s[i - 1] + " " + s[i])) {
+      else if (i > 2 && isEditionName(" " + s[i - 2] + " " + s[i - 1] + " " + s[i])) {
         // three worded edition names
         LOGGER.trace("removed edition name: {} {} {}", s[i - 2], s[i - 1], s[i]);
         s[i - 2] = "";
