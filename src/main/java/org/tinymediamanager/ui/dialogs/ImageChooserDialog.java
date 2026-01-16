@@ -1904,9 +1904,8 @@ public class ImageChooserDialog extends TmmDialog {
       Path file = TmmUIHelper.selectFile(TmmResourceBundle.getString("image.choose"), path,
           new FileNameExtensionFilter("Image files", "jpg", "jpeg", "png", "bmp", "gif", "tbn", "webp"));
       if (file != null && Utils.isRegularFile(file)) {
-        String fileName = file.toAbsolutePath().toString();
         imageLabel.clearImage();
-        imageLabel.setImageUrl("file:/" + fileName);
+        imageLabel.setImageUrl(file.toAbsolutePath().toUri().toString());
         task.cancel(true);
         TmmProperties.getInstance().putProperty(DIALOG_ID + ".path", file.getParent().toString());
         setVisible(false);
