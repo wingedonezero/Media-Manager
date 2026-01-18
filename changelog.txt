@@ -1,5 +1,6 @@
 Version 5.2.6
 =======================
+x [TV shows] year filtering now matches the modern movie filter style
 
 
 Version 5.2.5
