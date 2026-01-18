@@ -171,19 +171,38 @@ public final class TvShowList extends AbstractModelObject {
 
   /**
    * removes the active instance <br>
-   * <b>Should only be used for unit testing et all!</b><br>
+   * <b>Should only be used for unit testing et al.</b><br>
    */
   static void clearInstance() {
     instance = null;
   }
 
   /**
-   * Gets the tv shows.
+   * Gets all TV shows.
    *
-   * @return the tv shows
+   * @return all TV shows
    */
   public List<TvShow> getTvShows() {
     return tvShows;
+  }
+
+  /**
+   * * Gets all TV shows for a given datasource
+   *
+   * @param dataSource
+   *          the data source
+   * @return all TV shows for the given datasource
+   */
+  public List<TvShow> getTvShowsForDataSource(String dataSource) {
+    List<TvShow> shows = new ArrayList<>();
+
+    for (TvShow show : new ArrayList<>(tvShows)) {
+      if (show.getDataSource().equals(dataSource)) {
+        shows.add(show);
+      }
+    }
+
+    return shows;
   }
 
   /**
