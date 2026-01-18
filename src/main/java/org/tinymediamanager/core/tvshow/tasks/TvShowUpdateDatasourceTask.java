@@ -1398,9 +1398,9 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
       String ext = mf.getExtension();
 
       // do not use regexp here since they are extremely expensive
-      ret = Strings.CS.replace(ret, "-" + mf.getType() + "." + ext, "." + ext);
-      ret = Strings.CS.replace(ret, "." + mf.getType() + "." + ext, "." + ext);
-      ret = Strings.CS.replace(ret, "_" + mf.getType() + "." + ext, "." + ext);
+      ret = Strings.CI.replace(ret, "-" + mf.getType() + "." + ext, "." + ext);
+      ret = Strings.CI.replace(ret, "." + mf.getType() + "." + ext, "." + ext);
+      ret = Strings.CI.replace(ret, "_" + mf.getType() + "." + ext, "." + ext);
 
       // does not work for extrafanarts/landscape - but that's mostly not used on episode level
       for (Pattern pattern : extraMfFiletypePatterns) {
