@@ -1,5 +1,6 @@
 Version 5.2.6
 =======================
+x [UI] show normalized rating values (0...10) in the rating column
 x [TV shows] year filtering now matches the modern movie filter style
 
 
