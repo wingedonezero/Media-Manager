@@ -296,7 +296,7 @@ public final class TvShowList extends AbstractModelObject {
    * @return the unscraped TvShows
    */
   public List<TvShow> getUnscrapedTvShows() {
-    return tvShows.parallelStream().filter(tvShow -> !tvShow.isScraped()).sorted().collect(Collectors.toList());
+    return tvShows.parallelStream().filter(tvShow -> !tvShow.isScraped()).sorted(new TvShowComparator()).collect(Collectors.toList());
   }
 
   /**
@@ -1450,7 +1450,7 @@ public final class TvShowList extends AbstractModelObject {
    * @return the new TvShows
    */
   public List<TvShow> getNewTvShows() {
-    return tvShows.parallelStream().filter(MediaEntity::isNewlyAdded).sorted().collect(Collectors.toList());
+    return tvShows.parallelStream().filter(MediaEntity::isNewlyAdded).sorted(new TvShowComparator()).collect(Collectors.toList());
   }
 
   /**
@@ -1773,6 +1773,16 @@ public final class TvShowList extends AbstractModelObject {
     }
 
     return missingMetadata;
+  }
+
+  private static class TvShowComparator implements Comparator<TvShow> {
+    @Override
+    public int compare(TvShow o1, TvShow o2) {
+      if (o1 == null || o2 == null || o1.getTitleSortable() == null || o2.getTitleSortable() == null) {
+        return 0;
+      }
+      return o1.getTitleSortable().compareToIgnoreCase(o2.getTitleSortable());
+    }
   }
 
   private static class TvShowMediaScraperComparator implements Comparator<MediaScraper> {

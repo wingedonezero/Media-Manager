@@ -3,6 +3,7 @@ Version 5.2.6
 x [UI] show normalized rating values (0...10) in the rating column
 x [UI] fixed sorting of the file size columns
 x [TV shows] year filtering now matches the modern movie filter style
+x [Movies, TV shows] fixed loading of unscraped and newly added items #3190
 
 
 Version 5.2.5
