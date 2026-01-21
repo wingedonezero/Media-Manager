@@ -190,7 +190,7 @@ public class TvShowTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     /*
      * rating
      */
-    col = new Column(TmmResourceBundle.getString("metatag.rating"), "rating", this::getRating, String.class);
+    col = new Column(TmmResourceBundle.getString("metatag.rating"), "rating", this::getRating, Float.class);
     col.setHeaderIcon(IconManager.RATING);
     col.setCellRenderer(new RightAlignTableCellRenderer());
     col.setColumnResizeable(false);
@@ -684,12 +684,12 @@ public class TvShowTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     return null;
   }
 
-  private String getRating(TmmTreeNode node) {
+  private Float getRating(TmmTreeNode node) {
     Object userObject = node.getUserObject();
     if (userObject instanceof TvShow || userObject instanceof TvShowEpisode) {
       MediaRating mediaRating = ((MediaEntity) userObject).getRating();
       if (mediaRating != null && mediaRating != MediaMetadata.EMPTY_RATING && mediaRating.getRating() > 0) {
-        return String.valueOf(mediaRating.getRating());
+        return mediaRating.getRatingNormalized();
       }
     }
     return null;
