@@ -4,6 +4,7 @@ Version 5.2.6
 ---
 x [UI] show normalized rating values (0...10) in the rating column
 x [UI] fixed sorting of the file size columns
+x [UI] re-set the maximum value of the width/height slider in the image chooser while scraping images
 x [TV shows] year filtering now matches the modern movie filter style
 x [Movies] fixed skipping of folder with .tmmignore, tmmignore or .nomedia in it
 x [Movies, TV shows] fixed loading of unscraped and newly added items #3190
