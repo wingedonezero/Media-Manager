@@ -1037,6 +1037,7 @@ public class ImageChooserDialog extends TmmDialog {
     int targetWidthMax = Math.max(suggestedWidthMax, maxWidth);
     if (widthSlider.getMaximum() != targetWidthMax) {
       widthSlider.setMaximum(targetWidthMax);
+      widthSlider.setHighValue(targetWidthMax);
     }
 
     int maxHeight = 0;
@@ -1050,6 +1051,7 @@ public class ImageChooserDialog extends TmmDialog {
     int targetHeightMax = Math.max(suggestedHeightMax, maxHeight);
     if (heightSlider.getMaximum() != targetHeightMax) {
       heightSlider.setMaximum(targetHeightMax);
+      heightSlider.setHighValue(targetHeightMax);
     }
 
     // reconfigure ticks when range changes
