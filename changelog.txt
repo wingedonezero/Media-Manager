@@ -8,6 +8,7 @@ x [UI] re-set the maximum value of the width/height slider in the image chooser 
 x [TV shows] year filtering now matches the modern movie filter style
 x [Movies] fixed skipping of folder with .tmmignore, tmmignore or .nomedia in it
 x [Movies, TV shows] fixed loading of unscraped and newly added items #3190
+y [Fanart.tv] improved fallback to TMDB id lookup when IMDb id lookup fails
 x [Linux] fixed startup if libmediainfo is missing #3191
 x [Updater] fixed downloading on incomplete/corrupted updates
 
