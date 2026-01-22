@@ -1,3 +1,7 @@
+Version 5.2.7
+=======================
+
+
 Version 5.2.6
 =======================
 + [TV shows] added support for more Jellyfin compatible season poster filenames #3187
