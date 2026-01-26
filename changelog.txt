@@ -1,5 +1,6 @@
 Version 5.2.7
 =======================
+x [WOL] send WOL magic packets twice to improve wake-up reliability #3178
 
 
 Version 5.2.6
