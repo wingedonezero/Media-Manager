@@ -1,5 +1,7 @@
 Version 5.2.7
 =======================
++ [Trailer] integrated deno for yt-dlp #3200
+---
 x [UI] fixed sorting of the rating column in the TV show module
 x [WOL] send WOL magic packets twice to improve wake-up reliability #3178
 
