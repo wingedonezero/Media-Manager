@@ -151,13 +151,18 @@ public class YtDlp {
       cmdList.add("--no-check-certificates");
     }
 
-    try {
-      String denoPath = getDenoExecutable();
-      cmdList.add("--js-runtimes");
-      cmdList.add("deno:" + denoPath);
+    if (Settings.getInstance().getYtDlpParams().contains("--js-runtimes")) {
+      LOGGER.debug("User defined js-runtimes detected - skipping deno js runtime integration");
     }
-    catch (IOException e) {
-      LOGGER.debug("deno is not available - skipping deno js runtime integration");
+    else {
+      try {
+        String denoPath = getDenoExecutable();
+        cmdList.add("--js-runtimes");
+        cmdList.add("deno:" + denoPath);
+      }
+      catch (IOException e) {
+        LOGGER.debug("deno is not available - skipping deno js runtime integration");
+      }
     }
 
     cmdList.add(url);
