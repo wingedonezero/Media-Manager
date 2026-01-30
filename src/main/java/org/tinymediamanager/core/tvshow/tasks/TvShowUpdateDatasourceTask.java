@@ -732,7 +732,11 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
 
       Set<Path> allFiles = getAllFilesRecursive(showDir);
       if (allFiles.isEmpty()) {
-        LOGGER.debug("Skip empty directory: {}", showDir);
+        LOGGER.debug("no file found in directory {}", showDir);
+        // do a cleanup, if the show existed before
+        if (tvShow != null) {
+          cleanup(tvShow);
+        }
         return "";
       }
 
@@ -761,6 +765,10 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
 
       if (getMediaFiles(mfs, MediaFileType.VIDEO).isEmpty()) {
         LOGGER.debug("no video file found in directory {}", showDir);
+        // do cleanup, if the show existed before
+        if (tvShow != null) {
+          cleanup(tvShow);
+        }
         return "";
       }
 
