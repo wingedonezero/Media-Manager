@@ -71,6 +71,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.AbstractFileVisitor;
+import org.tinymediamanager.core.FilesFirstWalker;
 import org.tinymediamanager.core.ImageCache;
 import org.tinymediamanager.core.MediaFileHelper;
 import org.tinymediamanager.core.MediaFileType;
@@ -2041,7 +2042,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
     folder = folder.toAbsolutePath();
     SearchAndParseVisitor visitor = new SearchAndParseVisitor(datasource);
     try {
-      Files.walkFileTree(folder, EnumSet.of(FileVisitOption.FOLLOW_LINKS), deep, visitor);
+      new FilesFirstWalker(true).walk(folder, visitor);
     }
     catch (IOException e) {
       // can not happen, since we override visitFileFailed, which throws no exception ;)
@@ -2091,7 +2092,8 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
 
       // check if that parent folder is to be skipped (could not catch all in preVisitDirectory)
       if (file.getParent() != null && (containsSkipFile(file.getParent(), skipFoldersWithNomedia, fsAttrCache))) {
-        return CONTINUE;
+        videofolders.remove(file.getParent());
+        return SKIP_SUBTREE;
       }
 
       try {
