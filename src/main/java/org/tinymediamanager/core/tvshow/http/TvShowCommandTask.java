@@ -67,7 +67,6 @@ import org.tinymediamanager.core.tvshow.tasks.TvShowUpdateDatasourceTask;
 import org.tinymediamanager.scraper.MediaScraper;
 import org.tinymediamanager.scraper.ScraperType;
 import org.tinymediamanager.scraper.entities.MediaLanguages;
-import org.tinymediamanager.scraper.rating.RatingProvider;
 import org.tinymediamanager.scraper.util.ListUtils;
 import org.tinymediamanager.scraper.util.ParserUtils;
 import org.tinymediamanager.thirdparty.trakttv.TvShowSyncTraktTvTask;
@@ -393,7 +392,7 @@ class TvShowCommandTask extends TmmThreadPool {
       setTaskName(TmmResourceBundle.getString("tvshow.fetchratings"));
       publishState(TmmResourceBundle.getString("tvshow.fetchratings"), getProgressDone());
 
-      activeTask = new TvShowFetchRatingsTask(tvShowsToScrape, episodesToScrape, RatingProvider.RatingSource.getRatingSourcesForTvShows());
+      activeTask = new TvShowFetchRatingsTask(tvShowsToScrape, episodesToScrape, tvShowSettings.getFetchRatingSources());
       activeTask.run(); // blocking
 
       // wait for other tmm threads (artwork download et all)
