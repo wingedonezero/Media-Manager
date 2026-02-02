@@ -177,15 +177,17 @@ public final class MovieList extends AbstractModelObject {
     EventBus.registerListener(EventBus.TOPIC_MOVIES, event -> {
       if (event.sender() instanceof Movie movie) {
         if (event.eventType().equals(Event.TYPE_SAVE)) {
-          // reindex this movie on path or media file changes
-          readWriteLock.writeLock().lock();
-          try {
-            deindexMovie(movie);
-            indexMovie(movie);
-          }
-          finally {
-            readWriteLock.writeLock().unlock();
-          }
+          TmmTaskManager.getInstance().addUnnamedTask(() -> {
+            // reindex this movie on path or media file changes
+            readWriteLock.writeLock().lock();
+            try {
+              deindexMovie(movie);
+              indexMovie(movie);
+            }
+            finally {
+              readWriteLock.writeLock().unlock();
+            }
+          });
         }
       }
     });
