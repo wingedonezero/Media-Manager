@@ -245,7 +245,13 @@ public abstract class MovieSetGenericXmlConnector implements IMovieSetConnector 
 
     if (nfoNaming.getFolderLocation() == IMovieSetFileNaming.Location.KODI_STYLE_FOLDER) {
       // Kodi style: <movie set artwork folder>/<movie set name>/<movie set name>.nfo
-      return Paths.get(dataFolder, movieSetName, nfoFilename);
+      String foldername = movieSetName;
+
+      if (MovieModuleManager.getInstance().getSettings().isMovieSetAppendTmdbId() && movieSet.getTmdbId() > 0) {
+        foldername = foldername + "-tmdb-" + movieSet.getTmdbId();
+      }
+
+      return Paths.get(dataFolder, foldername, nfoFilename);
     }
     else if (nfoNaming.getFolderLocation() == IMovieSetFileNaming.Location.AUTOMATOR_STYLE_FOLDER) {
       // Artwork Automator style: <movie set artwork folder>/<movie set name>.nfo
