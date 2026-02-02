@@ -2465,7 +2465,10 @@ public class Movie extends MediaEntity implements IMediaInformation {
       return cachedMainVideoFile;
     }
 
-    LOGGER.debug("Movie without video file? {} | {}", getPathNIO(), getTitle());
+    if (StringUtils.isNotBlank(getTitle())) {
+      // this is sometimes called too early in binding setup with no real data yet
+      LOGGER.debug("Movie without video file? {} | {}", getPathNIO(), getTitle());
+    }
     return MediaFile.EMPTY_MEDIAFILE;
   }
 
