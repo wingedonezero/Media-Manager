@@ -139,11 +139,6 @@ public final class MovieList extends AbstractModelObject {
    */
   private final Map<Path, Movie>                         byMainVideo;
 
-  /**
-   * Listener to keep per-movie index entries up-to-date on path/media changes.
-   */
-  private final PropertyChangeListener                   movieIndexListener;
-
   private final ReadWriteLock                            readWriteLock      = new ReentrantReadWriteLock();
 
   private final PropertyChangeListener                   movieSetListener;
@@ -179,13 +174,9 @@ public final class MovieList extends AbstractModelObject {
     audioTitlesInMovies = new CopyOnWriteArrayList<>();
     subtitleFormatsInMovies = new CopyOnWriteArrayList<>();
 
-    movieIndexListener = evt -> {
-      if (!(evt.getSource() instanceof Movie movie)) {
-        return;
-      }
-      switch (evt.getPropertyName()) {
-        case Constants.PATH:
-        case Constants.MEDIA_FILES:
+    EventBus.registerListener(EventBus.TOPIC_MOVIES, event -> {
+      if (event.sender() instanceof Movie movie) {
+        if (event.eventType().equals(Event.TYPE_SAVE)) {
           // reindex this movie on path or media file changes
           readWriteLock.writeLock().lock();
           try {
@@ -195,12 +186,9 @@ public final class MovieList extends AbstractModelObject {
           finally {
             readWriteLock.writeLock().unlock();
           }
-          break;
-
-        default:
-          break;
+        }
       }
-    };
+    });
 
     movieSetListener = evt -> {
       switch (evt.getPropertyName()) {
@@ -270,8 +258,7 @@ public final class MovieList extends AbstractModelObject {
       int oldValue = movieList.size();
       movieList.add(movie);
 
-      // register index listener and create entries
-      movie.addPropertyChangeListener(movieIndexListener);
+      // create entries
       readWriteLock.writeLock().lock();
       try {
         indexMovie(movie);
@@ -395,9 +382,8 @@ public final class MovieList extends AbstractModelObject {
       }
 
       readWriteLock.writeLock().lock();
-      // detach listener and deindex before removing
+      // deindex before removing
       try {
-        movie.removePropertyChangeListener(movieIndexListener);
         deindexMovie(movie);
         movieList.remove(movie);
       }
@@ -443,9 +429,8 @@ public final class MovieList extends AbstractModelObject {
       movie.deleteFilesSafely();
 
       readWriteLock.writeLock().lock();
-      // detach listener and deindex before removing
+      // deindex before removing
       try {
-        movie.removePropertyChangeListener(movieIndexListener);
         deindexMovie(movie);
         movieList.remove(movie);
       }
@@ -598,14 +583,13 @@ public final class MovieList extends AbstractModelObject {
       movie.initializeAfterLoading();
     }
 
-    // register index listeners and build initial index
+    // build initial index
     readWriteLock.writeLock().lock();
     try {
       byDbId.clear();
       byPath.clear();
       byMainVideo.clear();
       for (Movie movie : movieList) {
-        movie.addPropertyChangeListener(movieIndexListener);
         indexMovie(movie);
       }
     }
