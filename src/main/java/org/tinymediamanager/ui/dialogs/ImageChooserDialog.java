@@ -37,6 +37,7 @@ import java.io.InterruptedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -57,6 +58,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -2009,7 +2011,7 @@ public class ImageChooserDialog extends TmmDialog {
     int[] majors = getWellKnownSizes(isWidth);
 
     // build label table within current slider min/max
-    java.util.Hashtable<Integer, javax.swing.JComponent> table = new java.util.Hashtable<>();
+    Hashtable<Integer, JComponent> table = new Hashtable<>();
     int min = slider.getMinimum();
     int max = slider.getMaximum();
 
@@ -2030,7 +2032,7 @@ public class ImageChooserDialog extends TmmDialog {
       double minSeparation = 0.18d; // normalized spacing
       double lastNorm = -1d;
       for (int v : majorsInRange) {
-        double norm = (double) (v - min) / Math.max(1d, (double) (max - min));
+        double norm = (double) (v - min) / Math.max(1d, max - min);
         if (lastNorm < 0 || norm - lastNorm >= minSeparation) {
           filteredMajors.add(v);
           lastNorm = norm;
@@ -2039,9 +2041,8 @@ public class ImageChooserDialog extends TmmDialog {
       // always try to keep the largest preset label if available and not overlapping
       if (!majorsInRange.isEmpty()) {
         int last = majorsInRange.get(majorsInRange.size() - 1);
-        double normLast = (double) (last - min) / Math.max(1d, (double) (max - min));
-        double normPrev = filteredMajors.isEmpty() ? -1d
-            : (double) (filteredMajors.get(filteredMajors.size() - 1) - min) / Math.max(1d, (double) (max - min));
+        double normLast = (double) (last - min) / Math.max(1d, max - min);
+        double normPrev = filteredMajors.isEmpty() ? -1d : (double) (filteredMajors.get(filteredMajors.size() - 1) - min) / Math.max(1d, max - min);
         if (filteredMajors.isEmpty() || normLast - normPrev >= minSeparation) {
           if (!filteredMajors.contains(last)) {
             filteredMajors.add(last);
