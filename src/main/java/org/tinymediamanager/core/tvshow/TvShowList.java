@@ -94,7 +94,7 @@ import ca.odell.glazedlists.ObservableElementList;
  */
 public final class TvShowList extends AbstractModelObject {
   private static final Logger                            LOGGER        = LoggerFactory.getLogger(TvShowList.class);
-  private static TvShowList                              instance      = null;
+  private static volatile TvShowList                     instance      = null;
 
   private final List<TvShow>                             tvShows;
 
@@ -161,9 +161,13 @@ public final class TvShowList extends AbstractModelObject {
    * 
    * @return single instance of TvShowList
    */
-  static synchronized TvShowList getInstance() {
+  static TvShowList getInstance() {
     if (instance == null) {
-      instance = new TvShowList();
+      synchronized (TvShowList.class) {
+        if (instance == null) {
+          instance = new TvShowList();
+        }
+      }
     }
 
     return instance;

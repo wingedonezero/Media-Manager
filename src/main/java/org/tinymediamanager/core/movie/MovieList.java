@@ -103,7 +103,7 @@ import ca.odell.glazedlists.ObservableElementList;
  */
 public final class MovieList extends AbstractModelObject {
   private static final Logger                            LOGGER             = LoggerFactory.getLogger(MovieList.class);
-  private static MovieList                               instance;
+  private static volatile MovieList                      instance;
 
   private final List<Movie>                              movieList;
   private final List<MovieSet>                           movieSetList;
@@ -234,10 +234,15 @@ public final class MovieList extends AbstractModelObject {
    * 
    * @return single instance of MovieList
    */
-  static synchronized MovieList getInstance() {
+  static MovieList getInstance() {
     if (instance == null) {
-      instance = new MovieList();
+      synchronized (MovieList.class) {
+        if (instance == null) {
+          instance = new MovieList();
+        }
+      }
     }
+
     return instance;
   }
 

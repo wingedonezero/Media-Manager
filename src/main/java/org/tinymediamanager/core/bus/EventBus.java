@@ -161,7 +161,9 @@ public class EventBus {
       };
 
       // fire the event after 250 ms to collect some subsequent events for the same sender
-      INSTANCE.executor.schedule(runnable, 250, TimeUnit.MILLISECONDS);
+      if (!INSTANCE.executor.isShutdown()) {
+        INSTANCE.executor.schedule(runnable, 250, TimeUnit.MILLISECONDS);
+      }
     }
     finally {
       INSTANCE.readWriteLock.writeLock().unlock();

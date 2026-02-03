@@ -24,8 +24,9 @@ import java.util.Set;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
+import org.tinymediamanager.core.bus.Event;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.movie.MovieList;
 import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.entities.Movie;
@@ -51,7 +52,13 @@ public class MovieTagFilter extends AbstractCheckComboBoxMovieUIFilter<String> {
     oldTags = new HashSet<>();
 
     buildAndInstallTagsArray();
-    movieList.addPropertyChangeListener(Constants.TAGS, evt -> SwingUtilities.invokeLater(this::buildAndInstallTagsArray));
+    EventBus.registerListener(EventBus.TOPIC_MOVIES, event -> {
+      if (event.sender() instanceof Movie) {
+        if (event.eventType().equals(Event.TYPE_SAVE)) {
+          buildAndInstallTagsArray();
+        }
+      }
+    });
   }
 
   @Override
@@ -91,8 +98,7 @@ public class MovieTagFilter extends AbstractCheckComboBoxMovieUIFilter<String> {
     if (oldTags.size() != tags.size()) {
       dirty = true;
     }
-
-    if (!oldTags.containsAll(tags) || !tags.containsAll(oldTags)) {
+    else if (!oldTags.containsAll(tags) || !tags.containsAll(oldTags)) {
       dirty = true;
     }
 
@@ -100,7 +106,7 @@ public class MovieTagFilter extends AbstractCheckComboBoxMovieUIFilter<String> {
       oldTags.clear();
       oldTags.addAll(tags);
 
-      setValues(ListUtils.asSortedList(tags, comparator));
+      SwingUtilities.invokeLater(() -> setValues(ListUtils.asSortedList(tags, comparator)));
     }
   }
 

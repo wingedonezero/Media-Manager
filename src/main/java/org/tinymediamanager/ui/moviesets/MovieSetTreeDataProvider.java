@@ -114,8 +114,7 @@ public class MovieSetTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
     if (child.getUserObject() instanceof MovieSet) {
       return root;
     }
-    else if (child.getUserObject() instanceof Movie) {
-      Movie movie = (Movie) child.getUserObject();
+    else if (child.getUserObject() instanceof Movie movie) {
       TmmTreeNode node = getNodeFromCache(movie.getMovieSet());
       // parent movie set not yet added? add it
       if (node == null && movie.getMovieSet() != null) {

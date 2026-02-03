@@ -19,10 +19,10 @@ package org.tinymediamanager.core;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.SystemUtils;
@@ -103,7 +103,7 @@ public class TmmDateFormat {
   private static final String                  NATIVE_TIME_SHORT;
   private static final String                  NATIVE_TIME_MEDIUM;
 
-  private static final Map<String, DateFormat> DATEFORMAT_CACHE = new HashMap<>();
+  private static final Map<String, DateFormat> DATEFORMAT_CACHE = new ConcurrentHashMap<>();
 
   static {
     DateFormat[] formats = getDateTimeFormats();

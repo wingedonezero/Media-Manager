@@ -207,7 +207,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
   /**
    * Cached main video file to avoid expensive recalculation.
    */
-  private transient MediaFile                   cachedMainVideoFile        = null;
+  private transient volatile MediaFile          cachedMainVideoFile        = null;
 
   /**
    * Instantiates a new movie. To initialize the propertychangesupport after loading
@@ -328,11 +328,11 @@ public class Movie extends MediaEntity implements IMediaInformation {
         vid = getMainDVDVideoFile();
       }
     }
-    if (vid == null || vid.getFilename().isEmpty()) {
+    if (vid == null || vid == MediaFile.EMPTY_MEDIAFILE) {
       vid = getBiggestMediaFile(MediaFileType.VIDEO);
     }
 
-    if (vid != null && !vid.getFilename().isEmpty()) {
+    if (vid != null && vid != MediaFile.EMPTY_MEDIAFILE) {
       cachedMainVideoFile = vid;
     }
     else {
@@ -2469,6 +2469,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
       // this is sometimes called too early in binding setup with no real data yet
       LOGGER.debug("Movie without video file? {} | {}", getPathNIO(), getTitle());
     }
+
     return MediaFile.EMPTY_MEDIAFILE;
   }
 

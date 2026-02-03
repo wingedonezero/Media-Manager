@@ -83,7 +83,7 @@ public final class TvShowSettings extends AbstractSettings {
   public static final String                     DEFAULT_RENAMER_SEASON_PATTERN         = "Season ${seasonNr}";
   public static final String                     DEFAULT_RENAMER_FILE_PATTERN           = "${showTitle} - S${seasonNr2}E${episodeNr2} - ${title}";
 
-  private static TvShowSettings                  instance;
+  private static volatile TvShowSettings         instance;
 
   /**
    * Constants mainly for events
@@ -405,20 +405,25 @@ public final class TvShowSettings extends AbstractSettings {
    *
    * @return single instance of TvShowSettings
    */
-  static synchronized TvShowSettings getInstance() {
+  static TvShowSettings getInstance() {
     return getInstance(Settings.getInstance().getSettingsFolder());
   }
 
   /**
    * Override our settings folder (defaults to "data")<br>
-   * <b>Should only be used for unit testing et all!</b><br>
+   * <b>Should only be used for unit testing et al.!</b><br>
    *
    * @return single instance of TvShowSettings
    */
-  static synchronized TvShowSettings getInstance(String folder) {
+  static TvShowSettings getInstance(String folder) {
     if (instance == null) {
-      instance = (TvShowSettings) getInstance(folder, CONFIG_FILE, TvShowSettings.class);
+      synchronized (TvShowSettings.class) {
+        if (instance == null) {
+          instance = (TvShowSettings) getInstance(folder, CONFIG_FILE, TvShowSettings.class);
+        }
+      }
     }
+
     return instance;
   }
 
