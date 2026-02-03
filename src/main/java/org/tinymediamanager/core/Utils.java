@@ -2290,7 +2290,7 @@ public class Utils {
    *          filesystem attribute cache populated during recursive walk; if null, falls back to {@link Files#exists}
    * @return true if any skip file is found in cache (or on filesystem if cache is null), false otherwise
    */
-  public static boolean containsSkipFile(Path dir, boolean readNomedia, Map<Path, BasicFileAttributes> fsCache) {
+  public static boolean containsSkipFile(Path dir, boolean readNomedia, Map<String, BasicFileAttributes> fsCache) {
     if (dir == null || fsCache == null) {
       return false;
     }
@@ -2300,13 +2300,13 @@ public class Utils {
     Path tmmIgnore2 = dir.resolve("tmmignore");
     Path nomedia = dir.resolve(".nomedia");
 
-    if (fsCache.containsKey(tmmIgnore.toAbsolutePath())) {
+    if (fsCache.containsKey(tmmIgnore.toAbsolutePath().toString())) {
       return true;
     }
-    if (fsCache.containsKey(tmmIgnore2.toAbsolutePath())) {
+    if (fsCache.containsKey(tmmIgnore2.toAbsolutePath().toString())) {
       return true;
     }
-    if (readNomedia && fsCache.containsKey(nomedia.toAbsolutePath())) {
+    if (readNomedia && fsCache.containsKey(nomedia.toAbsolutePath().toString())) {
       return true;
     }
 
