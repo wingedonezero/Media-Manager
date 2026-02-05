@@ -12,6 +12,7 @@ x [UI] fixed sorting of the rating column in the TV show module
 x [NFO] write default ratings first in NFO files to improve compatibility with some media centers
 x [HTTP] only fetch ratings chosen in the settings
 x [WOL] send WOL magic packets twice to improve wake-up reliability #3178
+x [KODI] completely rework of file matching algo for RPC calls #3182
 
 
 Version 5.2.6

@@ -25,9 +25,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -73,21 +75,21 @@ import org.tinymediamanager.jsonrpc.notification.AbstractEvent;
 import org.tinymediamanager.scraper.util.DateUtils;
 
 public class KodiRPC {
-  private static final Logger         LOGGER            = LoggerFactory.getLogger(KodiRPC.class);
-  private static KodiRPC              instance;
-  private static final String         SEPARATOR_REGEX   = "[\\/\\\\]+";
+  private static final Logger           LOGGER            = LoggerFactory.getLogger(KodiRPC.class);
+  private static KodiRPC                instance;
+  private static final String           SEPARATOR_REGEX   = "[\\/\\\\]+";
 
-  private final JavaConnectionManager connectionManager = new JavaConnectionManager();
+  private final JavaConnectionManager   connectionManager = new JavaConnectionManager();
 
-  private final Map<String, String>   videodatasources  = new LinkedHashMap<>();                 // dir, label
-  private final List<String>          audiodatasources  = new ArrayList<>();
+  private final Map<String, String>     videodatasources  = new LinkedHashMap<>();                 // dir, label
+  private final List<String>            audiodatasources  = new ArrayList<>();
 
   // TMM DbId-to-KodiId mappings
-  private final Map<UUID, Integer>    moviemappings     = new HashMap<>();
-  private final Map<UUID, Integer>    tvshowmappings    = new HashMap<>();
-  private final Map<UUID, Integer>    episodemappings   = new HashMap<>();                       // on demand
+  private final Map<UUID, Integer>      moviemappings     = new HashMap<>();
+  private final Map<UUID, Integer>      tvshowmappings    = new HashMap<>();
+  private final Map<UUID, Set<Integer>> episodemappings   = new HashMap<>();                       // on demand
 
-  private String                      kodiVersion       = "";
+  private String                        kodiVersion       = "";
 
   private KodiRPC() {
     connectionManager.registerConnectionListener(new ConnectionListener() {
@@ -155,6 +157,13 @@ public class KodiRPC {
     return this.videodatasources;
   }
 
+  /**
+   * unneeded, invalidated.<br>
+   * If you have your datasources auto-mounted via fstab, Kodi does NOT list em!<br>
+   * We just get a list of absolute filenames, and cannot reliably determine it, thus removed.<br>
+   * We DO keep this, for all users who have them correctly set, to use the Kodi UDS call...
+   */
+  @Deprecated
   private void getAndSetVideoDataSources() {
     final Files.GetSources call = new Files.GetSources(FilesModel.Media.VIDEO); // movies + tv !!!
     send(call);
@@ -187,6 +196,7 @@ public class KodiRPC {
 
   // we need to sort the datasources by length (longest first) to find the best match!
   // but keep the order of the LinkedHashMap
+  @Deprecated
   private String detectDatasource(String file) {
     ArrayList<String> list = new ArrayList<>(this.videodatasources.keySet());
     Collections.sort(list);
@@ -201,94 +211,113 @@ public class KodiRPC {
   }
 
   /**
+   * given a Kodi path (String), we return the parent folder + filename, separated with "|"<br>
+   * (parent can be empty, thus starting with delimiter)
+   * 
+   * @param path
+   * @throws Exception,
+   *           if Path cannot be constructed
+   * @return
+   */
+  private String getParentAndFileDelimited(String path) throws Exception {
+    Path p = Path.of(path); // can throw
+    if (p.getParent() == null) {
+      return "|" + p.getFileName().toString();
+    }
+    else {
+      return p.getParent().getFileName().toString() + "|" + p.getFileName().toString();
+    }
+  }
+
+  /**
    * builds the moviemappings: DBid -> Kodi ID
    */
   protected void getAndSetMovieMappings() {
     final VideoLibrary.GetMovies call = new VideoLibrary.GetMovies(MovieFields.FILE);
     send(call);
     if (call.getResults() != null && !call.getResults().isEmpty()) {
-      moviemappings.clear();
+      getAndSetMovieMappings(call.getResults());
+    }
+  }
 
-      // KODI ds|file=id
-      Map<String, Integer> kodiDsAndFolder = new HashMap<>();
-      for (MovieDetail movie : call.getResults()) {
-        if (movie.file == null || movie.file.isEmpty()) {
-          continue;
+  protected int getMappedMoviesSize() {
+    return moviemappings.size();
+  }
+
+  /**
+   * this wrapper method has just been added for unit testing, injecting own values<br>
+   * Not intended to use in normal calls, use {@link #getAndSetMovieMappings() getAndSetMovieMappings()} without params instead!
+   * 
+   * @param movies
+   *          call results JSON
+   */
+  protected void getAndSetMovieMappings(ArrayList<MovieDetail> movies) {
+    moviemappings.clear();
+    LOGGER.debug("KODI {} movies", movies.size()); // stacked movies are multiple times in here
+
+    // 1. prepare a map of all TMM Mfs, rel path from DS -> entity DBID (less memory than complete entity)
+    Map<String, UUID> tmmMovies = new HashMap<>();
+    for (Movie movie : MovieModuleManager.getInstance().getMovieList().getMovies()) {
+      // FIXME: maybe every MF? DVD? Check various types and stacking formats!!!
+      String rel = Utils.relPath(Path.of(movie.getDataSource()), movie.getMainFile().getFileAsPath());
+      tmmMovies.put(rel, movie.getDbId());
+    }
+
+    // 2. for every Kodi result, loop over TMM entries and find which matches with "endsWith"
+    for (MovieDetail kodiMovie : movies) {
+      if (kodiMovie.file == null || kodiMovie.file.isEmpty() || kodiMovie.movieid <= 0) {
+        continue;
+      }
+
+      try {
+        // stacking only supported on movies
+        if (kodiMovie.file.startsWith("stack")) {
+          String[] files = kodiMovie.file.split(" , ");
+          for (String kodiFile : files) {
+            // find TMM id
+            for (String tmmPath : tmmMovies.keySet()) {
+              // need to use Path for delimiter normalization
+              if (Path.of(kodiFile).endsWith(Path.of(tmmPath))) {
+                // we have a match!
+                UUID uuid = tmmMovies.get(tmmPath);
+                if (!moviemappings.containsKey(uuid)) {
+                  moviemappings.put(uuid, kodiMovie.movieid);
+                }
+                else {
+                  // no putIfAbsent since i wanna have a log!
+                  LOGGER.warn("Kodi movie '{}' already attached to another datasource - skipping", kodiMovie.label);
+                }
+                break; // no need to check the rest
+              }
+            }
+          }
         }
-
-        try {
-          // stacking only supported on movies
-          if (movie.file.startsWith("stack")) {
-            String[] files = movie.file.split(" , ");
-            for (String s : files) {
-              s = s.replaceFirst("^stack://", "");
-              String ds = detectDatasource(s);
-              String rel = s.replace(ds, ""); // remove ds, to have a relative folder
-              rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-              if (!kodiDsAndFolder.containsKey(rel)) {
-                kodiDsAndFolder.put(rel, movie.movieid);
+        else {
+          // find TMM id
+          for (String tmmPath : tmmMovies.keySet()) {
+            // need to use Path for delimiter normalization
+            if (Path.of(kodiMovie.file).endsWith(Path.of(tmmPath))) {
+              // we have a match!
+              UUID uuid = tmmMovies.get(tmmPath);
+              if (!moviemappings.containsKey(uuid)) {
+                moviemappings.put(uuid, kodiMovie.movieid);
               }
               else {
                 // no putIfAbsent since i wanna have a log!
-                LOGGER.warn("Kodi movie '{}' already attached to another datasource - skipping", rel);
+                LOGGER.warn("Kodi movie '{}' already attached to another datasource - skipping", kodiMovie.label);
               }
-            }
-          }
-          else {
-            // Kodi return full path of video file
-            String ds = detectDatasource(movie.file); // detect datasource of dir
-            String rel = movie.file.replace(ds, ""); // remove ds, to have a relative folder
-            rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-            if (!kodiDsAndFolder.containsKey(rel)) {
-              kodiDsAndFolder.put(rel, movie.movieid);
-            }
-            else {
-              // no putIfAbsent since i wanna have a log!
-              LOGGER.warn("Kodi movie '{}' already attached to another datasource - skipping", rel);
+              break; // no need to check the rest
             }
           }
         }
-        catch (Exception e) {
-          LOGGER.warn("Kodi movie '{}' error on mapping - skipping", movie.file);
-        }
       }
-      LOGGER.debug("KODI {} movies", call.getResults().size()); // stacked movies are multiple times in here
-
-      // TMM ds|dir=id
-      Map<String, UUID> tmmDsAndFolder = prepareMovieFileMap(MovieModuleManager.getInstance().getMovieList().getMovies());
-      LOGGER.debug("TMM {} movies", tmmDsAndFolder.size());
-
-      // map em'
-      for (Map.Entry<String, UUID> entry : tmmDsAndFolder.entrySet()) {
-        String key = entry.getKey();
-        UUID value = entry.getValue();
-        Integer kodiId = kodiDsAndFolder.get(key);
-        if (kodiId != null && kodiId > 0) {
-          // we have a match!
-          moviemappings.put(value, kodiId);
-        }
-        else {
-          LOGGER.trace("Could not map: {}", key);
-        }
+      catch (Exception e) {
+        LOGGER.warn("Kodi movie '{}' error on mapping - skipping", kodiMovie.file);
       }
-      LOGGER.info("mapped {} movies", moviemappings.size());
     }
-  }
 
-  private Map<String, UUID> prepareMovieFileMap(List<Movie> movies) {
-    Map<String, UUID> fileMap = new HashMap<>();
-    for (Movie movie : movies) {
-      fileMap.putAll(parseEntity(movie, movie.isDisc(), false));
-    }
-    return fileMap;
-  }
+    LOGGER.info("mapped {} movies", moviemappings.size());
 
-  private Map<String, UUID> prepareEpisodeFileMap(TvShow show) {
-    Map<String, UUID> fileMap = new HashMap<>();
-    for (TvShowEpisode ep : show.getEpisodes()) {
-      fileMap.putAll(parseEntity(ep, ep.isDisc(), ep.isMultiEpisode()));
-    }
-    return fileMap;
   }
 
   @Deprecated
@@ -357,33 +386,31 @@ public class KodiRPC {
             }
 
             if (file != null) {
-              String rel = Utils.relPath(ds, file); // file relative from datasource
-              rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-              if (!fileMap.containsKey(rel)) {
-                fileMap.put(rel, me.getDbId());
+              String id = getParentAndFileDelimited(mf.getFileAsPath().toString());
+              if (!fileMap.containsKey(id)) {
+                fileMap.put(id, me.getDbId());
               }
               else {
                 // no putIfAbsent since i wanna have a log!
-                LOGGER.warn("File '{}' already attached to another datasource - skipping", rel);
+                LOGGER.warn("File '{}' already attached to another datasource - skipping", id);
               }
             }
           }
         }
         else {
-          String rel = Utils.relPath(ds, main.getFileAsPath()); // file relative from datasource
-          rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-          if (!fileMap.containsKey(rel)) {
-            fileMap.put(rel, me.getDbId());
+          String id = getParentAndFileDelimited(main.getFileAsPath().toString());
+          if (!fileMap.containsKey(id)) {
+            fileMap.put(id, me.getDbId());
           }
           else {
             // can only happen on multi EPs (or maybe parted, if getMain returns multiple)
             int i = 2; // start with #2 ^^
-            while (fileMap.containsKey(rel + "#" + i)) {
+            while (fileMap.containsKey(id + "#" + i)) {
               i++;
             }
-            LOGGER.debug("Adding multi-EP for {} as {}", rel, rel + "#" + i);
-            rel = rel + "#" + i;
-            fileMap.put(rel, me.getDbId());
+            LOGGER.debug("Adding multi-EP for {} as {}", id, id + "#" + i);
+            id = id + "#" + i;
+            fileMap.put(id, me.getDbId());
           }
         }
       }
@@ -401,53 +428,64 @@ public class KodiRPC {
     final VideoLibrary.GetTVShows tvShowCall = new VideoLibrary.GetTVShows(TVShowFields.FILE);
     send(tvShowCall);
     if (tvShowCall.getResults() != null && !tvShowCall.getResults().isEmpty()) {
-      tvshowmappings.clear();
-      episodemappings.clear();
-
-      // KODI ds|dir=id
-      Map<String, Integer> kodiDsAndFolder = new HashMap<>();
-      for (TVShowDetail show : tvShowCall.getResults()) {
-        if (show.file == null || show.file.isEmpty()) {
-          continue;
-        }
-        // Kodi return full path of show dir
-        String ds = detectDatasource(show.file); // detect datasource of dir
-        String rel = show.file.replace(ds, ""); // remove ds, to have a relative folder
-        rel = rel.replaceAll(SEPARATOR_REGEX + "$", ""); // remove ending separator
-        rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-        if (!kodiDsAndFolder.containsKey(rel)) {
-          kodiDsAndFolder.put(rel, show.tvshowid);
-        }
-        else {
-          // no putIfAbsent since i wanna have a log!
-          LOGGER.warn("Kodi show '{}' already attached to another datasource - skipping", rel);
-        }
-      }
-      LOGGER.debug("KODI {} shows", kodiDsAndFolder.size());
-
-      // TMM ds|dir=id
-      LOGGER.debug("TMM {} shows", TvShowModuleManager.getInstance().getTvShowList().getTvShows().size());
-      for (TvShow tmmShow : TvShowModuleManager.getInstance().getTvShowList().getTvShows()) {
-        try {
-          Path ds = Paths.get(tmmShow.getDataSource());
-          String rel = Utils.relPath(ds, tmmShow.getPathNIO());
-          rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-
-          Integer kodiId = kodiDsAndFolder.get(rel);
-          if (kodiId != null && kodiId > 0) {
-            // we have a match!
-            tvshowmappings.put(tmmShow.getDbId(), kodiId);
-          }
-          else {
-            LOGGER.trace("Could not map: {}", rel);
-          }
-        }
-        catch (Exception e) {
-          LOGGER.error("Error mapping Kodi TV show '{}' on '{}'", e.getMessage(), tmmShow);
-        }
-      }
-      LOGGER.info("mapped {} shows", tvshowmappings.size());
+      getAndSetTvShowMappings(tvShowCall.getResults());
     }
+  }
+
+  protected int getMappedTvShowsSize() {
+    return tvshowmappings.size();
+  }
+
+  /**
+   * this wrapper method has just been added for unit testing, injecting own values<br>
+   * Not intended to use in normal calls, use {@link #getAndSetTvShowMappings() getAndSetTvShowMappings()} without params instead!
+   * 
+   * @param shows
+   *          call results JSON
+   */
+  protected void getAndSetTvShowMappings(ArrayList<TVShowDetail> shows) {
+    tvshowmappings.clear();
+    episodemappings.clear();
+    LOGGER.debug("KODI {} shows", shows.size());
+
+    // 1. prepare a map of all TMM Mfs, rel path from DS -> entity DBID (less memory than complete entity)
+    Map<String, UUID> tmmShows = new HashMap<>();
+    for (TvShow show : TvShowModuleManager.getInstance().getTvShowList().getTvShows()) {
+      // FIXME: maybe every MF? DVD? Check various types and stacking formats!!!
+      String rel = Utils.relPath(Path.of(show.getDataSource()), show.getPathNIO());
+      tmmShows.put(rel, show.getDbId());
+    }
+
+    // 2. for every Kodi result, loop over TMM entries and find which matches with "endsWith"
+    for (TVShowDetail kodiShow : shows) {
+      if (kodiShow.file == null || kodiShow.file.isEmpty() || kodiShow.tvshowid <= 0) {
+        continue;
+      }
+
+      try {
+        // find TMM id
+        for (String tmmPath : tmmShows.keySet()) {
+          // need to use Path for delimiter normalization
+          if (Path.of(kodiShow.file).endsWith(Path.of(tmmPath))) {
+            // we have a match!
+            UUID uuid = tmmShows.get(tmmPath);
+            if (!tvshowmappings.containsKey(uuid)) {
+              tvshowmappings.put(uuid, kodiShow.tvshowid);
+            }
+            else {
+              // no putIfAbsent since i wanna have a log!
+              LOGGER.warn("Kodi show '{}' already attached to another datasource - skipping", kodiShow.label);
+            }
+            break; // no need to check the rest
+          }
+        }
+      }
+      catch (Exception e) {
+        LOGGER.warn("Kodi show '{}' error on mapping - skipping", kodiShow.file);
+      }
+    }
+
+    LOGGER.info("mapped {} shows", tvshowmappings.size());
   }
 
   public void refreshFromNfo(Movie movie) {
@@ -493,9 +531,8 @@ public class KodiRPC {
   }
 
   public void refreshFromNfo(TvShowEpisode episode) {
-    Integer kodiID = getEpisodeId(episode);
-
-    if (kodiID != null) {
+    Set<Integer> kodiID = getEpisodeId(episode);
+    for (Integer kid : kodiID) {
       List<MediaFile> nfo = episode.getMediaFiles(MediaFileType.NFO);
       if (!nfo.isEmpty()) {
         LOGGER.debug("Kodi RPC: Refreshing from NFO: {}", nfo.get(0).getFileAsPath());
@@ -505,11 +542,8 @@ public class KodiRPC {
         // we do NOT return here, maybe Kodi will do something even w/o nfo...
       }
 
-      final VideoLibrary.RefreshEpisode call = new VideoLibrary.RefreshEpisode(kodiID, false); // always refresh from NFO
+      final VideoLibrary.RefreshEpisode call = new VideoLibrary.RefreshEpisode(kid, false); // always refresh from NFO
       sendWoResponse(call);
-    }
-    else {
-      LOGGER.warn("Kodi RPC: Unable to refresh - could not map episode '{}' to Kodi library", episode.getTitle());
     }
   }
 
@@ -547,10 +581,10 @@ public class KodiRPC {
   }
 
   public void readWatchedState(TvShowEpisode episode) {
-    Integer kodiID = getEpisodeId(episode);
-
-    if (kodiID != null) {
-      final VideoLibrary.GetEpisodeDetails call = new VideoLibrary.GetEpisodeDetails(kodiID, VideoModel.EpisodeDetail.PLAYCOUNT,
+    Set<Integer> kodiID = getEpisodeId(episode);
+    // FIXME: check for multi-episode files
+    for (Integer kid : kodiID) {
+      final VideoLibrary.GetEpisodeDetails call = new VideoLibrary.GetEpisodeDetails(kid, VideoModel.EpisodeDetail.PLAYCOUNT,
           VideoModel.EpisodeDetail.LASTPLAYED);
       send(call);
       if (call.getResult() != null && call.getResult().playcount != null) {
@@ -573,19 +607,25 @@ public class KodiRPC {
         episode.writeNFO();
         episode.saveToDb();
       }
-    }
-    else {
-      LOGGER.warn("Kodi RPC: Unable get playcount - could not map episode '{}' to Kodi library!", episode.getTitle());
+      else {
+        LOGGER.warn("Kodi RPC: Unable get playcount - could not map episode '{}' to Kodi library!", episode.getTitle());
+      }
     }
   }
 
-  public Integer getEpisodeId(TvShowEpisode episode) {
+  /**
+   * 
+   * @param episode
+   * @return returns always a set, since with multip-episode files, we have an M:N mapping!<br>
+   *         in return, you call this only with a single TMM episode... so you have to take care of that!
+   */
+  public Set<Integer> getEpisodeId(TvShowEpisode episode) {
     Integer kodiShowId = tvshowmappings.get(episode.getTvShowDbId());
     if (kodiShowId == null) {
       return null;
     }
 
-    Integer kodiEpId = episodemappings.get(episode.getDbId());
+    Set<Integer> kodiEpId = episodemappings.get(episode.getDbId());
     if (kodiEpId == null) {
       // cache show
       getAndSetTvShowEpisodeMappings(episode.getTvShow(), kodiShowId);
@@ -601,48 +641,59 @@ public class KodiRPC {
     final VideoLibrary.GetEpisodes episodeCall = new VideoLibrary.GetEpisodes(kodiShowId, EpisodeFields.FILE);
     send(episodeCall);
     if (episodeCall.getResults() != null && !episodeCall.getResults().isEmpty()) {
-      Map<String, Integer> kodiDsAndFolder = new HashMap<>();
-      for (EpisodeDetail ep : episodeCall.getResults()) {
-        if (ep.file == null || ep.file.isEmpty()) {
-          continue;
-        }
-        // KODI ds|file=id
-        // Kodi return full path of show dir
-        String ds = detectDatasource(ep.file); // detect datasource of show dir
-        String rel = ep.file.replace(ds, ""); // remove ds, to have a relative folde
-        rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-        if (!kodiDsAndFolder.containsKey(rel)) {
-          kodiDsAndFolder.put(rel, ep.episodeid);
+      LOGGER.debug("KODI {} episodes", episodeCall.getResults().size());
+
+      // 1. prepare a map of all TMM Mfs, rel path from DS -> entity DBID (less memory than complete entity)
+      Map<String, Set<UUID>> tmmEpisodes = new HashMap<>();
+      for (TvShowEpisode ep : tmmShow.getEpisodes()) {
+        // FIXME: maybe every MF? DVD? Check various types and stacking formats!!!
+        String rel = Utils.relPath(Path.of(tmmShow.getDataSource()), ep.getMainFile().getFileAsPath());
+        // consider multi-episode files; same file, but on different entities
+        if (!tmmEpisodes.keySet().contains(rel)) {
+          Set<UUID> set = new HashSet<>();
+          set.add(ep.getDbId());
+          tmmEpisodes.put(rel, set);
         }
         else {
-          // multi EP!!
-          int i = 2; // start with #2 ^^
-          while (kodiDsAndFolder.containsKey(rel + "#" + i)) {
-            i++;
+          Set<UUID> set = tmmEpisodes.get(rel);
+          set.add(ep.getDbId());
+        }
+      }
+
+      // 2. for every Kodi result, loop over TMM entries and find which matches with "endsWith"
+      for (EpisodeDetail kodiEp : episodeCall.getResults()) {
+        if (kodiEp.file == null || kodiEp.file.isEmpty() || kodiEp.episodeid <= 0) {
+          continue;
+        }
+
+        // find TMM id
+        for (String tmmPath : tmmEpisodes.keySet()) {
+          // need to use Path for delimiter normalization
+          if (Path.of(kodiEp.file).endsWith(Path.of(tmmPath))) {
+            // we have a match!
+            Set<UUID> uuids = tmmEpisodes.get(tmmPath);
+            for (UUID uuid : uuids) {
+              java.lang.System.out.println(uuid + " - " + kodiEp.episodeid);
+              if (!episodemappings.containsKey(uuid)) {
+                Set<Integer> set = new HashSet<>();
+                set.add(kodiEp.episodeid);
+                episodemappings.put(uuid, set);
+              }
+              else {
+                Set<Integer> set = episodemappings.get(uuid);
+                set.add(kodiEp.episodeid);
+              }
+            }
+            break; // no need to check the rest
           }
-          LOGGER.debug("Adding multi-EP for {} as {}", rel, rel + "#" + i);
-          rel = rel + "#" + i;
-          kodiDsAndFolder.put(rel, ep.episodeid);
         }
       }
-      LOGGER.debug("KODI {} episodes", kodiDsAndFolder.size());
 
-      // TMM ds|dir=id
-      Map<String, UUID> tmmDsAndFolder = prepareEpisodeFileMap(tmmShow);
-      LOGGER.debug("TMM {} episodes", tmmDsAndFolder.size());
-
-      // map em
-      for (Map.Entry<String, UUID> entry : tmmDsAndFolder.entrySet()) {
-        String key = entry.getKey();
-        UUID value = entry.getValue();
-        Integer kodiId = kodiDsAndFolder.get(key);
-        if (kodiId != null && kodiId > 0) {
-          // we have a match!
-          episodemappings.put(value, kodiId);
-        }
-      }
-      LOGGER.debug("mapped {} episodes for {}", episodemappings.size(), tmmShow.getTitle());
+      // FIXME: count episodemappings UNIQUE value set entries for correct amount of Kodi EP matches...
+      // but unneeded IMO, since this is also a global map, logging not needed here
+      // LOGGER.debug("mapped {} episodes for {}", episodemappings.size(), tmmShow.getTitle());
     }
+
   }
 
   // -----------------------------------------------------------------------------------
