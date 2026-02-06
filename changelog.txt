@@ -14,6 +14,7 @@ x [NFO] write default ratings first in NFO files to improve compatibility with s
 x [HTTP] only fetch ratings chosen in the settings
 x [WOL] send WOL magic packets twice to improve wake-up reliability #3178
 x [KODI] completely rework of file matching algo for RPC calls #3182
+x [Library] upgraded libmediainfo to 26.01
 
 
 Version 5.2.6
