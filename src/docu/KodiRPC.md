@@ -1,7 +1,7 @@
 
 some KodiRPC examples for localhost  
 
-[get Version]({"jsonrpc":"2.0","id":"1","method":"Application.GetProperties","params":{"properties":["version"]}})
+[get Version](http://127.0.0.1:8080/jsonrpc?request={"jsonrpc":"2.0","id":"1","method":"Application.GetProperties","params":{"properties":["version"]}})
 
 [get datasources](http://127.0.0.1:8080/jsonrpc?request={"jsonrpc":"2.0","id":"1","method":"Files.GetSources","params":{"media":"video"}})
 
