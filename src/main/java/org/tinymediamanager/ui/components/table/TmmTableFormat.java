@@ -278,26 +278,28 @@ public abstract class TmmTableFormat<E> implements AdvancedTableFormat<E> {
   public static class IntegerComparator implements Comparator<Integer> {
     @Override
     public int compare(Integer arg0, Integer arg1) {
+      // null = 0 in our case
       if (arg0 == null) {
-        return -1;
+        arg0 = 0;
       }
       if (arg1 == null) {
-        return 1;
+        arg1 = 0;
       }
-      return arg0 - arg1;
+      return Integer.compare(arg0, arg1);
     }
   }
 
   public static class FloatComparator implements Comparator<Float> {
     @Override
     public int compare(Float arg0, Float arg1) {
+      // null = 0.0f in our case
       if (arg0 == null) {
-        return -1;
+        arg0 = 0.0f;
       }
       if (arg1 == null) {
-        return 1;
+        arg1 = 0.0f;
       }
-      return arg0.compareTo(arg1);
+      return Float.compare(arg0, arg1);
     }
   }
 
