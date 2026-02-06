@@ -15,8 +15,6 @@
  */
 package org.tinymediamanager.ui.tvshows.filters;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,13 +22,12 @@ import java.util.Set;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.tvshow.TvShowList;
-import org.tinymediamanager.core.tvshow.TvShowModuleManager;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
 import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -39,13 +36,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Wolfgang Janes
  */
 public class TvShowDecadeFilter extends AbstractCheckComboBoxTvShowUIFilter<String> {
-  private final TvShowList tvShowList = TvShowModuleManager.getInstance().getTvShowList();
 
   public TvShowDecadeFilter() {
     super();
-    checkComboBox.enableFilter((s, s2) -> s.startsWith(s2));
-    buildYearArray();
-    tvShowList.addPropertyChangeListener(Constants.YEAR, evt -> SwingUtilities.invokeLater(this::buildYearArray));
+    checkComboBox.enableFilter(String::startsWith);
+
+    buildAndInstallDecadeArray();
+    EventBus.registerListener(EventBus.TOPIC_TV_SHOWS_UI, event -> buildAndInstallDecadeArray());
   }
 
   @Override
@@ -74,11 +71,19 @@ public class TvShowDecadeFilter extends AbstractCheckComboBoxTvShowUIFilter<Stri
     return invert ^ selectedItems.contains(tvShow.getDecadeShort());
   }
 
-  private void buildYearArray() {
-    Set<String> decadesSet = new HashSet<>();
-    tvShowList.getTvShows().forEach(tvShow -> decadesSet.add(tvShow.getDecadeShort()));
-    List<String> decades = new ArrayList<>(ListUtils.asSortedList(decadesSet));
-    Collections.sort(decades);
-    setValues(decades);
+  private void buildAndInstallDecadeArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<String> decadesInTvShows = new HashSet<>(tvShowList.getDecadesInTvShows());
+
+    if (!SetUtils.equals(oldValues, decadesInTvShows)) {
+      oldValues.clear();
+      oldValues.addAll(decadesInTvShows);
+
+      List<String> sortedDecades = ListUtils.asSortedList(decadesInTvShows);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedDecades));
+    }
   }
 }

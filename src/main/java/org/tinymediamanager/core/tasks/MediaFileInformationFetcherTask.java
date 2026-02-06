@@ -107,7 +107,7 @@ public class MediaFileInformationFetcherTask implements Runnable {
             sub.setTitle(info.getTitle());
             sub.set(info.getFlags());
           }
-          else if (mediaFile.getType() == MediaFileType.AUDIO && mediaFile.getAudioChannels().isEmpty()) {
+          else if (mediaFile.getType() == MediaFileType.AUDIO && !mediaFile.getAudioStreams().isEmpty()) {
             MediaFileAudioStream audio = mediaFile.getAudioStreams().get(0);
             // if we have detected a locale (which is more specific than language alone) us this
             if (StringUtils.isBlank(audio.getLanguage()) || info.getLanguage().matches("[a-zA-Z][a-zA-Z][_-].*")) {

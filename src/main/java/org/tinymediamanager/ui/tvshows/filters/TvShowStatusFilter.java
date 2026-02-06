@@ -36,7 +36,8 @@ public class TvShowStatusFilter extends AbstractCheckComboBoxTvShowUIFilter<Medi
 
   public TvShowStatusFilter() {
     super();
-    buildAndInstallCertificationArray();
+
+    buildAndInstallTvShowStatusArray();
   }
 
   @Override
@@ -56,7 +57,7 @@ public class TvShowStatusFilter extends AbstractCheckComboBoxTvShowUIFilter<Medi
     return new TmmLabel(TmmResourceBundle.getString("metatag.status"));
   }
 
-  private void buildAndInstallCertificationArray() {
+  private void buildAndInstallTvShowStatusArray() {
     List<MediaAiredStatus> airedStatuses = Arrays.asList(MediaAiredStatus.values());
     Collections.sort(airedStatuses);
 

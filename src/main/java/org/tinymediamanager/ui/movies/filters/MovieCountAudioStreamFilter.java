@@ -16,20 +16,18 @@
 
 package org.tinymediamanager.ui.movies.filters;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
-import org.tinymediamanager.core.MediaFileType;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.entities.MediaFile;
-import org.tinymediamanager.core.movie.MovieList;
-import org.tinymediamanager.core.movie.MovieModuleManager;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.movie.entities.Movie;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -38,13 +36,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Wolfgang Janes
  */
 public class MovieCountAudioStreamFilter extends AbstractCheckComboBoxMovieUIFilter<Integer> {
-  private final MovieList movieList = MovieModuleManager.getInstance().getMovieList();
 
   public MovieCountAudioStreamFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> String.valueOf(s).startsWith(s2));
-    buildCountAudioStreamArray();
-    movieList.addPropertyChangeListener(Constants.AUDIOSTREAMS_COUNT, evt -> SwingUtilities.invokeLater(this::buildCountAudioStreamArray));
+
+    buildAndInstallAudioStreamCountArray();
+    EventBus.registerListener(EventBus.TOPIC_MOVIES_UI, event -> buildAndInstallAudioStreamCountArray());
   }
 
   @Override
@@ -69,29 +67,23 @@ public class MovieCountAudioStreamFilter extends AbstractCheckComboBoxMovieUIFil
 
   @Override
   public boolean accept(Movie movie) {
-
     List<Integer> selectedItems = checkComboBox.getSelectedItems();
-    List<MediaFile> mediaFileList = movie.getMediaFiles(MediaFileType.VIDEO);
+    return selectedItems.contains(movie.getMediaInfoAudioStreamCount());
+  }
 
-    for (MediaFile mf : mediaFileList) {
-      // check for explicit empty search
-      if (selectedItems.isEmpty() && mf.getAudioStreams().isEmpty()) {
-        return true;
-      }
+  private void buildAndInstallAudioStreamCountArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<Integer> audioStreamCountInMovies = new HashSet<>(movieList.getAudioStreamsInMovies());
 
-      if (selectedItems.contains(mf.getAudioStreams().size())) {
-        return true;
-      }
+    if (!SetUtils.equals(oldValues, audioStreamCountInMovies)) {
+      oldValues.clear();
+      oldValues.addAll(audioStreamCountInMovies);
 
+      List<Integer> sortedAudioStreamCount = ListUtils.asSortedList(audioStreamCountInMovies);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedAudioStreamCount));
     }
-
-    return false;
   }
-
-  private void buildCountAudioStreamArray() {
-    List<Integer> audiostreams = new ArrayList<>(movieList.getAudioStreamsInMovies());
-    Collections.sort(audiostreams);
-    setValues(audiostreams);
-  }
-
 }

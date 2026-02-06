@@ -863,7 +863,9 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
     List<String> audioTitleList = new ArrayList<>();
 
     for (MediaFileAudioStream stream : ListUtils.nullSafe(audioStreams)) {
-      audioTitleList.add(stream.getTitle());
+      if (StringUtils.isNotBlank(stream.getTitle())) {
+        audioTitleList.add(stream.getTitle());
+      }
     }
 
     return audioTitleList;
@@ -879,7 +881,9 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
     List<String> audioCodecs = new ArrayList<>();
 
     for (MediaFileAudioStream stream : ListUtils.nullSafe(audioStreams)) {
-      audioCodecs.add(stream.getCodec());
+      if (StringUtils.isNotBlank(stream.getCodec())) {
+        audioCodecs.add(stream.getCodec());
+      }
     }
     return audioCodecs;
   }
@@ -893,7 +897,7 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
   public String getAudioCodecListAsAstring() {
     StringBuilder sb = new StringBuilder();
     for (MediaFileAudioStream audioStream : ListUtils.nullSafe(audioStreams)) {
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         sb.append(" / ");
       }
       sb.append(audioStream.getCodec());
@@ -948,7 +952,6 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
     List<String> audioLanguages = new ArrayList<>();
 
     for (MediaFileAudioStream stream : ListUtils.nullSafe(audioStreams)) {
-
       // just in case we couldn't detect the language name
       if (StringUtils.isBlank(stream.getLanguage())) {
         continue;

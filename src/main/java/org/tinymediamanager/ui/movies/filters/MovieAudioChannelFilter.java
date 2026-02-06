@@ -19,19 +19,20 @@ import static org.tinymediamanager.core.MediaFileType.AUDIO;
 import static org.tinymediamanager.core.MediaFileType.VIDEO;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.MediaFileHelper;
 import org.tinymediamanager.core.TmmResourceBundle;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.entities.MediaFile;
-import org.tinymediamanager.core.movie.MovieList;
-import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.entities.Movie;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -40,13 +41,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Manuel Laggner
  */
 public class MovieAudioChannelFilter extends AbstractCheckComboBoxMovieUIFilter<String> {
-  private final MovieList movieList = MovieModuleManager.getInstance().getMovieList();
 
   public MovieAudioChannelFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.substring(0, 1).equals(s2.substring(0, 1))); // first char is channel
-    buildAudioChannelArray();
-    movieList.addPropertyChangeListener(Constants.AUDIO_CHANNEL, evt -> SwingUtilities.invokeLater(this::buildAudioChannelArray));
+
+    buildAndInstallAudioChannelArray();
+    EventBus.registerListener(EventBus.TOPIC_MOVIES_UI, event -> buildAndInstallAudioChannelArray());
   }
 
   @Override
@@ -56,7 +57,7 @@ public class MovieAudioChannelFilter extends AbstractCheckComboBoxMovieUIFilter<
 
   @Override
   public boolean accept(Movie movie) {
-    List<String> audioChannels = new ArrayList<String>();
+    List<String> audioChannels = new ArrayList<>();
     for (String values : checkComboBox.getSelectedItems()) {
       audioChannels.add(values.substring(0, 1)); // MI does not return more than 8 channels, so 16 is no issue ;)
     }
@@ -74,13 +75,23 @@ public class MovieAudioChannelFilter extends AbstractCheckComboBoxMovieUIFilter<
     return false;
   }
 
-  private void buildAudioChannelArray() {
-    List<String> audioChannel = new ArrayList<>();
+  private void buildAndInstallAudioChannelArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<String> audioChannelsInMovies = new HashSet<>();
     for (int channel : movieList.getAudioChannelsInMovies()) {
-      audioChannel.add(audioChannelNotation(channel));
+      audioChannelsInMovies.add(audioChannelNotation(channel));
     }
-    Collections.sort(audioChannel);
-    setValues(audioChannel);
+
+    if (!SetUtils.equals(oldValues, audioChannelsInMovies)) {
+      oldValues.clear();
+      oldValues.addAll(audioChannelsInMovies);
+
+      List<String> sortedChannelsTitles = ListUtils.asSortedList(audioChannelsInMovies);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedChannelsTitles));
+    }
   }
 
   private String audioChannelNotation(int channels) {

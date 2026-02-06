@@ -16,19 +16,19 @@
 
 package org.tinymediamanager.ui.movies.filters;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.movie.MovieList;
-import org.tinymediamanager.core.movie.MovieModuleManager;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.movie.entities.Movie;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -37,13 +37,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Manuel Laggner
  */
 public class MovieSubtitleFormatFilter extends AbstractCheckComboBoxMovieUIFilter<String> {
-  private final MovieList movieList = MovieModuleManager.getInstance().getMovieList();
 
   public MovieSubtitleFormatFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
-    buildSubtitleFormatArray();
-    movieList.addPropertyChangeListener(Constants.SUBTITLE_FORMATS, evt -> SwingUtilities.invokeLater(this::buildSubtitleFormatArray));
+
+    buildAndInstallSubtitleFormatArray();
+    EventBus.registerListener(EventBus.TOPIC_MOVIES_UI, event -> buildAndInstallSubtitleFormatArray());
   }
 
   @Override
@@ -80,9 +80,19 @@ public class MovieSubtitleFormatFilter extends AbstractCheckComboBoxMovieUIFilte
     return false;
   }
 
-  public void buildSubtitleFormatArray() {
-    List<String> subtitleFormats = new ArrayList<>(movieList.getSubtitleFormatsInMovies());
-    Collections.sort(subtitleFormats);
-    setValues(subtitleFormats);
+  public void buildAndInstallSubtitleFormatArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<String> subtitleFormatsInMovies = new HashSet<>(movieList.getSubtitleFormatsInMovies());
+
+    if (!SetUtils.equals(oldValues, subtitleFormatsInMovies)) {
+      oldValues.clear();
+      oldValues.addAll(subtitleFormatsInMovies);
+
+      List<String> sortedSubtitleFormats = ListUtils.asSortedList(subtitleFormatsInMovies);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedSubtitleFormats));
+    }
   }
 }

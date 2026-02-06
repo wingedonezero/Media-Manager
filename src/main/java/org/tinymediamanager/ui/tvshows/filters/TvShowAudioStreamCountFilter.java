@@ -15,32 +15,29 @@
  */
 package org.tinymediamanager.ui.tvshows.filters;
 
-import static org.tinymediamanager.core.MediaFileType.VIDEO;
-
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.entities.MediaFile;
-import org.tinymediamanager.core.tvshow.TvShowList;
-import org.tinymediamanager.core.tvshow.TvShowModuleManager;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 public class TvShowAudioStreamCountFilter extends AbstractCheckComboBoxTvShowUIFilter<Integer> {
-  private final TvShowList tvShowList = TvShowModuleManager.getInstance().getTvShowList();
 
   public TvShowAudioStreamCountFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> String.valueOf(s).startsWith(s2));
-    buildCountAudioStreamArray();
-    tvShowList.addPropertyChangeListener(Constants.AUDIOSTREAMS_COUNT, evt -> SwingUtilities.invokeLater(this::buildCountAudioStreamArray));
+
+    buildAndInstallAudioStreamCountArray();
+    EventBus.registerListener(EventBus.TOPIC_TV_SHOWS_UI, event -> buildAndInstallAudioStreamCountArray());
   }
 
   @Override
@@ -59,11 +56,8 @@ public class TvShowAudioStreamCountFilter extends AbstractCheckComboBoxTvShowUIF
     List<Integer> selectedItems = checkComboBox.getSelectedItems();
 
     for (TvShowEpisode episode : episodes) {
-      List<MediaFile> mfs = episode.getMediaFiles(VIDEO);
-      for (MediaFile mf : mfs) {
-        if (invert ^ selectedItems.contains(mf.getAudioStreams().size())) {
-          return true;
-        }
+      if (invert ^ selectedItems.contains(episode.getMediaInfoAudioStreamCount())) {
+        return true;
       }
     }
     return false;
@@ -79,10 +73,19 @@ public class TvShowAudioStreamCountFilter extends AbstractCheckComboBoxTvShowUIF
     return "countAudioStreamsTvShow";
   }
 
-  private void buildCountAudioStreamArray() {
-    List<Integer> audiostreams = new ArrayList<>(tvShowList.getAudioStreamsInEpisodes());
-    Collections.sort(audiostreams);
-    setValues(audiostreams);
-  }
+  private void buildAndInstallAudioStreamCountArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<Integer> audioStreamCountInEpisodes = new HashSet<>(tvShowList.getAudioStreamsInEpisodes());
 
+    if (!SetUtils.equals(oldValues, audioStreamCountInEpisodes)) {
+      oldValues.clear();
+      oldValues.addAll(audioStreamCountInEpisodes);
+
+      List<Integer> sortedAudioStreamCount = ListUtils.asSortedList(audioStreamCountInEpisodes);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedAudioStreamCount));
+    }
+  }
 }

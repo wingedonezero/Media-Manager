@@ -27,6 +27,7 @@ public record Event(Object sender, String eventType) {
   public static final String TYPE_SAVE = "save";
   public static final String TYPE_ADD = "add";
   public static final String TYPE_REMOVE = "remove";
+  public static final String TYPE_UPDATE = "update";
 
   /**
    * Creates a save event with the specified sender.
@@ -61,10 +62,23 @@ public record Event(Object sender, String eventType) {
     return new Event(sender, TYPE_REMOVE);
   }
 
+  /**
+   * Creates an update event with the specified sender.
+   *
+   * @param sender
+   *          the source of the event
+   * @return a new update event
+   */
+  public static Event createUpdateEvent(Object sender) {
+    return new Event(sender, TYPE_UPDATE);
+  }
+
   @Override
   public boolean equals(Object o) {
-    if (this == o)
+    if (this == o) {
       return true;
+    }
+
     if (o == null || getClass() != o.getClass()) {
       return false;
     }

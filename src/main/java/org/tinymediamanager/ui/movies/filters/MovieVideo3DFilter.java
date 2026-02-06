@@ -37,7 +37,7 @@ public class MovieVideo3DFilter extends AbstractCheckComboBoxMovieUIFilter<Media
   public MovieVideo3DFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.toString().toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
-    buildAndInstallEditionArray();
+    buildAndInstall3DFormatArray();
   }
 
   @Override
@@ -45,7 +45,7 @@ public class MovieVideo3DFilter extends AbstractCheckComboBoxMovieUIFilter<Media
     return "movieVideo3D";
   }
 
-  private void buildAndInstallEditionArray() {
+  private void buildAndInstall3DFormatArray() {
     List<MediaInfo3D> editions = new ArrayList<>();
 
     for (MediaInfo3D ddd : MediaInfo3D.values()) {

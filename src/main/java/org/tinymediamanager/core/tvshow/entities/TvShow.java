@@ -2453,6 +2453,11 @@ public class TvShow extends MediaEntity implements IMediaInformation {
   }
 
   @Override
+  public Integer getMediaInfoAudioStreamCount() {
+    return 0;
+  }
+
+  @Override
   public String getMediaInfoAudioLanguage() {
     return "";
   }
@@ -2465,6 +2470,11 @@ public class TvShow extends MediaEntity implements IMediaInformation {
   @Override
   public List<String> getMediaInfoSubtitleLanguageList() {
     return Collections.emptyList();
+  }
+
+  @Override
+  public Integer getMediaInfoSubtitleStreamCount() {
+    return 0;
   }
 
   @Override

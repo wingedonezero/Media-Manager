@@ -165,11 +165,6 @@ public class MovieUIModule extends AbstractTmmUIModule {
       settingsNode = new MovieSettingsNode();
     });
 
-    // further initializations
-    init();
-  }
-
-  private void init() {
     // apply stored UI filters
     if (MovieModuleManager.getInstance().getSettings().isStoreUiFilters()) {
       SwingUtilities.invokeLater(() -> {

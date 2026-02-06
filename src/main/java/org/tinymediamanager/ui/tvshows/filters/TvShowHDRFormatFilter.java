@@ -16,20 +16,20 @@
 
 package org.tinymediamanager.ui.tvshows.filters;
 
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.tvshow.TvShowList;
-import org.tinymediamanager.core.tvshow.TvShowModuleManager;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -38,14 +38,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Wolfgang Janes
  */
 public class TvShowHDRFormatFilter extends AbstractCheckComboBoxTvShowUIFilter<String> {
-  private final TvShowList tvShowList = TvShowModuleManager.getInstance().getTvShowList();
 
   public TvShowHDRFormatFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
-    buildHdrArray();
-    PropertyChangeListener propertyChangeListener = evt -> buildHdrArray();
-    tvShowList.addPropertyChangeListener(Constants.HDR_FORMAT, propertyChangeListener);
+
+    buildAndInstallHdrFormatArray();
+    EventBus.registerListener(EventBus.TOPIC_TV_SHOWS_UI, event -> buildAndInstallHdrFormatArray());
   }
 
   @Override
@@ -83,9 +82,19 @@ public class TvShowHDRFormatFilter extends AbstractCheckComboBoxTvShowUIFilter<S
     return false;
   }
 
-  public void buildHdrArray() {
-    List<String> hdrformats = new ArrayList<>(tvShowList.getHdrFormatInEpisodes());
-    Collections.sort(hdrformats);
-    setValues(hdrformats);
+  public void buildAndInstallHdrFormatArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<String> hdrFormatsInEpisodes = new HashSet<>(tvShowList.getHdrFormatInEpisodes());
+
+    if (!SetUtils.equals(oldValues, hdrFormatsInEpisodes)) {
+      oldValues.clear();
+      oldValues.addAll(hdrFormatsInEpisodes);
+
+      List<String> sortedHdrFormats = ListUtils.asSortedList(hdrFormatsInEpisodes);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedHdrFormats));
+    }
   }
 }

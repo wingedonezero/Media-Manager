@@ -38,12 +38,15 @@ import org.slf4j.LoggerFactory;
  * @author Manuel Laggner
  */
 public class EventBus {
-  private static final Logger                    LOGGER           = LoggerFactory.getLogger(EventBus.class);
-  private static final EventBus                  INSTANCE         = new EventBus();
+  private static final Logger                    LOGGER              = LoggerFactory.getLogger(EventBus.class);
+  private static final EventBus                  INSTANCE            = new EventBus();
 
-  public static String                           TOPIC_MOVIES     = "movies";
-  public static String                           TOPIC_MOVIE_SETS = "movieSets";
-  public static String                           TOPIC_TV_SHOWS   = "tvShows";
+  public static String                           TOPIC_MOVIES        = "movies";
+  public static String                           TOPIC_MOVIES_UI     = "movies-ui";
+  public static String                           TOPIC_MOVIE_SETS    = "movieSets";
+  public static String                           TOPIC_MOVIE_SETS_UI = "movieSets-ui";
+  public static String                           TOPIC_TV_SHOWS      = "tvShows";
+  public static String                           TOPIC_TV_SHOWS_UI   = "tvShows-ui";
 
   private final ReentrantReadWriteLock           readWriteLock;
   private final Map<String, Set<IEventListener>> listeners;

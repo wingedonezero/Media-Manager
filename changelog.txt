@@ -1,5 +1,6 @@
 Version 5.2.7
 =======================
++ [Performance] heavily improved UI performance for really large libraries
 + [Trailer] integrated deno for yt-dlp #3200
 ---
 x [Movies] fixed excluding of nested folders when using .tmmignore, tmmignore or .nomedia files

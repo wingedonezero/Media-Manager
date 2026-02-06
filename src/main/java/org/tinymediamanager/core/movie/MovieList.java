@@ -15,11 +15,8 @@
  */
 package org.tinymediamanager.core.movie;
 
-import static org.tinymediamanager.core.Constants.DECADE;
-import static org.tinymediamanager.core.Constants.GENRE;
-import static org.tinymediamanager.core.Constants.TAGS;
-import static org.tinymediamanager.core.Constants.YEAR;
 import static org.tinymediamanager.core.bus.EventBus.TOPIC_MOVIES;
+import static org.tinymediamanager.core.bus.EventBus.TOPIC_MOVIES_UI;
 import static org.tinymediamanager.core.bus.EventBus.TOPIC_MOVIE_SETS;
 
 import java.beans.PropertyChangeListener;
@@ -28,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -37,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -121,7 +120,7 @@ public final class MovieList extends AbstractModelObject {
   private final CopyOnWriteArrayList<Integer>            subtitlesInMovies;
   private final CopyOnWriteArrayList<String>             audioLanguagesInMovies;
   private final CopyOnWriteArrayList<String>             subtitleLanguagesInMovies;
-  private final CopyOnWriteArrayList<String>             decadeInMovies;
+  private final CopyOnWriteArrayList<String>             decadesInMovies;
   private final CopyOnWriteArrayList<String>             hdrFormatInMovies;
   private final CopyOnWriteArrayList<String>             audioTitlesInMovies;
   private final CopyOnWriteArrayList<String>             subtitleFormatsInMovies;
@@ -134,10 +133,6 @@ public final class MovieList extends AbstractModelObject {
    * Internal lookup index: absolute normalized path -> movies in that folder
    */
   private final Map<Path, List<Movie>>                   byPath;
-  /**
-   * Internal lookup index: main video file absolute normalized path -> movie
-   */
-  private final Map<Path, Movie>                         byMainVideo;
 
   private final ReadWriteLock                            readWriteLock      = new ReentrantReadWriteLock();
 
@@ -154,7 +149,6 @@ public final class MovieList extends AbstractModelObject {
 
     byDbId = new HashMap<>();
     byPath = new HashMap<>();
-    byMainVideo = new HashMap<>();
 
     yearsInMovies = new CopyOnWriteArrayList<>();
     tagsInMovies = new CopyOnWriteArrayList<>();
@@ -169,7 +163,7 @@ public final class MovieList extends AbstractModelObject {
     subtitlesInMovies = new CopyOnWriteArrayList<>();
     audioLanguagesInMovies = new CopyOnWriteArrayList<>();
     subtitleLanguagesInMovies = new CopyOnWriteArrayList<>();
-    decadeInMovies = new CopyOnWriteArrayList<>();
+    decadesInMovies = new CopyOnWriteArrayList<>();
     hdrFormatInMovies = new CopyOnWriteArrayList<>();
     audioTitlesInMovies = new CopyOnWriteArrayList<>();
     subtitleFormatsInMovies = new CopyOnWriteArrayList<>();
@@ -182,7 +176,10 @@ public final class MovieList extends AbstractModelObject {
             readWriteLock.writeLock().lock();
             try {
               deindexMovie(movie);
-              indexMovie(movie);
+              if (movieList.contains(movie)) {
+                // only re-index movies which are still in the movie list
+                indexMovie(movie);
+              }
             }
             finally {
               readWriteLock.writeLock().unlock();
@@ -212,19 +209,35 @@ public final class MovieList extends AbstractModelObject {
       }
     });
 
-    // eventbus listener
+    // eventbus listener - just forward movie changes to the movie list listener to collect changes/avoid unnecessary multiple updates
     EventBus.registerListener(EventBus.TOPIC_MOVIES, event -> {
       if (event.sender() instanceof Movie) {
         if (event.eventType().equals(Event.TYPE_REMOVE) || event.eventType().equals(Event.TYPE_SAVE)) {
-          // full sync of lists - to remove unused items
-          TmmTaskManager.getInstance().addUiTask(() -> {
-            updateYear();
-            updateDecades();
-            updateTags();
-            updateGenres();
-            updateCertifications();
-          });
+          EventBus.publishEvent("movieList", Event.createUpdateEvent(instance));
         }
+      }
+    });
+
+    // collect movie changes locally
+    EventBus.registerListener("movieList", event -> {
+      if (event.sender() == instance) {
+        // needed since new ArrayList<>(movieList) is not thread-safe enough here
+        List<Movie> movies = new ArrayList<>();
+
+        readWriteLock.readLock().lock();
+        try {
+          movies.addAll(movieList);
+        }
+        finally {
+          readWriteLock.readLock().unlock();
+        }
+
+        updateYear(movies);
+        updateDecades(movies);
+        updateTags(movies);
+        updateGenres(movies);
+        updateCertifications(movies);
+        updateMediaInformationLists(movies);
       }
     });
   }
@@ -263,18 +276,17 @@ public final class MovieList extends AbstractModelObject {
   public void addMovie(Movie movie) {
     if (findByDbId(movie.getDbId()).isEmpty()) {
       int oldValue = movieList.size();
-      movieList.add(movie);
 
       // create entries
       readWriteLock.writeLock().lock();
       try {
+        movieList.add(movie);
         indexMovie(movie);
       }
       finally {
         readWriteLock.writeLock().unlock();
       }
 
-      updateLists(movie);
       firePropertyChange("movies", null, movieList);
       firePropertyChange("movieCount", oldValue, movieList.size());
     }
@@ -595,7 +607,6 @@ public final class MovieList extends AbstractModelObject {
     try {
       byDbId.clear();
       byPath.clear();
-      byMainVideo.clear();
       for (Movie movie : movieList) {
         indexMovie(movie);
       }
@@ -604,7 +615,8 @@ public final class MovieList extends AbstractModelObject {
       readWriteLock.writeLock().unlock();
     }
 
-    updateLists(movieList);
+    // update the lists
+    EventBus.publishEvent("movieList", Event.createUpdateEvent(instance));
 
     for (MovieSet movieSet : movieSetList) {
       movieSet.initializeAfterLoading();
@@ -697,15 +709,6 @@ public final class MovieList extends AbstractModelObject {
         list.add(movie);
       }
     }
-
-    // main video file path (if present)
-    MediaFile mvf = movie.getMainVideoFile();
-    if (mvf != null) {
-      Path mp = mvf.getFileAsPath();
-      if (mp != null) {
-        byMainVideo.put(normalizePath(mp), movie);
-      }
-    }
   }
 
   /**
@@ -721,27 +724,10 @@ public final class MovieList extends AbstractModelObject {
       byDbId.remove(id);
     }
 
-    // movie path
-    Path p = movie.getPathNIO();
-    if (p != null) {
-      Path np = normalizePath(p);
-      List<Movie> list = byPath.get(np);
-      if (list != null) {
-        list.remove(movie);
-        if (list.isEmpty()) {
-          byPath.remove(np);
-        }
-      }
-    }
-
-    // main video file path
-    MediaFile mvf = movie.getMainVideoFile();
-    if (mvf != null) {
-      Path mp = mvf.getFileAsPath();
-      if (mp != null) {
-        byMainVideo.remove(normalizePath(mp));
-      }
-    }
+    // movie path - scan all paths to find and remove this movie
+    // This is necessary because the movie's path may have changed since indexing
+    byPath.values().forEach(list -> list.remove(movie));
+    byPath.values().removeIf(List::isEmpty);
   }
 
   /**
@@ -774,26 +760,6 @@ public final class MovieList extends AbstractModelObject {
     readWriteLock.readLock().lock();
     try {
       return Optional.ofNullable(byDbId.get(id));
-    }
-    finally {
-      readWriteLock.readLock().unlock();
-    }
-  }
-
-  /**
-   * Find a movie by its main video file path.
-   *
-   * @param videoPath
-   *          the main video file path
-   * @return optional movie
-   */
-  public Optional<Movie> findByMainVideoPath(Path videoPath) {
-    if (videoPath == null) {
-      return Optional.empty();
-    }
-    readWriteLock.readLock().lock();
-    try {
-      return Optional.ofNullable(byMainVideo.get(normalizePath(videoPath)));
     }
     finally {
       readWriteLock.readLock().unlock();
@@ -1044,6 +1010,7 @@ public final class MovieList extends AbstractModelObject {
     LOGGER.debug("=====================================================");
     sr.addAll(provider.search(options)
         .stream()
+        .filter(Objects::nonNull)
         .filter(mediaSearchResult -> !mediaSearchResult.getIds().isEmpty() && StringUtils.isNotBlank(mediaSearchResult.getTitle()))
         .toList());
 
@@ -1061,6 +1028,7 @@ public final class MovieList extends AbstractModelObject {
       LOGGER.debug("=====================================================");
       sr.addAll(provider.search(o)
           .stream()
+          .filter(Objects::nonNull)
           .filter(mediaSearchResult -> !mediaSearchResult.getIds().isEmpty() && StringUtils.isNotBlank(mediaSearchResult.getTitle()))
           .toList());
     }
@@ -1082,6 +1050,7 @@ public final class MovieList extends AbstractModelObject {
           LOGGER.debug("=====================================================");
           sr.addAll(((IMovieMetadataProvider) ms.getMediaProvider()).search(options)
               .stream()
+              .filter(Objects::nonNull)
               .filter(mediaSearchResult -> !mediaSearchResult.getIds().isEmpty() && StringUtils.isNotBlank(mediaSearchResult.getTitle()))
               .toList());
         }
@@ -1284,163 +1253,97 @@ public final class MovieList extends AbstractModelObject {
     return count;
   }
 
-  private void updateLists(Movie movie) {
-    updateLists(Collections.singletonList(movie));
-  }
-
-  private void updateLists(Collection<Movie> movies) {
-    TmmTaskManager.getInstance().addUiTask(() -> {
-      updateYear(movies);
-      updateDecades(movies);
-      updateTags(movies);
-      updateGenres(movies);
-      updateCertifications(movies);
-      updateMediaInformationLists(movies);
-    });
-  }
-
-  /**
-   * Update year in movies - used for newly added movies
-   *
-   * @param movies
-   *          all movies to update
-   */
-  private void updateYear(Collection<Movie> movies) {
-    Set<Integer> years = new TreeSet<>();
-    movies.forEach(movie -> years.add(movie.getYear()));
-
-    if (ListUtils.addToCopyOnWriteArrayListIfAbsent(yearsInMovies, years)) {
-      firePropertyChange(YEAR, null, yearsInMovies);
-    }
-  }
-
   /**
    * Update year in movies - used to sync all years
    *
    */
-  private void updateYear() {
+  private void updateYear(List<Movie> movies) {
     Set<Integer> years = new TreeSet<>();
-    movieSetList.forEach(movie -> years.add(movie.getYear()));
+    movies.forEach(movie -> years.add(movie.getYear()));
 
-    if (years.hashCode() != yearsInMovies.hashCode()) {
+    if (!new HashSet<>(yearsInMovies).equals(years)) {
       yearsInMovies.clear();
       yearsInMovies.addAll(years);
-      firePropertyChange(YEAR, null, yearsInMovies);
-    }
-  }
-
-  /**
-   * Update decades in movies - used for newly added movies
-   *
-   * @param movies
-   *          all movies to update
-   */
-  private void updateDecades(Collection<Movie> movies) {
-    Set<String> decades = new TreeSet<>();
-    movies.forEach(movie -> decades.add(movie.getDecadeShort()));
-
-    if (ListUtils.addToCopyOnWriteArrayListIfAbsent(decadeInMovies, decades)) {
-      firePropertyChange(DECADE, null, decadeInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
   }
 
   /**
    * Update decades in movies - used to sync all decades
    */
-  private void updateDecades() {
-    Set<String> decades = new TreeSet<>();
-    movieList.forEach(movie -> decades.add(movie.getDecadeShort()));
+  private void updateDecades(List<Movie> movies) {
+    Set<String> decades = new HashSet<>();
+    movies.forEach(movie -> {
+      String decadeShort = movie.getDecadeShort();
+      if (StringUtils.isNotBlank(decadeShort)) {
+        decades.add(decadeShort);
+      }
+    });
 
-    if (decades.hashCode() != decadeInMovies.hashCode()) {
-      decadeInMovies.clear();
-      decadeInMovies.addAll(decades);
-      firePropertyChange(DECADE, null, decadeInMovies);
-    }
-  }
-
-  /**
-   * Update genres used in movies - used for newly added movies
-   *
-   * @param movies
-   *          all movies to update
-   */
-  private void updateGenres(Collection<Movie> movies) {
-    Set<MediaGenres> genres = new TreeSet<>();
-    movies.forEach(movie -> genres.addAll(movie.getGenres()));
-
-    if (ListUtils.addToCopyOnWriteArrayListIfAbsent(genresInMovies, genres)) {
-      firePropertyChange(GENRE, null, genresInMovies);
+    if (!new HashSet<>(decadesInMovies).equals(decades)) {
+      decadesInMovies.clear();
+      decadesInMovies.addAll(decades);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
   }
 
   /**
    * Update genres used in movies - used to sync all genres
    */
-  private void updateGenres() {
-    Set<MediaGenres> genres = new TreeSet<>();
-    movieList.forEach(movie -> genres.addAll(movie.getGenres()));
+  private void updateGenres(List<Movie> movies) {
+    Set<MediaGenres> genres = new HashSet<>();
+    movies.forEach(movie -> genres.addAll(movie.getGenres()));
 
-    if (genres.hashCode() != genresInMovies.hashCode()) {
+    if (!new HashSet<>(genresInMovies).equals(genres)) {
       genresInMovies.clear();
       genresInMovies.addAll(genres);
-      firePropertyChange(GENRE, null, genresInMovies);
-    }
-  }
-
-  /**
-   * Update tags used in movies - used for newly added movies
-   *
-   * @param movies
-   *          all movies to update
-   */
-  private void updateTags(Collection<Movie> movies) {
-    Set<String> tags = new TreeSet<>();
-    movies.forEach(movie -> tags.addAll(movie.getTags()));
-
-    if (ListUtils.addToCopyOnWriteArrayListIfAbsent(tagsInMovies, tags)) {
-      Utils.removeDuplicateStringFromCollectionIgnoreCase(tagsInMovies);
-      firePropertyChange(TAGS, null, tagsInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
   }
 
   /**
    * Update tags used in movies - used to sync all tags
    */
-  private void updateTags() {
+  private void updateTags(List<Movie> movies) {
     Set<String> tags = new TreeSet<>();
-    movieList.forEach(movie -> tags.addAll(movie.getTags()));
+    movies.forEach(movie -> tags.addAll(movie.getTags()));
+    Utils.removeDuplicateStringFromCollectionIgnoreCase(tags);
 
-    if (tags.hashCode() != tagsInMovies.hashCode()) {
+    if (!new HashSet<>(tagsInMovies).equals(tags)) {
       tagsInMovies.clear();
       tagsInMovies.addAll(tags);
-      Utils.removeDuplicateStringFromCollectionIgnoreCase(tagsInMovies);
-      firePropertyChange(TAGS, null, tagsInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
   }
 
   /**
    * Update media information used in movies.
    *
-   * @param movies
-   *          all movies to update
    */
-  private void updateMediaInformationLists(Collection<Movie> movies) {
+  private void updateMediaInformationLists(List<Movie> movies) {
     Set<String> videoCodecs = new HashSet<>();
     Set<Double> frameRates = new HashSet<>();
     Map<String, String> videoContainers = new HashMap<>();
     Set<String> audioCodecs = new HashSet<>();
     Set<Integer> audioChannels = new HashSet<>();
     Set<Integer> audioStreamCount = new HashSet<>();
-    Set<Integer> subtitleCount = new HashSet<>();
+    Set<Integer> subtitleStreamCount = new HashSet<>();
     Set<String> audioLanguages = new HashSet<>();
     Set<String> subtitleLanguages = new HashSet<>();
     Set<String> hdrFormat = new HashSet<>();
     Set<String> audioTitles = new HashSet<>();
     Set<String> subtitleFormats = new HashSet<>();
 
-    // get subtitle language/format from video files and subtitle files
     for (Movie movie : movies) {
+
+      // get subtitle language/format from video files and subtitle files
+      boolean firstVideoFile = true;
       for (MediaFile mf : movie.getMediaFiles(MediaFileType.VIDEO, MediaFileType.SUBTITLE)) {
+        if (mf.getType() == MediaFileType.VIDEO && !firstVideoFile) {
+          // only get subtitle information from the first video file
+          continue;
+        }
+
         // subtitle language
         if (!mf.getSubtitleLanguages().isEmpty()) {
           subtitleLanguages.addAll(mf.getSubtitleLanguages());
@@ -1451,10 +1354,47 @@ public final class MovieList extends AbstractModelObject {
             subtitleFormats.add(subtitle.getCodec());
           }
         }
-      }
-    }
 
-    for (Movie movie : movies) {
+        if (mf.getType() == MediaFileType.VIDEO) {
+          firstVideoFile = false;
+        }
+      }
+
+      subtitleStreamCount.add(movie.getMediaInfoSubtitleStreamCount());
+
+      // get all audio information from video files and audio files
+      firstVideoFile = true;
+      for (MediaFile mf : movie.getMediaFiles(MediaFileType.VIDEO, MediaFileType.AUDIO)) {
+        if (mf.getType() == MediaFileType.VIDEO && !firstVideoFile) {
+          // only get audio information from the first video file
+          continue;
+        }
+
+        for (MediaFileAudioStream audio : mf.getAudioStreams()) {
+          if (StringUtils.isNotBlank(audio.getCodec())) {
+            audioCodecs.add(audio.getCodec());
+          }
+          audioChannels.add(audio.getAudioChannels());
+        }
+
+        // audio language
+        if (!mf.getAudioLanguagesList().isEmpty()) {
+          audioLanguages.addAll(mf.getAudioLanguagesList());
+        }
+
+        // Audio Titles
+        if (!mf.getAudioTitleList().isEmpty()) {
+          audioTitles.addAll(mf.getAudioTitleList());
+        }
+
+        if (mf.getType() == MediaFileType.VIDEO) {
+          firstVideoFile = false;
+        }
+      }
+
+      audioStreamCount.add(movie.getMediaInfoAudioStreamCount());
+
+      // get video related information only from video files
       for (MediaFile mf : movie.getMediaFiles(MediaFileType.VIDEO)) {
         // video codec
         if (StringUtils.isNotBlank(mf.getVideoCodec())) {
@@ -1471,209 +1411,166 @@ public final class MovieList extends AbstractModelObject {
           videoContainers.putIfAbsent(mf.getContainerFormat().toLowerCase(Locale.ROOT), mf.getContainerFormat());
         }
 
-        // audio codec+channels
-        for (MediaFileAudioStream audio : mf.getAudioStreams()) {
-          if (StringUtils.isNotBlank(audio.getCodec())) {
-            audioCodecs.add(audio.getCodec());
-          }
-          audioChannels.add(audio.getAudioChannels());
-        }
-        // audio streams
-        if (!mf.getAudioStreams().isEmpty()) {
-          audioStreamCount.add(mf.getAudioStreams().size());
-        }
-
-        // subtitles
-        if (!mf.getSubtitles().isEmpty()) {
-          subtitleCount.add(mf.getSubtitles().size());
-        }
-
-        // audio language
-        if (!mf.getAudioLanguagesList().isEmpty()) {
-          audioLanguages.addAll(mf.getAudioLanguagesList());
-        }
-
         // HDR Format (comma separated)
         if (!mf.getHdrFormat().isEmpty()) {
-          String[] hdrs = mf.getHdrFormat().split(", ");
-          for (String hdr : hdrs) {
-            hdrFormat.add(hdr);
-          }
+          hdrFormat.addAll(Arrays.asList(mf.getHdrFormat().split(", ")));
         }
 
-        // Audio Titles
-        if (!mf.getAudioTitleList().isEmpty()) {
-          audioTitles.addAll(mf.getAudioTitleList());
-        }
+        break;
       }
     }
 
     // video codecs
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(videoCodecsInMovies, videoCodecs)) {
-      firePropertyChange(Constants.VIDEO_CODEC, null, videoCodecsInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
 
     // frame rate
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(frameRatesInMovies, frameRates)) {
-      firePropertyChange(Constants.FRAME_RATE, null, frameRatesInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
 
     // video container
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(videoContainersInMovies, videoContainers.values())) {
-      firePropertyChange(Constants.VIDEO_CONTAINER, null, videoContainersInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
 
     // audio codec
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(audioCodecsInMovies, audioCodecs)) {
-      firePropertyChange(Constants.AUDIO_CODEC, null, audioCodecsInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
 
     // audio channels
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(audioChannelsInMovies, audioChannels)) {
-      firePropertyChange(Constants.AUDIO_CHANNEL, null, audioChannelsInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
 
     // audio streams
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(audioStreamsInMovies, audioStreamCount)) {
-      firePropertyChange(Constants.AUDIOSTREAMS_COUNT, null, audioStreamsInMovies);
-    }
-
-    // subtitles
-    if (ListUtils.addToCopyOnWriteArrayListIfAbsent(subtitlesInMovies, subtitleCount)) {
-      firePropertyChange(Constants.SUBTITLES_COUNT, null, subtitlesInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
 
     // audio languages
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(audioLanguagesInMovies, audioLanguages)) {
-      firePropertyChange(Constants.AUDIO_LANGUAGES, null, audioLanguagesInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
+    }
+
+    // subtitles
+    if (ListUtils.addToCopyOnWriteArrayListIfAbsent(subtitlesInMovies, subtitleStreamCount)) {
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
 
     // subtitle languages
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(subtitleLanguagesInMovies, subtitleLanguages)) {
-      firePropertyChange(Constants.SUBTITLE_LANGUAGES, null, subtitleLanguagesInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
 
     // subtitle formats
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(subtitleFormatsInMovies, subtitleFormats)) {
-      firePropertyChange(Constants.SUBTITLE_FORMATS, null, subtitleFormatsInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
 
     // HDR Format
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(hdrFormatInMovies, hdrFormat)) {
-      firePropertyChange(Constants.HDR_FORMAT, null, hdrFormatInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
 
-    // AudioTitle
+    // audio titles
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(audioTitlesInMovies, audioTitles)) {
-      firePropertyChange(Constants.AUDIO_TITLE, null, audioTitlesInMovies);
-    }
-  }
-
-  /**
-   * Update certifications used in movies - used for newly added movies
-   *
-   * @param movies
-   *          all movies to update
-   */
-  private void updateCertifications(Collection<Movie> movies) {
-    Set<MediaCertification> certifications = new TreeSet<>();
-    movies.forEach(movie -> certifications.add(movie.getCertification()));
-
-    if (ListUtils.addToCopyOnWriteArrayListIfAbsent(certificationsInMovies, certifications)) {
-      firePropertyChange(Constants.CERTIFICATION, null, certificationsInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(instance));
     }
   }
 
   /**
    * Update certifications used in movies - used to sync all certifications
    */
-  private void updateCertifications() {
+  private void updateCertifications(List<Movie> movies) {
     Set<MediaCertification> certifications = new TreeSet<>();
-    movieList.forEach(movie -> certifications.add(movie.getCertification()));
+    movies.forEach(movie -> certifications.add(movie.getCertification()));
 
     if (certifications.hashCode() != certificationsInMovies.hashCode()) {
       certificationsInMovies.clear();
       certificationsInMovies.addAll(certifications);
-      firePropertyChange(Constants.CERTIFICATION, null, certificationsInMovies);
+      EventBus.publishEvent(TOPIC_MOVIES_UI, Event.createUpdateEvent(movieList));
     }
   }
 
   /**
-   * get a {@link Set} of all years in movies
+   * get a {@link List} of all years in movies
    * 
-   * @return a {@link Set} of all years
+   * @return a {@link List} of all years
    */
-  public Collection<Integer> getYearsInMovies() {
+  public List<Integer> getYearsInMovies() {
     return Collections.unmodifiableList(yearsInMovies);
   }
 
   /**
-   * get a {@link Set} of all decades in movies
+   * get a {@link List} of all decades in movies
    *
-   * @return a {@link Set} of all decades
+   * @return a {@link List} of all decades
    */
-  public Collection<String> getDecadeInMovies() {
-    return Collections.unmodifiableList(decadeInMovies);
+  public List<String> getDecadesInMovies() {
+    return Collections.unmodifiableList(decadesInMovies);
   }
 
   /**
-   * get a {@link Set} of all tags in movies.
+   * get a {@link List} of all tags in movies.
    *
-   * @return a {@link Set} of all tags
+   * @return a {@link List} of all tags
    */
-  public Collection<String> getTagsInMovies() {
+  public List<String> getTagsInMovies() {
     return Collections.unmodifiableList(tagsInMovies);
   }
 
-  public Collection<String> getVideoCodecsInMovies() {
+  public List<String> getVideoCodecsInMovies() {
     return Collections.unmodifiableList(videoCodecsInMovies);
   }
 
-  public Collection<String> getVideoContainersInMovies() {
+  public List<String> getVideoContainersInMovies() {
     return Collections.unmodifiableList(videoContainersInMovies);
   }
 
-  public Collection<String> getAudioCodecsInMovies() {
+  public List<String> getAudioCodecsInMovies() {
     return Collections.unmodifiableList(audioCodecsInMovies);
   }
 
-  public Collection<Integer> getAudioChannelsInMovies() {
+  public List<Integer> getAudioChannelsInMovies() {
     return Collections.unmodifiableList(audioChannelsInMovies);
   }
 
-  public Collection<MediaCertification> getCertificationsInMovies() {
+  public List<MediaCertification> getCertificationsInMovies() {
     return Collections.unmodifiableList(certificationsInMovies);
   }
 
-  public Collection<Double> getFrameRatesInMovies() {
+  public List<Double> getFrameRatesInMovies() {
     return Collections.unmodifiableList(frameRatesInMovies);
   }
 
-  public Collection<Integer> getAudioStreamsInMovies() {
+  public List<Integer> getAudioStreamsInMovies() {
     return Collections.unmodifiableList(audioStreamsInMovies);
   }
 
-  public Collection<Integer> getSubtitlesInMovies() {
+  public List<Integer> getSubtitlesInMovies() {
     return Collections.unmodifiableList(subtitlesInMovies);
   }
 
-  public Collection<String> getAudioLanguagesInMovies() {
+  public List<String> getAudioLanguagesInMovies() {
     return Collections.unmodifiableList(audioLanguagesInMovies);
   }
 
-  public Collection<String> getSubtitleLanguagesInMovies() {
+  public List<String> getSubtitleLanguagesInMovies() {
     return Collections.unmodifiableList(subtitleLanguagesInMovies);
   }
 
-  public Collection<String> getSubtitleFormatsInMovies() {
+  public List<String> getSubtitleFormatsInMovies() {
     return Collections.unmodifiableList(subtitleFormatsInMovies);
   }
 
-  public Collection<String> getHDRFormatInMovies() {
+  public List<String> getHDRFormatInMovies() {
     return Collections.unmodifiableList(hdrFormatInMovies);
   }
 
-  public Collection<String> getAudioTitlesInMovies() {
+  public List<String> getAudioTitlesInMovies() {
     return Collections.unmodifiableList(audioTitlesInMovies);
   }
 

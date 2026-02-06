@@ -15,19 +15,19 @@
  */
 package org.tinymediamanager.ui.tvshows.filters;
 
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.tvshow.TvShowList;
-import org.tinymediamanager.core.tvshow.TvShowModuleManager;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -36,14 +36,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Manuel Laggner
  */
 public class TvShowFrameRateFilter extends AbstractCheckComboBoxTvShowUIFilter<Double> {
-  private final TvShowList tvShowList = TvShowModuleManager.getInstance().getTvShowList();
 
   public TvShowFrameRateFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> String.valueOf(s).startsWith(s2));
-    buildAndInstallCodecArray();
-    PropertyChangeListener propertyChangeListener = evt -> buildAndInstallCodecArray();
-    tvShowList.addPropertyChangeListener(Constants.FRAME_RATE, propertyChangeListener);
+
+    buildAndInstallFrameRateArray();
+    EventBus.registerListener(EventBus.TOPIC_TV_SHOWS_UI, event -> buildAndInstallFrameRateArray());
   }
 
   @Override
@@ -75,11 +74,20 @@ public class TvShowFrameRateFilter extends AbstractCheckComboBoxTvShowUIFilter<D
     return new TmmLabel(TmmResourceBundle.getString("metatag.framerate"));
   }
 
-  private void buildAndInstallCodecArray() {
-    List<Double> frameRates = new ArrayList<>(tvShowList.getFrameRatesInEpisodes());
-    Collections.sort(frameRates);
+  private void buildAndInstallFrameRateArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<Double> frameRateInEpisodes = new HashSet<>(tvShowList.getFrameRatesInEpisodes());
 
-    setValues(frameRates);
+    if (!SetUtils.equals(oldValues, frameRateInEpisodes)) {
+      oldValues.clear();
+      oldValues.addAll(frameRateInEpisodes);
+
+      List<Double> sortedFrameRates = ListUtils.asSortedList(frameRateInEpisodes);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedFrameRates));
+    }
   }
 
   @Override

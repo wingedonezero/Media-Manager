@@ -15,7 +15,6 @@
  */
 package org.tinymediamanager.ui.movies.filters;
 
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -25,13 +24,11 @@ import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.bus.Event;
 import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.entities.MediaGenres;
-import org.tinymediamanager.core.movie.MovieList;
-import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -40,25 +37,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Manuel Laggner
  */
 public class MovieGenreFilter extends AbstractCheckComboBoxMovieUIFilter<MediaGenres> {
-  private final Comparator<MediaGenres> comparator;
-  private final MovieList               movieList;
-  private final Set<MediaGenres>        oldGenres;
 
   public MovieGenreFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.toString().toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
-    movieList = MovieModuleManager.getInstance().getMovieList();
-    comparator = new MediaGenres.MediaGenresComparator();
-    oldGenres = new HashSet<>();
 
     buildAndInstallMediaGenres();
-    EventBus.registerListener(EventBus.TOPIC_MOVIES, event -> {
-      if (event.sender() instanceof Movie) {
-        if (event.eventType().equals(Event.TYPE_SAVE)) {
-          buildAndInstallMediaGenres();
-        }
-      }
-    });
+    EventBus.registerListener(EventBus.TOPIC_MOVIES_UI, event -> buildAndInstallMediaGenres());
   }
 
   @Override
@@ -93,22 +78,16 @@ public class MovieGenreFilter extends AbstractCheckComboBoxMovieUIFilter<MediaGe
   private void buildAndInstallMediaGenres() {
     // do it lazy because otherwise there is too much UI overhead
     // also use a set for faster lookups
-    boolean dirty = false;
-
     Set<MediaGenres> genres = new HashSet<>(movieList.getUsedGenres());
 
-    if (oldGenres.size() != genres.size()) {
-      dirty = true;
-    }
-    else if (!oldGenres.containsAll(genres) || !genres.containsAll(oldGenres)) {
-      dirty = true;
-    }
+    if (!SetUtils.equals(oldValues, genres)) {
+      oldValues.clear();
+      oldValues.addAll(genres);
 
-    if (dirty) {
-      oldGenres.clear();
-      oldGenres.addAll(genres);
+      List<MediaGenres> sortedGenres = ListUtils.asSortedList(genres);
 
-      SwingUtilities.invokeLater(() -> setValues(ListUtils.asSortedList(genres, comparator)));
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedGenres));
     }
   }
 

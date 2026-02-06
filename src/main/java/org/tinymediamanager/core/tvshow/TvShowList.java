@@ -16,12 +16,11 @@
 package org.tinymediamanager.core.tvshow;
 
 import static org.tinymediamanager.core.Constants.ADDED_TV_SHOW;
-import static org.tinymediamanager.core.Constants.EPISODE_COUNT;
 import static org.tinymediamanager.core.Constants.REMOVED_TV_SHOW;
-import static org.tinymediamanager.core.Constants.TAGS;
 import static org.tinymediamanager.core.Constants.TV_SHOWS;
 import static org.tinymediamanager.core.Constants.TV_SHOW_COUNT;
 import static org.tinymediamanager.core.bus.EventBus.TOPIC_TV_SHOWS;
+import static org.tinymediamanager.core.bus.EventBus.TOPIC_TV_SHOWS_UI;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -52,7 +52,6 @@ import org.slf4j.LoggerFactory;
 import org.tinymediamanager.TmmOsUtils;
 import org.tinymediamanager.UpgradeTasks;
 import org.tinymediamanager.core.AbstractModelObject;
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.ImageCache;
 import org.tinymediamanager.core.MediaFileType;
 import org.tinymediamanager.core.Message;
@@ -65,7 +64,6 @@ import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaFileAudioStream;
 import org.tinymediamanager.core.entities.MediaFileSubtitle;
-import org.tinymediamanager.core.threading.TmmTaskManager;
 import org.tinymediamanager.core.tvshow.TvShowEpisodeAndSeasonParser.EpisodeMatchingResult;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
@@ -100,6 +98,7 @@ public final class TvShowList extends AbstractModelObject {
 
   private final CopyOnWriteArrayList<String>             tagsInTvShows;
   private final CopyOnWriteArrayList<String>             tagsInEpisodes;
+  private final CopyOnWriteArrayList<String>             decadesInTvShows;
   private final CopyOnWriteArrayList<String>             videoCodecsInEpisodes;
   private final CopyOnWriteArrayList<String>             videoContainersInEpisodes;
   private final CopyOnWriteArrayList<String>             audioCodecsInEpisodes;
@@ -125,6 +124,7 @@ public final class TvShowList extends AbstractModelObject {
     tvShows = new ObservableElementList<>(GlazedLists.threadSafeList(new BasicEventList<>()), GlazedLists.beanConnector(TvShow.class));
     tagsInTvShows = new CopyOnWriteArrayList<>();
     tagsInEpisodes = new CopyOnWriteArrayList<>();
+    decadesInTvShows = new CopyOnWriteArrayList<>();
     videoCodecsInEpisodes = new CopyOnWriteArrayList<>();
     videoContainersInEpisodes = new CopyOnWriteArrayList<>();
     audioCodecsInEpisodes = new CopyOnWriteArrayList<>();
@@ -139,19 +139,53 @@ public final class TvShowList extends AbstractModelObject {
     audioTitlesInEpisodes = new CopyOnWriteArrayList<>();
     subtitleFormatsInEpisodes = new CopyOnWriteArrayList<>();
 
-    // eventbus listener
+    // eventbus listener - just forward TV show changes to the TV show list listener to collect changes/avoid unnecessary multiple updates
     EventBus.registerListener(EventBus.TOPIC_TV_SHOWS, event -> {
       if (event.eventType().equals(Event.TYPE_REMOVE) || event.eventType().equals(Event.TYPE_SAVE)) {
-        // full sync of lists - to remove unused items
-        TmmTaskManager.getInstance().addUiTask(() -> {
-          if (event.sender() instanceof TvShow) {
-            updateTvShowTags();
-            updateCertification();
-          }
-          else if (event.sender() instanceof TvShowEpisode) {
-            updateEpisodeTags();
-          }
-        });
+        if (event.sender() instanceof TvShow) {
+          EventBus.publishEvent("tvShowList-tvShow", Event.createUpdateEvent(instance));
+        }
+        else if (event.sender() instanceof TvShowEpisode) {
+          EventBus.publishEvent("tvShowList-episode", Event.createUpdateEvent(instance));
+        }
+      }
+    });
+
+    // collect TV show changes locally
+    EventBus.registerListener("tvShowList-tvShow", event -> {
+      if (event.sender() == instance) {
+        // needed since new ArrayList<>(tvShows) is not thread-safe enough here
+        List<TvShow> tvShows = new ArrayList<>();
+
+        readWriteLock.readLock().lock();
+        try {
+          tvShows.addAll(this.tvShows);
+        }
+        finally {
+          readWriteLock.readLock().unlock();
+        }
+
+        updateTvShowTags(tvShows);
+        updateCertification(tvShows);
+        updateDecades(tvShows);
+      }
+    });
+
+    EventBus.registerListener("tvShowList-episode", event -> {
+      if (event.sender() == instance) {
+        // needed since new ArrayList<>(tvShows) is not thread-safe enough here
+        List<TvShow> tvShows = new ArrayList<>();
+
+        readWriteLock.readLock().lock();
+        try {
+          tvShows.addAll(this.tvShows);
+        }
+        finally {
+          readWriteLock.readLock().unlock();
+        }
+
+        updateEpisodeTags(tvShows);
+        updateMediaInformationLists(tvShows);
       }
     });
   }
@@ -775,8 +809,9 @@ public final class TvShowList extends AbstractModelObject {
       }
     }
 
-    updateTvShowLists(tvShows);
-    updateEpisodeLists(episodes);
+    // update the lists
+    EventBus.publishEvent("tvShowList-tvShow", Event.createUpdateEvent(instance));
+    EventBus.publishEvent("tvShowList-episode", Event.createUpdateEvent(instance));
   }
 
   private boolean isCorrupt(TvShow show) {
@@ -827,7 +862,6 @@ public final class TvShowList extends AbstractModelObject {
     try {
       TvShowModuleManager.getInstance().persistTvShow(tvShow);
       EventBus.publishEvent(TOPIC_TV_SHOWS, Event.createSaveEvent(tvShow));
-      updateTvShowLists(Collections.singletonList(tvShow));
     }
     catch (Exception e) {
       LOGGER.error("Failed to persist TV show '{}' - '{}'", tvShow.getTitle(), e.getMessage());
@@ -1063,6 +1097,7 @@ public final class TvShowList extends AbstractModelObject {
     LOGGER.debug("=====================================================");
     results.addAll(provider.search(options)
         .stream()
+        .filter(Objects::nonNull)
         .filter(mediaSearchResult -> !mediaSearchResult.getIds().isEmpty() && StringUtils.isNotBlank(mediaSearchResult.getTitle()))
         .toList());
 
@@ -1077,6 +1112,7 @@ public final class TvShowList extends AbstractModelObject {
       LOGGER.debug("=====================================================");
       results.addAll(provider.search(o)
           .stream()
+          .filter(Objects::nonNull)
           .filter(mediaSearchResult -> !mediaSearchResult.getIds().isEmpty() && StringUtils.isNotBlank(mediaSearchResult.getTitle()))
           .toList());
     }
@@ -1084,59 +1120,51 @@ public final class TvShowList extends AbstractModelObject {
     return new ArrayList<>(results);
   }
 
-  private void updateTvShowLists(Collection<TvShow> tvShows) {
-    TmmTaskManager.getInstance().addUiTask(() -> {
-      updateTvShowTags(tvShows);
-      updateCertification(tvShows);
-      firePropertyChange(EPISODE_COUNT, 0, 1);
-    });
-  }
-
-  private void updateTvShowTags(Collection<TvShow> tvShows) {
-    Set<String> tags = new TreeSet<>();
-    tvShows.forEach(tvShow -> tags.addAll(tvShow.getTags()));
-
-    if (ListUtils.addToCopyOnWriteArrayListIfAbsent(tagsInTvShows, tags)) {
-      Utils.removeDuplicateStringFromCollectionIgnoreCase(tagsInTvShows);
-      firePropertyChange(TAGS, null, tagsInTvShows);
-    }
-  }
-
   /**
    * Update tags used in TV shows - used to sync all tags
    */
-  private void updateTvShowTags() {
+  private void updateTvShowTags(List<TvShow> tvShows) {
     Set<String> tags = new TreeSet<>();
     tvShows.forEach(tvShow -> tags.addAll(tvShow.getTags()));
+    Utils.removeDuplicateStringFromCollectionIgnoreCase(tags);
 
-    if (tags.hashCode() != tagsInTvShows.hashCode()) {
+    if (!new HashSet<>(tagsInTvShows).equals(tags)) {
       tagsInTvShows.clear();
       tagsInTvShows.addAll(tags);
-      Utils.removeDuplicateStringFromCollectionIgnoreCase(tagsInTvShows);
-      firePropertyChange(TAGS, null, tagsInTvShows);
-    }
-  }
-
-  private void updateCertification(Collection<TvShow> tvShows) {
-    Set<MediaCertification> certifications = new TreeSet<>();
-    tvShows.forEach(tvShow -> certifications.add(tvShow.getCertification()));
-
-    if (ListUtils.addToCopyOnWriteArrayListIfAbsent(certificationsInTvShows, certifications)) {
-      firePropertyChange(Constants.CERTIFICATION, null, certificationsInTvShows);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
   }
 
   /**
    * Update certifications used in TV shows - used to sync all certifications
    */
-  private void updateCertification() {
-    Set<MediaCertification> certifications = new TreeSet<>();
+  private void updateCertification(List<TvShow> tvShows) {
+    Set<MediaCertification> certifications = new HashSet<>();
     tvShows.forEach(tvShow -> certifications.add(tvShow.getCertification()));
 
-    if (certifications.hashCode() != certificationsInTvShows.hashCode()) {
+    if (!new HashSet<>(certificationsInTvShows).equals(certifications)) {
       certificationsInTvShows.clear();
       certificationsInTvShows.addAll(certifications);
-      firePropertyChange(Constants.CERTIFICATION, null, certificationsInTvShows);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
+    }
+  }
+
+  /**
+   * Update decades in tvShows - used to sync all decades
+   */
+  private void updateDecades(List<TvShow> tvShows) {
+    Set<String> decades = new HashSet<>();
+    tvShows.forEach(tvShow -> {
+      String decadeShort = tvShow.getDecadeShort();
+      if (StringUtils.isNotBlank(decadeShort)) {
+        decades.add(decadeShort);
+      }
+    });
+
+    if (!new HashSet<>(decadesInTvShows).equals(decades)) {
+      decadesInTvShows.clear();
+      decadesInTvShows.addAll(decades);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
   }
 
@@ -1149,44 +1177,36 @@ public final class TvShowList extends AbstractModelObject {
     return Collections.unmodifiableList(tagsInTvShows);
   }
 
-  private void updateEpisodeLists(Collection<TvShowEpisode> episodes) {
-    TmmTaskManager.getInstance().addUiTask(() -> {
-      updateEpisodeTags(episodes);
-      updateMediaInformationLists(episodes);
-    });
+  /**
+   * get a {@link List} of all decades in TV shows
+   * 
+   * @return a {@link List} of all decades
+   */
+  public List<String> getDecadesInTvShows() {
+    return Collections.unmodifiableList(decadesInTvShows);
   }
 
-  private void updateEpisodeTags(Collection<TvShowEpisode> episodes) {
-    Set<String> tags = new TreeSet<>();
-    episodes.forEach(episode -> tags.addAll(episode.getTags()));
-
-    if (ListUtils.addToCopyOnWriteArrayListIfAbsent(tagsInEpisodes, tags)) {
-      Utils.removeDuplicateStringFromCollectionIgnoreCase(tagsInEpisodes);
-      firePropertyChange(TAGS, null, tagsInEpisodes);
-    }
-  }
-
-  private void updateEpisodeTags() {
+  private void updateEpisodeTags(List<TvShow> tvShows) {
     Set<String> tags = new TreeSet<>();
     for (TvShow tvShow : tvShows) {
       for (TvShowEpisode episode : tvShow.getEpisodes()) {
         tags.addAll(episode.getTags());
       }
     }
+    Utils.removeDuplicateStringFromCollectionIgnoreCase(tagsInEpisodes);
 
-    if (tags.hashCode() != tagsInEpisodes.hashCode()) {
+    if (!new HashSet<>(tagsInEpisodes).equals(tags)) {
       tagsInEpisodes.clear();
       tagsInEpisodes.addAll(tags);
-      Utils.removeDuplicateStringFromCollectionIgnoreCase(tagsInEpisodes);
-      firePropertyChange(TAGS, null, tagsInEpisodes);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
   }
 
-  public Collection<String> getTagsInEpisodes() {
+  public List<String> getTagsInEpisodes() {
     return Collections.unmodifiableList(tagsInEpisodes);
   }
 
-  private void updateMediaInformationLists(Collection<TvShowEpisode> episodes) {
+  private void updateMediaInformationLists(List<TvShow> tvShows) {
     Set<String> videoCodecs = new HashSet<>();
     Set<Double> frameRates = new HashSet<>();
     Map<String, String> videoContainers = new HashMap<>();
@@ -1200,195 +1220,203 @@ public final class TvShowList extends AbstractModelObject {
     Set<String> audioTitles = new HashSet<>();
     Set<String> subtitleFormats = new HashSet<>();
 
-    for (TvShowEpisode episode : episodes) {
-      int audioCount = 0;
-      int subtitleCount = 0;
-
-      boolean first = true;
-
-      for (MediaFile mf : episode.getMediaFiles(MediaFileType.VIDEO)) {
-        // video codec
-        if (StringUtils.isNotBlank(mf.getVideoCodec())) {
-          videoCodecs.add(mf.getVideoCodec());
-        }
-
-        // frame rate
-        if (mf.getFrameRate() > 0) {
-          frameRates.add(mf.getFrameRate());
-        }
-
-        // video container
-        if (StringUtils.isNotBlank(mf.getContainerFormat())) {
-          videoContainers.putIfAbsent(mf.getContainerFormat().toLowerCase(Locale.ROOT), mf.getContainerFormat());
-        }
-
-        // audio codec+channels
-        for (MediaFileAudioStream audio : mf.getAudioStreams()) {
-          if (StringUtils.isNotBlank(audio.getCodec())) {
-            audioCodecs.add(audio.getCodec());
+    for (TvShow tvShow : tvShows) {
+      for (TvShowEpisode episode : tvShow.getEpisodes()) {
+        // get subtitle language/format from video files and subtitle files
+        boolean firstVideoFile = true;
+        for (MediaFile mf : episode.getMediaFiles(MediaFileType.VIDEO, MediaFileType.SUBTITLE)) {
+          if (mf.getType() == MediaFileType.VIDEO && !firstVideoFile) {
+            // only get subtitle information from the first video file
+            continue;
           }
-          audioChannels.add(audio.getAudioChannels());
+
+          // subtitle language
+          if (!mf.getSubtitleLanguages().isEmpty()) {
+            subtitleLanguages.addAll(mf.getSubtitleLanguages());
+          }
+          // subtitle formats
+          for (MediaFileSubtitle subtitle : mf.getSubtitles()) {
+            if (!subtitle.getCodec().isEmpty()) {
+              subtitleFormats.add(subtitle.getCodec());
+            }
+          }
+
+          if (mf.getType() == MediaFileType.VIDEO) {
+            firstVideoFile = false;
+          }
         }
 
-        if (first) {
-          // audio stream count
-          audioCount = mf.getAudioStreams().size();
+        subtitleStreamCount.add(episode.getMediaInfoSubtitleStreamCount());
 
-          // audio languages
-          audioLanguages.addAll(mf.getAudioLanguagesList());
+        // get all audio information from video files and audio files
+        firstVideoFile = true;
+        for (MediaFile mf : episode.getMediaFiles(MediaFileType.VIDEO, MediaFileType.AUDIO)) {
+          if (mf.getType() == MediaFileType.VIDEO && !firstVideoFile) {
+            // only get audio information from the first video file
+            continue;
+          }
 
-          // audio titles
-          audioTitles.addAll(mf.getAudioTitleList());
+          for (MediaFileAudioStream audio : mf.getAudioStreams()) {
+            if (StringUtils.isNotBlank(audio.getCodec())) {
+              audioCodecs.add(audio.getCodec());
+            }
+            audioChannels.add(audio.getAudioChannels());
+          }
 
-          // subtitles stream count
-          subtitleCount = mf.getSubtitles().size();
+          // audio language
+          if (!mf.getAudioLanguagesList().isEmpty()) {
+            audioLanguages.addAll(mf.getAudioLanguagesList());
+          }
 
-          // HDR Format
+          // Audio Titles
+          if (!mf.getAudioTitleList().isEmpty()) {
+            audioTitles.addAll(mf.getAudioTitleList());
+          }
+
+          if (mf.getType() == MediaFileType.VIDEO) {
+            firstVideoFile = false;
+          }
+        }
+        audioStreamCount.add(episode.getMediaInfoAudioStreamCount());
+
+        // get video related information only from video files
+        for (MediaFile mf : episode.getMediaFiles(MediaFileType.VIDEO)) {
+          // video codec
+          if (StringUtils.isNotBlank(mf.getVideoCodec())) {
+            videoCodecs.add(mf.getVideoCodec());
+          }
+
+          // frame rate
+          if (mf.getFrameRate() > 0) {
+            frameRates.add(mf.getFrameRate());
+          }
+
+          // video container
+          if (StringUtils.isNotBlank(mf.getContainerFormat())) {
+            videoContainers.putIfAbsent(mf.getContainerFormat().toLowerCase(Locale.ROOT), mf.getContainerFormat());
+          }
+
+          // HDR Format (comma separated)
           if (!mf.getHdrFormat().isEmpty()) {
-            String[] hdrs = mf.getHdrFormat().split(", ");
-            hdrFormat.addAll(Arrays.asList(hdrs));
+            hdrFormat.addAll(Arrays.asList(mf.getHdrFormat().split(", ")));
           }
-        }
 
-        first = false;
-      }
-
-      // get subtitle language/format from video files and subtitle files
-      for (MediaFile mf : episode.getMediaFiles(MediaFileType.VIDEO, MediaFileType.SUBTITLE)) {
-        // subtitle language
-        if (!mf.getSubtitleLanguages().isEmpty()) {
-          subtitleLanguages.addAll(mf.getSubtitleLanguages());
-        }
-        // subtitle formats
-        for (MediaFileSubtitle subtitle : mf.getSubtitles()) {
-          if (!subtitle.getCodec().isEmpty()) {
-            subtitleFormats.add(subtitle.getCodec());
-          }
+          break;
         }
       }
-
-      // get audio data also from audio files
-      for (MediaFile mf : episode.getMediaFiles(MediaFileType.AUDIO)) {
-        audioCount++;
-        audioLanguages.addAll(mf.getAudioLanguagesList());
-        audioTitles.addAll(mf.getAudioTitleList());
-      }
-
-      audioStreamCount.add(audioCount);
-      subtitleStreamCount.add(subtitleCount);
     }
 
     // video codecs
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(videoCodecsInEpisodes, videoCodecs)) {
-      firePropertyChange(Constants.VIDEO_CODEC, null, videoCodecsInEpisodes);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
 
     }
 
     // frame rate
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(frameRatesInEpisodes, frameRates)) {
-      firePropertyChange(Constants.FRAME_RATE, null, frameRatesInEpisodes);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
 
     // video container
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(videoContainersInEpisodes, videoContainers.values())) {
-      firePropertyChange(Constants.VIDEO_CONTAINER, null, videoContainersInEpisodes);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
 
     // audio codec
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(audioCodecsInEpisodes, audioCodecs)) {
-      firePropertyChange(Constants.AUDIO_CODEC, null, audioCodecsInEpisodes);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
 
     // audio channels
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(audioChannelsInEpisodes, audioChannels)) {
-      firePropertyChange(Constants.AUDIO_CHANNEL, null, audioChannelsInEpisodes);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
 
     // audio streams
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(audioStreamsInEpisodes, audioStreamCount)) {
-      firePropertyChange(Constants.AUDIOSTREAMS_COUNT, null, audioStreamsInEpisodes);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
 
     // audio languages
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(audioLanguagesInEpisodes, audioLanguages)) {
-      firePropertyChange(Constants.AUDIO_LANGUAGES, null, audioLanguagesInEpisodes);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
 
     // subtitles
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(subtitlesInEpisodes, subtitleStreamCount)) {
-      firePropertyChange(Constants.SUBTITLES_COUNT, null, subtitlesInEpisodes);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
 
     // subtitle languages
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(subtitleLanguagesInEpisodes, subtitleLanguages)) {
-      firePropertyChange(Constants.SUBTITLE_LANGUAGES, null, subtitleLanguagesInEpisodes);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
 
     // subtitle formats
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(subtitleFormatsInEpisodes, subtitleFormats)) {
-      firePropertyChange(Constants.SUBTITLE_FORMATS, null, subtitleFormatsInEpisodes);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
 
     // HDR Format
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(hdrFormatInEpisodes, hdrFormat)) {
-      firePropertyChange(Constants.HDR_FORMAT, null, hdrFormatInEpisodes);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
 
     // audio titles
     if (ListUtils.addToCopyOnWriteArrayListIfAbsent(audioTitlesInEpisodes, audioTitles)) {
-      firePropertyChange(Constants.AUDIO_TITLE, null, audioTitlesInEpisodes);
+      EventBus.publishEvent(TOPIC_TV_SHOWS_UI, Event.createUpdateEvent(instance));
     }
   }
 
-  public Collection<String> getVideoCodecsInEpisodes() {
+  public List<String> getVideoCodecsInEpisodes() {
     return Collections.unmodifiableList(videoCodecsInEpisodes);
   }
 
-  public Collection<String> getVideoContainersInEpisodes() {
+  public List<String> getVideoContainersInEpisodes() {
     return Collections.unmodifiableList(videoContainersInEpisodes);
   }
 
-  public Collection<Double> getFrameRatesInEpisodes() {
+  public List<Double> getFrameRatesInEpisodes() {
     return Collections.unmodifiableList(frameRatesInEpisodes);
   }
 
-  public Collection<String> getAudioCodecsInEpisodes() {
+  public List<String> getAudioCodecsInEpisodes() {
     return Collections.unmodifiableList(audioCodecsInEpisodes);
   }
 
-  public Collection<Integer> getAudioChannelsInEpisodes() {
+  public List<Integer> getAudioChannelsInEpisodes() {
     return Collections.unmodifiableList(audioChannelsInEpisodes);
   }
 
-  public Collection<MediaCertification> getCertification() {
+  public List<MediaCertification> getCertification() {
     return Collections.unmodifiableList(certificationsInTvShows);
   }
 
-  public Collection<Integer> getAudioStreamsInEpisodes() {
+  public List<Integer> getAudioStreamsInEpisodes() {
     return Collections.unmodifiableList(audioStreamsInEpisodes);
   }
 
-  public Collection<Integer> getSubtitlesInEpisodes() {
+  public List<Integer> getSubtitlesInEpisodes() {
     return Collections.unmodifiableList(subtitlesInEpisodes);
   }
 
-  public Collection<String> getAudioLanguagesInEpisodes() {
+  public List<String> getAudioLanguagesInEpisodes() {
     return Collections.unmodifiableList(audioLanguagesInEpisodes);
   }
 
-  public Collection<String> getSubtitleLanguagesInEpisodes() {
+  public List<String> getSubtitleLanguagesInEpisodes() {
     return Collections.unmodifiableList(subtitleLanguagesInEpisodes);
   }
 
-  public Collection<String> getSubtitleFormatsInEpisodes() {
+  public List<String> getSubtitleFormatsInEpisodes() {
     return Collections.unmodifiableList(subtitleFormatsInEpisodes);
   }
 
-  public Collection<String> getHdrFormatInEpisodes() {
+  public List<String> getHdrFormatInEpisodes() {
     return Collections.unmodifiableList(hdrFormatInEpisodes);
   }
 
-  public Collection<String> getAudioTitlesInEpisodes() {
+  public List<String> getAudioTitlesInEpisodes() {
     return Collections.unmodifiableList(audioTitlesInEpisodes);
   }
 

@@ -18,21 +18,22 @@ package org.tinymediamanager.ui.tvshows.filters;
 import static org.tinymediamanager.core.MediaFileType.AUDIO;
 import static org.tinymediamanager.core.MediaFileType.VIDEO;
 
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.entities.MediaFile;
-import org.tinymediamanager.core.tvshow.TvShowList;
-import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -42,13 +43,12 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  */
 public class TvShowAudioTitleFilter extends AbstractCheckComboBoxTvShowUIFilter<String> {
 
-  private final TvShowList tvShowList = TvShowModuleManager.getInstance().getTvShowList();
-
   public TvShowAudioTitleFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
-    buildAudioTitleArray();
-    tvShowList.addPropertyChangeListener(Constants.AUDIO_TITLE, evt -> SwingUtilities.invokeLater(this::buildAudioTitleArray));
+
+    buildAndInstallAudioTitleArray();
+    EventBus.registerListener(EventBus.TOPIC_TV_SHOWS_UI, event -> buildAndInstallAudioTitleArray());
   }
 
   @Override
@@ -96,9 +96,19 @@ public class TvShowAudioTitleFilter extends AbstractCheckComboBoxTvShowUIFilter<
     return false;
   }
 
-  private void buildAudioTitleArray() {
-    List<String> titles = new ArrayList<>(tvShowList.getAudioTitlesInEpisodes());
-    Collections.sort(titles);
-    setValues(titles);
+  private void buildAndInstallAudioTitleArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<String> audioTitlesInEpisodes = new HashSet<>(tvShowList.getAudioTitlesInEpisodes());
+
+    if (!SetUtils.equals(oldValues, audioTitlesInEpisodes)) {
+      oldValues.clear();
+      oldValues.addAll(audioTitlesInEpisodes);
+
+      List<String> sortedAudioTitles = ListUtils.asSortedList(audioTitlesInEpisodes);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedAudioTitles));
+    }
   }
 }
