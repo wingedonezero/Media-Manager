@@ -1263,8 +1263,10 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
               // nothing to do
             }
           }
-          // get edition from name
-          movie.setEdition(MovieEdition.getMovieEditionFromString(basename));
+          // get edition from name if no edition has been set via NFO
+          if (movie.getEdition() == MovieEdition.NONE) {
+            movie.setEdition(MovieEdition.getMovieEditionFromString(basename));
+          }
 
           // if the String 3D is in the movie file name, assume it is a 3D movie
           Matcher matcher = VIDEO_3D_PATTERN.matcher(basename);
