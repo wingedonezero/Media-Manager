@@ -93,7 +93,9 @@ public class MovieRenamerPreview {
         c.oldFiles.add(container.getOldPath().relativize(typeMf.getFileAsPath()).toString());
         List<MediaFile> mfs = MovieRenamer.generateFilename(movie, new MediaFile(typeMf), newVideoBasename);
         for (MediaFile mf : mfs) {
-          c.newFiles.add(container.getNewPath().relativize(mf.getFileAsPath()).toString());
+          // need old path here, since the movie object still holds the old path
+          // the new path is only set on the clone, which is not used for the filename generation
+          c.newFiles.add(container.getOldPath().relativize(mf.getFileAsPath()).toString());
         }
       }
       if (!c.oldFiles.isEmpty()) {
