@@ -38,7 +38,7 @@ public class MovieLockedFilter extends AbstractMovieUIFilter {
 
     private final String title;
 
-    private LockedFlag(String title) {
+    LockedFlag(String title) {
       this.title = title;
     }
 

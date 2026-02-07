@@ -15,22 +15,22 @@
  */
 package org.tinymediamanager.ui.tvshows.filters;
 
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.MediaFileType;
 import org.tinymediamanager.core.TmmResourceBundle;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.entities.MediaFile;
-import org.tinymediamanager.core.tvshow.TvShowList;
-import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -39,14 +39,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Manuel Laggner
  */
 public class TvShowVideoCodecFilter extends AbstractCheckComboBoxTvShowUIFilter<String> {
-  private TvShowList tvShowList = TvShowModuleManager.getInstance().getTvShowList();
 
   public TvShowVideoCodecFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
-    buildAndInstallCodecArray();
-    PropertyChangeListener propertyChangeListener = evt -> buildAndInstallCodecArray();
-    tvShowList.addPropertyChangeListener(Constants.VIDEO_CODEC, propertyChangeListener);
+
+    buildAndInstallVideoCodecArray();
+    EventBus.registerListener(EventBus.TOPIC_TV_SHOWS_UI, event -> buildAndInstallVideoCodecArray());
   }
 
   @Override
@@ -76,11 +75,20 @@ public class TvShowVideoCodecFilter extends AbstractCheckComboBoxTvShowUIFilter<
     return new TmmLabel(TmmResourceBundle.getString("metatag.videocodec"));
   }
 
-  private void buildAndInstallCodecArray() {
-    List<String> codecs = new ArrayList<>(tvShowList.getVideoCodecsInEpisodes());
-    Collections.sort(codecs);
+  private void buildAndInstallVideoCodecArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<String> videoCodecsInEpisodes = new HashSet<>(tvShowList.getVideoCodecsInEpisodes());
 
-    setValues(codecs);
+    if (!SetUtils.equals(oldValues, videoCodecsInEpisodes)) {
+      oldValues.clear();
+      oldValues.addAll(videoCodecsInEpisodes);
+
+      List<String> sortedVideoCodecs = ListUtils.asSortedList(videoCodecsInEpisodes);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedVideoCodecs));
+    }
   }
 
   @Override

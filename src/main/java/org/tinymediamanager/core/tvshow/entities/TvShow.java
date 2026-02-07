@@ -2453,6 +2453,11 @@ public class TvShow extends MediaEntity implements IMediaInformation {
   }
 
   @Override
+  public Integer getMediaInfoAudioStreamCount() {
+    return 0;
+  }
+
+  @Override
   public String getMediaInfoAudioLanguage() {
     return "";
   }
@@ -2465,6 +2470,11 @@ public class TvShow extends MediaEntity implements IMediaInformation {
   @Override
   public List<String> getMediaInfoSubtitleLanguageList() {
     return Collections.emptyList();
+  }
+
+  @Override
+  public Integer getMediaInfoSubtitleStreamCount() {
+    return 0;
   }
 
   @Override
@@ -2701,6 +2711,24 @@ public class TvShow extends MediaEntity implements IMediaInformation {
     }
 
     return null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    TvShow tvShow = (TvShow) o;
+    return path.equals(tvShow.path);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(path);
   }
 
   /**

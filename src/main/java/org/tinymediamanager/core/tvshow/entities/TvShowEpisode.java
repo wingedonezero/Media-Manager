@@ -1825,6 +1825,15 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
   }
 
   @Override
+  public Integer getMediaInfoAudioStreamCount() {
+    int audioStreamCount = getMainVideoFile().getAudioStreams().size();
+    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
+      audioStreamCount += mf.getAudioStreams().size();
+    }
+    return audioStreamCount;
+  }
+
+  @Override
   public String getMediaInfoAudioCodec() {
     return getMainVideoFile().getAudioCodec();
   }
@@ -1896,6 +1905,15 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
       lang.addAll(mf.getAudioLanguagesList());
     }
     return lang;
+  }
+
+  @Override
+  public Integer getMediaInfoSubtitleStreamCount() {
+    int subtitleStreamCount = getMainVideoFile().getSubtitles().size();
+    for (MediaFile mf : getMediaFiles(MediaFileType.SUBTITLE)) {
+      subtitleStreamCount += mf.getSubtitles().size();
+    }
+    return subtitleStreamCount;
   }
 
   @Override

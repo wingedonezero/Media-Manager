@@ -114,6 +114,13 @@ public interface IMediaInformation {
   String getVideoHDRFormat();
 
   /**
+   * gets the count of audio streams
+   * 
+   * @return the count of audio streams
+   */
+  Integer getMediaInfoAudioStreamCount();
+
+  /**
    * gets the audio codec (e.g. mp3) from the main audio stream
    * 
    * @return the audio codec
@@ -168,6 +175,13 @@ public interface IMediaInformation {
    * @return the audio language from all streams
    */
   List<String> getMediaInfoAudioLanguageList();
+
+  /**
+   * gets the count of subtitle streams
+   * 
+   * @return the count of subtitle streams
+   */
+  Integer getMediaInfoSubtitleStreamCount();
 
   /**
    * gets all subtitle languages (e.g, de) from the subtitle streams as List

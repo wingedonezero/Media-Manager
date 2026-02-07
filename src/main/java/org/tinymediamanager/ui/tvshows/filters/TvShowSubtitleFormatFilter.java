@@ -16,20 +16,20 @@
 
 package org.tinymediamanager.ui.tvshows.filters;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.tvshow.TvShowList;
-import org.tinymediamanager.core.tvshow.TvShowModuleManager;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -38,14 +38,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Manuel Laggner
  */
 public class TvShowSubtitleFormatFilter extends AbstractCheckComboBoxTvShowUIFilter<String> {
-  private final TvShowList tvShowList = TvShowModuleManager.getInstance().getTvShowList();
 
   public TvShowSubtitleFormatFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
-    buildSubtitleFormatArray();
-    tvShowList.addPropertyChangeListener(Constants.SUBTITLE_FORMATS, evt -> SwingUtilities.invokeLater(this::buildSubtitleFormatArray));
 
+    buildAndInstallSubtitleFormatArray();
+    EventBus.registerListener(EventBus.TOPIC_TV_SHOWS_UI, event -> buildAndInstallSubtitleFormatArray());
   }
 
   @Override
@@ -85,9 +84,19 @@ public class TvShowSubtitleFormatFilter extends AbstractCheckComboBoxTvShowUIFil
     return "tvShowSubtitleFormat";
   }
 
-  private void buildSubtitleFormatArray() {
-    List<String> subtitleFormats = new ArrayList<>(tvShowList.getSubtitleFormatsInEpisodes());
-    Collections.sort(subtitleFormats);
-    setValues(subtitleFormats);
+  private void buildAndInstallSubtitleFormatArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<String> subtitleFormatsInEpisodes = new HashSet<>(tvShowList.getSubtitleFormatsInEpisodes());
+
+    if (!SetUtils.equals(oldValues, subtitleFormatsInEpisodes)) {
+      oldValues.clear();
+      oldValues.addAll(subtitleFormatsInEpisodes);
+
+      List<String> sortedSubtitleFormats = ListUtils.asSortedList(subtitleFormatsInEpisodes);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedSubtitleFormats));
+    }
   }
 }

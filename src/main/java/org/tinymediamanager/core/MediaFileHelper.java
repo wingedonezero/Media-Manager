@@ -828,7 +828,7 @@ public class MediaFileHelper {
       mediaFile.setFilesize(size);
     }
     catch (Exception e) {
-      LOGGER.debug("could not get file information (size/date): {}", e.getMessage());
+      LOGGER.debug("could not get file information (size/date): {} / {}", e.getMessage(), e.getClass().getName());
     }
 
     return dirty;

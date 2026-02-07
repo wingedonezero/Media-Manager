@@ -1,3 +1,24 @@
+Version 5.2.7
+=======================
++ [Performance] heavily improved UI performance for really large libraries
++ [Trailer] integrated deno for yt-dlp #3200
+---
+x [Movies] fixed excluding of nested folders when using .tmmignore, tmmignore or .nomedia files
+x [Movies] fixed some renamer issues with empty path/filename patterns #3184
+x [Movies] fixed hanging UI on updating large libraries
+x [Movies] do not overwrite editions from NFO on update data sources #3157
+x [Movie sets] fixed writing NFO files into Emby-style movie set folders #3137
+x [Movie sets] fixed sorting by (missing) movie count #3204
+x [TV shows] fixed cleanup of mediainfo XML files for episodes #3198
+x [TV shows] also do a cleanup of empty TV show folders #3201
+x [UI] fixed sorting of the rating column in the TV show module
+x [NFO] write default ratings first in NFO files to improve compatibility with some media centers
+x [HTTP] only fetch ratings chosen in the settings
+x [WOL] send WOL magic packets twice to improve wake-up reliability #3178
+x [KODI] completely rework of file matching algo for RPC calls #3182
+x [Library] upgraded libmediainfo to 26.01
+
+
 Version 5.2.6
 =======================
 + [TV shows] added support for more Jellyfin compatible season poster filenames #3187
@@ -16,7 +37,7 @@ x [Updater] fixed downloading on incomplete/corrupted updates
 Version 5.2.5
 =======================
 + [TV shows] added taglines for TV shows #3173
-+ [Movie sets] added option to append TMDB ID to movie set folder names (Emby style) #3137
++ [Movie sets] added option to append TMDB ID to movie set folder names (Emby-style) #3137
 + [UI] added native file dialogs from FlatLaf for better OS integration (Windows and macOS)
 + [UI] added "remove all genres" and "remove all tags" to the TV show bulk editor
 + [UI] added edition and media source to the movie set tree view #3152

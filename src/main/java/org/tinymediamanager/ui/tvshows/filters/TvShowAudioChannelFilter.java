@@ -19,20 +19,21 @@ import static org.tinymediamanager.core.MediaFileType.AUDIO;
 import static org.tinymediamanager.core.MediaFileType.VIDEO;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.MediaFileHelper;
 import org.tinymediamanager.core.TmmResourceBundle;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.entities.MediaFile;
-import org.tinymediamanager.core.tvshow.TvShowList;
-import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -41,13 +42,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Manuel Laggner
  */
 public class TvShowAudioChannelFilter extends AbstractCheckComboBoxTvShowUIFilter<String> {
-  private final TvShowList tvShowList = TvShowModuleManager.getInstance().getTvShowList();
 
   public TvShowAudioChannelFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.substring(0, 1).equals(s2.substring(0, 1))); // first char is channel
-    buildAudioChannelArray();
-    tvShowList.addPropertyChangeListener(Constants.AUDIO_CHANNEL, evt -> SwingUtilities.invokeLater(this::buildAudioChannelArray));
+
+    buildAndInstallAudioChannelArray();
+    EventBus.registerListener(EventBus.TOPIC_TV_SHOWS_UI, event -> buildAndInstallAudioChannelArray());
   }
 
   @Override
@@ -57,7 +58,7 @@ public class TvShowAudioChannelFilter extends AbstractCheckComboBoxTvShowUIFilte
 
   @Override
   protected boolean accept(TvShow tvShow, List<TvShowEpisode> episodes, boolean invert) {
-    List<String> audioChannels = new ArrayList<String>();
+    List<String> audioChannels = new ArrayList<>();
     for (String values : checkComboBox.getSelectedItems()) {
       audioChannels.add(values.substring(0, 1)); // MI does not return more than 8 channels, so 16 is no issue ;)
     }
@@ -77,13 +78,23 @@ public class TvShowAudioChannelFilter extends AbstractCheckComboBoxTvShowUIFilte
     return false;
   }
 
-  private void buildAudioChannelArray() {
-    List<String> audioChannel = new ArrayList<>();
+  private void buildAndInstallAudioChannelArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<String> audioChannelsInEpisodes = new HashSet<>();
     for (int channel : tvShowList.getAudioChannelsInEpisodes()) {
-      audioChannel.add(audioChannelNotation(channel));
+      audioChannelsInEpisodes.add(audioChannelNotation(channel));
     }
-    Collections.sort(audioChannel);
-    setValues(audioChannel);
+
+    if (!SetUtils.equals(oldValues, audioChannelsInEpisodes)) {
+      oldValues.clear();
+      oldValues.addAll(audioChannelsInEpisodes);
+
+      List<String> sortedAudioChannels = ListUtils.asSortedList(audioChannelsInEpisodes);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedAudioChannels));
+    }
   }
 
   private String audioChannelNotation(int channels) {

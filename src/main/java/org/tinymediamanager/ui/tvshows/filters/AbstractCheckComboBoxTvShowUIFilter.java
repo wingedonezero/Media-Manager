@@ -18,10 +18,14 @@ package org.tinymediamanager.ui.tvshows.filters;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JComponent;
 
+import org.tinymediamanager.core.tvshow.TvShowList;
+import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.ui.components.combobox.TmmCheckComboBox;
 
 /**
@@ -35,7 +39,16 @@ import org.tinymediamanager.ui.components.combobox.TmmCheckComboBox;
  */
 abstract class AbstractCheckComboBoxTvShowUIFilter<E> extends AbstractTvShowUIFilter {
 
+  protected final TvShowList    tvShowList;
+  protected final Set<E>        oldValues;
+
   protected TmmCheckComboBox<E> checkComboBox;
+
+  protected AbstractCheckComboBoxTvShowUIFilter() {
+    super();
+    oldValues = new HashSet<>(0);
+    tvShowList = TvShowModuleManager.getInstance().getTvShowList();
+  }
 
   @Override
   protected JComponent createFilterComponent() {

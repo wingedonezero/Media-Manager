@@ -39,6 +39,7 @@ public class TvShowMediaSourceFilter extends AbstractCheckComboBoxTvShowUIFilter
   public TvShowMediaSourceFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.toString().toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
+
     buildAndInstallMediaSources();
     MediaSource.addListener(evt -> SwingUtilities.invokeLater(this::buildAndInstallMediaSources));
   }

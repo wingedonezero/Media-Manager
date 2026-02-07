@@ -109,22 +109,32 @@ public abstract class TmmTreeDataProvider<E extends TmmTreeNode> extends Abstrac
 
   protected TmmTreeNode getNodeFromCache(Object obj) {
     readWriteLock.readLock().lock();
-    TmmTreeNode node = nodeMap.get(obj);
-    readWriteLock.readLock().unlock();
-    return node;
+    try {
+      return nodeMap.get(obj);
+    }
+    finally {
+      readWriteLock.readLock().unlock();
+    }
   }
 
   protected void putNodeToCache(Object obj, TmmTreeNode node) {
     readWriteLock.writeLock().lock();
-    nodeMap.put(obj, node);
-    readWriteLock.writeLock().unlock();
+    try {
+      nodeMap.put(obj, node);
+    }
+    finally {
+      readWriteLock.writeLock().unlock();
+    }
   }
 
   protected TmmTreeNode removeNodeFromCache(Object obj) {
     readWriteLock.writeLock().lock();
-    TmmTreeNode node = nodeMap.remove(obj);
-    readWriteLock.writeLock().unlock();
-    return node;
+    try {
+      return nodeMap.remove(obj);
+    }
+    finally {
+      readWriteLock.writeLock().unlock();
+    }
   }
 
   /**

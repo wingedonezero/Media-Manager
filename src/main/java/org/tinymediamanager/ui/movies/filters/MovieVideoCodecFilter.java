@@ -15,19 +15,19 @@
  */
 package org.tinymediamanager.ui.movies.filters;
 
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.movie.MovieList;
-import org.tinymediamanager.core.movie.MovieModuleManager;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.movie.entities.Movie;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -36,14 +36,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Manuel Laggner
  */
 public class MovieVideoCodecFilter extends AbstractCheckComboBoxMovieUIFilter<String> {
-  private final MovieList movieList = MovieModuleManager.getInstance().getMovieList();
 
   public MovieVideoCodecFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
-    buildAndInstallCodecArray();
-    PropertyChangeListener propertyChangeListener = evt -> buildAndInstallCodecArray();
-    movieList.addPropertyChangeListener(Constants.VIDEO_CODEC, propertyChangeListener);
+
+    buildAndInstallVideoCodecArray();
+    EventBus.registerListener(EventBus.TOPIC_MOVIES_UI, event -> buildAndInstallVideoCodecArray());
   }
 
   @Override
@@ -62,11 +61,20 @@ public class MovieVideoCodecFilter extends AbstractCheckComboBoxMovieUIFilter<St
     return new TmmLabel(TmmResourceBundle.getString("metatag.videocodec"));
   }
 
-  private void buildAndInstallCodecArray() {
-    List<String> codecs = new ArrayList<>(movieList.getVideoCodecsInMovies());
-    Collections.sort(codecs);
+  private void buildAndInstallVideoCodecArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<String> videoCodecsInMovies = new HashSet<>(movieList.getVideoCodecsInMovies());
 
-    setValues(codecs);
+    if (!SetUtils.equals(oldValues, videoCodecsInMovies)) {
+      oldValues.clear();
+      oldValues.addAll(videoCodecsInMovies);
+
+      List<String> sortedVideoCodecs = ListUtils.asSortedList(videoCodecsInMovies);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedVideoCodecs));
+    }
   }
 
   @Override

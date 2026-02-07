@@ -16,7 +16,6 @@
 
 package org.tinymediamanager.thirdparty;
 
-import java.nio.file.Paths;
 import java.util.List;
 
 import org.junit.AfterClass;
@@ -28,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.TmmModuleManager;
 import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
-import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.jsonrpc.api.model.VideoModel.MovieDetail;
 import org.tinymediamanager.jsonrpc.config.HostConfig;
 
@@ -79,14 +77,6 @@ public class ITKodiRPCTest {
   @Test
   public void getAllTvShows() {
     KodiRPC.getInstance().getAllTvShows();
-  }
-
-  @Test
-  public void testEp() {
-    TvShow show = TvShowModuleManager.getInstance().getTvShowList().getTvShowByPath(Paths.get("target\\test-classes\\testtvshows\\Futurama (1999)"));
-    System.out.println(KodiRPC.getInstance().getEpisodeId(show.getEpisodes().get(0)));
-    System.out.println(KodiRPC.getInstance().getEpisodeId(show.getEpisodes().get(1)));
-    System.out.println(KodiRPC.getInstance().getEpisodeId(show.getEpisodes().get(2)));
   }
 
   @BeforeClass

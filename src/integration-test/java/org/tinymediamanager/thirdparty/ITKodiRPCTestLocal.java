@@ -1,135 +1,104 @@
 package org.tinymediamanager.thirdparty;
 
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import static org.junit.Assert.assertEquals;
 
+import java.io.File;
+import java.io.IOException;
+
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.tinymediamanager.core.Utils;
+import org.tinymediamanager.core.BasicITest;
+import org.tinymediamanager.core.MediaFileType;
+import org.tinymediamanager.core.TmmModuleManager;
+import org.tinymediamanager.core.entities.MediaFile;
+import org.tinymediamanager.core.movie.MovieModuleManager;
+import org.tinymediamanager.core.movie.entities.Movie;
+import org.tinymediamanager.core.tvshow.TvShowModuleManager;
+import org.tinymediamanager.core.tvshow.entities.TvShow;
+import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
+import org.tinymediamanager.jsonrpc.api.call.VideoLibrary;
+import org.tinymediamanager.jsonrpc.api.model.VideoModel.MovieFields;
+import org.tinymediamanager.jsonrpc.api.model.VideoModel.TVShowFields;
+import org.tinymediamanager.scraper.entities.MediaEpisodeGroup;
+import org.tinymediamanager.scraper.entities.MediaEpisodeNumber;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 // copy of impl to quick test em
 
-public class ITKodiRPCTestLocal {
-  private static final String  SEPARATOR_REGEX  = "[\\/\\\\]+";
-  private Map<String, String>  videodatasources = new LinkedHashMap<>(); // dir, label
-  // KODI ds|file=id
-  private Map<String, Integer> kodiDsAndFolder  = new HashMap<>();
-  private Map<String, String>  fileMap          = new HashMap<>();
-  private int                  cnt              = 0;
+public class ITKodiRPCTestLocal extends BasicITest {
+
+  @Before
+  public void initRPC() throws Exception {
+    TmmModuleManager.getInstance().startUp();
+    MovieModuleManager.getInstance().startUp();
+    TvShowModuleManager.getInstance().startUp();
+  }
+
+  @After
+  public void tearDown() throws Exception {
+    TvShowModuleManager.getInstance().shutDown();
+    MovieModuleManager.getInstance().shutDown();
+    TmmModuleManager.getInstance().shutDown();
+  }
 
   @Test
-  public void testMapping() throws UnsupportedEncodingException {
-    loadDatasource("multipath://smb%3a%2f%2f10.0.0.2%2fi%24%2fDownloads%2f/smb%3a%2f%2f10.0.0.2%2fj%24%2fDownloads%2f/");
-    loadDatasource("smb://DS1821NAS/Movies/");
-    loadDatasource("smb://DS1821NAS/Dupes/");
-    getAndSetKodiNames("smb://DS1821NAS/Movies/Action - Adventure/12 Strong (2018)/12 Strong (2018) - 1080p - Blu-ray - DTS.mkv");
-    getAndSetKodiNames("smb://DS1821NAS/Dupes/Action - Adventure/12 Strong (2018)/12 Strong (2018) - 1080p - Blu-ray - DTS.mkv");
-    getAndSetTmmNames("M:\\", "M:\\Action - Adventure\\12 Strong (2018)\\12 Strong (2018) - 1080p - Blu-ray - DTS.mkv");
-    getAndSetTmmNames("D:\\", "D:\\Action - Adventure\\12 Strong (2018)\\12 Strong (2018) - 1080p - Blu-ray - DTS.mkv");
+  public void testMovieMapping() throws IOException {
+    // set same paths as in Kodi JSONs
+    Movie m = new Movie();
+    m.setDataSource("C:\\some\\datasource");
+    m.setPath("C:\\some\\datasource\\5 Centimeters per Second (2007)");
+    MediaFile mf = new MediaFile();
+    mf.setType(MediaFileType.VIDEO);
+    mf.setPath("C:\\some\\datasource\\5 Centimeters per Second (2007)");
+    mf.setFilename("5 Centimeters per Second (2007) 1080p h264.mkv");
+    m.addToMediaFiles(mf);
+    MovieModuleManager.getInstance().getMovieList().addMovie(m);
 
-    System.out.println("fin");
+    // map Kodi response to TMM entities
+    ObjectMapper mapper = new ObjectMapper();
+
+    // load saved KodiRPC movies response
+    JsonNode node = mapper.readTree(new File("src/test/resources/KodiRPC/getMovies.json"));
+    VideoLibrary.GetMovies call = new VideoLibrary.GetMovies(MovieFields.FILE);
+    call.setResponse(node);
+    KodiRPC.getInstance().getAndSetMovieMappings(call.getResults());
+
+    assertEquals(1, KodiRPC.getInstance().getMappedMoviesSize());
   }
 
-  private void loadDatasource(String file) throws UnsupportedEncodingException {
-    System.out.println("Kodi datasource: " + file);
-    if (file.startsWith("multipath")) {
-      // more than one source mapped to a single Kodi datasource
-      // multipath://%2fmedia%2f8TB%2fFilme%2fKino%2f/%2fmedia%2fWD-4TB%2f!Kino2%2f/
-      String mp = file.replace("multipath://", ""); // remove prefix
-      String[] source = mp.split("/"); // split on slash
-      for (String ds : source) {
-        String s = URLDecoder.decode(ds, "UTF-8");
-        System.out.println("DS: " + s);
-        this.videodatasources.put(s, "ds name");
-      }
-    }
-    else {
-      System.out.println("DS: " + file);
-      this.videodatasources.put(file, "ds name");
-    }
-  }
+  @Test
+  public void testTvShowMapping() throws IOException {
+    // set same paths as in Kodi JSONs
+    TvShow s = new TvShow();
+    s.setTitle("Clannad");
+    s.setDataSource("C:\\some\\datasource");
+    s.setPath("C:\\some\\datasource\\Clannad (2007)");
+    TvShowEpisode episode = new TvShowEpisode();
+    episode.setDataSource("C:\\some\\datasource");
+    episode.setPath("C:\\some\\datasource\\Clannad (2007)");
+    episode.setTvShow(s);
+    episode.setTitle("clannad-EP");
+    episode.setEpisode(new MediaEpisodeNumber(MediaEpisodeGroup.DEFAULT_AIRED, 1, 2));
+    MediaFile mf = new MediaFile();
+    mf.setType(MediaFileType.VIDEO);
+    mf.setPath("C:\\some\\datasource\\Clannad (2007)");
+    mf.setFilename("S01E01.mkv");
+    episode.addToMediaFiles(mf);
+    s.addEpisode(episode);
+    TvShowModuleManager.getInstance().getTvShowList().addTvShow(s);
 
-  private void getAndSetKodiNames(String file) {
-    cnt++;
-    // stacking only supported on movies
-    if (file.startsWith("stack")) {
-      String[] files = file.split(" , ");
-      for (String s : files) {
-        s = s.replaceFirst("^stack://", "");
-        String ds = detectDatasource(s);
-        String rel = s.replace(ds, ""); // remove ds, to have a relative folder
-        rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-        ds = ds.replaceAll(SEPARATOR_REGEX + "$", ""); // replace ending separator
-        ds = ds.replaceAll(".*" + SEPARATOR_REGEX, ""); // replace everything till last separator
-        if (!kodiDsAndFolder.containsKey(rel)) {
-          kodiDsAndFolder.put(rel, cnt);
-        }
-        else {
-          // no putIfAbsent since i wanna have a log!
-          System.out.println("Kodi file" + file + " already attached to another datasource - skipping");
-        }
-      }
-    }
-    else {
-      // Kodi return full path of video file
-      String ds = detectDatasource(file); // detect datasource of show dir
-      String rel = file.replace(ds, ""); // remove ds, to have a relative folder
-      rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-      ds = ds.replaceAll(SEPARATOR_REGEX + "$", ""); // replace ending separator
-      ds = ds.replaceAll(".*" + SEPARATOR_REGEX, ""); // replace everything till last separator
-      if (!kodiDsAndFolder.containsKey(rel)) {
-        kodiDsAndFolder.put(rel, cnt);
-      }
-      else {
-        // no putIfAbsent since i wanna have a log!
-        System.out.println("Kodi file" + file + " already attached to another datasource - skipping");
-      }
-    }
-  }
+    // map Kodi response to TMM entities
+    ObjectMapper mapper = new ObjectMapper();
 
-  private void getAndSetTmmNames(String ds, String file) {
-    String dsName = parseDatasourceName(Path.of(ds));
-    String rel = Utils.relPath(dsName, file); // file relative from datasource
-    rel = rel.replaceAll(SEPARATOR_REGEX, "/"); // normalize separators
-    if (!fileMap.containsKey(rel)) {
-      fileMap.put(rel, "uuid-uuid-uuid");
-    }
-    else {
-      // no putIfAbsent since i wanna have a log!
-      System.out.println("Movie dir " + file + " already attached to another datasource - skipping");
-    }
-  }
+    // load saved KodiRPC tvshow response
+    JsonNode node = mapper.readTree(new File("src/test/resources/KodiRPC/getShows.json"));
+    VideoLibrary.GetTVShows tvShowCall = new VideoLibrary.GetTVShows(TVShowFields.FILE);
+    tvShowCall.setResponse(node);
+    KodiRPC.getInstance().getAndSetTvShowMappings(tvShowCall.getResults());
 
-  private String detectDatasource(String file) {
-    for (String ds : this.videodatasources.keySet()) {
-      if (file.startsWith(ds)) {
-        return ds;
-      }
-    }
-    return "";
-  }
-
-  private String parseDatasourceName(Path ds) {
-    // get the name of the datasource folder
-    // unfortunately, for UNC paths like \\server\share i cannot get the share name from Path
-    // and URI is so slow
-    String dsName = "";
-    if (ds.getFileName() != null) {
-      dsName = ds.getFileName().toString();
-    }
-    else {
-      // try with good old file, which is not so bitchy
-      File f = ds.toFile();
-      dsName = f.getName();
-    }
-    if (dsName.isEmpty()) {
-      // happens when only a drive letter like M:\ is set - return 1:1
-      dsName = ds.toString();
-    }
-    return dsName;
+    assertEquals(1, KodiRPC.getInstance().getMappedTvShowsSize());
   }
 }

@@ -15,18 +15,18 @@
  */
 package org.tinymediamanager.ui.movies.filters;
 
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.movie.MovieList;
-import org.tinymediamanager.core.movie.MovieModuleManager;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.movie.entities.Movie;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -35,14 +35,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Wolfgang Janes
  */
 public class MovieDecadesFilter extends AbstractCheckComboBoxMovieUIFilter<String> {
-  private final MovieList movieList = MovieModuleManager.getInstance().getMovieList();
 
   public MovieDecadesFilter() {
     super();
-    checkComboBox.enableFilter((s, s2) -> s.startsWith(s2));
-    buildDecades();
-    PropertyChangeListener propertyChangeListener = evt -> buildDecades();
-    movieList.addPropertyChangeListener(Constants.DECADE, propertyChangeListener);
+    checkComboBox.enableFilter(String::startsWith);
+
+    buildAndInstallDecadeArray();
+    EventBus.registerListener(EventBus.TOPIC_MOVIES_UI, event -> buildAndInstallDecadeArray());
   }
 
   @Override
@@ -71,9 +70,19 @@ public class MovieDecadesFilter extends AbstractCheckComboBoxMovieUIFilter<Strin
     return string;
   }
 
-  private void buildDecades() {
-    List<String> decades = new ArrayList<>(movieList.getDecadeInMovies());
-    Collections.sort(decades);
-    setValues(decades);
+  private void buildAndInstallDecadeArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<String> decadesInMovies = new HashSet<>(movieList.getDecadesInMovies());
+
+    if (!SetUtils.equals(oldValues, decadesInMovies)) {
+      oldValues.clear();
+      oldValues.addAll(decadesInMovies);
+
+      List<String> sortedDecades = ListUtils.asSortedList(decadesInMovies);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedDecades));
+    }
   }
 }

@@ -24,12 +24,11 @@ import java.util.Set;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.movie.MovieList;
-import org.tinymediamanager.core.movie.MovieModuleManager;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.table.TmmTableFormat;
 
@@ -40,18 +39,14 @@ import org.tinymediamanager.ui.components.table.TmmTableFormat;
  */
 public class MovieTagFilter extends AbstractCheckComboBoxMovieUIFilter<String> {
   private final Comparator<String> comparator;
-  private final MovieList          movieList;
-  private final Set<String>        oldTags;
 
   public MovieTagFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
     comparator = new TmmTableFormat.StringComparator();
-    movieList = MovieModuleManager.getInstance().getMovieList();
-    oldTags = new HashSet<>();
 
     buildAndInstallTagsArray();
-    movieList.addPropertyChangeListener(Constants.TAGS, evt -> SwingUtilities.invokeLater(this::buildAndInstallTagsArray));
+    EventBus.registerListener(EventBus.TOPIC_MOVIES_UI, event -> buildAndInstallTagsArray());
   }
 
   @Override
@@ -85,22 +80,16 @@ public class MovieTagFilter extends AbstractCheckComboBoxMovieUIFilter<String> {
   private void buildAndInstallTagsArray() {
     // do it lazy because otherwise there is too much UI overhead
     // also use a set for faster lookups
-    boolean dirty = false;
     Set<String> tags = new HashSet<>(movieList.getTagsInMovies());
 
-    if (oldTags.size() != tags.size()) {
-      dirty = true;
-    }
+    if (!SetUtils.equals(oldValues, tags)) {
+      oldValues.clear();
+      oldValues.addAll(tags);
 
-    if (!oldTags.containsAll(tags) || !tags.containsAll(oldTags)) {
-      dirty = true;
-    }
+      List<String> sortedTags = ListUtils.asSortedList(tags, comparator);
 
-    if (dirty) {
-      oldTags.clear();
-      oldTags.addAll(tags);
-
-      setValues(ListUtils.asSortedList(tags, comparator));
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedTags));
     }
   }
 

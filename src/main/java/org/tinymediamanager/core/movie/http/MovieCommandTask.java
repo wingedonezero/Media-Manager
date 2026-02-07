@@ -59,7 +59,6 @@ import org.tinymediamanager.core.threading.TmmThreadPool;
 import org.tinymediamanager.scraper.MediaScraper;
 import org.tinymediamanager.scraper.ScraperType;
 import org.tinymediamanager.scraper.entities.MediaLanguages;
-import org.tinymediamanager.scraper.rating.RatingProvider;
 import org.tinymediamanager.scraper.util.ListUtils;
 import org.tinymediamanager.scraper.util.ParserUtils;
 
@@ -262,7 +261,7 @@ class MovieCommandTask extends TmmThreadPool {
           setTaskName(TmmResourceBundle.getString("movie.fetchratings"));
           publishState(TmmResourceBundle.getString("movie.fetchratings"), getProgressDone());
 
-          MovieFetchRatingsTask task = new MovieFetchRatingsTask(moviesToScrape, RatingProvider.RatingSource.getRatingSourcesForMovies());
+          MovieFetchRatingsTask task = new MovieFetchRatingsTask(moviesToScrape, movieSettings.getFetchRatingSources());
 
           activeTask = task;
           activeTask.run(); // blocking

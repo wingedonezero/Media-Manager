@@ -15,21 +15,21 @@
  */
 package org.tinymediamanager.ui.tvshows.filters;
 
-import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.tvshow.TvShowList;
-import org.tinymediamanager.core.tvshow.TvShowModuleManager;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
 import org.tinymediamanager.scraper.entities.MediaCertification;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -38,14 +38,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Wolfgang Janes
  */
 public class TvShowCertificationFilter extends AbstractCheckComboBoxTvShowUIFilter<MediaCertification> {
-  private final TvShowList tvShowList = TvShowModuleManager.getInstance().getTvShowList();
 
   public TvShowCertificationFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.toString().toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
+
     buildAndInstallCertificationArray();
-    PropertyChangeListener propertyChangeListener = evt -> buildAndInstallCertificationArray();
-    tvShowList.addPropertyChangeListener(Constants.CERTIFICATION, propertyChangeListener);
+    EventBus.registerListener(EventBus.TOPIC_TV_SHOWS_UI, event -> buildAndInstallCertificationArray());
   }
 
   @Override
@@ -81,8 +80,18 @@ public class TvShowCertificationFilter extends AbstractCheckComboBoxTvShowUIFilt
   }
 
   private void buildAndInstallCertificationArray() {
-    List<MediaCertification> certifications = new ArrayList<>(tvShowList.getCertification());
-    Collections.sort(certifications);
-    setValues(certifications);
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<MediaCertification> certificationsInTvShows = new HashSet<>(tvShowList.getCertification());
+
+    if (!SetUtils.equals(oldValues, certificationsInTvShows)) {
+      oldValues.clear();
+      oldValues.addAll(certificationsInTvShows);
+
+      List<MediaCertification> sortedCertifications = ListUtils.asSortedList(certificationsInTvShows);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedCertifications));
+    }
   }
 }

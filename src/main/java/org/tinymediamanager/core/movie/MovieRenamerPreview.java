@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.core.MediaFileType;
 import org.tinymediamanager.core.RenamerPreviewContainer;
 import org.tinymediamanager.core.RenamerPreviewContainer.MediaFileTypeContainer;
@@ -48,8 +49,15 @@ public class MovieRenamerPreview {
   public RenamerPreviewContainer generatePreview() {
 
     // generate the new path
-    container.newPath = Paths.get(movie.getDataSource())
-        .resolve(MovieRenamer.createDestinationForFoldername(MovieModuleManager.getInstance().getSettings().getRenamerPathname(), movie));
+    String newPath = MovieRenamer.createDestinationForFoldername(MovieModuleManager.getInstance().getSettings().getRenamerPathname(), movie);
+    if (StringUtils.isNotBlank(newPath)) {
+      container.newPath = Paths.get(movie.getDataSource(), newPath);
+    }
+    else {
+      // use existing path
+      container.newPath = movie.getPathNIO();
+    }
+
     this.clone.setPath(container.newPath.toString());
 
     // process movie media files
@@ -85,7 +93,9 @@ public class MovieRenamerPreview {
         c.oldFiles.add(container.getOldPath().relativize(typeMf.getFileAsPath()).toString());
         List<MediaFile> mfs = MovieRenamer.generateFilename(movie, new MediaFile(typeMf), newVideoBasename);
         for (MediaFile mf : mfs) {
-          c.newFiles.add(container.getNewPath().relativize(mf.getFileAsPath()).toString());
+          // need old path here, since the movie object still holds the old path
+          // the new path is only set on the clone, which is not used for the filename generation
+          c.newFiles.add(container.getOldPath().relativize(mf.getFileAsPath()).toString());
         }
       }
       if (!c.oldFiles.isEmpty()) {

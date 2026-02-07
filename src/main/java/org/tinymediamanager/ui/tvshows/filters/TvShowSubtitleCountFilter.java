@@ -15,22 +15,19 @@
  */
 package org.tinymediamanager.ui.tvshows.filters;
 
-import static org.tinymediamanager.core.MediaFileType.VIDEO;
-
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.entities.MediaFile;
-import org.tinymediamanager.core.tvshow.TvShowList;
-import org.tinymediamanager.core.tvshow.TvShowModuleManager;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
+import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -39,13 +36,13 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Wolfgang Janes
  */
 public class TvShowSubtitleCountFilter extends AbstractCheckComboBoxTvShowUIFilter<Integer> {
-  private final TvShowList tvShowList = TvShowModuleManager.getInstance().getTvShowList();
 
   public TvShowSubtitleCountFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> String.valueOf(s).startsWith(s2));
-    buildSubtitleCountArray();
-    tvShowList.addPropertyChangeListener(Constants.SUBTITLES_COUNT, evt -> SwingUtilities.invokeLater(this::buildSubtitleCountArray));
+
+    buildAndInstallSubtitleCountArray();
+    EventBus.registerListener(EventBus.TOPIC_TV_SHOWS_UI, event -> buildAndInstallSubtitleCountArray());
   }
 
   @Override
@@ -64,15 +61,8 @@ public class TvShowSubtitleCountFilter extends AbstractCheckComboBoxTvShowUIFilt
     List<Integer> selectedItems = checkComboBox.getSelectedItems();
 
     for (TvShowEpisode episode : episodes) {
-      List<MediaFile> mfs = episode.getMediaFiles(VIDEO);
-      for (MediaFile mf : mfs) {
-        if (invert ^ (selectedItems.isEmpty() && mf.getSubtitles().isEmpty())) {
-          return true;
-        }
-
-        if (invert ^ selectedItems.contains(mf.getSubtitles().size())) {
-          return true;
-        }
+      if (invert ^ selectedItems.contains(episode.getMediaInfoSubtitleStreamCount())) {
+        return true;
       }
     }
     return false;
@@ -88,9 +78,19 @@ public class TvShowSubtitleCountFilter extends AbstractCheckComboBoxTvShowUIFilt
     return "tvShowSubtitleCount";
   }
 
-  private void buildSubtitleCountArray() {
-    List<Integer> subtitles = new ArrayList<>(tvShowList.getSubtitlesInEpisodes());
-    Collections.sort(subtitles);
-    setValues(subtitles);
+  private void buildAndInstallSubtitleCountArray() {
+    // do it lazy because otherwise there is too much UI overhead
+    // also use a set for faster lookups
+    Set<Integer> subtitleCountInEpisodes = new HashSet<>(tvShowList.getSubtitlesInEpisodes());
+
+    if (!SetUtils.equals(oldValues, subtitleCountInEpisodes)) {
+      oldValues.clear();
+      oldValues.addAll(subtitleCountInEpisodes);
+
+      List<Integer> sortedSubtitleCount = ListUtils.asSortedList(subtitleCountInEpisodes);
+
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedSubtitleCount));
+    }
   }
 }

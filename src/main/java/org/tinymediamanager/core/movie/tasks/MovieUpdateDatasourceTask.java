@@ -71,6 +71,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.AbstractFileVisitor;
+import org.tinymediamanager.core.FilesFirstWalker;
 import org.tinymediamanager.core.ImageCache;
 import org.tinymediamanager.core.MediaFileHelper;
 import org.tinymediamanager.core.MediaFileType;
@@ -112,38 +113,38 @@ import org.tinymediamanager.thirdparty.trakttv.MovieSyncTraktTvTask;
  * @author Myron Boyle
  */
 public class MovieUpdateDatasourceTask extends TmmThreadPool {
-  private static final Logger                            LOGGER           = LoggerFactory.getLogger(MovieUpdateDatasourceTask.class);
+  private static final Logger                              LOGGER           = LoggerFactory.getLogger(MovieUpdateDatasourceTask.class);
 
-  private static long                                    preDir           = 0;
-  private static long                                    postDir          = 0;
-  private static long                                    visFile          = 0;
-  private static long                                    preDirAll        = 0;
-  private static long                                    postDirAll       = 0;
-  private static long                                    visFileAll       = 0;
+  private static long                                      preDir           = 0;
+  private static long                                      postDir          = 0;
+  private static long                                      visFile          = 0;
+  private static long                                      preDirAll        = 0;
+  private static long                                      postDirAll       = 0;
+  private static long                                      visFileAll       = 0;
 
   // skip well-known, but unneeded folders (UPPERCASE)
-  private static final List<String>                      SKIP_FOLDERS     = Arrays.asList(".", "..", "CERTIFICATE", "$RECYCLE.BIN", "RECYCLER",
+  private static final List<String>                        SKIP_FOLDERS     = Arrays.asList(".", "..", "CERTIFICATE", "$RECYCLE.BIN", "RECYCLER",
       "SYSTEM VOLUME INFORMATION", "@EADIR", "ADV_OBJ", "PLEX VERSIONS", "LOST.DIR");
 
   // skip folders starting with a SINGLE "." or "._" (exception for movie ".45")
-  private static final String                            SKIP_REGEX       = "(?i)^[.@](?!45|buelos)[\\w@]+.*";
+  private static final String                              SKIP_REGEX       = "(?i)^[.@](?!45|buelos)[\\w@]+.*";
   // MMD detected as single movie in a structured folder such as /A/, /2010/ or decade
-  public static final String                             FOLDER_STRUCTURE = "(?i)^(\\w|\\d{4}|\\d{4}s|\\d{4}\\-\\d{4})$";
-  private static final Pattern                           VIDEO_3D_PATTERN = Pattern.compile("(?i)[ .,_\\(\\[-]3D[ .,_\\)\\]-]?");
+  public static final String                               FOLDER_STRUCTURE = "(?i)^(\\w|\\d{4}|\\d{4}s|\\d{4}\\-\\d{4})$";
+  private static final Pattern                             VIDEO_3D_PATTERN = Pattern.compile("(?i)[ .,_\\(\\[-]3D[ .,_\\)\\]-]?");
 
-  private final List<String>                             dataSources;
-  private final List<Pattern>                            skipFolders      = new ArrayList<>();
-  private final List<Movie>                              moviesToUpdate   = new ArrayList<>();
-  private final MovieList                                movieList        = MovieModuleManager.getInstance().getMovieList();
-  private final Set<Path>                                filesFound       = new HashSet<>();
-  private final ReentrantReadWriteLock                   fileLock         = new ReentrantReadWriteLock();
-  private final List<Runnable>                           miTasks          = Collections.synchronizedList(new ArrayList<>());
-  private final List<Path>                               existingMovies   = new ArrayList<>();
-  private final List<MediaFile>                          imageFiles       = new ArrayList<>();
+  private final List<String>                               dataSources;
+  private final List<Pattern>                              skipFolders      = new ArrayList<>();
+  private final List<Movie>                                moviesToUpdate   = new ArrayList<>();
+  private final MovieList                                  movieList        = MovieModuleManager.getInstance().getMovieList();
+  private final Set<Path>                                  filesFound       = new HashSet<>();
+  private final ReentrantReadWriteLock                     fileLock         = new ReentrantReadWriteLock();
+  private final List<Runnable>                             miTasks          = Collections.synchronizedList(new ArrayList<>());
+  private final List<Path>                                 existingMovies   = new ArrayList<>();
+  private final List<MediaFile>                            imageFiles       = new ArrayList<>();
   /**
    * Lightweight filesystem attribute cache collected during recursive walks to reduce repeated network I/O on remote datasources.
    */
-  private final ConcurrentMap<Path, BasicFileAttributes> fsAttrCache      = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, BasicFileAttributes> fsAttrCache      = new ConcurrentHashMap<>();
 
   public MovieUpdateDatasourceTask() {
     this(MovieModuleManager.getInstance().getSettings().getMovieDataSource());
@@ -1262,8 +1263,10 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
               // nothing to do
             }
           }
-          // get edition from name
-          movie.setEdition(MovieEdition.getMovieEditionFromString(basename));
+          // get edition from name if no edition has been set via NFO
+          if (movie.getEdition() == MovieEdition.NONE) {
+            movie.setEdition(MovieEdition.getMovieEditionFromString(basename));
+          }
 
           // if the String 3D is in the movie file name, assume it is a 3D movie
           Matcher matcher = VIDEO_3D_PATTERN.matcher(basename);
@@ -1927,7 +1930,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
 
       // cache attributes for later use
       try {
-        fsAttrCache.putIfAbsent(file.toAbsolutePath(), attr);
+        fsAttrCache.putIfAbsent(file.toAbsolutePath().toString(), attr);
       }
       catch (Exception ignored) {
         // just in case mapping fails
@@ -1983,7 +1986,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
 
       // cache attributes for directories too
       try {
-        fsAttrCache.putIfAbsent(dir.toAbsolutePath(), attrs);
+        fsAttrCache.putIfAbsent(dir.toAbsolutePath().toString(), attrs);
       }
       catch (Exception ignored) {
         // ignore
@@ -2041,7 +2044,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
     folder = folder.toAbsolutePath();
     SearchAndParseVisitor visitor = new SearchAndParseVisitor(datasource);
     try {
-      Files.walkFileTree(folder, EnumSet.of(FileVisitOption.FOLLOW_LINKS), deep, visitor);
+      new FilesFirstWalker(true).walk(folder, visitor);
     }
     catch (IOException e) {
       // can not happen, since we override visitFileFailed, which throws no exception ;)
@@ -2084,14 +2087,15 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
 
       // cache attributes
       try {
-        fsAttrCache.putIfAbsent(file.toAbsolutePath(), attr);
+        fsAttrCache.putIfAbsent(file.toAbsolutePath().toString(), attr);
       }
       catch (Exception ignored) {
       }
 
       // check if that parent folder is to be skipped (could not catch all in preVisitDirectory)
       if (file.getParent() != null && (containsSkipFile(file.getParent(), skipFoldersWithNomedia, fsAttrCache))) {
-        return CONTINUE;
+        videofolders.remove(file.getParent());
+        return SKIP_SUBTREE;
       }
 
       try {
@@ -2141,7 +2145,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
 
       // cache attributes
       try {
-        fsAttrCache.putIfAbsent(dir.toAbsolutePath(), attrs);
+        fsAttrCache.putIfAbsent(dir.toAbsolutePath().toString(), attrs);
       }
       catch (Exception ignored) {
         // ignore
@@ -2315,43 +2319,6 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
       // pass the filename to the task description
       publishState(mediaEntity.getTitle() + " - " + mediaFile.getFilename());
       super.run();
-    }
-  }
-
-  /**
-   * Helper to check existence using cached attributes first to avoid network I/O. Falls back to Files.exists when not cached.
-   */
-  private boolean cachedExists(Path path) {
-    if (path == null) {
-      return false;
-    }
-    if (fsAttrCache.containsKey(path.toAbsolutePath())) {
-      return true;
-    }
-    try {
-      return Files.exists(path);
-    }
-    catch (Exception e) {
-      return false;
-    }
-  }
-
-  /**
-   * Helper to check directory using cached attributes first to avoid network I/O.
-   */
-  private boolean cachedIsDirectory(Path path) {
-    if (path == null) {
-      return false;
-    }
-    BasicFileAttributes attr = fsAttrCache.get(path.toAbsolutePath());
-    if (attr != null) {
-      return attr.isDirectory();
-    }
-    try {
-      return Files.isDirectory(path);
-    }
-    catch (Exception e) {
-      return false;
     }
   }
 }

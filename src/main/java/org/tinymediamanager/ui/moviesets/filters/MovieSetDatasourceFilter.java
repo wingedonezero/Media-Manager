@@ -15,7 +15,6 @@
  */
 package org.tinymediamanager.ui.moviesets.filters;
 
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,13 +34,14 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  * @author Manuel Laggner
  */
 public class MovieSetDatasourceFilter extends AbstractCheckComboBoxMovieSetUIFilter<String> {
-  private MovieSettings movieSettings = MovieModuleManager.getInstance().getSettings();
+  private final MovieSettings movieSettings;
 
   public MovieSetDatasourceFilter() {
     super();
+    movieSettings = MovieModuleManager.getInstance().getSettings();
+
     buildAndInstallDatasourceArray();
-    PropertyChangeListener propertyChangeListener = evt -> buildAndInstallDatasourceArray();
-    movieSettings.addPropertyChangeListener(Constants.DATA_SOURCE, propertyChangeListener);
+    movieSettings.addPropertyChangeListener(Constants.DATA_SOURCE, evt -> buildAndInstallDatasourceArray());
   }
 
   @Override

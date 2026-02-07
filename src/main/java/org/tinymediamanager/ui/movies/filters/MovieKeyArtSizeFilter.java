@@ -36,7 +36,6 @@ public class MovieKeyArtSizeFilter extends AbstractNumberMovieFilter {
     // display the size with px at the end
     spinnerLow.setEditor(prepareNumberEditor(spinnerLow, "####0 px"));
     spinnerHigh.setEditor(prepareNumberEditor(spinnerHigh, "####0 px"));
-
   }
 
   @Override

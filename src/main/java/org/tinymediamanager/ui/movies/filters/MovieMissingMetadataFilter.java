@@ -23,8 +23,6 @@ import java.util.Objects;
 import javax.swing.JLabel;
 
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.movie.MovieList;
-import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.MovieScraperMetadataConfig;
 import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.ui.components.label.TmmLabel;
@@ -36,12 +34,8 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  */
 public class MovieMissingMetadataFilter extends AbstractCheckComboBoxMovieUIFilter<MovieMissingMetadataFilter.MetadataField> {
 
-  private final MovieList movieList;
-
   public MovieMissingMetadataFilter() {
     super();
-    movieList = MovieModuleManager.getInstance().getMovieList();
-
     checkComboBox.enableFilter((s, s2) -> s.toString().toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
 
     // initial filling

@@ -33,9 +33,7 @@ public class MovieBorderTableCellRenderer extends BorderTableCellRenderer {
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     String text;
-    if (value instanceof Movie) {
-      Movie movie = (Movie) value;
-
+    if (value instanceof Movie movie) {
       if (movie.isLocked()) {
         setIcon(IconManager.LOCK_BLUE);
       }

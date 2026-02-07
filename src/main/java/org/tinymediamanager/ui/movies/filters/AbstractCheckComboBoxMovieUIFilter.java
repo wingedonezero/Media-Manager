@@ -18,10 +18,14 @@ package org.tinymediamanager.ui.movies.filters;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JComponent;
 
+import org.tinymediamanager.core.movie.MovieList;
+import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.ui.components.combobox.TmmCheckComboBox;
 
 /**
@@ -35,7 +39,16 @@ import org.tinymediamanager.ui.components.combobox.TmmCheckComboBox;
  */
 abstract class AbstractCheckComboBoxMovieUIFilter<E> extends AbstractMovieUIFilter {
 
+  protected final MovieList     movieList;
+  protected final Set<E>        oldValues;
+
   protected TmmCheckComboBox<E> checkComboBox;
+
+  protected AbstractCheckComboBoxMovieUIFilter() {
+    super();
+    oldValues = new HashSet<>(0);
+    movieList = MovieModuleManager.getInstance().getMovieList();
+  }
 
   @Override
   protected JComponent createFilterComponent() {

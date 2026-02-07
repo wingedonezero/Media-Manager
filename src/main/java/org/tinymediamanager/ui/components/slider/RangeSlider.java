@@ -16,8 +16,14 @@
 
 package org.tinymediamanager.ui.components.slider;
 
+import java.util.Dictionary;
+import java.util.Enumeration;
+
 import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.JComponent;
 import javax.swing.JSlider;
+
+import org.tinymediamanager.ui.TmmFontHelper;
 
 /**
  * A slider component that allows selection of a value range with two thumbs.
@@ -173,5 +179,27 @@ public class RangeSlider extends JSlider {
    */
   public void setRangeDraggable(boolean rangeDraggable) {
     _rangeDraggable = rangeDraggable;
+  }
+
+  /**
+   * Sets the label table for the slider.
+   * 
+   * @param labels
+   *          new {@code Dictionary} of labels, or {@code null} to remove all labels
+   */
+  @Override
+  public void setLabelTable(Dictionary labels) {
+    super.setLabelTable(labels);
+
+    // reduce font size of labels
+    Dictionary<?, ?> labelTable = getLabelTable();
+
+    Enumeration<?> enumeration = labelTable.keys();
+    while (enumeration.hasMoreElements()) {
+      Object value = labelTable.get(enumeration.nextElement());
+      if (value instanceof JComponent component) {
+        TmmFontHelper.changeFont(component, TmmFontHelper.L1);
+      }
+    }
   }
 }

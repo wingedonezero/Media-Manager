@@ -81,7 +81,7 @@ public final class MovieSettings extends AbstractSettings {
   public static final String                DEFAULT_RENAMER_FOLDER_PATTERN         = "${title}${ - ,edition,} (${year})";
   public static final String                DEFAULT_RENAMER_FILE_PATTERN           = "${title}${ - ,edition,} (${year}) ${videoFormat} ${audioCodec}";
 
-  private static MovieSettings              instance;
+  private static volatile MovieSettings     instance;
 
   /**
    * Constants mainly for events
@@ -413,20 +413,25 @@ public final class MovieSettings extends AbstractSettings {
    *
    * @return single instance of MovieSettings
    */
-  static synchronized MovieSettings getInstance() {
+  static MovieSettings getInstance() {
     return getInstance(Settings.getInstance().getSettingsFolder());
   }
 
   /**
    * Override our settings folder (defaults to "data")<br>
-   * <b>Should only be used for unit testing et all!</b><br>
+   * <b>Should only be used for unit testing et al.!</b><br>
    *
    * @return single instance of MovieSettings
    */
-  static synchronized MovieSettings getInstance(String folder) {
+  static MovieSettings getInstance(String folder) {
     if (instance == null) {
-      instance = (MovieSettings) getInstance(folder, CONFIG_FILE, MovieSettings.class);
+      synchronized (MovieSettings.class) {
+        if (instance == null) {
+          instance = (MovieSettings) getInstance(folder, CONFIG_FILE, MovieSettings.class);
+        }
+      }
     }
+
     return instance;
   }
 

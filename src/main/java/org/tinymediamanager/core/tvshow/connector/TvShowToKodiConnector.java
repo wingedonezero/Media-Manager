@@ -75,36 +75,51 @@ public class TvShowToKodiConnector extends TvShowGenericXmlConnector {
       }
     }
 
-    for (MediaRating r : tvShow.getRatings().values()) {
-      // skip user ratings here
-      if (MediaRating.USER.equals(r.getId())) {
-        continue;
-      }
-
-      Element rating = document.createElement("rating");
-      // Kodi needs themoviedb instead of tmdb
-      if (MediaMetadata.TMDB.equals(r.getId())) {
-        rating.setAttribute("name", "themoviedb");
-      }
-      else {
-        rating.setAttribute("name", r.getId());
-      }
-      rating.setAttribute("max", String.valueOf(r.getMaxValue()));
-
-      rating.setAttribute("default", r == mainMediaRating ? "true" : "false");
-
-      Element value = document.createElement("value");
-      value.setTextContent(String.format(Locale.US, "%.1f", r.getRating()));
-      rating.appendChild(value);
-
-      Element votes = document.createElement("votes");
-      votes.setTextContent(Integer.toString(r.getVotes()));
-      rating.appendChild(votes);
-
+    if (mainMediaRating != MediaMetadata.EMPTY_RATING) {
+      Element rating = createRating(mainMediaRating);
+      rating.setAttribute("default", "true");
       ratings.appendChild(rating);
     }
 
+    for (MediaRating mediaRating : tvShow.getRatings().values()) {
+      // skip main rating here (has already been added)
+      if (mediaRating == mainMediaRating) {
+        continue;
+      }
+
+      // skip user ratings here
+      if (MediaRating.USER.equals(mediaRating.getId())) {
+        continue;
+      }
+
+      ratings.appendChild(createRating(mediaRating));
+    }
+
     root.appendChild(ratings);
+  }
+
+  private Element createRating(MediaRating mediaRating) {
+    Element rating = document.createElement("rating");
+
+    // Kodi needs themoviedb instead of tmdb
+    if (MediaMetadata.TMDB.equals(mediaRating.getId())) {
+      rating.setAttribute("name", "themoviedb");
+    }
+    else {
+      rating.setAttribute("name", mediaRating.getId());
+    }
+    rating.setAttribute("max", String.valueOf(mediaRating.getMaxValue()));
+    rating.setAttribute("default", "false");
+
+    Element value = document.createElement("value");
+    value.setTextContent(String.format(Locale.US, "%.1f", mediaRating.getRating()));
+    rating.appendChild(value);
+
+    Element votes = document.createElement("votes");
+    votes.setTextContent(Integer.toString(mediaRating.getVotes()));
+    rating.appendChild(votes);
+
+    return rating;
   }
 
   /**

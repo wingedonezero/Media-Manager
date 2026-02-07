@@ -73,26 +73,8 @@ public class TvShowTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
 
     Comparator<MediaCertification> certificationComparator = new CertificationComparator();
     Comparator<String> stringComparator = new StringComparator();
-    Comparator<Integer> integerComparator = Comparator.comparingInt(o -> o);
-    Comparator<String> floatComparator = (o1, o2) -> {
-      float value1 = 0;
-      float value2 = 0;
-
-      try {
-        value1 = Float.parseFloat(o1);
-      }
-      catch (Exception ignored) {
-        // do nothing
-      }
-      try {
-        value2 = Float.parseFloat(o2);
-      }
-      catch (Exception ignored) {
-        // do nothing
-      }
-
-      return Float.compare(value1, value2);
-    };
+    Comparator<Integer> integerComparator = new IntegerComparator();
+    Comparator<Float> floatComparator = new FloatComparator();
     Comparator<Date> dateComparator = new DateComparator();
     Comparator<Date> dateTimeComparator = new DateTimeComparator();
     Comparator<ImageIcon> imageComparator = new ImageComparator();

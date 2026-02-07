@@ -69,7 +69,7 @@ public final class Settings extends AbstractSettings {
    */
   private static final String                              CONFIG_FILE                  = "tmm.json";
 
-  private static Settings                                  instance;
+  private static volatile Settings                         instance;
 
   private final List<String>                               titlePrefixes                = ObservableCollections.observableList(new ArrayList<>());
   private final List<String>                               videoFileTypes               = ObservableCollections.observableList(new ArrayList<>());
@@ -266,20 +266,25 @@ public final class Settings extends AbstractSettings {
    *
    * @return single instance of Settings
    */
-  public static synchronized Settings getInstance() {
+  public static Settings getInstance() {
     return getInstance(Globals.DATA_FOLDER);
   }
 
   /**
    * Override our settings folder (defaults to "data")<br>
-   * <b>Should only be used for unit testing et all!</b><br>
+   * <b>Should only be used for unit testing et al.!</b><br>
    *
    * @return single instance of Settings
    */
-  static synchronized Settings getInstance(String folder) {
+  static Settings getInstance(String folder) {
     if (instance == null) {
-      instance = (Settings) getInstance(folder, CONFIG_FILE, Settings.class);
+      synchronized (Settings.class) {
+        if (instance == null) {
+          instance = (Settings) getInstance(folder, CONFIG_FILE, Settings.class);
+        }
+      }
     }
+
     return instance;
   }
 

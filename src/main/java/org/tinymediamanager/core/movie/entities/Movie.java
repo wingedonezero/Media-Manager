@@ -207,7 +207,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
   /**
    * Cached main video file to avoid expensive recalculation.
    */
-  private transient MediaFile                   cachedMainVideoFile        = null;
+  private transient volatile MediaFile          cachedMainVideoFile        = null;
 
   /**
    * Instantiates a new movie. To initialize the propertychangesupport after loading
@@ -328,11 +328,11 @@ public class Movie extends MediaEntity implements IMediaInformation {
         vid = getMainDVDVideoFile();
       }
     }
-    if (vid == null || vid.getFilename().isEmpty()) {
+    if (vid == null || vid == MediaFile.EMPTY_MEDIAFILE) {
       vid = getBiggestMediaFile(MediaFileType.VIDEO);
     }
 
-    if (vid != null && !vid.getFilename().isEmpty()) {
+    if (vid != null && vid != MediaFile.EMPTY_MEDIAFILE) {
       cachedMainVideoFile = vid;
     }
     else {
@@ -2465,7 +2465,11 @@ public class Movie extends MediaEntity implements IMediaInformation {
       return cachedMainVideoFile;
     }
 
-    LOGGER.debug("Movie without video file? {} | {}", getPathNIO(), getTitle());
+    if (StringUtils.isNotBlank(getTitle())) {
+      // this is sometimes called too early in binding setup with no real data yet
+      LOGGER.debug("Movie without video file? {} | {}", getPathNIO(), getTitle());
+    }
+
     return MediaFile.EMPTY_MEDIAFILE;
   }
 
@@ -2566,14 +2570,22 @@ public class Movie extends MediaEntity implements IMediaInformation {
   }
 
   @Override
+  public Integer getMediaInfoAudioStreamCount() {
+    int audioStreamCount = getMainVideoFile().getAudioStreams().size();
+    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
+      audioStreamCount += mf.getAudioStreams().size();
+    }
+    return audioStreamCount;
+  }
+
+  @Override
   public String getMediaInfoAudioCodec() {
     return getMainVideoFile().getAudioCodec();
   }
 
   @Override
   public List<String> getMediaInfoAudioCodecList() {
-    List<String> lang = new ArrayList<>();
-    lang.addAll(getMainVideoFile().getAudioCodecList());
+    List<String> lang = new ArrayList<>(getMainVideoFile().getAudioCodecList());
 
     for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
       lang.addAll(mf.getAudioCodecList());
@@ -2588,8 +2600,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
 
   @Override
   public List<String> getMediaInfoAudioChannelList() {
-    List<String> lang = new ArrayList<>();
-    lang.addAll(getMainVideoFile().getAudioChannelsList());
+    List<String> lang = new ArrayList<>(getMainVideoFile().getAudioChannelsList());
 
     for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
       lang.addAll(mf.getAudioChannelsList());
@@ -2626,6 +2637,15 @@ public class Movie extends MediaEntity implements IMediaInformation {
       lang.addAll(mf.getAudioLanguagesList());
     }
     return lang;
+  }
+
+  @Override
+  public Integer getMediaInfoSubtitleStreamCount() {
+    int subtitleStreamCount = getMainVideoFile().getSubtitles().size();
+    for (MediaFile mf : getMediaFiles(MediaFileType.SUBTITLE)) {
+      subtitleStreamCount += mf.getSubtitles().size();
+    }
+    return subtitleStreamCount;
   }
 
   @Override

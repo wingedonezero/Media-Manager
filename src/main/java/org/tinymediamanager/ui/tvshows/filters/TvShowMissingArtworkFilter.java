@@ -24,8 +24,6 @@ import javax.swing.JLabel;
 
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.tvshow.TvShowEpisodeScraperMetadataConfig;
-import org.tinymediamanager.core.tvshow.TvShowList;
-import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.TvShowScraperMetadataConfig;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
@@ -38,12 +36,8 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  */
 public class TvShowMissingArtworkFilter extends AbstractCheckComboBoxTvShowUIFilter<TvShowMissingArtworkFilter.MetadataField> {
 
-  private final TvShowList tvShowList;
-
   public TvShowMissingArtworkFilter() {
     super();
-    tvShowList = TvShowModuleManager.getInstance().getTvShowList();
-
     checkComboBox.enableFilter((s, s2) -> s.toString().toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
 
     // initial filling

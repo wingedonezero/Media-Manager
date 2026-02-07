@@ -1479,7 +1479,6 @@ public class Utils {
   public static void sendWakeOnLanPacket(String macAddr) {
     // Broadcast IP address
     final String IP = "255.255.255.255";
-    final int port = 7;
 
     try {
       final byte[] MACBYTE = new byte[6];
@@ -1496,9 +1495,19 @@ public class Utils {
         System.arraycopy(MACBYTE, 0, bytes, i, MACBYTE.length);
       }
 
-      // Send UDP packet here
+      // Send UDP packet (port 7 and with a light delay on port 9)
+      // both ports are commonly used for WOL and in some setup we need the first packet to populate ARP tables and
+      // the second one to actually wakes up the machine
       final InetAddress address = InetAddress.getByName(IP);
-      final DatagramPacket packet = new DatagramPacket(bytes, bytes.length, address, port);
+
+      DatagramPacket packet = new DatagramPacket(bytes, bytes.length, address, 7);
+      try (DatagramSocket socket = new DatagramSocket()) {
+        socket.send(packet);
+      }
+
+      Thread.sleep(100);
+
+      packet = new DatagramPacket(bytes, bytes.length, address, 9);
       try (DatagramSocket socket = new DatagramSocket()) {
         socket.send(packet);
       }
@@ -2281,7 +2290,7 @@ public class Utils {
    *          filesystem attribute cache populated during recursive walk; if null, falls back to {@link Files#exists}
    * @return true if any skip file is found in cache (or on filesystem if cache is null), false otherwise
    */
-  public static boolean containsSkipFile(Path dir, boolean readNomedia, Map<Path, BasicFileAttributes> fsCache) {
+  public static boolean containsSkipFile(Path dir, boolean readNomedia, Map<String, BasicFileAttributes> fsCache) {
     if (dir == null || fsCache == null) {
       return false;
     }
@@ -2291,13 +2300,13 @@ public class Utils {
     Path tmmIgnore2 = dir.resolve("tmmignore");
     Path nomedia = dir.resolve(".nomedia");
 
-    if (fsCache.containsKey(tmmIgnore.toAbsolutePath())) {
+    if (fsCache.containsKey(tmmIgnore.toAbsolutePath().toString())) {
       return true;
     }
-    if (fsCache.containsKey(tmmIgnore2.toAbsolutePath())) {
+    if (fsCache.containsKey(tmmIgnore2.toAbsolutePath().toString())) {
       return true;
     }
-    if (readNomedia && fsCache.containsKey(nomedia.toAbsolutePath())) {
+    if (readNomedia && fsCache.containsKey(nomedia.toAbsolutePath().toString())) {
       return true;
     }
 

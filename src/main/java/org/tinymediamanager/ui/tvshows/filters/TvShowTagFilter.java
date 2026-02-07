@@ -15,21 +15,21 @@
  */
 package org.tinymediamanager.ui.tvshows.filters;
 
-import java.beans.PropertyChangeListener;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 
-import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.tvshow.TvShowList;
-import org.tinymediamanager.core.tvshow.TvShowModuleManager;
+import org.tinymediamanager.core.Utils;
+import org.tinymediamanager.core.bus.EventBus;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
 import org.tinymediamanager.scraper.util.ListUtils;
+import org.tinymediamanager.scraper.util.SetUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.table.TmmTableFormat;
 
@@ -41,16 +41,13 @@ import org.tinymediamanager.ui.components.table.TmmTableFormat;
 public class TvShowTagFilter extends AbstractCheckComboBoxTvShowUIFilter<String> {
   private final TmmTableFormat.StringComparator comparator;
 
-  private final TvShowList                      tvShowList = TvShowModuleManager.getInstance().getTvShowList();
-  private final Set<String>                     oldTags    = new HashSet<>();
-
   public TvShowTagFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
     comparator = new TmmTableFormat.StringComparator();
+
     buildAndInstallTagsArray();
-    PropertyChangeListener propertyChangeListener = evt -> buildAndInstallTagsArray();
-    tvShowList.addPropertyChangeListener(Constants.TAGS, propertyChangeListener);
+    EventBus.registerListener(EventBus.TOPIC_TV_SHOWS_UI, event -> buildAndInstallTagsArray());
   }
 
   @Override
@@ -107,23 +104,18 @@ public class TvShowTagFilter extends AbstractCheckComboBoxTvShowUIFilter<String>
   private void buildAndInstallTagsArray() {
     // do it lazy because otherwise there is too much UI overhead
     // also use a set for faster lookups
-    boolean dirty = false;
-    Set<String> tags = new HashSet<>(tvShowList.getTagsInTvShows());
+    Set<String> tags = new TreeSet<>(tvShowList.getTagsInTvShows());
     tags.addAll(tvShowList.getTagsInEpisodes());
+    Utils.removeDuplicateStringFromCollectionIgnoreCase(tags);
 
-    if (oldTags.size() != tags.size()) {
-      dirty = true;
-    }
+    if (!SetUtils.equals(oldValues, tags)) {
+      oldValues.clear();
+      oldValues.addAll(tags);
 
-    if (!oldTags.containsAll(tags) || !tags.containsAll(oldTags)) {
-      dirty = true;
-    }
+      List<String> sortedTags = ListUtils.asSortedList(tags, comparator);
 
-    if (dirty) {
-      oldTags.clear();
-      oldTags.addAll(tags);
-
-      setValues(ListUtils.asSortedList(tags, comparator));
+      // update the combobox in the EDT
+      SwingUtilities.invokeLater(() -> setValues(sortedTags));
     }
   }
 

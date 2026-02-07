@@ -261,7 +261,11 @@ public class ImageCache {
           }
 
           originalImage = ImageUtils.createImage(bytes);
-          break;
+
+          // only break if we have a valid image
+          if (originalImage != null) {
+            break;
+          }
         }
         catch (OutOfMemoryError e) {
           // memory limit hit; give it another 500ms time to recover
@@ -305,7 +309,11 @@ public class ImageCache {
               scaledImage = Scalr.resize(originalImage, Scalr.Method.ULTRA_QUALITY, Scalr.Mode.FIT_EXACT, size.x, size.y);
               break;
           }
-          break;
+
+          // only break if we have a scaled image
+          if (scaledImage != null) {
+            break;
+          }
         }
         catch (OutOfMemoryError e) {
           // memory limit hit; give it another 500ms time to recover
