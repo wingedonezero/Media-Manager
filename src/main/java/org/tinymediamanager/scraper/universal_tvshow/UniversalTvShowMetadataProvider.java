@@ -143,6 +143,7 @@ public class UniversalTvShowMetadataProvider implements ITvShowMetadataProvider 
     config.addSelect("episodes", "metatag.episodes", compatibleScraperIds, UNDEFINED);
     config.addSelect("episodeTitle", "metatag.title", compatibleScraperIds, UNDEFINED);
     config.addSelect("episodeOriginalTitle", "metatag.originaltitle", compatibleScraperIds, UNDEFINED);
+    config.addSelect("episodeEnglishTitle", "metatag.title.english", compatibleScraperIds, UNDEFINED);
     config.addSelect("episodePlot", "metatag.plot", compatibleScraperIds, UNDEFINED);
     config.addSelect("episodeCastMembers", "metatag.cast", compatibleScraperIds, UNDEFINED);
     config.addSelect("episodeRatings", "metatag.rating", scrapersWithout(compatibleScraperIds, MediaMetadata.TVDB), UNDEFINED); // all but tvdb
