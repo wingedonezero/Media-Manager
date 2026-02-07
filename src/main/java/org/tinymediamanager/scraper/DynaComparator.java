@@ -50,8 +50,8 @@ public class DynaComparator<E> implements Comparator<E>, Serializable {
   }
 
   // generic comparator attributes
-  private String  targetMethod;
-  private boolean sortAscending;
+  private final String  targetMethod;
+  private final boolean sortAscending;
 
   /**
    * <p>
@@ -330,16 +330,16 @@ public class DynaComparator<E> implements Comparator<E>, Serializable {
   private CompareMode findCompareMode(Object o1, Object o2) {
     CompareMode cm = CompareMode.LESS_THAN;
 
-    if (null != o1 & null != o2) {
+    if (null != o1 && null != o2) {
       cm = CompareMode.DEFAULT;
     }
-    else if (null == o1 & null != o2) {
+    else if (null == o1 && null != o2) {
       cm = CompareMode.LESS_THAN;
     }
-    else if (null != o1 & null == o2) {
+    else if (null != o1 && null == o2) {
       cm = CompareMode.GREATER_THAN;
     }
-    else if (null == o1 & null == o2) {
+    else if (null == o1 && null == o2) {
       cm = CompareMode.EQUAL;
     }
 

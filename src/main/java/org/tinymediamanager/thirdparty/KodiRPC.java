@@ -75,7 +75,6 @@ import org.tinymediamanager.scraper.util.DateUtils;
 public class KodiRPC {
   private static final Logger         LOGGER            = LoggerFactory.getLogger(KodiRPC.class);
   private static KodiRPC              instance;
-  private static final String         SEPARATOR_REGEX   = "[\\/\\\\]+";
 
   private final JavaConnectionManager connectionManager = new JavaConnectionManager();
 
