@@ -1,6 +1,7 @@
 Version 5.2.7
 =======================
 + [Performance] heavily improved UI performance for really large libraries
++ [TV shows] added support for writing directors and writers to the NFO files #3107
 + [Trailer] integrated deno for yt-dlp #3200
 ---
 x [Movies] fixed excluding of nested folders when using .tmmignore, tmmignore or .nomedia files

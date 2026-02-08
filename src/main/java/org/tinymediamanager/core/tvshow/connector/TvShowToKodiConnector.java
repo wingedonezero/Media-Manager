@@ -127,6 +127,7 @@ public class TvShowToKodiConnector extends TvShowGenericXmlConnector {
    */
   @Override
   protected void addVotes() {
+    // votes are now in the ratings tag
   }
 
   @Override

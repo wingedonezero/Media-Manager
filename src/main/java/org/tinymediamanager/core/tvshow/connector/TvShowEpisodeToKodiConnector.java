@@ -97,6 +97,7 @@ public class TvShowEpisodeToKodiConnector extends TvShowEpisodeGenericXmlConnect
    */
   @Override
   protected void addVotes(TvShowEpisode episode, TvShowEpisodeNfoParser.Episode parser) {
+    // votes are now in the ratings tag
   }
 
   @Override
