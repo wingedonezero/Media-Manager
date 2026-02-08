@@ -232,7 +232,14 @@ abstract class FanartTvMetadataProvider implements IMediaProvider {
         ma.setLanguage(image.lang);
       }
       ma.setLikes(image.likes);
-      ma.addImageSize(type.width, type.height, image.url, type.sizeOrder);
+      if (image.width > 0 && image.height > 0) {
+        // use the real dimensions, as they are more accurate than the ones from the type
+        ma.addImageSize(image.width, image.height, image.url, type.sizeOrder);
+      }
+      else {
+        // fallback to the dimensions from the type, as some images do not have them
+        ma.addImageSize(type.width, type.height, image.url, type.sizeOrder);
+      }
 
       if ("all".equals(image.season)) {
         ma.setSeason(0);
