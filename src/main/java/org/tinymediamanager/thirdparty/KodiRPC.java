@@ -273,6 +273,7 @@ public class KodiRPC {
         if (normalizedKodiFile.startsWith("stack")) {
           String[] files = normalizedKodiFile.split(" , ");
           for (String kodiFile : files) {
+            normalizedKodiFile = kodiFile.replaceAll("^\\w+://+", "/"); // once again, for others
             // find TMM id
             for (String tmmPath : tmmMovies.keySet()) {
               // need to use Path for delimiter normalization
