@@ -264,10 +264,14 @@ public class KodiRPC {
         continue;
       }
 
+      // strip-off schema as we only ned the last path;
+      // it always comes with slash (even on windows)
+      String normalizedKodiFile = kodiMovie.file.replaceAll("^\\w+://+", "/");
+
       try {
         // stacking only supported on movies
-        if (kodiMovie.file.startsWith("stack")) {
-          String[] files = kodiMovie.file.split(" , ");
+        if (normalizedKodiFile.startsWith("stack")) {
+          String[] files = normalizedKodiFile.split(" , ");
           for (String kodiFile : files) {
             // find TMM id
             for (String tmmPath : tmmMovies.keySet()) {
@@ -291,7 +295,7 @@ public class KodiRPC {
           // find TMM id
           for (String tmmPath : tmmMovies.keySet()) {
             // need to use Path for delimiter normalization
-            if (Path.of(kodiMovie.file).endsWith(Path.of(tmmPath))) {
+            if (Path.of(normalizedKodiFile).endsWith(Path.of(tmmPath))) {
               // we have a match!
               UUID uuid = tmmMovies.get(tmmPath);
               if (!moviemappings.containsKey(uuid)) {
@@ -393,7 +397,7 @@ public class KodiRPC {
           }
         }
         else {
-          String rel = Utils.relPath(Path.of(entity.getDataSource()), me.getPathNIO());
+          String rel = Utils.relPath(Path.of(entity.getDataSource()), me.getMainFile().getFileAsPath());
           if (!fileMap.containsKey(rel)) {
             fileMap.put(rel, me.getDbId());
           }
@@ -446,7 +450,8 @@ public class KodiRPC {
     // 1. prepare a map of all TMM Mfs, rel path from DS -> entity DBID (less memory than complete entity)
     Map<String, UUID> tmmShows = new HashMap<>();
     for (TvShow show : TvShowModuleManager.getInstance().getTvShowList().getTvShows()) {
-      tmmShows.putAll(parseTmmEntity(show, false, false));
+      String rel = Utils.relPath(show.getDataSource(), show.getPath());
+      tmmShows.put(rel, show.getDbId());
     }
 
     // 2. for every Kodi result, loop over TMM entries and find which matches with "endsWith"
@@ -455,11 +460,15 @@ public class KodiRPC {
         continue;
       }
 
+      // strip-off schema as we only ned the last path;
+      // it always comes with slash (even on windows)
+      String normalizedKodiFile = kodiShow.file.replaceAll("^\\w+://+", "/");
+
       try {
         // find TMM id
         for (String tmmPath : tmmShows.keySet()) {
           // need to use Path for delimiter normalization
-          if (Path.of(kodiShow.file).endsWith(Path.of(tmmPath))) {
+          if (Path.of(normalizedKodiFile).endsWith(Path.of(tmmPath))) {
             // we have a match!
             UUID uuid = tmmShows.get(tmmPath);
             if (!tvshowmappings.containsKey(uuid)) {
