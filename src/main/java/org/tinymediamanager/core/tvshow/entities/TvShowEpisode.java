@@ -81,6 +81,7 @@ import org.tinymediamanager.core.entities.MediaStreamInfo;
 import org.tinymediamanager.core.entities.Person;
 import org.tinymediamanager.core.tasks.MediaEntityImageFetcherTask;
 import org.tinymediamanager.core.threading.TmmTaskManager;
+import org.tinymediamanager.core.tvshow.TvShowArtworkHelper;
 import org.tinymediamanager.core.tvshow.TvShowEpisodeEdition;
 import org.tinymediamanager.core.tvshow.TvShowEpisodeScraperMetadataConfig;
 import org.tinymediamanager.core.tvshow.TvShowList;
@@ -2188,8 +2189,7 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
       case RUNTIME -> getRuntime();
       case ACTORS -> getActors();
       case CREW -> getCrew();
-      case THUMB -> getMediaFiles(MediaFileType.THUMB);
-      default -> null;
+      case THUMB -> TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.THUMB);
     };
   }
 

@@ -2954,18 +2954,17 @@ public class Movie extends MediaEntity implements IMediaInformation {
       case TRAILER -> getTrailer();
       case ACTORS -> getActors();
       case CREW -> getCrew();
-      case POSTER -> getMediaFiles(MediaFileType.POSTER);
-      case FANART -> getMediaFiles(MediaFileType.FANART);
-      case BANNER -> getMediaFiles(MediaFileType.BANNER);
-      case CLEARART -> getMediaFiles(MediaFileType.CLEARART);
-      case THUMB -> getMediaFiles(MediaFileType.THUMB);
-      case CLEARLOGO -> getMediaFiles(MediaFileType.CLEARLOGO);
-      case DISCART -> getMediaFiles(MediaFileType.DISC);
-      case KEYART -> getMediaFiles(MediaFileType.KEYART);
-      case EXTRAFANART -> getMediaFiles(MediaFileType.EXTRAFANART);
-      case EXTRATHUMB -> getMediaFiles(MediaFileType.EXTRATHUMB);
+      case POSTER -> MovieArtworkHelper.getArtworkFiles(this, MediaFileType.POSTER);
+      case FANART -> MovieArtworkHelper.getArtworkFiles(this, MediaFileType.FANART);
+      case BANNER -> MovieArtworkHelper.getArtworkFiles(this, MediaFileType.BANNER);
+      case CLEARART -> MovieArtworkHelper.getArtworkFiles(this, MediaFileType.CLEARART);
+      case THUMB -> MovieArtworkHelper.getArtworkFiles(this, MediaFileType.THUMB);
+      case CLEARLOGO -> MovieArtworkHelper.getArtworkFiles(this, MediaFileType.CLEARLOGO);
+      case DISCART -> MovieArtworkHelper.getArtworkFiles(this, MediaFileType.DISC);
+      case KEYART -> MovieArtworkHelper.getArtworkFiles(this, MediaFileType.KEYART);
+      case EXTRAFANART -> MovieArtworkHelper.getArtworkFiles(this, MediaFileType.EXTRAFANART);
+      case EXTRATHUMB -> MovieArtworkHelper.getArtworkFiles(this, MediaFileType.EXTRATHUMB);
     };
-
   }
 
   @Override

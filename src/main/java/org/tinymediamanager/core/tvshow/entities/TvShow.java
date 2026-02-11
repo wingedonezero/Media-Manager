@@ -2629,34 +2629,34 @@ public class TvShow extends MediaEntity implements IMediaInformation {
         return getActors();
 
       case POSTER:
-        return getMediaFiles(MediaFileType.POSTER);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.POSTER);
 
       case FANART:
-        return getMediaFiles(MediaFileType.FANART);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.FANART);
 
       case BANNER:
-        return getMediaFiles(MediaFileType.BANNER);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.BANNER);
 
       case CLEARART:
-        return getMediaFiles(MediaFileType.CLEARART);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.CLEARART);
 
       case THUMB:
-        return getMediaFiles(MediaFileType.THUMB);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.THUMB);
 
       case CLEARLOGO:
-        return getMediaFiles(MediaFileType.CLEARLOGO);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.CLEARLOGO);
 
       case DISCART:
-        return getMediaFiles(MediaFileType.DISC);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.DISC);
 
       case KEYART:
-        return getMediaFiles(MediaFileType.KEYART);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.KEYART);
 
       case EXTRAFANART:
-        return getMediaFiles(MediaFileType.EXTRAFANART);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.EXTRAFANART);
 
       case CHARACTERART:
-        return getMediaFiles(MediaFileType.CHARACTERART);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.CHARACTERART);
 
       case SEASON_NAMES:
         // if matches, we have all season titles
@@ -2695,19 +2695,19 @@ public class TvShow extends MediaEntity implements IMediaInformation {
         return "all seasonoverviews found"; // dummy non-null
 
       case SEASON_POSTER:
-        return getMediaFiles(MediaFileType.SEASON_POSTER);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.SEASON_POSTER);
 
       case SEASON_FANART:
-        return getMediaFiles(MediaFileType.SEASON_FANART);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.SEASON_FANART);
 
       case SEASON_BANNER:
-        return getMediaFiles(MediaFileType.SEASON_BANNER);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.SEASON_BANNER);
 
       case SEASON_THUMB:
-        return getMediaFiles(MediaFileType.SEASON_THUMB);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.SEASON_THUMB);
 
       case THEME:
-        return getMediaFiles(MediaFileType.THEME);
+        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.THEME);
     }
 
     return null;

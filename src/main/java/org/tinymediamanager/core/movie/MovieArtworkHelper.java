@@ -232,50 +232,50 @@ public class MovieArtworkHelper {
   public static void downloadMissingArtwork(Movie movie, List<MediaArtwork> artwork, List<MovieScraperMetadataConfig> metadataConfig) {
 
     // poster
-    if (metadataConfig.contains(MovieScraperMetadataConfig.POSTER) && movie.getMediaFiles(MediaFileType.POSTER).isEmpty()) {
+    if (metadataConfig.contains(MovieScraperMetadataConfig.POSTER) && !hasArtwork(movie, MediaFileType.POSTER)) {
       setBestPoster(movie, artwork, false);
     }
 
     // fanart
-    if (metadataConfig.contains(MovieScraperMetadataConfig.FANART) && movie.getMediaFiles(MediaFileType.FANART).isEmpty()) {
+    if (metadataConfig.contains(MovieScraperMetadataConfig.FANART) && !hasArtwork(movie, MediaFileType.FANART)) {
       setBestFanart(movie, artwork, false);
     }
 
     // clearlogo
-    if (metadataConfig.contains(MovieScraperMetadataConfig.CLEARLOGO) && movie.getMediaFiles(MediaFileType.CLEARLOGO).isEmpty()) {
+    if (metadataConfig.contains(MovieScraperMetadataConfig.CLEARLOGO) && !hasArtwork(movie, MediaFileType.CLEARLOGO)) {
       setBestArtwork(movie, artwork, MediaArtworkType.CLEARLOGO, !MovieModuleManager.getInstance().getSettings().getClearlogoFilenames().isEmpty(),
           false);
     }
 
     // clearart
-    if (metadataConfig.contains(MovieScraperMetadataConfig.CLEARART) && movie.getMediaFiles(MediaFileType.CLEARART).isEmpty()) {
+    if (metadataConfig.contains(MovieScraperMetadataConfig.CLEARART) && !hasArtwork(movie, MediaFileType.CLEARART)) {
       setBestArtwork(movie, artwork, MediaArtworkType.CLEARART, !MovieModuleManager.getInstance().getSettings().getClearartFilenames().isEmpty(),
           false);
     }
 
     // banner
-    if (metadataConfig.contains(MovieScraperMetadataConfig.BANNER) && movie.getMediaFiles(MediaFileType.BANNER).isEmpty()) {
+    if (metadataConfig.contains(MovieScraperMetadataConfig.BANNER) && !hasArtwork(movie, MediaFileType.BANNER)) {
       setBestArtwork(movie, artwork, MediaArtworkType.BANNER, !MovieModuleManager.getInstance().getSettings().getBannerFilenames().isEmpty(), false);
     }
 
     // thumb
-    if (metadataConfig.contains(MovieScraperMetadataConfig.THUMB) && movie.getMediaFiles(MediaFileType.THUMB).isEmpty()) {
+    if (metadataConfig.contains(MovieScraperMetadataConfig.THUMB) && !hasArtwork(movie, MediaFileType.THUMB)) {
       setBestArtwork(movie, artwork, MediaArtworkType.THUMB, !MovieModuleManager.getInstance().getSettings().getThumbFilenames().isEmpty(), false);
     }
 
     // discart
-    if (metadataConfig.contains(MovieScraperMetadataConfig.DISCART) && movie.getMediaFiles(MediaFileType.DISC).isEmpty()) {
+    if (metadataConfig.contains(MovieScraperMetadataConfig.DISCART) && !hasArtwork(movie, MediaFileType.DISC)) {
       setBestArtwork(movie, artwork, MediaArtworkType.DISC, !MovieModuleManager.getInstance().getSettings().getDiscartFilenames().isEmpty(), false);
     }
 
     // keyart
-    if (metadataConfig.contains(MovieScraperMetadataConfig.KEYART) && movie.getMediaFiles(MediaFileType.KEYART).isEmpty()) {
+    if (metadataConfig.contains(MovieScraperMetadataConfig.KEYART) && !hasArtwork(movie, MediaFileType.KEYART)) {
       setBestArtwork(movie, artwork, MediaArtworkType.KEYART, !MovieModuleManager.getInstance().getSettings().getKeyartFilenames().isEmpty(), false);
     }
 
     // extrathumbs
     List<String> extrathumbs = new ArrayList<>();
-    if (metadataConfig.contains(MovieScraperMetadataConfig.EXTRATHUMB) && movie.getMediaFiles(MediaFileType.EXTRATHUMB).isEmpty()
+    if (metadataConfig.contains(MovieScraperMetadataConfig.EXTRATHUMB) && !hasArtwork(movie, MediaFileType.EXTRATHUMB)
         && MovieModuleManager.getInstance().getSettings().isImageExtraThumbs()
         && MovieModuleManager.getInstance().getSettings().getImageExtraThumbsCount() > 0) {
       for (MediaArtwork art : artwork.stream().filter(mediaArtwork -> mediaArtwork.getType() == MediaArtworkType.BACKGROUND).toList()) {
@@ -301,7 +301,7 @@ public class MovieArtworkHelper {
 
     // extrafanarts
     List<String> extrafanarts = new ArrayList<>();
-    if (metadataConfig.contains(MovieScraperMetadataConfig.EXTRAFANART) && movie.getMediaFiles(MediaFileType.EXTRAFANART).isEmpty()
+    if (metadataConfig.contains(MovieScraperMetadataConfig.EXTRAFANART) && !hasArtwork(movie, MediaFileType.EXTRAFANART)
         && MovieModuleManager.getInstance().getSettings().isImageExtraFanart()
         && MovieModuleManager.getInstance().getSettings().getImageExtraFanartCount() > 0) {
       for (MediaArtwork art : artwork.stream().filter(mediaArtwork -> mediaArtwork.getType() == MediaArtworkType.BACKGROUND).toList()) {
@@ -343,48 +343,86 @@ public class MovieArtworkHelper {
    */
   public static boolean hasMissingArtwork(Movie movie, List<MovieScraperMetadataConfig> config) {
     if (config.contains(MovieScraperMetadataConfig.POSTER) && !MovieModuleManager.getInstance().getSettings().getPosterFilenames().isEmpty()
-        && movie.getMediaFiles(MediaFileType.POSTER).isEmpty()) {
+        && !hasArtwork(movie, MediaFileType.POSTER)) {
       return true;
     }
     if (config.contains(MovieScraperMetadataConfig.FANART) && !MovieModuleManager.getInstance().getSettings().getFanartFilenames().isEmpty()
-        && movie.getMediaFiles(MediaFileType.FANART).isEmpty()) {
+        && !hasArtwork(movie, MediaFileType.FANART)) {
       return true;
     }
     if (config.contains(MovieScraperMetadataConfig.BANNER) && !MovieModuleManager.getInstance().getSettings().getBannerFilenames().isEmpty()
-        && movie.getMediaFiles(MediaFileType.BANNER).isEmpty()) {
+        && !hasArtwork(movie, MediaFileType.BANNER)) {
       return true;
     }
     if (config.contains(MovieScraperMetadataConfig.DISCART) && !MovieModuleManager.getInstance().getSettings().getDiscartFilenames().isEmpty()
-        && movie.getMediaFiles(MediaFileType.DISC).isEmpty()) {
+        && !hasArtwork(movie, MediaFileType.DISC)) {
       return true;
     }
     if (config.contains(MovieScraperMetadataConfig.CLEARLOGO) && !MovieModuleManager.getInstance().getSettings().getClearlogoFilenames().isEmpty()
-        && movie.getMediaFiles(MediaFileType.CLEARLOGO).isEmpty()) {
+        && !hasArtwork(movie, MediaFileType.CLEARLOGO)) {
       return true;
     }
     if (config.contains(MovieScraperMetadataConfig.CLEARART) && !MovieModuleManager.getInstance().getSettings().getClearartFilenames().isEmpty()
-        && movie.getMediaFiles(MediaFileType.CLEARART).isEmpty()) {
+        && !hasArtwork(movie, MediaFileType.CLEARART)) {
       return true;
     }
     if (config.contains(MovieScraperMetadataConfig.THUMB) && !MovieModuleManager.getInstance().getSettings().getThumbFilenames().isEmpty()
-        && movie.getMediaFiles(MediaFileType.THUMB).isEmpty()) {
+        && !hasArtwork(movie, MediaFileType.THUMB)) {
       return true;
     }
     if (config.contains(MovieScraperMetadataConfig.KEYART) && !MovieModuleManager.getInstance().getSettings().getKeyartFilenames().isEmpty()
-        && movie.getMediaFiles(MediaFileType.KEYART).isEmpty()) {
+        && !hasArtwork(movie, MediaFileType.KEYART)) {
       return true;
     }
     if (config.contains(MovieScraperMetadataConfig.EXTRAFANART) && MovieModuleManager.getInstance().getSettings().isImageExtraFanart()
-        && !MovieModuleManager.getInstance().getSettings().getExtraFanartFilenames().isEmpty()
-        && movie.getMediaFiles(MediaFileType.EXTRAFANART).isEmpty()) {
+        && !MovieModuleManager.getInstance().getSettings().getExtraFanartFilenames().isEmpty() && !hasArtwork(movie, MediaFileType.EXTRAFANART)) {
       return true;
     }
     if (config.contains(MovieScraperMetadataConfig.EXTRATHUMB) && MovieModuleManager.getInstance().getSettings().isImageExtraThumbs()
-        && movie.getMediaFiles(MediaFileType.EXTRATHUMB).isEmpty()) {
+        && !hasArtwork(movie, MediaFileType.EXTRATHUMB)) {
       return true;
     }
 
     return false;
+  }
+
+  /**
+   * checks if there is at least one artwork file for the given movie and type with a filesize > 0
+   *
+   * @param movie
+   *          the movie to check artwork for
+   * @param type
+   *          the type of artwork to check for
+   * @return true/false
+   */
+  private static boolean hasArtwork(Movie movie, MediaFileType type) {
+    for (MediaFile artwork : movie.getMediaFiles(type)) {
+      if (artwork.getFilesize() > 0) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * get all artwork files for the given movie and type with a filesize > 0
+   *
+   * @param movie
+   *          the movie to check artwork for
+   * @param type
+   *          the type of artwork to check for
+   * @return list of MediaFiles (can be empty!)
+   */
+  public static List<MediaFile> getArtworkFiles(Movie movie, MediaFileType type) {
+    List<MediaFile> artworkFiles = new ArrayList<>();
+    for (MediaFile artwork : movie.getMediaFiles(type)) {
+      if (artwork.getFilesize() > 0) {
+        artworkFiles.add(artwork);
+      }
+    }
+
+    return artworkFiles;
   }
 
   /**
