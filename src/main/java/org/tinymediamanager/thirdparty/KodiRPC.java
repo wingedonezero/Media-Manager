@@ -250,7 +250,7 @@ public class KodiRPC {
    */
   protected void getAndSetMovieMappings(ArrayList<MovieDetail> movies) {
     moviemappings.clear();
-    LOGGER.debug("KODI {} movies", movies.size()); // stacked movies are multiple times in here
+    LOGGER.info("KODI {} movies", movies.size()); // stacked movies are multiple times in here
 
     // 1. prepare a map of all TMM Mfs, rel path from DS -> entity DBID (less memory than complete entity)
     Map<String, UUID> tmmMovies = new HashMap<>();
@@ -317,7 +317,11 @@ public class KodiRPC {
     }
 
     LOGGER.info("mapped {} movies", moviemappings.size());
-
+    for (Movie movie : MovieModuleManager.getInstance().getMovieList().getMovies()) {
+      if (!moviemappings.containsKey(movie.getDbId())) {
+        LOGGER.debug("could not map '{}'", movie.getMainFile().getFileAsPath());
+      }
+    }
   }
 
   @Deprecated
@@ -446,7 +450,7 @@ public class KodiRPC {
   protected void getAndSetTvShowMappings(ArrayList<TVShowDetail> shows) {
     tvshowmappings.clear();
     episodemappings.clear();
-    LOGGER.debug("KODI {} shows", shows.size());
+    LOGGER.info("KODI {} shows", shows.size());
 
     // 1. prepare a map of all TMM Mfs, rel path from DS -> entity DBID (less memory than complete entity)
     Map<String, UUID> tmmShows = new HashMap<>();
@@ -489,6 +493,11 @@ public class KodiRPC {
     }
 
     LOGGER.info("mapped {} shows", tvshowmappings.size());
+    for (TvShow show : TvShowModuleManager.getInstance().getTvShowList().getTvShows()) {
+      if (!tvshowmappings.containsKey(show.getDbId())) {
+        LOGGER.debug("could not map '{}'", show.getPathNIO());
+      }
+    }
   }
 
   public void refreshFromNfo(Movie movie) {
