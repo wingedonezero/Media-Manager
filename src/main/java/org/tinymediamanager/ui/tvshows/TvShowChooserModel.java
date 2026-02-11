@@ -570,7 +570,7 @@ public class TvShowChooserModel extends AbstractModelObject {
       tvShowtoScrape.saveToDb();
       tvShowtoScrape.writeNFO();
 
-      // start automatic movie trailer download
+      // start automatic TV show trailer download
       if (TvShowModuleManager.getInstance().getSettings().isUseTrailerPreference()
           && TvShowModuleManager.getInstance().getSettings().isAutomaticTrailerDownload() && tvShow.getMediaFiles(MediaFileType.TRAILER).isEmpty()
           && !tvShow.getTrailer().isEmpty()) {

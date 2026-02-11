@@ -604,10 +604,13 @@ public final class TvShowSettings extends AbstractSettings {
     boolean oldValue = this.useTrailerPreference;
     this.useTrailerPreference = newValue;
     firePropertyChange("useTrailerPreference", oldValue, newValue);
+    // also influences the automatic trailer download
+    firePropertyChange("automaticTrailerDownload", oldValue, newValue);
   }
 
   public boolean isAutomaticTrailerDownload() {
-    return automaticTrailerDownload;
+    // only available if the trailer preference is set
+    return useTrailerPreference && automaticTrailerDownload;
   }
 
   public void setAutomaticTrailerDownload(boolean newValue) {

@@ -26,7 +26,6 @@ import javax.swing.KeyStroke;
 
 import org.tinymediamanager.core.MediaFileType;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.core.threading.TmmTask;
 import org.tinymediamanager.core.threading.TmmTaskManager;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.tasks.TvShowTrailerDownloadTask;
@@ -89,8 +88,7 @@ public class TvShowTrailerDownloadAction extends TmmAction {
         continue;
       }
 
-      TmmTask task = new TvShowTrailerDownloadTask(tvShow);
-      TmmTaskManager.getInstance().addDownloadTask(task);
+      TmmTaskManager.getInstance().addDownloadTask(new TvShowTrailerDownloadTask(tvShow));
     }
   }
 }

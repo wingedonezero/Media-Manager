@@ -14,6 +14,7 @@ x [TV shows] fixed cleanup of mediainfo XML files for episodes #3198
 x [TV shows] also do a cleanup of empty TV show folders #3201
 x [TV shows] added support of English title for episodes in the universal scraper
 x [Artwork] ignore 0 byte files when checking for existing artwork
+x [Trailer] unified trailer settings between movies and TV shows
 x [UI] fixed sorting of the rating column in the TV show module
 x [NFO] write default ratings first in NFO files to improve compatibility with some media centers
 x [HTTP] only fetch ratings chosen in the settings
