@@ -16,6 +16,9 @@
 
 package org.tinymediamanager.core.tvshow.connector;
 
+import static org.tinymediamanager.core.entities.Person.Type.DIRECTOR;
+import static org.tinymediamanager.core.entities.Person.Type.WRITER;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLDecoder;
@@ -57,6 +60,7 @@ import org.tinymediamanager.scraper.entities.MediaEpisodeGroup;
 import org.tinymediamanager.scraper.util.DateUtils;
 import org.tinymediamanager.scraper.util.MediaIdUtil;
 import org.tinymediamanager.scraper.util.MetadataUtil;
+import org.tinymediamanager.scraper.util.ParserUtils;
 
 /**
  * The class TvShowNfoParser is used to parse all types of NFO/XML files
@@ -112,6 +116,8 @@ public class TvShowNfoParser {
   public List<String>               studios             = new ArrayList<>();
   public List<String>               countries           = new ArrayList<>();
   public List<String>               tags                = new ArrayList<>();
+  public List<Person>               directors           = new ArrayList<>();
+  public List<Person>               credits             = new ArrayList<>();
   public List<Person>               actors              = new ArrayList<>();
   public List<MediaEpisodeGroup>    episodeGroups       = new ArrayList<>();
 
@@ -177,6 +183,8 @@ public class TvShowNfoParser {
     parseTag(TvShowNfoParser::parseStudios);
     parseTag(TvShowNfoParser::parseCountries);
     parseTag(TvShowNfoParser::parseTags);
+    parseTag(TvShowNfoParser::parseDirectors);
+    parseTag(TvShowNfoParser::parseCredits);
     parseTag(TvShowNfoParser::parseActors);
     parseTag(TvShowNfoParser::parseTrailer);
 
@@ -1271,6 +1279,144 @@ public class TvShowNfoParser {
   }
 
   /**
+   * credits come in two different flavors<br />
+   * - kodi has multiple credits tags<br />
+   * - mediaportal has all credits (comma separated) in one credits tag
+   */
+  private Void parseCredits() {
+    supportedElements.add("credits");
+
+    Elements elements = root.select(root.tagName() + " > credits");
+    // if there is exactly one credits tag, split the credits at the comma
+    if (elements.size() == 1) {
+      try {
+        Element element = elements.get(0);
+
+        // split on , or / and remove whitespace around
+        List<String> creditsNames = ParserUtils.split(element.ownText());
+
+        for (String credit : creditsNames) {
+          Person person = new Person();
+          person.name = credit;
+
+          // parse IDs, only if exactly one director is in the tag
+          if (creditsNames.size() == 1) {
+            if (StringUtils.isNotBlank(element.attr("tmdbid"))) {
+              person.tmdbId = element.attr("tmdbid");
+            }
+
+            if (StringUtils.isNotBlank(element.attr("imdbid"))) {
+              person.imdbId = element.attr("imdbid");
+            }
+
+            if (StringUtils.isNotBlank(element.attr("tvdbid"))) {
+              person.tvdbId = element.attr("tvdbid");
+            }
+          }
+
+          credits.add(person);
+        }
+      }
+      catch (Exception ignored) {
+        // ignored
+      }
+    }
+    else {
+      for (Element element : elements) {
+        if (StringUtils.isNotBlank(element.ownText())) {
+          Person person = new Person();
+          person.name = element.ownText();
+
+          if (StringUtils.isNotBlank(element.attr("tmdbid"))) {
+            person.tmdbId = element.attr("tmdbid");
+          }
+
+          if (StringUtils.isNotBlank(element.attr("imdbid"))) {
+            person.imdbId = element.attr("imdbid");
+          }
+
+          if (StringUtils.isNotBlank(element.attr("tvdbid"))) {
+            person.tvdbId = element.attr("tvdbid");
+          }
+
+          credits.add(person);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * directors come in two different flavors<br />
+   * - kodi has multiple director tags<br />
+   * - mediaportal has all directors (comma separated) in one director tag
+   */
+  private Void parseDirectors() {
+    supportedElements.add("director");
+
+    Elements elements = root.select(root.tagName() + " > director");
+    // if there is exactly one director tag, split the directors at the comma
+    if (elements.size() == 1) {
+      try {
+        Element element = elements.get(0);
+
+        // split on , or / and remove whitespace around
+        List<String> directorNames = ParserUtils.split(element.ownText());
+
+        for (String director : directorNames) {
+          Person person = new Person();
+          person.name = director;
+
+          // parse IDs, only if exactly one director is in the tag
+          if (directorNames.size() == 1) {
+            if (StringUtils.isNotBlank(element.attr("tmdbid"))) {
+              person.tmdbId = element.attr("tmdbid");
+            }
+
+            if (StringUtils.isNotBlank(element.attr("imdbid"))) {
+              person.imdbId = element.attr("imdbid");
+            }
+
+            if (StringUtils.isNotBlank(element.attr("tvdbid"))) {
+              person.tvdbId = element.attr("tvdbid");
+            }
+          }
+
+          directors.add(person);
+        }
+      }
+      catch (Exception ignored) {
+        // ignored
+      }
+    }
+    else {
+      for (Element element : elements) {
+        if (StringUtils.isNotBlank(element.ownText())) {
+          Person person = new Person();
+          person.name = element.ownText();
+
+          if (StringUtils.isNotBlank(element.attr("tmdbid"))) {
+            person.tmdbId = element.attr("tmdbid");
+          }
+
+          if (StringUtils.isNotBlank(element.attr("imdbid"))) {
+            person.imdbId = element.attr("imdbid");
+          }
+
+          if (StringUtils.isNotBlank(element.attr("tvdbid"))) {
+            person.tvdbId = element.attr("tvdbid");
+          }
+
+          directors.add(person);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * actors usually come as multiple actor tags in the root with three child tags:<br />
    * - name<br />
    * - role<br />
@@ -1642,6 +1788,24 @@ public class TvShowNfoParser {
 
     show.setCertification(certification);
     show.setStatus(status);
+
+    List<org.tinymediamanager.core.entities.Person> newDirectors = new ArrayList<>();
+    for (Person director : directors) {
+      if (StringUtils.isBlank(director.role)) {
+        director.role = "Director";
+      }
+      newDirectors.add(morphPerson(DIRECTOR, director));
+    }
+    show.addToCrew(newDirectors);
+
+    List<org.tinymediamanager.core.entities.Person> newWriters = new ArrayList<>();
+    for (Person writer : credits) {
+      if (StringUtils.isBlank(writer.role)) {
+        writer.role = "Writer";
+      }
+      newWriters.add(morphPerson(WRITER, writer));
+    }
+    show.addToCrew(newWriters);
 
     List<org.tinymediamanager.core.entities.Person> newActors = new ArrayList<>();
     for (Person actor : actors) {

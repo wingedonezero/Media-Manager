@@ -75,7 +75,6 @@ import org.tinymediamanager.scraper.util.DateUtils;
 public class KodiRPC {
   private static final Logger         LOGGER            = LoggerFactory.getLogger(KodiRPC.class);
   private static KodiRPC              instance;
-  private static final String         SEPARATOR_REGEX   = "[\\/\\\\]+";
 
   private final JavaConnectionManager connectionManager = new JavaConnectionManager();
 
@@ -251,7 +250,7 @@ public class KodiRPC {
    */
   protected void getAndSetMovieMappings(ArrayList<MovieDetail> movies) {
     moviemappings.clear();
-    LOGGER.debug("KODI {} movies", movies.size()); // stacked movies are multiple times in here
+    LOGGER.info("KODI {} movies", movies.size()); // stacked movies are multiple times in here
 
     // 1. prepare a map of all TMM Mfs, rel path from DS -> entity DBID (less memory than complete entity)
     Map<String, UUID> tmmMovies = new HashMap<>();
@@ -265,11 +264,16 @@ public class KodiRPC {
         continue;
       }
 
+      // strip-off schema as we only ned the last path;
+      // it always comes with slash (even on windows)
+      String normalizedKodiFile = kodiMovie.file.replaceAll("^\\w+://+", "/");
+
       try {
         // stacking only supported on movies
-        if (kodiMovie.file.startsWith("stack")) {
-          String[] files = kodiMovie.file.split(" , ");
+        if (normalizedKodiFile.startsWith("stack")) {
+          String[] files = normalizedKodiFile.split(" , ");
           for (String kodiFile : files) {
+            normalizedKodiFile = kodiFile.replaceAll("^\\w+://+", "/"); // once again, for others
             // find TMM id
             for (String tmmPath : tmmMovies.keySet()) {
               // need to use Path for delimiter normalization
@@ -292,7 +296,7 @@ public class KodiRPC {
           // find TMM id
           for (String tmmPath : tmmMovies.keySet()) {
             // need to use Path for delimiter normalization
-            if (Path.of(kodiMovie.file).endsWith(Path.of(tmmPath))) {
+            if (Path.of(normalizedKodiFile).endsWith(Path.of(tmmPath))) {
               // we have a match!
               UUID uuid = tmmMovies.get(tmmPath);
               if (!moviemappings.containsKey(uuid)) {
@@ -313,7 +317,11 @@ public class KodiRPC {
     }
 
     LOGGER.info("mapped {} movies", moviemappings.size());
-
+    for (Movie movie : MovieModuleManager.getInstance().getMovieList().getMovies()) {
+      if (!moviemappings.containsKey(movie.getDbId())) {
+        LOGGER.debug("could not map '{}'", movie.getMainFile().getFileAsPath());
+      }
+    }
   }
 
   @Deprecated
@@ -394,7 +402,7 @@ public class KodiRPC {
           }
         }
         else {
-          String rel = Utils.relPath(Path.of(entity.getDataSource()), me.getPathNIO());
+          String rel = Utils.relPath(Path.of(entity.getDataSource()), me.getMainFile().getFileAsPath());
           if (!fileMap.containsKey(rel)) {
             fileMap.put(rel, me.getDbId());
           }
@@ -442,12 +450,13 @@ public class KodiRPC {
   protected void getAndSetTvShowMappings(ArrayList<TVShowDetail> shows) {
     tvshowmappings.clear();
     episodemappings.clear();
-    LOGGER.debug("KODI {} shows", shows.size());
+    LOGGER.info("KODI {} shows", shows.size());
 
     // 1. prepare a map of all TMM Mfs, rel path from DS -> entity DBID (less memory than complete entity)
     Map<String, UUID> tmmShows = new HashMap<>();
     for (TvShow show : TvShowModuleManager.getInstance().getTvShowList().getTvShows()) {
-      tmmShows.putAll(parseTmmEntity(show, false, false));
+      String rel = Utils.relPath(show.getDataSource(), show.getPath());
+      tmmShows.put(rel, show.getDbId());
     }
 
     // 2. for every Kodi result, loop over TMM entries and find which matches with "endsWith"
@@ -456,11 +465,15 @@ public class KodiRPC {
         continue;
       }
 
+      // strip-off schema as we only ned the last path;
+      // it always comes with slash (even on windows)
+      String normalizedKodiFile = kodiShow.file.replaceAll("^\\w+://+", "/");
+
       try {
         // find TMM id
         for (String tmmPath : tmmShows.keySet()) {
           // need to use Path for delimiter normalization
-          if (Path.of(kodiShow.file).endsWith(Path.of(tmmPath))) {
+          if (Path.of(normalizedKodiFile).endsWith(Path.of(tmmPath))) {
             // we have a match!
             UUID uuid = tmmShows.get(tmmPath);
             if (!tvshowmappings.containsKey(uuid)) {
@@ -480,6 +493,11 @@ public class KodiRPC {
     }
 
     LOGGER.info("mapped {} shows", tvshowmappings.size());
+    for (TvShow show : TvShowModuleManager.getInstance().getTvShowList().getTvShows()) {
+      if (!tvshowmappings.containsKey(show.getDbId())) {
+        LOGGER.debug("could not map '{}'", show.getPathNIO());
+      }
+    }
   }
 
   public void refreshFromNfo(Movie movie) {

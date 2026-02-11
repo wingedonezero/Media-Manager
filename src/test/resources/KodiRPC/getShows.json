@@ -9,7 +9,7 @@
         },
         "tvshows": [
             {
-                "file": "/media/qnap_media/Sorozat/Clannad (2007)/",
+                "file": "smb://192.168.178.37/Share/Video_1-4/Filme_1-4/Sorozat/Clannad (2007)/",
                 "label": "Clannad",
                 "tvshowid": 1
             },

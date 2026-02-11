@@ -421,7 +421,7 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
   }
 
   /**
-   * Gets the file name of the (first) artwork of the given type
+   * Gets the file name of the (first) artwork of the given type with a file size > 0
    * 
    * @param type
    *          the artwork type
@@ -429,8 +429,10 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
    */
   public String getArtworkFilename(MediaFileType type) {
     List<MediaFile> artworks = getMediaFiles(type);
-    if (!artworks.isEmpty()) {
-      return artworks.get(0).getFile().toString();
+    for (MediaFile mediaFile : artworks) {
+      if (mediaFile.getFilesize() > 0) {
+        return mediaFile.getFile().toString();
+      }
     }
     return "";
   }

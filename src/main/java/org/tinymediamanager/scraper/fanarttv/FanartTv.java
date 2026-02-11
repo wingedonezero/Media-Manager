@@ -36,10 +36,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class FanartTv {
   // the base API url
-  public static final String API_URL          = "https://webservice.fanart.tv/v3/";
-  // the api key query parameter; hast to be supplied at all calls
-  public static final String PARAM_API_KEY    = "api-key";
-  public static final String PARAM_CLIENT_KEY = "client-key";
+  public static final String API_URL = "https://webservice.fanart.tv/v3.2/";
 
   private Retrofit           restAdapter;
   private String             apiKey;
@@ -111,9 +108,9 @@ public class FanartTv {
       builder.client(TmmHttpClient.newBuilder(true).addInterceptor(chain -> {
         Request original = chain.request();
         Request.Builder request = original.newBuilder().method(original.method(), original.body());
-        request.addHeader(PARAM_API_KEY, apiKey);
+        request.addHeader("api-key", apiKey);
         if (StringUtils.isNotBlank(clientKey)) {
-          request.addHeader(PARAM_CLIENT_KEY, clientKey);
+          request.addHeader("client-key", clientKey);
         }
         return chain.proceed(request.build());
       }).build());

@@ -8,7 +8,7 @@
             "total": 336
         },
         "movies": [{
-                "file": "/media/qnap_media/Film/5 Centimeters per Second (2007)/5 Centimeters per Second (2007) 1080p h264.mkv",
+                "file": "smb://192.168.178.37/Share/Video_1-4/Filme_1-4/5 Centimeters per Second (2007)/5 Centimeters per Second (2007) 1080p h264.mkv",
                 "label": "5 Centimeters per Second",
                 "movieid": 1
             }, {

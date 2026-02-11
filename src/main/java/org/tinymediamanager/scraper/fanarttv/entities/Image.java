@@ -23,6 +23,9 @@ public class Image {
   public String url       = "";
   public String lang      = "";
   public int    likes     = 0;
+  public int    width     = 0;
+  public int    height    = 0;
+
   public String season    = ""; // string because there are entries for _all_ seasons
   public int    disc      = 0;
   public String disc_type = "";

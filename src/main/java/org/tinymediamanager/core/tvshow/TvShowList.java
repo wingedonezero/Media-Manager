@@ -793,8 +793,6 @@ public final class TvShowList extends AbstractModelObject {
     // check for corrupted media entities
     checkAndCleanupMediaFiles();
 
-    List<TvShowEpisode> episodes = new ArrayList<>();
-
     // init everything after loading
     for (TvShow tvShow : tvShows) {
       tvShow.initializeAfterLoading();
@@ -805,7 +803,6 @@ public final class TvShowList extends AbstractModelObject {
 
       for (TvShowEpisode episode : tvShow.getEpisodes()) {
         episode.initializeAfterLoading();
-        episodes.add(episode);
       }
     }
 
@@ -1279,29 +1276,27 @@ public final class TvShowList extends AbstractModelObject {
         }
         audioStreamCount.add(episode.getMediaInfoAudioStreamCount());
 
-        // get video related information only from video files
-        for (MediaFile mf : episode.getMediaFiles(MediaFileType.VIDEO)) {
-          // video codec
-          if (StringUtils.isNotBlank(mf.getVideoCodec())) {
-            videoCodecs.add(mf.getVideoCodec());
-          }
+        // get video related information only from main video file
+        MediaFile mf = episode.getMainVideoFile();
 
-          // frame rate
-          if (mf.getFrameRate() > 0) {
-            frameRates.add(mf.getFrameRate());
-          }
+        // video codec
+        if (StringUtils.isNotBlank(mf.getVideoCodec())) {
+          videoCodecs.add(mf.getVideoCodec());
+        }
 
-          // video container
-          if (StringUtils.isNotBlank(mf.getContainerFormat())) {
-            videoContainers.putIfAbsent(mf.getContainerFormat().toLowerCase(Locale.ROOT), mf.getContainerFormat());
-          }
+        // frame rate
+        if (mf.getFrameRate() > 0) {
+          frameRates.add(mf.getFrameRate());
+        }
 
-          // HDR Format (comma separated)
-          if (!mf.getHdrFormat().isEmpty()) {
-            hdrFormat.addAll(Arrays.asList(mf.getHdrFormat().split(", ")));
-          }
+        // video container
+        if (StringUtils.isNotBlank(mf.getContainerFormat())) {
+          videoContainers.putIfAbsent(mf.getContainerFormat().toLowerCase(Locale.ROOT), mf.getContainerFormat());
+        }
 
-          break;
+        // HDR Format (comma separated)
+        if (!mf.getHdrFormat().isEmpty()) {
+          hdrFormat.addAll(Arrays.asList(mf.getHdrFormat().split(", ")));
         }
       }
     }

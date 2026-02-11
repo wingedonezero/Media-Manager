@@ -237,7 +237,7 @@ public class TvShowChooserDialog extends TmmDialog implements ActionListener {
     {
       JPanel panelSearchField = new JPanel();
       contentPanel.add(panelSearchField, "cell 0 0,grow");
-      panelSearchField.setLayout(new MigLayout("", "[][][grow][]", "[23px][]"));
+      panelSearchField.setLayout(new MigLayout("insets 0", "[][][grow][]", "[23px][]"));
       {
         JLabel lblScraper = new TmmLabel(TmmResourceBundle.getString("scraper"));
         panelSearchField.add(lblScraper, "cell 0 0,alignx right");
@@ -363,7 +363,7 @@ public class TvShowChooserDialog extends TmmDialog implements ActionListener {
     {
       JPanel panelScraperConfig = new JPanel();
       contentPanel.add(panelScraperConfig, "cell 0 4,grow");
-      panelScraperConfig.setLayout(new MigLayout("", "[][grow]", "[][][][]"));
+      panelScraperConfig.setLayout(new MigLayout("insets 0", "[][grow]", "[][][][]"));
       {
         JLabel lblScrapeFollowingItems = new TmmLabel(TmmResourceBundle.getString("chooser.scrape"));
         panelScraperConfig.add(lblScrapeFollowingItems, "cell 0 0 2 1");

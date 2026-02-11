@@ -22,11 +22,8 @@ package org.tinymediamanager.core;
  * 
  */
 public class WolDevice extends AbstractModelObject {
-  private static final String NAME        = "name";
-  private static final String MAC_ADDRESS = "macAddress";
-
-  private String              name;
-  private String              macAddress;
+  private String name;
+  private String macAddress;
 
   public WolDevice() {
   }
@@ -53,12 +50,12 @@ public class WolDevice extends AbstractModelObject {
   public void setName(String newValue) {
     String oldValue = this.name;
     this.name = newValue;
-    firePropertyChange(NAME, oldValue, newValue);
+    firePropertyChange("name", oldValue, newValue);
   }
 
   public void setMacAddress(String newValue) {
     String oldValue = this.macAddress;
     this.macAddress = newValue;
-    firePropertyChange(MAC_ADDRESS, oldValue, newValue);
+    firePropertyChange("macAddress", oldValue, newValue);
   }
 }

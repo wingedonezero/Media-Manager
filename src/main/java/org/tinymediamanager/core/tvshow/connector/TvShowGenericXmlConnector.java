@@ -75,7 +75,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public abstract class TvShowGenericXmlConnector implements ITvShowConnector {
   private static final Logger                 LOGGER                 = LoggerFactory.getLogger(TvShowGenericXmlConnector.class);
 
-  protected static final String               ORACLE_IS_STANDALONE   = "http://www.oracle.com/xml/is-standalone";
   protected static final DecimalFormatSymbols DECIMAL_FORMAT_SYMBOLS = new DecimalFormatSymbols(Locale.US);
 
   protected final TvShow                      tvShow;
@@ -171,6 +170,8 @@ public abstract class TvShowGenericXmlConnector implements ITvShowConnector {
         addStudios();
         addCountry();
         addTags();
+        addCredits();
+        addDirectors();
         addActors();
         addTrailer();
         addDateAdded();
@@ -893,6 +894,34 @@ public abstract class TvShowGenericXmlConnector implements ITvShowConnector {
       tag.setTextContent(t);
       root.appendChild(tag);
     }
+  }
+
+  /**
+   * add credits in <credits>xxx</credits> tags (mulitple)
+   */
+  protected void addCredits() {
+    tvShow.getCrew().stream().filter(person -> person.getType() == Person.Type.WRITER).forEach(writer -> {
+      Element element = document.createElement("credits");
+      element.setTextContent(writer.getName());
+
+      NfoUtils.addPersonIdsAsAttributes(element, writer);
+
+      root.appendChild(element);
+    });
+  }
+
+  /**
+   * add directors in <director>xxx</director> tags (mulitple)
+   */
+  protected void addDirectors() {
+    tvShow.getCrew().stream().filter(person -> person.getType() == Person.Type.DIRECTOR).forEach(director -> {
+      Element element = document.createElement("director");
+      element.setTextContent(director.getName());
+
+      NfoUtils.addPersonIdsAsAttributes(element, director);
+
+      root.appendChild(element);
+    });
   }
 
   /**
