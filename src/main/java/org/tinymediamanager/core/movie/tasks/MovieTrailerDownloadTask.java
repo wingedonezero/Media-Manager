@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 
@@ -83,8 +84,15 @@ public class MovieTrailerDownloadTask extends TmmTask {
     // prepare the list of desired trailers
     // search for quality and provider
     for (MediaTrailer trailer : movie.getTrailer()) {
-      if (desiredQuality.containsQuality(trailer.getQuality()) && desiredSource.containsSource(trailer.getProvider())) {
-        trailers.add(trailer);
+      if (desiredSource.containsSource(trailer.getProvider())) {
+        if (desiredSource == TrailerSources.YOUTUBE) {
+          // for YouTube, we do not need to check the quality, because we can download all qualities
+          trailers.add(trailer);
+        }
+        else if (desiredQuality.containsQuality(trailer.getQuality())) {
+          // for other providers we check the quality, because we can only download the given quality
+          trailers.add(trailer);
+        }
       }
     }
 
@@ -113,6 +121,11 @@ public class MovieTrailerDownloadTask extends TmmTask {
         // no url - no download
         // OR: an IMDB trailer, were we ONLY collect the ID, because we must generate the url on-the-fly
         LOGGER.trace("Trailer has neither an ID, nor an url: {}", trailer);
+        continue;
+      }
+
+      // skip local files - we only want to download online trailers
+      if (StringUtils.isNotBlank(url) && !url.toLowerCase(Locale.ROOT).startsWith("http")) {
         continue;
       }
 

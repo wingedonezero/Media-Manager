@@ -166,7 +166,7 @@ class MovieTrailerOptionsSettingsPanel extends JPanel {
         panelOptions.add(lblTrailerSource, "cell 2 2");
 
         cbTrailerSource = new JComboBox();
-        cbTrailerSource.setModel(new DefaultComboBoxModel<>(TrailerSources.values()));
+        cbTrailerSource.setModel(new DefaultComboBoxModel<>(TrailerSources.getActiveTrailerSources()));
         panelOptions.add(cbTrailerSource, "cell 2 2");
 
         JLabel lblTrailerQuality = new JLabel(TmmResourceBundle.getString("Settings.trailer.quality"));

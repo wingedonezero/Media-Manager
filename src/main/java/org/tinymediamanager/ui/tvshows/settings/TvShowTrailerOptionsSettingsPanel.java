@@ -66,6 +66,7 @@ public class TvShowTrailerOptionsSettingsPanel extends JPanel {
   private JRadioButton              rbTrailerFilename3;
   private JRadioButton              rbTrailerFilename4;
   private JCheckBox                 chckbxUseYtDlp;
+  private JLabel                    lblAutomaticTrailerDownloadHint;
 
   TvShowTrailerOptionsSettingsPanel() {
     checkBoxListener = e -> checkChanges();
@@ -157,7 +158,7 @@ public class TvShowTrailerOptionsSettingsPanel extends JPanel {
         panelOptions.add(lblTrailerSource, "cell 2 2");
 
         cbTrailerSource = new JComboBox();
-        cbTrailerSource.setModel(new DefaultComboBoxModel<>(TrailerSources.values()));
+        cbTrailerSource.setModel(new DefaultComboBoxModel<>(TrailerSources.getActiveTrailerSources()));
         panelOptions.add(cbTrailerSource, "cell 2 2");
 
         JLabel lblTrailerQuality = new JLabel(TmmResourceBundle.getString("Settings.trailer.quality"));
@@ -168,9 +169,9 @@ public class TvShowTrailerOptionsSettingsPanel extends JPanel {
         panelOptions.add(cbTrailerQuality, "cell 2 3");
 
         chckbxAutomaticTrailerDownload = new JCheckBox(TmmResourceBundle.getString("Settings.trailer.automaticdownload"));
-        panelOptions.add(chckbxAutomaticTrailerDownload, "cell 1 4 2 1");
+        panelOptions.add(chckbxAutomaticTrailerDownload, "cell 2 4");
 
-        JLabel lblAutomaticTrailerDownloadHint = new JLabel(TmmResourceBundle.getString("Settings.trailer.automaticdownload.hint"));
+        lblAutomaticTrailerDownloadHint = new JLabel(TmmResourceBundle.getString("Settings.trailer.automaticdownload.hint"));
         panelOptions.add(lblAutomaticTrailerDownloadHint, "cell 2 5");
         TmmFontHelper.changeFont(lblAutomaticTrailerDownloadHint, L2);
 
@@ -203,10 +204,10 @@ public class TvShowTrailerOptionsSettingsPanel extends JPanel {
   }
 
   protected void initDataBindings() {
-    BeanProperty<TvShowSettings, TrailerSources> tvShowSettingsBeanProperty = BeanProperty.create("trailerSource");
-    BeanProperty<JComboBox<TrailerSources>, Object> jComboBoxBeanProperty = BeanProperty.create("selectedItem");
-    AutoBinding<TvShowSettings, TrailerSources, JComboBox<TrailerSources>, Object> autoBinding_1 = Bindings
-        .createAutoBinding(AutoBinding.UpdateStrategy.READ_WRITE, settings, tvShowSettingsBeanProperty, cbTrailerSource, jComboBoxBeanProperty);
+    Property tvShowSettingsBeanProperty = BeanProperty.create("trailerSource");
+    Property jComboBoxBeanProperty = BeanProperty.create("selectedItem");
+    AutoBinding autoBinding_1 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, tvShowSettingsBeanProperty, cbTrailerSource,
+        jComboBoxBeanProperty);
     autoBinding_1.bind();
     //
     Property tvShowSettingsBeanProperty_1 = BeanProperty.create("trailerQuality");
@@ -230,5 +231,14 @@ public class TvShowTrailerOptionsSettingsPanel extends JPanel {
     AutoBinding autoBinding_5 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, tvShowSettingsBeanProperty_4, chckbxUseYtDlp,
         jCheckBoxBeanProperty);
     autoBinding_5.bind();
+    //
+    Property jCheckBoxBeanProperty_1 = BeanProperty.create("enabled");
+    AutoBinding autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ, checkBox, jCheckBoxBeanProperty, chckbxAutomaticTrailerDownload,
+        jCheckBoxBeanProperty_1);
+    autoBinding.bind();
+    //
+    AutoBinding autoBinding_6 = Bindings.createAutoBinding(UpdateStrategy.READ, checkBox, jCheckBoxBeanProperty, lblAutomaticTrailerDownloadHint,
+        jCheckBoxBeanProperty_1);
+    autoBinding_6.bind();
   }
 }
