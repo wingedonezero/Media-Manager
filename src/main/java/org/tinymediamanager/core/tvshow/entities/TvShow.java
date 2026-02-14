@@ -2629,34 +2629,34 @@ public class TvShow extends MediaEntity implements IMediaInformation {
         return getActors();
 
       case POSTER:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.POSTER);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.POSTER);
 
       case FANART:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.FANART);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.FANART);
 
       case BANNER:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.BANNER);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.BANNER);
 
       case CLEARART:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.CLEARART);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.CLEARART);
 
       case THUMB:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.THUMB);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.THUMB);
 
       case CLEARLOGO:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.CLEARLOGO);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.CLEARLOGO);
 
       case DISCART:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.DISC);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.DISC);
 
       case KEYART:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.KEYART);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.KEYART);
 
       case EXTRAFANART:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.EXTRAFANART);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.EXTRAFANART);
 
       case CHARACTERART:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.CHARACTERART);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.CHARACTERART);
 
       case SEASON_NAMES:
         // if matches, we have all season titles
@@ -2695,19 +2695,19 @@ public class TvShow extends MediaEntity implements IMediaInformation {
         return "all seasonoverviews found"; // dummy non-null
 
       case SEASON_POSTER:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.SEASON_POSTER);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.SEASON_POSTER);
 
       case SEASON_FANART:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.SEASON_FANART);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.SEASON_FANART);
 
       case SEASON_BANNER:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.SEASON_BANNER);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.SEASON_BANNER);
 
       case SEASON_THUMB:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.SEASON_THUMB);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.SEASON_THUMB);
 
       case THEME:
-        TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.THEME);
+        return TvShowArtworkHelper.getArtworkFiles(this, MediaFileType.THEME);
     }
 
     return null;
