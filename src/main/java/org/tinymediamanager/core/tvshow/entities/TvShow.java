@@ -748,7 +748,7 @@ public class TvShow extends MediaEntity implements IMediaInformation {
    */
   public void invalidateEpisodeForDisplayCache() {
     cachedEpisodesForDisplay = null;
-    seasons.forEach(season -> season.invalidateEpisodeForDisplayCache());
+    seasons.forEach(TvShowSeason::invalidateEpisodeForDisplayCache);
   }
 
   /**

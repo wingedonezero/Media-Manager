@@ -261,7 +261,7 @@ public class MovieRenamer {
       return;
     }
 
-    // all the good & needed mediafiles & hbistory
+    // all the good & needed mediafiles & history
     List<MediaFile> needed = new ArrayList<>();
     List<MediaFile> cleanup = new ArrayList<>();
     MediaEntityFilenameHistory fileNameHistory = new MediaEntityFilenameHistory();
@@ -277,7 +277,9 @@ public class MovieRenamer {
     LOGGER.debug("path expression: {}", MovieModuleManager.getInstance().getSettings().getRenamerPathname());
     LOGGER.debug("file expression: {}", MovieModuleManager.getInstance().getSettings().getRenamerFilename());
 
+    // rel
     String newPathname = createDestinationForFoldername(MovieModuleManager.getInstance().getSettings().getRenamerPathname(), movie);
+    // abs
     String oldPathname = movie.getPathNIO().toString();
 
     if (!newPathname.isEmpty()) {
@@ -765,7 +767,7 @@ public class MovieRenamer {
       }
       else {
         // check if the target folder already exists (and is not empty)
-        // check if the user wants this behaviour
+        // check if the user wants this behavior
         try {
           if (Files.exists(destDir) && !Utils.isFolderEmpty(destDir)
               && MovieModuleManager.getInstance().getSettings().isAllowMultipleMoviesInSameDir()) {
@@ -905,7 +907,30 @@ public class MovieRenamer {
     List<MediaFile> newFiles = new ArrayList<>();
     boolean newDestIsMultiMovieDir = movie.isMultiMovieDir();
 
+    String newPathname = "";
+
+    String pattern = MovieModuleManager.getInstance().getSettings().getRenamerPathname();
+    // keep MMD setting unless renamer pattern is not empty
+    if (!pattern.isEmpty()) {
+      // re-evaluate multiMovieDir based on renamer settings
+      // folder MUST BE UNIQUE, so we need at least a T/E-Y combo or IMDBid
+      // If renaming just to a fixed pattern (eg "$S"), movie will downgrade to a MMD
+      newDestIsMultiMovieDir = !MovieRenamer.isFolderPatternUnique(pattern);
+      newPathname = MovieRenamer.createDestinationForFoldername(pattern, movie);
+    }
+    else {
+      // keep same dir
+      // Path relativize(Path other)
+      newPathname = Utils.relPath(Paths.get(movie.getDataSource()), movie.getPathNIO());
+    }
+
     Path newMovieDir = movie.getPathNIO();
+    try {
+      newMovieDir = Paths.get(movie.getDataSource(), newPathname);
+    }
+    catch (Exception e) {
+      LOGGER.warn("New movie folder name '{}' is not allowed - '{}'", newPathname, e.getMessage());
+    }
 
     String newFilename = newVideoFileName;
     if (StringUtils.isBlank(newFilename)) {

@@ -115,6 +115,28 @@ public class MovieRenamerTest extends BasicMovieTest {
   }
 
   @Test
+  public void testRenameMultiMovieFolderToSingleMovieFolder() throws Exception {
+    try {
+      initTest();
+
+      MovieModuleManager.getInstance().getSettings().setRenamerPathname("${titleSortable} ${- ,edition,} (${year}) [${videoFormat}]");
+      MovieModuleManager.getInstance()
+          .getSettings()
+          .setRenamerFilename("${title} ${- ,edition,} (${year}) [${videoFormat}] [${videoCodec}] [${audioCodec}]");
+
+      UdsMiRenamerExample example = new UdsMiRenamerExample("MultipleVideosMMD", "Aladdin", 1992, "multiv-movie1.avi", "1080p", "h264",
+          "Aladdin (1992) [1080p]");
+      example.oldFiles = new String[] { "multiv-movie1.avi", "multiv-movie1.nfo", "multiv-movie1-poster.png" };
+      String movieBasename = "Aladdin (1992) [1080p] [h264] [DTS]";
+      example.newFiles = new String[] { movieBasename + ".avi", movieBasename + ".nfo", movieBasename + "-poster.png" };
+      checkExample(example);
+    }
+    finally {
+      finishTest();
+    }
+  }
+
+  @Test
   public void testRenameBdmv() throws Exception {
     try {
       initTest();
@@ -166,7 +188,15 @@ public class MovieRenamerTest extends BasicMovieTest {
     MovieList movieList = MovieList.getInstance();
     Path datasource = Paths.get(MovieModuleManager.getInstance().getSettings().getMovieDataSource().get(0));
 
-    Movie movie = movieList.findFirstByPath(datasource.resolve(example.oldFolder));
+    Movie movie = null;
+    for (Movie m : movieList.findByPath(datasource.resolve(example.oldFolder))) {
+      if (m.getMainVideoFile().getFilename().equals(example.mainVideoFilename)) {
+        movie = m;
+        break;
+      }
+    }
+
+    assertThat(movie).isNotNull();
     assertThat(movie.getTitle()).isEqualTo(example.title);
     assertThat(movie.getYear()).isEqualTo(example.year);
 

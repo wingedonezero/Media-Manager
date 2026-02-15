@@ -1,3 +1,9 @@
+Version 5.2.8
+=======================
+x [Movies] fixed a problem in the renamer, when "upgrading" movies to a dedicated folder
+x [TV shows] update TV show tree correctly after renaming
+
+
 Version 5.2.7
 =======================
 + [Performance] heavily improved UI performance for really large libraries

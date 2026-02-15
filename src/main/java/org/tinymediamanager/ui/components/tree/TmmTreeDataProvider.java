@@ -25,6 +25,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.tinymediamanager.core.AbstractModelObject;
+import org.tinymediamanager.core.entities.MediaEntity;
 
 /**
  * The class TmmTreeDataProvider is the base class for all data providers used with the TmmTree
@@ -49,7 +50,7 @@ public abstract class TmmTreeDataProvider<E extends TmmTreeNode> extends Abstrac
   /**
    * Get all tree filters assigned to this data provider
    * 
-   * @return a list of all set filters
+   * @return a {@link Set} of all set filters
    */
   public Set<ITmmTreeFilter<E>> getTreeFilters() {
     return treeFilters;
@@ -107,6 +108,10 @@ public abstract class TmmTreeDataProvider<E extends TmmTreeNode> extends Abstrac
     this.treeComparator = treeComparator;
   }
 
+  protected TmmTreeNode getNodeFromCache(MediaEntity mediaEntity) {
+    return getNodeFromCache(mediaEntity.getDbId());
+  }
+
   protected TmmTreeNode getNodeFromCache(Object obj) {
     readWriteLock.readLock().lock();
     try {
@@ -117,6 +122,10 @@ public abstract class TmmTreeDataProvider<E extends TmmTreeNode> extends Abstrac
     }
   }
 
+  protected void putNodeToCache(MediaEntity mediaEntity, TmmTreeNode node) {
+    putNodeToCache(mediaEntity.getDbId(), node);
+  }
+
   protected void putNodeToCache(Object obj, TmmTreeNode node) {
     readWriteLock.writeLock().lock();
     try {
@@ -125,6 +134,10 @@ public abstract class TmmTreeDataProvider<E extends TmmTreeNode> extends Abstrac
     finally {
       readWriteLock.writeLock().unlock();
     }
+  }
+
+  protected TmmTreeNode removeNodeFromCache(MediaEntity mediaEntity) {
+    return removeNodeFromCache(mediaEntity.getDbId());
   }
 
   protected TmmTreeNode removeNodeFromCache(Object obj) {
@@ -142,7 +155,7 @@ public abstract class TmmTreeDataProvider<E extends TmmTreeNode> extends Abstrac
    * 
    * @return the root node
    */
-  abstract public E getRoot();
+  public abstract E getRoot();
 
   /**
    * Get the parent node for the given node
@@ -151,7 +164,7 @@ public abstract class TmmTreeDataProvider<E extends TmmTreeNode> extends Abstrac
    *          the node to get the parent node for
    * @return the parent node
    */
-  abstract public E getParent(E node);
+  public abstract E getParent(E node);
 
   /**
    * Get all children for the given node
@@ -160,7 +173,7 @@ public abstract class TmmTreeDataProvider<E extends TmmTreeNode> extends Abstrac
    *          the node to get all children for
    * @return a list of all children
    */
-  abstract public List<E> getChildren(E node);
+  public abstract List<E> getChildren(E node);
 
   /**
    * Is the given node a leaf?
@@ -169,5 +182,5 @@ public abstract class TmmTreeDataProvider<E extends TmmTreeNode> extends Abstrac
    *          the node
    * @return true if the node is a leaf; false otherwise
    */
-  abstract public boolean isLeaf(final E node);
+  public abstract boolean isLeaf(final E node);
 }
