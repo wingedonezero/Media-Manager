@@ -261,7 +261,7 @@ public class MovieRenamer {
       return;
     }
 
-    // all the good & needed mediafiles & hbistory
+    // all the good & needed mediafiles & history
     List<MediaFile> needed = new ArrayList<>();
     List<MediaFile> cleanup = new ArrayList<>();
     MediaEntityFilenameHistory fileNameHistory = new MediaEntityFilenameHistory();
@@ -277,7 +277,9 @@ public class MovieRenamer {
     LOGGER.debug("path expression: {}", MovieModuleManager.getInstance().getSettings().getRenamerPathname());
     LOGGER.debug("file expression: {}", MovieModuleManager.getInstance().getSettings().getRenamerFilename());
 
+    // rel
     String newPathname = createDestinationForFoldername(MovieModuleManager.getInstance().getSettings().getRenamerPathname(), movie);
+    // abs
     String oldPathname = movie.getPathNIO().toString();
 
     if (!newPathname.isEmpty()) {
@@ -765,7 +767,7 @@ public class MovieRenamer {
       }
       else {
         // check if the target folder already exists (and is not empty)
-        // check if the user wants this behaviour
+        // check if the user wants this behavior
         try {
           if (Files.exists(destDir) && !Utils.isFolderEmpty(destDir)
               && MovieModuleManager.getInstance().getSettings().isAllowMultipleMoviesInSameDir()) {

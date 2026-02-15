@@ -86,16 +86,15 @@ public class MovieRenamerPreview {
   }
 
   private void processMovie() {
+    String oldVideoBasename = movie.getVideoBasenameWithoutStacking();
     String newVideoBasename = MovieRenamer.generateNewVideoBasename(movie);
     for (MediaFileType type : MediaFileType.values()) {
       MediaFileTypeContainer c = new MediaFileTypeContainer();
       for (MediaFile typeMf : movie.getMediaFiles(type)) {
         c.oldFiles.add(container.getOldPath().relativize(typeMf.getFileAsPath()).toString());
-        List<MediaFile> mfs = MovieRenamer.generateFilename(movie, new MediaFile(typeMf), newVideoBasename);
+        List<MediaFile> mfs = MovieRenamer.generateFilename(movie, new MediaFile(typeMf), newVideoBasename, oldVideoBasename);
         for (MediaFile mf : mfs) {
-          // need old path here, since the movie object still holds the old path
-          // the new path is only set on the clone, which is not used for the filename generation
-          c.newFiles.add(container.getOldPath().relativize(mf.getFileAsPath()).toString());
+          c.newFiles.add(container.getNewPath().relativize(mf.getFileAsPath()).toString());
         }
       }
       if (!c.oldFiles.isEmpty()) {
