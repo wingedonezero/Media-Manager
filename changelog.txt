@@ -1,5 +1,6 @@
 Version 5.2.8
 =======================
+x [TV shows] update TV show tree correctly after renaming
 
 
 Version 5.2.7
