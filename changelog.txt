@@ -1,4 +1,4 @@
-Version 5.2.8
+Version 5.2.7.1
 =======================
 x [Movies] fixed a problem in the renamer, when "upgrading" movies to a dedicated folder
 x [TV shows] update TV show tree correctly after renaming
