@@ -905,7 +905,30 @@ public class MovieRenamer {
     List<MediaFile> newFiles = new ArrayList<>();
     boolean newDestIsMultiMovieDir = movie.isMultiMovieDir();
 
+    String newPathname = "";
+
+    String pattern = MovieModuleManager.getInstance().getSettings().getRenamerPathname();
+    // keep MMD setting unless renamer pattern is not empty
+    if (!pattern.isEmpty()) {
+      // re-evaluate multiMovieDir based on renamer settings
+      // folder MUST BE UNIQUE, so we need at least a T/E-Y combo or IMDBid
+      // If renaming just to a fixed pattern (eg "$S"), movie will downgrade to a MMD
+      newDestIsMultiMovieDir = !MovieRenamer.isFolderPatternUnique(pattern);
+      newPathname = MovieRenamer.createDestinationForFoldername(pattern, movie);
+    }
+    else {
+      // keep same dir
+      // Path relativize(Path other)
+      newPathname = Utils.relPath(Paths.get(movie.getDataSource()), movie.getPathNIO());
+    }
+
     Path newMovieDir = movie.getPathNIO();
+    try {
+      newMovieDir = Paths.get(movie.getDataSource(), newPathname);
+    }
+    catch (Exception e) {
+      LOGGER.warn("New movie folder name '{}' is not allowed - '{}'", newPathname, e.getMessage());
+    }
 
     String newFilename = newVideoFileName;
     if (StringUtils.isBlank(newFilename)) {
