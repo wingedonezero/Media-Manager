@@ -1,6 +1,7 @@
 Version 5.2.8
 =======================
 x [TV shows] corrected the tooltip for missing season artwork
+x [UI] fixed displaying of NL:14 and NL:18 logos #3216
 
 
 Version 5.2.7.1
