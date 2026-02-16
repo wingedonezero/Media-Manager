@@ -214,7 +214,7 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
     }
 
     // check if that file is an ISO file
-    if ("iso".equalsIgnoreCase(FilenameUtils.getExtension(filename))) {
+    if ("iso".equalsIgnoreCase(getExtension())) {
       isISO = true;
     }
 
