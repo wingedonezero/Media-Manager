@@ -290,6 +290,10 @@ public class TvShowEditorDialog extends AbstractEditorDialog {
       spDateAdded.setValue(tvShow.getDateAdded());
       spRating.setModel(new SpinnerNumberModel(userMediaRating.getRating(), 0.0, 10.0, 0.1));
 
+      for (Person origCast : tvShow.getCrew()) {
+        crew.add(new Person(origCast));
+      }
+
       for (Person origCast : tvShow.getActors()) {
         actors.add(new Person(origCast));
       }

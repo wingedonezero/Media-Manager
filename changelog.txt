@@ -1,6 +1,7 @@
 Version 5.2.8
 =======================
 x [TV shows] corrected the tooltip for missing season artwork
+x [TV shows] fixed losing crew members when editing a TV show
 x [UI] fixed displaying of NL:14 and NL:18 logos #3216
 
 
