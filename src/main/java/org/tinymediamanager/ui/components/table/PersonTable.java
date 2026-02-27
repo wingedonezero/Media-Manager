@@ -373,7 +373,7 @@ public class PersonTable extends TmmEditorTable {
 
   private static boolean hasProfileUrl(Person person) {
     if (person != null) {
-      if (StringUtils.isNotBlank(person.getThumbUrl())) {
+      if (StringUtils.isNotBlank(person.getProfileUrl())) {
         return true;
       }
       if (StringUtils.isNotBlank(person.getIdAsString(MediaMetadata.IMDB))) {

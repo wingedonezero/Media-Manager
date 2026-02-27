@@ -1362,6 +1362,7 @@ public class MovieEditorDialog extends AbstractEditorDialog {
       // remove all lists to avoid merging
       movieToEdit.removeActors();
       movieToEdit.setActors(cast);
+
       movieToEdit.removeCrew();
       movieToEdit.setCrew(crew);
 
@@ -1619,13 +1620,13 @@ public class MovieEditorDialog extends AbstractEditorDialog {
       }
 
       // genre
-      if (item instanceof MediaGenres) {
-        newGenre = (MediaGenres) item;
+      if (item instanceof MediaGenres genre) {
+        newGenre = genre;
       }
 
       // newly created genre?
-      if (item instanceof String) {
-        newGenre = MediaGenres.getGenre((String) item);
+      if (item instanceof String string) {
+        newGenre = MediaGenres.getGenre(string);
       }
 
       // add genre if it is not already in the list

@@ -1600,10 +1600,19 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
       return;
     }
 
+    // shortcut: if the base list is empty, just add all new items
+    if (baseList.isEmpty()) {
+      baseList.addAll(newItems);
+      return;
+    }
+
     // add new ones in the right order
     for (int i = 0; i < newItems.size(); i++) {
       Person entry = newItems.get(i);
-      if (!baseList.contains(entry)) {
+      int indexOldList = baseList.indexOf(entry);
+
+      if (indexOldList == -1) {
+        // simply add new entry at the right position
         try {
           baseList.add(i, entry);
         }
@@ -1613,7 +1622,6 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
       }
       else {
         // or update existing ones
-        int indexOldList = baseList.indexOf(entry);
 
         // merge the entries (e.g. use thumb url/profile/ids from both)
         Person oldPerson = baseList.get(indexOldList);

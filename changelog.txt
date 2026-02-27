@@ -3,6 +3,8 @@ Version 5.2.8
 x [TV shows] corrected the tooltip for missing season artwork
 x [TV shows] fixed losing crew members when editing a TV show
 x [UI] fixed displaying of NL:14 and NL:18 logos #3216
+x [NFO] enhanced writing/parsing of crew members #3218
+  You may need to re-write your NFO files to get the new values stored correctly!
 
 
 Version 5.2.7.1

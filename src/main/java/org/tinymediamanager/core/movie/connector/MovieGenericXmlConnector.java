@@ -70,7 +70,6 @@ import org.w3c.dom.Element;
  */
 public abstract class MovieGenericXmlConnector implements IMovieConnector {
   private static final Logger                 LOGGER                 = LoggerFactory.getLogger(MovieGenericXmlConnector.class);
-  protected static final String               ORACLE_IS_STANDALONE   = "http://www.oracle.com/xml/is-standalone";
   protected static final DecimalFormatSymbols DECIMAL_FORMAT_SYMBOLS = new DecimalFormatSymbols(Locale.US);
 
   protected final Movie                       movie;
@@ -943,6 +942,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
     addUserNote();
     addEnglishTitle();
     addCRC32();
+    addCrew();
   }
 
   /**
@@ -973,6 +973,43 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
     Element crc = document.createElement("crc32");
     crc.setTextContent(movie.getMainFile().getCRC32());
     root.appendChild(crc);
+  }
+
+  /**
+   * add the crew in <crew>xxx</crew> and the same structure as the actors (name, role, thumb, profile)
+   */
+  protected void addCrew() {
+    for (Person crewMember : movie.getCrew()) {
+      Element crew = document.createElement("crew");
+
+      Element name = document.createElement("name");
+      name.setTextContent(crewMember.getName());
+      crew.appendChild(name);
+
+      Element role = document.createElement("role");
+      role.setTextContent(StringUtils.capitalize(crewMember.getType().toString()));
+
+      if (StringUtils.isNotBlank(crewMember.getRole())) {
+        role.setAttribute("subrole", crewMember.getRole());
+      }
+      crew.appendChild(role);
+
+      if (settings.isNfoWriteArtworkUrls() && StringUtils.isNotBlank(crewMember.getThumbUrl())) {
+        Element thumb = document.createElement("thumb");
+        thumb.setTextContent(crewMember.getThumbUrl());
+        crew.appendChild(thumb);
+      }
+
+      if (StringUtils.isNotBlank(crewMember.getProfileUrl())) {
+        Element profile = document.createElement("profile");
+        profile.setTextContent(crewMember.getProfileUrl());
+        crew.appendChild(profile);
+      }
+
+      NfoUtils.addPersonIdsAsChildren(crew, crewMember);
+
+      root.appendChild(crew);
+    }
   }
 
   /**
