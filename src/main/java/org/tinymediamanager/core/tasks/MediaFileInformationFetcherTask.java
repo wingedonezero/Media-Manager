@@ -86,7 +86,7 @@ public class MediaFileInformationFetcherTask implements Runnable {
         MediaFile mainVideoFile = mediaEntity.getMainFile();
 
         boolean goOn = true;
-        if (mediaEntity instanceof Movie && ((Movie) mediaEntity).isMultiMovieDir()) {
+        if (mediaEntity instanceof Movie movie && movie.isMultiMovieDir()) {
           if (StringUtils.isNotBlank(mainVideoFile.getBasename()) && mediaFile.getFilename().startsWith(mainVideoFile.getBasename())) {
             // MMD movie MUST start with basename, for all others or TV this is fine w/o
           }

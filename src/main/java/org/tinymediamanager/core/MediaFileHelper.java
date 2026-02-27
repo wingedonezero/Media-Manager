@@ -3251,8 +3251,9 @@ public class MediaFileHelper {
         int languageIndex = -1;
         // parse forward, since language is more significant
         for (int i = 0; i < chunks.size(); i++) {
-          if (chunks.get(i).equalsIgnoreCase("und")) {
+          if (chunks.get(i).equalsIgnoreCase("und") && i != chunks.size() - 1) {
             // we need to keep "und" as undefined, but valid language within our array.
+            // this applies to all chunks but the last one, because the last one is probably the language code
             // but we must ignore that at some places, since this is a very common German word
             // FIXME: there are more tokens, like "xxx Die_Tam-Turbulenzen.mp4 -> tam no langu!
             continue;
