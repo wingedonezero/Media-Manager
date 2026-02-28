@@ -29,7 +29,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -170,11 +169,25 @@ class TraktTvTvShow {
     // *****************************************************************************
     // 1) sync ALL missing show IDs & dates from trakt
     // *****************************************************************************
-    List<BaseShow> traktShows;
+    List<BaseShow> traktShows = new ArrayList<>();
     try {
       // Extended.DEFAULT adds url, poster, fanart, banner, genres
       // Extended.MAX adds certs, runtime, and other stuff (useful for scraper!)
-      traktShows = executeCall(api.sync().collectionShows(Extended.METADATA));
+      // Fetch all pages using pagination with limit of 1000 (maximum according to Trakt API)
+      int page = 1;
+      int limit = 1000;
+      while (true) {
+        List<BaseShow> pageResults = executeCall(api.sync().collectionShows(page, limit, Extended.METADATA));
+        if (pageResults.isEmpty()) {
+          break;
+        }
+        traktShows.addAll(pageResults);
+        // If we got fewer results than the limit, this was the last page
+        if (pageResults.size() < limit) {
+          break;
+        }
+        page++;
+      }
     }
     catch (Exception e) {
       LOGGER.error("Failed syncing Trakt.tv - '{}'", e.getMessage());
@@ -373,8 +386,7 @@ class TraktTvTvShow {
       }
     }
     if (syncShow.seasons != null) {
-      syncShow.seasons
-          .removeAll(syncShow.seasons.stream().filter(season -> season.episodes == null || season.episodes.isEmpty()).collect(Collectors.toList()));
+      syncShow.seasons.removeAll(syncShow.seasons.stream().filter(season -> season.episodes == null || season.episodes.isEmpty()).toList());
     }
     if (syncShow.seasons != null && !syncShow.seasons.isEmpty()) {
       syncItems.shows(syncShow);
@@ -394,22 +406,50 @@ class TraktTvTvShow {
     // *****************************************************************************
     // 1) get all Trakt shows/episodes and update our items without a personal rating
     // *****************************************************************************
-    List<RatedShow> traktShows;
+    List<RatedShow> traktShows = new ArrayList<>();
     try {
       // Extended.DEFAULT adds url, poster, fanart, banner, genres
       // Extended.MAX adds certs, runtime, and other stuff (useful for scraper!)
-      traktShows = executeCall(api.sync().ratingsShows(RatingsFilter.ALL, null, null, null));
+      // Fetch all pages using pagination with limit of 1000 (maximum according to Trakt API)
+      int page = 1;
+      int limit = 1000;
+      while (true) {
+        List<RatedShow> pageResults = executeCall(api.sync().ratingsShows(RatingsFilter.ALL, null, page, limit));
+        if (pageResults.isEmpty()) {
+          break;
+        }
+        traktShows.addAll(pageResults);
+        // If we got fewer results than the limit, this was the last page
+        if (pageResults.size() < limit) {
+          break;
+        }
+        page++;
+      }
     }
     catch (Exception e) {
       LOGGER.error("Failed syncing Trakt.tv - '{}'", e.getMessage());
       return;
     }
 
-    List<RatedEpisode> traktEpisodes;
+    List<RatedEpisode> traktEpisodes = new ArrayList<>();
     try {
       // Extended.DEFAULT adds url, poster, fanart, banner, genres
       // Extended.MAX adds certs, runtime, and other stuff (useful for scraper!)
-      traktEpisodes = executeCall(api.sync().ratingsEpisodes(RatingsFilter.ALL, null, null, null));
+      // Fetch all pages using pagination with limit of 1000 (maximum according to Trakt API)
+      int page = 1;
+      int limit = 1000;
+      while (true) {
+        List<RatedEpisode> pageResults = executeCall(api.sync().ratingsEpisodes(RatingsFilter.ALL, null, page, limit));
+        if (pageResults.isEmpty()) {
+          break;
+        }
+        traktEpisodes.addAll(pageResults);
+        // If we got fewer results than the limit, this was the last page
+        if (pageResults.size() < limit) {
+          break;
+        }
+        page++;
+      }
     }
     catch (Exception e) {
       LOGGER.error("Failed syncing Trakt.tv - '{}'", e.getMessage());
@@ -560,10 +600,26 @@ class TraktTvTvShow {
     // *****************************************************************************
     // 1) get ALL Trakt shows in collection / watched
     // *****************************************************************************
-    List<BaseShow> traktCollection;
+    List<BaseShow> traktCollection = new ArrayList<>();
     List<BaseShow> traktWatched;
     try {
-      traktCollection = executeCall(api.sync().collectionShows(null));
+      // Fetch all pages using pagination with limit of 1000 (maximum according to Trakt API)
+      int page = 1;
+      int limit = 1000;
+      while (true) {
+        List<BaseShow> pageResults = executeCall(api.sync().collectionShows(page, limit, null));
+        if (pageResults.isEmpty()) {
+          break;
+        }
+        traktCollection.addAll(pageResults);
+        // If we got fewer results than the limit, this was the last page
+        if (pageResults.size() < limit) {
+          break;
+        }
+        page++;
+      }
+
+      // Note: watchedShows does not support pagination in trakt-java, so we retrieve all at once
       traktWatched = executeCall(api.sync().watchedShows(null));
     }
     catch (Exception e) {
@@ -614,7 +670,7 @@ class TraktTvTvShow {
   }
 
   private List<TvShow> getTmmTvShowForTraktShow(List<TvShow> tmmTvShows, Show traktShow) {
-    return tmmTvShows.stream().filter(tvShow -> matches(tvShow, traktShow)).collect(Collectors.toList());
+    return tmmTvShows.stream().filter(tvShow -> matches(tvShow, traktShow)).toList();
   }
 
   private boolean matches(TvShow tmmShow, Show traktShow) {

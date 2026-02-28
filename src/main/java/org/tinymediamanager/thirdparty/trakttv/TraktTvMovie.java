@@ -155,12 +155,26 @@ class TraktTvMovie {
     // *****************************************************************************
     LOGGER.debug("got up to {} movies for Trakt.tv collection sync", moviesInTmm.size());
 
-    // get ALL Trakt movies in collection
-    List<BaseMovie> traktMovies;
+    // get ALL Trakt movies in collection using pagination
+    List<BaseMovie> traktMovies = new ArrayList<>();
     try {
       // Extended.DEFAULT adds url, poster, fanart, banner, genres
       // Extended.MAX adds certs, runtime, and other stuff (useful for scraper!)
-      traktMovies = executeCall(api.sync().collectionMovies(Extended.METADATA));
+      // Fetch all pages using pagination with limit of 1000 (maximum according to Trakt API)
+      int page = 1;
+      int limit = 1000;
+      while (true) {
+        List<BaseMovie> pageResults = executeCall(api.sync().collectionMovies(page, limit, Extended.METADATA));
+        if (pageResults.isEmpty()) {
+          break;
+        }
+        traktMovies.addAll(pageResults);
+        // If we got fewer results than the limit, this was the last page
+        if (pageResults.size() < limit) {
+          break;
+        }
+        page++;
+      }
     }
     catch (Exception e) {
       LOGGER.error("Failed syncing Trakt.tv - '{}'", e.getMessage());
@@ -382,11 +396,25 @@ class TraktTvMovie {
     // *****************************************************************************
     // 1) get all Trakt movies and update our movies without a personal rating
     // *****************************************************************************
-    List<RatedMovie> traktMovies;
+    List<RatedMovie> traktMovies = new ArrayList<>();
     try {
       // Extended.DEFAULT adds url, poster, fanart, banner, genres
       // Extended.MAX adds certs, runtime, and other stuff (useful for scraper!)
-      traktMovies = executeCall(api.sync().ratingsMovies(RatingsFilter.ALL, null, null, null));
+      // Fetch all pages using pagination with limit of 1000 (maximum according to Trakt API)
+      int page = 1;
+      int limit = 1000;
+      while (true) {
+        List<RatedMovie> pageResults = executeCall(api.sync().ratingsMovies(RatingsFilter.ALL, null, page, limit));
+        if (pageResults.isEmpty()) {
+          break;
+        }
+        traktMovies.addAll(pageResults);
+        // If we got fewer results than the limit, this was the last page
+        if (pageResults.size() < limit) {
+          break;
+        }
+        page++;
+      }
     }
     catch (Exception e) {
       LOGGER.error("Failed syncing Trakt.tv - '{}'", e.getMessage());
@@ -550,10 +578,26 @@ class TraktTvMovie {
     // *****************************************************************************
     // 1) get ALL Trakt movies in collection / watched
     // *****************************************************************************
-    List<BaseMovie> traktCollection;
-    List<BaseMovie> traktWatched;
+    List<BaseMovie> traktCollection = new ArrayList<>();
+    List<BaseMovie> traktWatched = new ArrayList<>();
     try {
-      traktCollection = executeCall(api.sync().collectionMovies(null));
+      // Fetch all pages using pagination with limit of 1000 (maximum according to Trakt API)
+      int page = 1;
+      int limit = 1000;
+      while (true) {
+        List<BaseMovie> pageResults = executeCall(api.sync().collectionMovies(page, limit, null));
+        if (pageResults.isEmpty()) {
+          break;
+        }
+        traktCollection.addAll(pageResults);
+        // If we got fewer results than the limit, this was the last page
+        if (pageResults.size() < limit) {
+          break;
+        }
+        page++;
+      }
+
+      // Note: watchedMovies does not support pagination in trakt-java, so we retrieve all at once
       traktWatched = executeCall(api.sync().watchedMovies(null));
     }
     catch (Exception e) {
@@ -606,7 +650,7 @@ class TraktTvMovie {
   }
 
   private List<Movie> getTmmMoviesForTraktMovie(List<Movie> tmmMovies, com.uwetrottmann.trakt5.entities.Movie traktMovie) {
-    return tmmMovies.stream().filter(movie -> matches(movie, traktMovie)).collect(Collectors.toList());
+    return tmmMovies.stream().filter(movie -> matches(movie, traktMovie)).toList();
   }
 
   private boolean matches(Movie tmmMovie, com.uwetrottmann.trakt5.entities.Movie traktMovie) {
