@@ -6,6 +6,7 @@ x [UI] fixed displaying of NL:14 and NL:18 logos #3216
 x [UI] fixed loading of column width in the TV show and movie set table #3221
 x [NFO] enhanced writing/parsing of crew members #3218
   You may need to re-write your NFO files to get the new values stored correctly!
+x [IMDb] fixed parsing of actors #3222
 x [Trakt.tv] implemented API changes for trakt.tv
 
 
