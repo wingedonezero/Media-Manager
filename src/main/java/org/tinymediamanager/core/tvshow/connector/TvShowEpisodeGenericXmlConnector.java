@@ -815,6 +815,7 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
     addEpisodeGroups(episode, parser);
     addEnglishTitle(episode, parser);
     addCRC32(episode, parser);
+    addCrew(episode, parser);
   }
 
   /**
@@ -897,6 +898,43 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
     Element crc = document.createElement("crc32");
     crc.setTextContent(episode.getMainFile().getCRC32());
     root.appendChild(crc);
+  }
+
+  /**
+   * add the crew in <crew>xxx</crew> and the same structure as the actors (name, role, thumb, profile)
+   */
+  protected void addCrew(TvShowEpisode episode, TvShowEpisodeNfoParser.Episode parser) {
+    for (Person crewMember : episode.getCrew()) {
+      Element crew = document.createElement("crew");
+
+      Element name = document.createElement("name");
+      name.setTextContent(crewMember.getName());
+      crew.appendChild(name);
+
+      Element role = document.createElement("role");
+      role.setTextContent(StringUtils.capitalize(crewMember.getType().toString()));
+
+      if (StringUtils.isNotBlank(crewMember.getRole())) {
+        role.setAttribute("subrole", crewMember.getRole());
+      }
+      crew.appendChild(role);
+
+      if (settings.isNfoWriteArtworkUrls() && StringUtils.isNotBlank(crewMember.getThumbUrl())) {
+        Element thumb = document.createElement("thumb");
+        thumb.setTextContent(crewMember.getThumbUrl());
+        crew.appendChild(thumb);
+      }
+
+      if (StringUtils.isNotBlank(crewMember.getProfileUrl())) {
+        Element profile = document.createElement("profile");
+        profile.setTextContent(crewMember.getProfileUrl());
+        crew.appendChild(profile);
+      }
+
+      NfoUtils.addPersonIdsAsChildren(crew, crewMember);
+
+      root.appendChild(crew);
+    }
   }
 
   /**

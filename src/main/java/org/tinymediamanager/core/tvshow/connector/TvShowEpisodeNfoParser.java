@@ -205,6 +205,7 @@ public class TvShowEpisodeNfoParser {
     public List<Person>               actors              = new ArrayList<>();
     public List<Person>               directors           = new ArrayList<>();
     public List<Person>               credits             = new ArrayList<>();
+    public List<Person>               crew                = new ArrayList<>();
     public List<MediaEpisodeNumber>   episodeNumbers      = new ArrayList<>();
 
     public List<String>               unsupportedElements = new ArrayList<>();
@@ -259,6 +260,7 @@ public class TvShowEpisodeNfoParser {
       parseTag(Episode::parseStudios);
       parseTag(Episode::parseCredits);
       parseTag(Episode::parseDirectors);
+      parseTag(Episode::parseCrew);
       parseTag(Episode::parseTags);
       parseTag(Episode::parseActors);
       parseTag(Episode::parseFileinfo);
@@ -1168,7 +1170,60 @@ public class TvShowEpisodeNfoParser {
     }
 
     /**
-     * tags usually come in a tag tag
+     * crew usually come as multiple crew tags in the root with multiple child tags
+     */
+    private Void parseCrew() {
+      supportedElements.add("crew");
+
+      Elements elements = root.select(root.tagName() + " > crew");
+      for (Element element : elements) {
+        Person crewMember = new Person();
+
+        for (Element child : element.children()) {
+          switch (child.tagName()) {
+            case "name":
+              crewMember.name = child.ownText();
+              break;
+
+            case "role":
+              crewMember.type = child.ownText();
+              crewMember.role = child.attr("subrole");
+              break;
+
+            case "thumb":
+              crewMember.thumb = child.ownText();
+              break;
+
+            case "profile":
+              crewMember.profile = child.ownText();
+              break;
+
+            case "tmdbid":
+              crewMember.tmdbId = child.ownText();
+              break;
+
+            case "tvdbid":
+              crewMember.tvdbId = child.ownText();
+              break;
+
+            case "imdbid":
+              crewMember.imdbId = child.ownText();
+              break;
+
+            default:
+              break;
+          }
+        }
+        if (StringUtils.isNotBlank(crewMember.name)) {
+          crew.add(crewMember);
+        }
+      }
+
+      return null;
+    }
+
+    /**
+     * tags usually come in a <tag></tag> tag
      */
     private Void parseTags() {
       supportedElements.add("tag");
@@ -1195,6 +1250,8 @@ public class TvShowEpisodeNfoParser {
       Elements elements = root.select(root.tagName() + " > actor");
       for (Element element : elements) {
         Person actor = new Person();
+        actor.type = "Actor";
+
         for (Element child : element.children()) {
           switch (child.tagName()) {
             case "name":
@@ -1690,23 +1747,39 @@ public class TvShowEpisodeNfoParser {
       }
       episode.addToActors(newActors);
 
-      List<org.tinymediamanager.core.entities.Person> newDirectors = new ArrayList<>();
-      for (Person director : directors) {
-        if (StringUtils.isBlank(director.role)) {
-          director.role = "Director";
+      if (!crew.isEmpty()) {
+        // new crew format - take this
+        List<org.tinymediamanager.core.entities.Person> newCrew = new ArrayList<>();
+        for (Person crewMember : crew) {
+          try {
+            newCrew.add(morphPerson(org.tinymediamanager.core.entities.Person.Type.valueOf(crewMember.type.toUpperCase(Locale.ROOT)), crewMember));
+          }
+          catch (Exception e) {
+            LOGGER.debug("Could not unmarshal crew member with name '{}' and role '{}'", crewMember.name, crewMember.type);
+          }
         }
-        newDirectors.add(morphPerson(DIRECTOR, director));
+        episode.addToCrew(newCrew);
       }
-      episode.addToCrew(newDirectors);
+      else {
+        // legacy format w/o metadata
+        List<org.tinymediamanager.core.entities.Person> newDirectors = new ArrayList<>();
+        for (Person director : directors) {
+          if (StringUtils.isBlank(director.role)) {
+            director.role = "Director";
+          }
+          newDirectors.add(morphPerson(DIRECTOR, director));
+        }
+        episode.addToCrew(newDirectors);
 
-      List<org.tinymediamanager.core.entities.Person> newWriters = new ArrayList<>();
-      for (Person writer : credits) {
-        if (StringUtils.isBlank(writer.role)) {
-          writer.role = "Writer";
+        List<org.tinymediamanager.core.entities.Person> newWriters = new ArrayList<>();
+        for (Person writer : credits) {
+          if (StringUtils.isBlank(writer.role)) {
+            writer.role = "Writer";
+          }
+          newWriters.add(morphPerson(WRITER, writer));
         }
-        newWriters.add(morphPerson(WRITER, writer));
+        episode.addToCrew(newWriters);
       }
-      episode.addToCrew(newWriters);
 
       episode.addToTags(tags);
 
@@ -1761,6 +1834,7 @@ public class TvShowEpisodeNfoParser {
 
   public static class Person {
     public String  name      = "";
+    public String  type      = "";
     public String  role      = "";
     public String  thumb     = "";
     public boolean guestStar = false;

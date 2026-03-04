@@ -42,6 +42,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.LocaleUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -1314,26 +1315,11 @@ public abstract class ImdbParser {
         JsonNode itemsNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/categories");
         for (ImdbCreditsCategory cat : JsonUtils.parseList(mapper, itemsNode, ImdbCreditsCategory.class)) {
           if (cat.section != null) {
-            Person.Type pt = switch (cat.id) {
-              case "cast" -> Person.Type.ACTOR;
-              case "director" -> Person.Type.DIRECTOR;
-              case "directors" -> Person.Type.DIRECTOR;
-              case "writer" -> Person.Type.WRITER;
-              case "writers" -> Person.Type.WRITER;
-              case "producer" -> Person.Type.PRODUCER;
-              case "producers" -> Person.Type.PRODUCER;
-              case "editor" -> Person.Type.EDITOR;
-              case "editors" -> Person.Type.EDITOR;
-              case "composer" -> Person.Type.COMPOSER;
-              case "composers" -> Person.Type.COMPOSER;
-              case "cinematographer" -> Person.Type.CAMERA;
-              case "cinematographers" -> Person.Type.CAMERA;
-
-              default -> Person.Type.OTHER;
-            };
+            Person.Type pt = getPersonTypeType(cat);
             if (pt == Type.OTHER) {
               continue;
             }
+
             // add persons
             int cnt = 0;
             for (ImdbCreditsCategoryPerson imdbPerson : ListUtils.nullSafe(cat.section.items)) {
@@ -1832,48 +1818,7 @@ public abstract class ImdbParser {
         JsonNode itemsNode = JsonUtils.at(node, "/props/pageProps/contentData/categories");
         for (ImdbCreditsCategory cat : JsonUtils.parseList(mapper, itemsNode, ImdbCreditsCategory.class)) {
           if (cat.section != null) {
-            Person.Type pt = switch (cat.id) {
-              case "cast" -> Person.Type.ACTOR;
-              case "director" -> Person.Type.DIRECTOR;
-              case "directors" -> Person.Type.DIRECTOR;
-              case "writer" -> Person.Type.WRITER;
-              case "writers" -> Person.Type.WRITER;
-              case "producer" -> Person.Type.PRODUCER;
-              case "producers" -> Person.Type.PRODUCER;
-              case "editor" -> Person.Type.EDITOR;
-              case "editors" -> Person.Type.EDITOR;
-              case "composer" -> Person.Type.COMPOSER;
-              case "composers" -> Person.Type.COMPOSER;
-              case "cinematographer" -> Person.Type.CAMERA;
-              case "cinematographers" -> Person.Type.CAMERA;
-
-              default -> Person.Type.OTHER;
-            };
-
-            if (pt == Type.OTHER) {
-              // not so fast - new IMDB style has not yet finalized its new IDs, as the are called like
-              // "amzn1.imdb.CONCEPT.name_credit_category.ace5cb4c-8708-4238-9542-04641e7c8171"
-              // until we can prove the UUID to be fixed, lets parse the NAME :/
-              // Therefor, this page MUST be called in en_US, else we get translated types...
-              String nam = cat.name.toLowerCase(Locale.ROOT);
-              pt = switch (nam) {
-                case "cast" -> Person.Type.ACTOR;
-                case "director" -> Person.Type.DIRECTOR;
-                case "directors" -> Person.Type.DIRECTOR;
-                case "writer" -> Person.Type.WRITER;
-                case "writers" -> Person.Type.WRITER;
-                case "producer" -> Person.Type.PRODUCER;
-                case "producers" -> Person.Type.PRODUCER;
-                case "editor" -> Person.Type.EDITOR;
-                case "editors" -> Person.Type.EDITOR;
-                case "composer" -> Person.Type.COMPOSER;
-                case "composers" -> Person.Type.COMPOSER;
-                case "cinematographer" -> Person.Type.CAMERA;
-                case "cinematographers" -> Person.Type.CAMERA;
-
-                default -> Person.Type.OTHER;
-              };
-            }
+            Type pt = getPersonTypeType(cat);
             if (pt == Type.OTHER) {
               continue;
             }
@@ -1931,6 +1876,41 @@ public abstract class ImdbParser {
       }
 
     }
+  }
+
+  @NotNull
+  private static Type getPersonTypeType(ImdbCreditsCategory cat) {
+    Type pt = switch (cat.id) {
+      case "cast" -> Type.ACTOR;
+      case "director", "directors" -> Type.DIRECTOR;
+      case "writer", "writers" -> Type.WRITER;
+      case "producer", "producers" -> Type.PRODUCER;
+      case "editor", "editors" -> Type.EDITOR;
+      case "composer", "composers" -> Type.COMPOSER;
+      case "cinematographer", "cinematographers" -> Type.CAMERA;
+
+      default -> Type.OTHER;
+    };
+
+    if (pt == Type.OTHER) {
+      // not so fast - new IMDB style has not yet finalized its new IDs, as the are called like
+      // "amzn1.imdb.CONCEPT.name_credit_category.ace5cb4c-8708-4238-9542-04641e7c8171"
+      // until we can prove the UUID to be fixed, lets parse the NAME :/
+      // Therefor, this page MUST be called in en_US, else we get translated types...
+      String nam = cat.name.toLowerCase(Locale.ROOT);
+      pt = switch (nam) {
+        case "cast" -> Type.ACTOR;
+        case "director", "directors" -> Type.DIRECTOR;
+        case "writer", "writers" -> Type.WRITER;
+        case "producer", "producers" -> Type.PRODUCER;
+        case "editor", "editors" -> Type.EDITOR;
+        case "composer", "composers" -> Type.COMPOSER;
+        case "cinematographer", "cinematographers" -> Type.CAMERA;
+
+        default -> Type.OTHER;
+      };
+    }
+    return pt;
   }
 
   protected void parseKeywordsPage(Document doc, MediaSearchAndScrapeOptions options, MediaMetadata md) {

@@ -213,7 +213,6 @@ public class MovieSetTreePanel extends TmmListPanel {
     JScrollPane scrollPane = new JScrollPane();
     tree.configureScrollPane(scrollPane);
     add(scrollPane, "cell 0 1 2 1,grow");
-    tree.adjustColumnPreferredWidths(3);
 
     tree.setRootVisible(false);
 

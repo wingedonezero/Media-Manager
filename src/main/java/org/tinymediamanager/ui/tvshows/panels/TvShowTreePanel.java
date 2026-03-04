@@ -221,7 +221,6 @@ public class TvShowTreePanel extends TmmListPanel {
     tree.configureScrollPane(scrollPane);
     add(scrollPane, "cell 0 1 2 1,grow");
     add(scrollPane, "cell 0 1 2 1,grow");
-    tree.adjustColumnPreferredWidths(3);
 
     tree.setRootVisible(false);
 

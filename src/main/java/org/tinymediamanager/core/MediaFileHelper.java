@@ -115,7 +115,6 @@ public class MediaFileHelper {
   public static final Pattern      SEASON_FANART_PATTERN;
   public static final Pattern      SEASON_BANNER_PATTERN;
   public static final Pattern      SEASON_THUMB_PATTERN;
-  public static final Pattern      LOGO_PATTERN;
   public static final Pattern      CLEARLOGO_PATTERN;
   public static final Pattern      CHARACTERART_PATTERN;
   public static final Pattern      DISCART_PATTERN;
@@ -177,24 +176,24 @@ public class MediaFileHelper {
     BINARY_FILETYPES = List.of("bin", "dat", "img", "nrg", "disc");
 
     String extensions = String.join("|", SUPPORTED_ARTWORK_FILETYPES);
+    String opt_delim = "(?:[\\w _.-]+[_.-])*"; // word incl delims & space, followed by a mandatory delim
 
-    MOVIESET_ARTWORK_PATTERN = Pattern
-        .compile("(?i)movieset-(poster|fanart|backdrop|banner|disc|discart|logo|clearlogo|clearart|thumb)\\.(" + extensions + ")$");
-    POSTER_PATTERN = Pattern.compile("(?i)(.*-poster|poster|folder|movie|.*-cover|cover)\\.(" + extensions + ")$");
-    FANART_PATTERN = Pattern.compile("(?i)(.*-fanart|.*-backdrop|.*\\.fanart|.*\\.backdrop|fanart|backdrop)\\.(" + extensions + ")$");
-    EXTRAFANART_PATTERN = Pattern.compile("(?i)(.*-fanart|.*-backdrop|.*\\.fanart|.*\\.backdrop|fanart|backdrop)[0-9]+\\.(" + extensions + ")$");
-    BANNER_PATTERN = Pattern.compile("(?i)(.*-banner|banner)\\.(" + extensions + ")$");
-    THUMB_PATTERN = Pattern.compile("(?i)(.*-thumb|thumb|.*-landscape|landscape)[0-9]{0,2}\\.(" + extensions + ")$");
-    SEASON_POSTER_PATTERN = Pattern.compile("(?i)season([0-9]{1,6}|-specials|-all)(-poster)?\\.(" + extensions + ")$");
-    SEASON_FANART_PATTERN = Pattern.compile("(?i)season([0-9]{1,6}|-specials|-all)-fanart\\.(" + extensions + ")$");
-    SEASON_BANNER_PATTERN = Pattern.compile("(?i)season([0-9]{1,6}|-specials|-all)-banner\\.(" + extensions + ")$");
-    SEASON_THUMB_PATTERN = Pattern.compile("(?i)season([0-9]{1,6}|-specials|-all)-(thumb|landscape)\\.(" + extensions + ")$");
-    LOGO_PATTERN = Pattern.compile("(?i)(.*-logo|logo)\\.(" + extensions + ")$");
-    CLEARLOGO_PATTERN = Pattern.compile("(?i)(.*-clearlogo|clearlogo)\\.(" + extensions + ")$");
-    CHARACTERART_PATTERN = Pattern.compile("(?i)(.*-characterart|characterart)[0-9]{0,2}\\.(" + extensions + ")$");
-    DISCART_PATTERN = Pattern.compile("(?i)(.*-discart|discart|.*-disc|disc)\\.(" + extensions + ")$");
-    CLEARART_PATTERN = Pattern.compile("(?i)(.*-clearart|clearart)\\.(" + extensions + ")$");
-    KEYART_PATTERN = Pattern.compile("(?i)(.*-keyart|keyart)\\.(" + extensions + ")$");
+    MOVIESET_ARTWORK_PATTERN = Pattern.compile(
+        "^movieset-(poster|fanart|backdrop|banner|disc|discart|logo|clearlogo|clearart|thumb)\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    POSTER_PATTERN = Pattern.compile("^" + opt_delim + "(poster|folder|movie|cover)\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    FANART_PATTERN = Pattern.compile("^" + opt_delim + "(backdrop|fanart|background)\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    EXTRAFANART_PATTERN = Pattern.compile("^" + opt_delim + "(fanart|backdrop|background)[0-9]+\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    BANNER_PATTERN = Pattern.compile("^" + opt_delim + "(banner)\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    THUMB_PATTERN = Pattern.compile("^" + opt_delim + "(thumb|landscape)[0-9]{0,2}\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    SEASON_POSTER_PATTERN = Pattern.compile("season([0-9]{1,6}|-specials|-all)(-poster)?\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    SEASON_FANART_PATTERN = Pattern.compile("season([0-9]{1,6}|-specials|-all)-fanart\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    SEASON_BANNER_PATTERN = Pattern.compile("season([0-9]{1,6}|-specials|-all)-banner\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    SEASON_THUMB_PATTERN = Pattern.compile("season([0-9]{1,6}|-specials|-all)-(thumb|landscape)\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    CLEARLOGO_PATTERN = Pattern.compile("^" + opt_delim + "(clearlogo|logo)\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    CHARACTERART_PATTERN = Pattern.compile("^" + opt_delim + "(characterart)[0-9]{0,2}\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    DISCART_PATTERN = Pattern.compile("^" + opt_delim + "(discart|disc)\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    CLEARART_PATTERN = Pattern.compile("^" + opt_delim + "(clearart)\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
+    KEYART_PATTERN = Pattern.compile("^" + opt_delim + "(keyart)\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);
   }
 
   private MediaFileHelper() {
@@ -454,13 +453,7 @@ public class MediaFileHelper {
       return MediaFileType.CLEARART;
     }
 
-    // logo.* is now CLEARLOGO
-    matcher = MediaFileHelper.LOGO_PATTERN.matcher(filename);
-    if (matcher.matches()) {
-      return MediaFileType.CLEARLOGO;
-    }
-
-    // clearlogo.*
+    // logo & clearlogo.*
     matcher = MediaFileHelper.CLEARLOGO_PATTERN.matcher(filename);
     if (matcher.matches()) {
       return MediaFileType.CLEARLOGO;
@@ -3251,8 +3244,9 @@ public class MediaFileHelper {
         int languageIndex = -1;
         // parse forward, since language is more significant
         for (int i = 0; i < chunks.size(); i++) {
-          if (chunks.get(i).equalsIgnoreCase("und")) {
+          if (chunks.get(i).equalsIgnoreCase("und") && i != chunks.size() - 1) {
             // we need to keep "und" as undefined, but valid language within our array.
+            // this applies to all chunks but the last one, because the last one is probably the language code
             // but we must ignore that at some places, since this is a very common German word
             // FIXME: there are more tokens, like "xxx Die_Tam-Turbulenzen.mp4 -> tam no langu!
             continue;

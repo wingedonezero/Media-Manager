@@ -1733,6 +1733,10 @@ public final class TvShowList extends AbstractModelObject {
   }
 
   public List<TvShowScraperMetadataConfig> detectMissingFields(TvShowSeason season, List<TvShowScraperMetadataConfig> toCheck) {
+    if (season.isDummy()) {
+      return Collections.emptyList();
+    }
+
     List<TvShowScraperMetadataConfig> missingMetadata = new ArrayList<>();
 
     for (TvShowScraperMetadataConfig metadataConfig : toCheck) {

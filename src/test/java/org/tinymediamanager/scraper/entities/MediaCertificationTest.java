@@ -20,15 +20,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 import org.tinymediamanager.core.BasicTest;
+import org.tinymediamanager.core.CertificationStyle;
 
 public class MediaCertificationTest extends BasicTest {
 
-  // @Test
-  // public void testCertificationNames() {
-  // for (Certification cert : Certification.values()) {
-  // System.out.println(cert.name() + "\t" + cert.toString());
-  // }
-  // }
+  /**
+   * just to verify, if all certs can be rendered in all styles....
+   */
+  @Test
+  public void renderAll() {
+    for (CertificationStyle style : CertificationStyle.values()) {
+      for (MediaCertification cert : MediaCertification.values()) {
+        String s = CertificationStyle.formatCertification(cert, style);
+        System.out.print(s);
+      }
+      System.out.println();
+    }
+  }
+
+  @Test
+  public void testCertificationTemplate() {
+    // assertEqual(expected, actual);
+    assertThat(CertificationStyle.formatCertification(MediaCertification.DE_FSK16, CertificationStyle.SHORT)).isEqualTo("FSK 16");
+    assertThat(CertificationStyle.formatCertification(MediaCertification.US_PG13, CertificationStyle.MEDIUM)).isEqualTo("US: PG-13");
+    assertThat(CertificationStyle.formatCertification(MediaCertification.DE_FSK16, CertificationStyle.LARGE))
+        .isEqualTo("DE:FSK 16 / DE:FSK-16 / DE:FSK16 / DE:16 / DE:16+ / DE:ab 16");
+    assertThat(CertificationStyle.formatCertification(MediaCertification.DE_FSK16, CertificationStyle.LARGE_FULL))
+        .isEqualTo("Germany:FSK 16 / Germany:FSK-16 / Germany:FSK16 / Germany:16 / Germany:16+ / Germany:ab 16");
+    assertThat(CertificationStyle.formatCertification(MediaCertification.DE_FSK16, CertificationStyle.TECHNICAL)).isEqualTo("DE_FSK16");
+  }
 
   @Test
   public void testParseCertification() {

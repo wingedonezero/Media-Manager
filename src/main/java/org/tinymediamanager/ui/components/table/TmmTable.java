@@ -225,7 +225,9 @@ public class TmmTable extends JTable {
    */
   public void setVisibleColumnsWithWidths(List<ColumnState> visibleColumns) {
     if (getColumnModel() instanceof TmmTableColumnModel tmmTableColumnModel) {
+      columnsAdjusting = true;
       tmmTableColumnModel.setVisibleColumnsWithWidths(visibleColumns);
+      columnsAdjusting = false;
     }
   }
 
