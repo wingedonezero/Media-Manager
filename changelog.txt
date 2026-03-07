@@ -4,8 +4,13 @@ x [TV shows] corrected the tooltip for missing season artwork
 x [TV shows] fixed losing crew members when editing a TV show
 x [UI] fixed displaying of NL:14 and NL:18 logos #3216
 x [UI] fixed loading of column width in the TV show and movie set table #3221
+x [UI] fixed checking for missing artwork in the TV show table
+x [UI] some fixes for the movie renamer preview
+x [UI] corrected the tooltip for missing season artwork
 x [NFO] enhanced writing/parsing of crew members #3218
   You may need to re-write your NFO files to get the new values stored correctly!
+x [Subtitles] allow the special language code "und" (undefined) for subtitles, which is used by some subtitle providers
+x [Scraper] reworked certifications to be able to fetch even more from TMDB/TVDB and others
 x [IMDb] fixed parsing of actors #3222
 x [Trakt.tv] implemented API changes for trakt.tv
 
