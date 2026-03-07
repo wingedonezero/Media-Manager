@@ -1,3 +1,7 @@
+Version 5.2.9
+=======================
+
+
 Version 5.2.8
 =======================
 x [TV shows] corrected the tooltip for missing season artwork
