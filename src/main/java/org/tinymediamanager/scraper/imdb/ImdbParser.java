@@ -15,7 +15,6 @@
  */
 package org.tinymediamanager.scraper.imdb;
 
-import static org.tinymediamanager.core.entities.Person.Type.ACTOR;
 import static org.tinymediamanager.scraper.entities.MediaArtwork.MediaArtworkType.THUMB;
 
 import java.io.InputStream;
@@ -48,6 +47,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.entities.MediaGenres;
 import org.tinymediamanager.core.entities.MediaRating;
@@ -112,46 +112,77 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author Manuel Laggner
  */
 public abstract class ImdbParser {
-  static final Pattern                IMDB_ID_PATTERN          = Pattern.compile("/title/(tt[0-9]{6,})/");
-  static final Pattern                PERSON_ID_PATTERN        = Pattern.compile("/name/(nm[0-9]{6,})/");
-  static final Pattern                MOVIE_PATTERN            = Pattern.compile("^.*?\\(\\d{4}\\)$");
-  static final Pattern                TV_MOVIE_PATTERN         = Pattern.compile("^.*?\\(\\d{4}\\s+TV Movie\\)$");
-  static final Pattern                TV_SERIES_PATTERN        = Pattern.compile("^.*?\\(\\d{4}\\)\\s+\\((TV Series|TV Mini[ -]Series)\\)$");
-  static final Pattern                SHORT_PATTERN            = Pattern.compile("^.*?\\(\\d{4}\\)\\s+\\((Short|Video)\\)$");
-  static final Pattern                VIDEOGAME_PATTERN        = Pattern.compile("^.*?\\(\\d{4}\\)\\s+\\(Video Game\\)$");
-  static final Pattern                IMAGE_SCALING_PATTERN    = Pattern.compile("S([XY])(.*?)_CR(\\d*),(\\d*),(\\d*),(\\d*)");
+  private static final Logger            LOGGER                   = LoggerFactory.getLogger(ImdbParser.class);
 
-  static final String                 INCLUDE_MOVIE            = "includeMovieResults";
-  static final String                 INCLUDE_TV_MOVIE         = "includeTvMovieResults";
-  static final String                 INCLUDE_TV_SERIES        = "includeTvSeriesResults";
-  static final String                 INCLUDE_SHORT            = "includeShortResults";
-  static final String                 INCLUDE_VIDEOGAME        = "includeVideogameResults";
-  static final String                 INCLUDE_MUSICVIDEO       = "includeMusicVideoResults";
-  static final String                 INCLUDE_PODCAST          = "includePodcastResults";
-  static final String                 INCLUDE_ADULT            = "includeAdultResults";
-  static final String                 INCLUDE_METACRITIC       = "includeMetacritic";
+  static final Pattern                   IMDB_ID_PATTERN          = Pattern.compile("/title/(tt[0-9]{6,})/");
+  static final Pattern                   PERSON_ID_PATTERN        = Pattern.compile("/name/(nm[0-9]{6,})/");
+  static final Pattern                   MOVIE_PATTERN            = Pattern.compile("^.*?\\(\\d{4}\\)$");
+  static final Pattern                   TV_MOVIE_PATTERN         = Pattern.compile("^.*?\\(\\d{4}\\s+TV Movie\\)$");
+  static final Pattern                   TV_SERIES_PATTERN        = Pattern.compile("^.*?\\(\\d{4}\\)\\s+\\((TV Series|TV Mini[ -]Series)\\)$");
+  static final Pattern                   SHORT_PATTERN            = Pattern.compile("^.*?\\(\\d{4}\\)\\s+\\((Short|Video)\\)$");
+  static final Pattern                   VIDEOGAME_PATTERN        = Pattern.compile("^.*?\\(\\d{4}\\)\\s+\\(Video Game\\)$");
+  static final Pattern                   IMAGE_SCALING_PATTERN    = Pattern.compile("S([XY])(.*?)_CR(\\d*),(\\d*),(\\d*),(\\d*)");
 
-  static final String                 SCRAPE_KEYWORDS_PAGE     = "scrapeKeywordsPage";
-  static final String                 SCRAPE_UNCREDITED_ACTORS = "scrapeUncreditedActors";
-  static final String                 SCRAPE_LANGUAGE_NAMES    = "scrapeLanguageNames";
-  static final String                 LOCAL_RELEASE_DATE       = "localReleaseDate";
-  static final String                 INCLUDE_PREMIERE_DATE    = "includePremiereDate";
-  static final String                 MAX_KEYWORD_COUNT        = "maxKeywordCount";
+  static final String                    INCLUDE_MOVIE            = "includeMovieResults";
+  static final String                    INCLUDE_TV_MOVIE         = "includeTvMovieResults";
+  static final String                    INCLUDE_TV_SERIES        = "includeTvSeriesResults";
+  static final String                    INCLUDE_SHORT            = "includeShortResults";
+  static final String                    INCLUDE_VIDEOGAME        = "includeVideogameResults";
+  static final String                    INCLUDE_MUSICVIDEO       = "includeMusicVideoResults";
+  static final String                    INCLUDE_PODCAST          = "includePodcastResults";
+  static final String                    INCLUDE_ADULT            = "includeAdultResults";
+  static final String                    INCLUDE_METACRITIC       = "includeMetacritic";
 
-  protected final IMediaProvider      metadataProvider;
-  protected final MediaType           type;
-  protected final MediaProviderConfig config;
-  protected final ExecutorService     executor;
-  private ObjectMapper                mapper                   = new ObjectMapper();
+  static final String                    SCRAPE_KEYWORDS_PAGE     = "scrapeKeywordsPage";
+  static final String                    SCRAPE_UNCREDITED_ACTORS = "scrapeUncreditedActors";
+  static final String                    SCRAPE_LANGUAGE_NAMES    = "scrapeLanguageNames";
+  static final String                    LOCAL_RELEASE_DATE       = "localReleaseDate";
+  static final String                    INCLUDE_PREMIERE_DATE    = "includePremiereDate";
+  static final String                    MAX_KEYWORD_COUNT        = "maxKeywordCount";
+
+  protected final IMediaProvider         metadataProvider;
+  protected final MediaType              type;
+  protected final MediaProviderConfig    config;
+  protected final ExecutorService        executor;
+
+  private final ObjectMapper             mapper;
+  private final Map<String, Person.Type> personTypes;
 
   protected ImdbParser(IMediaProvider mediaProvider, MediaType type, ExecutorService executor) {
     this.metadataProvider = mediaProvider;
     this.type = type;
     this.config = mediaProvider.getProviderInfo().getConfig();
     this.executor = executor;
-  }
 
-  protected abstract Logger getLogger();
+    this.mapper = new ObjectMapper();
+    this.personTypes = new HashMap<>();
+
+    // fill well known person types
+    personTypes.put(decode("Y2FzdA=="), Type.ACTOR);
+    personTypes.put(decode("ZGlyZWN0b3I="), Type.DIRECTOR);
+    personTypes.put(decode("ZGlyZWN0b3Jz"), Type.DIRECTOR);
+    personTypes.put(decode("d3JpdGVy"), Type.WRITER);
+    personTypes.put(decode("d3JpdGVycw=="), Type.WRITER);
+    personTypes.put(decode("cHJvZHVjZXI="), Type.PRODUCER);
+    personTypes.put(decode("cHJvZHVjZXJz"), Type.PRODUCER);
+    personTypes.put(decode("ZWRpdG9y"), Type.EDITOR);
+    personTypes.put(decode("ZWRpdG9ycw=="), Type.EDITOR);
+    personTypes.put(decode("Y29tcG9zZXI="), Type.COMPOSER);
+    personTypes.put(decode("Y29tcG9zZXJz"), Type.COMPOSER);
+    personTypes.put(decode("Y2luZW1hdG9ncmFwaGVy"), Type.CAMERA);
+    personTypes.put(decode("Y2luZW1hdG9ncmFwaGVycw=="), Type.CAMERA);
+
+    personTypes.put(decode("YW16bjEuaW1kYi5jb25jZXB0Lm5hbWVfY3JlZGl0X2NhdGVnb3J5LmFjZTVjYjRjLTg3MDgtNDIzOC05NTQyLTA0NjQxZTdjODE3MQ=="),
+        Type.DIRECTOR);
+    personTypes.put(decode("YW16bjEuaW1kYi5jb25jZXB0Lm5hbWVfY3JlZGl0X2NhdGVnb3J5LmM4NGVjYWZmLWFkZDUtNGYyZS04MWRiLTEwMmE0MTg4MWZlMw=="), Type.WRITER);
+    personTypes.put(decode("YW16bjEuaW1kYi5jb25jZXB0Lm5hbWVfY3JlZGl0X2dyb3VwLjdjYWY3ZDE2LTVkYjktNGY0Zi04ODY0LWQ0YzZlNzExYzY4Ng=="), Type.ACTOR);
+    personTypes.put(decode("YW16bjEuaW1kYi5jb25jZXB0Lm5hbWVfY3JlZGl0X2NhdGVnb3J5LjBhZjEyM2NlLTE2MDUtNGE1MS05M2NmLTdhZDQ3N2IxMTgzMg=="),
+        Type.PRODUCER);
+    personTypes.put(decode("YW16bjEuaW1kYi5jb25jZXB0Lm5hbWVfY3JlZGl0X2NhdGVnb3J5LjAwZjVmYWEwLTVmNzYtNGViNS04N2ExLWVjOGQ0ODRkMTc3OQ=="),
+        Type.COMPOSER);
+    personTypes.put(decode("YW16bjEuaW1kYi5jb25jZXB0Lm5hbWVfY3JlZGl0X2NhdGVnb3J5LmUyYmY3MjE3LWM5NDctNDYxYi1hYTU4LTQ3ZTI3ZGExYzc4ZQ=="), Type.CAMERA);
+    personTypes.put(decode("YW16bjEuaW1kYi5jb25jZXB0Lm5hbWVfY3JlZGl0X2NhdGVnb3J5LjYzYjFmOWM2LTlkM2ItNGJlNi04OGZjLTYzMjFjOWZhNWFlMg=="), Type.EDITOR);
+  }
 
   protected abstract MediaMetadata getMetadata(MediaSearchAndScrapeOptions options) throws ScrapeException;
 
@@ -299,7 +330,7 @@ public abstract class ImdbParser {
   }
 
   protected SortedSet<MediaSearchResult> search(MediaSearchAndScrapeOptions options) throws ScrapeException {
-    getLogger().debug("search(): {}", options);
+    LOGGER.debug("search(): {}", options);
     SortedSet<MediaSearchResult> results = new TreeSet<>();
 
     /*
@@ -332,7 +363,7 @@ public abstract class ImdbParser {
 
     searchTerm = MetadataUtil.removeNonSearchCharacters(searchTerm).strip();
 
-    getLogger().debug("========= BEGIN IMDB Scraper Search for: {}", searchTerm);
+    LOGGER.debug("========= BEGIN IMDB Scraper Search for: {}", searchTerm);
 
     // 1) first advanced search
     try {
@@ -343,14 +374,14 @@ public abstract class ImdbParser {
       Thread.currentThread().interrupt();
     }
     catch (Exception e) {
-      getLogger().debug("Error fetching advanced search via JSON", e.getMessage());
+      LOGGER.debug("Error fetching advanced search via JSON", e.getMessage());
       // do not throw here YET
     }
 
     // 2) exception? empty? Try basic search (has fuzzy search)
     if (results.isEmpty()) {
       try {
-        getLogger().debug("Nothing found, trying fallback...");
+        LOGGER.debug("Nothing found, trying fallback...");
         results.addAll(getSearchResults(searchTerm, options));
       }
       catch (InterruptedException | InterruptedIOException e2) {
@@ -358,7 +389,7 @@ public abstract class ImdbParser {
         Thread.currentThread().interrupt();
       }
       catch (Exception e) {
-        getLogger().debug("Error fetching basic search via JSON", e.getMessage());
+        LOGGER.debug("Error fetching basic search via JSON", e.getMessage());
         throw new ScrapeException(e);
       }
     }
@@ -441,7 +472,7 @@ public abstract class ImdbParser {
         else {
           for (ImdbAdvancedSearchResult result : JsonUtils.parseList(mapper, resultsNode, ImdbAdvancedSearchResult.class)) {
             if (StringUtils.isAnyBlank(result.titleId, result.titleText)) {
-              getLogger().debug("Could not parse search result: {}", result);
+              LOGGER.debug("Could not parse search result: {}", result);
               continue;
             }
             MediaSearchResult sr = new MediaSearchResult(ImdbMetadataProvider.ID, options.getMediaType());
@@ -470,7 +501,7 @@ public abstract class ImdbParser {
       }
     }
     catch (Exception e) {
-      getLogger().debug("Error parsing advanced JSON: {}", e.getMessage());
+      LOGGER.debug("Error parsing advanced JSON: {}", e.getMessage());
     }
 
     // fallback HTML parsing
@@ -580,7 +611,7 @@ public abstract class ImdbParser {
         else {
           for (ImdbSearchResult result : JsonUtils.parseList(mapper, resultsNode, ImdbSearchResult.class)) {
             if (result.listItem == null || StringUtils.isAnyBlank(result.listItem.id, result.listItem.titleNameText)) {
-              getLogger().debug("Could not parse search result: {}", result);
+              LOGGER.debug("Could not parse search result: {}", result);
               continue;
             }
             MediaSearchResult sr = new MediaSearchResult(ImdbMetadataProvider.ID, options.getMediaType());
@@ -614,7 +645,7 @@ public abstract class ImdbParser {
       }
     }
     catch (Exception e) {
-      getLogger().debug("Error parsing basic JSON: {}", e.getMessage());
+      LOGGER.debug("Error parsing basic JSON: {}", e.getMessage());
     }
 
     // fallback HTML parsing
@@ -978,7 +1009,7 @@ public abstract class ImdbParser {
 
     }
     catch (Exception e) {
-      getLogger().debug("Error parsing JSON: '{}'", e.getMessage());
+      LOGGER.debug("Error parsing JSON: '{}'", e.getMessage());
       throw e;
     }
   }
@@ -1083,7 +1114,7 @@ public abstract class ImdbParser {
       }
     }
     catch (Exception e) {
-      getLogger().debug("Could not parse images page  - '{}'", e.getMessage());
+      LOGGER.debug("Could not parse images page  - '{}'", e.getMessage());
     }
     return images;
   }
@@ -1367,7 +1398,7 @@ public abstract class ImdbParser {
         }
       }
       catch (Exception e) {
-        getLogger().debug("Error parsing JSON: '{}'", e.getMessage());
+        LOGGER.debug("Error parsing JSON: '{}'", e.getMessage());
         throw e;
       }
     }
@@ -1463,7 +1494,7 @@ public abstract class ImdbParser {
             md.addRating(rating);
           }
           catch (Exception e) {
-            getLogger().trace("could not parse rating/vote count: {}", e.getMessage());
+            LOGGER.trace("could not parse rating/vote count: {}", e.getMessage());
           }
         }
       }
@@ -1480,7 +1511,7 @@ public abstract class ImdbParser {
               md.setTop250(Integer.parseInt(top250Text));
             }
             catch (Exception e) {
-              getLogger().trace("could not parse top250: {}", e.getMessage());
+              LOGGER.trace("could not parse top250: {}", e.getMessage());
             }
           }
         }
@@ -1787,7 +1818,7 @@ public abstract class ImdbParser {
           }
 
           // check if we're at the uncredited cast members
-          if (personType == ACTOR && !isScrapeUncreditedActors() && role.contains("uncredited")) {
+          if (personType == Type.ACTOR && !isScrapeUncreditedActors() && role.contains("uncredited")) {
             continue;
           }
 
@@ -1800,7 +1831,7 @@ public abstract class ImdbParser {
           ret.add(person);
         }
         catch (Exception e) {
-          getLogger().debug("Could not parse person: {}", e.getMessage());
+          LOGGER.debug("Could not parse person: {}", e.getMessage());
         }
       }
     }
@@ -1871,7 +1902,7 @@ public abstract class ImdbParser {
 
       }
       catch (Exception e) {
-        getLogger().debug("Error parsing JSON: '{}'", e.getMessage());
+        LOGGER.debug("Error parsing JSON: '{}'", e.getMessage());
         throw e;
       }
 
@@ -1879,37 +1910,18 @@ public abstract class ImdbParser {
   }
 
   @NotNull
-  private static Type getPersonTypeType(ImdbCreditsCategory cat) {
-    Type pt = switch (cat.id) {
-      case "cast" -> Type.ACTOR;
-      case "director", "directors" -> Type.DIRECTOR;
-      case "writer", "writers" -> Type.WRITER;
-      case "producer", "producers" -> Type.PRODUCER;
-      case "editor", "editors" -> Type.EDITOR;
-      case "composer", "composers" -> Type.COMPOSER;
-      case "cinematographer", "cinematographers" -> Type.CAMERA;
+  private Type getPersonTypeType(ImdbCreditsCategory cat) {
+    Type pt = personTypes.get(cat.id);
 
-      default -> Type.OTHER;
-    };
-
-    if (pt == Type.OTHER) {
-      // not so fast - new IMDB style has not yet finalized its new IDs, as the are called like
-      // "amzn1.imdb.CONCEPT.name_credit_category.ace5cb4c-8708-4238-9542-04641e7c8171"
-      // until we can prove the UUID to be fixed, lets parse the NAME :/
-      // Therefor, this page MUST be called in en_US, else we get translated types...
-      String nam = cat.name.toLowerCase(Locale.ROOT);
-      pt = switch (nam) {
-        case "cast" -> Type.ACTOR;
-        case "director", "directors" -> Type.DIRECTOR;
-        case "writer", "writers" -> Type.WRITER;
-        case "producer", "producers" -> Type.PRODUCER;
-        case "editor", "editors" -> Type.EDITOR;
-        case "composer", "composers" -> Type.COMPOSER;
-        case "cinematographer", "cinematographers" -> Type.CAMERA;
-
-        default -> Type.OTHER;
-      };
+    if (pt == null && StringUtils.isNotBlank(cat.name)) {
+      // maybe we find a match via name - but be careful, as this is localized in user language
+      pt = personTypes.get(cat.name.toLowerCase(Locale.ROOT));
     }
+
+    if (pt == null) {
+      pt = Type.OTHER;
+    }
+
     return pt;
   }
 
@@ -1932,7 +1944,7 @@ public abstract class ImdbParser {
       }
     }
     catch (Exception e) {
-      getLogger().debug("Error parsing JSON: '{}'", e);
+      LOGGER.debug("Error parsing JSON: '{}'", e);
     }
 
     // new style as of may 2023
@@ -2032,7 +2044,7 @@ public abstract class ImdbParser {
       }
     }
     catch (Exception e) {
-      getLogger().debug("Error parsing ReleaseinfoPageJson: '{}'", e);
+      LOGGER.debug("Error parsing ReleaseinfoPageJson: '{}'", e);
       throw e;
     }
   }
@@ -2275,7 +2287,7 @@ public abstract class ImdbParser {
         }
       }
       catch (Exception e) {
-        getLogger().debug("Could not parse scaling/cropping params - '{}'", e.getMessage());
+        LOGGER.debug("Could not parse scaling/cropping params - '{}'", e.getMessage());
       }
     }
 
@@ -2287,7 +2299,7 @@ public abstract class ImdbParser {
       return DateUtils.parseDate(dateAsSting);
     }
     catch (ParseException e) {
-      getLogger().trace("could not parse date: {}", e.getMessage());
+      LOGGER.trace("could not parse date: {}", e.getMessage());
     }
     return null;
   }
@@ -2310,7 +2322,7 @@ public abstract class ImdbParser {
       }
     }
     catch (Exception e) {
-      getLogger().debug("Could not get TOP250 listing - '{}'", e.getMessage());
+      LOGGER.debug("Could not get TOP250 listing - '{}'", e.getMessage());
     }
 
     return titles;
@@ -2354,7 +2366,7 @@ public abstract class ImdbParser {
         // url.addHeader("Accept-Language", getAcceptLanguage(language, country));
       }
       catch (Exception e) {
-        getLogger().debug("tried to fetch imdb page {} - {}", this.pageUrl, e.getMessage());
+        LOGGER.debug("tried to fetch imdb page {} - {}", this.pageUrl, e.getMessage());
         throw new ScrapeException(e);
       }
 
@@ -2366,7 +2378,7 @@ public abstract class ImdbParser {
         Thread.currentThread().interrupt();
       }
       catch (Exception e) {
-        getLogger().debug("tried to fetch imdb page {} - {}", this.pageUrl, e.getMessage());
+        LOGGER.debug("tried to fetch imdb page {} - {}", this.pageUrl, e.getMessage());
         throw e;
       }
 

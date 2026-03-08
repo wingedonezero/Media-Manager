@@ -58,11 +58,6 @@ public class ImdbMovieParser extends ImdbParser {
   }
 
   @Override
-  protected Logger getLogger() {
-    return LOGGER;
-  }
-
-  @Override
   protected boolean isIncludeMovieResults() {
     return true;
   }
