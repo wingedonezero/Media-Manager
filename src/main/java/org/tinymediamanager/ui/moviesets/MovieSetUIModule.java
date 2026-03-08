@@ -47,6 +47,7 @@ import org.tinymediamanager.ui.AbstractTmmUIModule;
 import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.components.label.TmmMenuLabel;
 import org.tinymediamanager.ui.components.tabbedpane.MainTabbedPane;
+import org.tinymediamanager.ui.dialogs.PostProcessResultDialog;
 import org.tinymediamanager.ui.movies.MovieSelectionModel;
 import org.tinymediamanager.ui.movies.panels.MovieArtworkPanel;
 import org.tinymediamanager.ui.movies.panels.MovieCastPanel;
@@ -296,8 +297,21 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
         if (!movieSetPostProcesses.isEmpty()) {
           postProcessingMenu.add(new TmmMenuLabel(TmmResourceBundle.getString("metatag.movieset")));
           for (PostProcess process : movieSetPostProcesses) {
+            MovieSetPostProcessExecutor executor = new MovieSetPostProcessExecutor(process,
+                MovieSetUIModule.getInstance().getSelectionModel().getSelectedMovieSets()) {
+              @Override
+              protected void finish() {
+                super.finish();
+
+                if (getExecutionResults().isEmpty()) {
+                  return;
+                }
+
+                SwingUtilities.invokeLater(() -> new PostProcessResultDialog(process.getName(), getExecutionResults()).setVisible(true));
+              }
+            };
             JMenuItem menuItem = new JMenuItem(process.getName(), IconManager.APPLY);
-            menuItem.addActionListener(pp -> new MovieSetPostProcessExecutor(process).execute());
+            menuItem.addActionListener(pp -> TmmTaskManager.getInstance().addUnnamedTask(executor));
             postProcessingMenu.add(menuItem);
           }
         }
@@ -306,10 +320,21 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
         if (!moviePostProcesses.isEmpty()) {
           postProcessingMenu.add(new TmmMenuLabel(TmmResourceBundle.getString("metatag.movie")));
           for (PostProcess process : moviePostProcesses) {
+            MovieSetMoviePostProcessExecutor executor = new MovieSetMoviePostProcessExecutor(process,
+                MovieSetUIModule.getInstance().getSelectionModel().getSelectedMoviesRecursive()) {
+              @Override
+              protected void finish() {
+                super.finish();
+
+                if (getExecutionResults().isEmpty()) {
+                  return;
+                }
+
+                SwingUtilities.invokeLater(() -> new PostProcessResultDialog(process.getName(), getExecutionResults()).setVisible(true));
+              }
+            };
             JMenuItem menuItem = new JMenuItem(process.getName(), IconManager.APPLY);
-            menuItem.addActionListener(pp -> TmmTaskManager.getInstance()
-                .addUnnamedTask(
-                    new MovieSetMoviePostProcessExecutor(process, MovieSetUIModule.getInstance().getSelectionModel().getSelectedMoviesRecursive())));
+            menuItem.addActionListener(pp -> TmmTaskManager.getInstance().addUnnamedTask(executor));
             postProcessingMenu.add(menuItem);
           }
         }

@@ -1,5 +1,6 @@
 Version 5.2.9
 =======================
++ [UI] show the result of the post-processing commands in a dedicated dialog
 x [UI] pre-set the scraper in the episode editor with the one used for the TV show
 x [IMDB] fixed/improved search and actor parsing due to site changes #3223 #3225
 

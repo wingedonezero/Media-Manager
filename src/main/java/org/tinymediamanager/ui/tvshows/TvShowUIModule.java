@@ -46,6 +46,7 @@ import org.tinymediamanager.ui.AbstractTmmUIModule;
 import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.components.MenuScroller;
 import org.tinymediamanager.ui.components.tabbedpane.MainTabbedPane;
+import org.tinymediamanager.ui.dialogs.PostProcessResultDialog;
 import org.tinymediamanager.ui.settings.TmmSettingsNode;
 import org.tinymediamanager.ui.thirdparty.KodiRPCMenu;
 import org.tinymediamanager.ui.tvshows.actions.DebugDumpShowAction;
@@ -551,9 +552,21 @@ public class TvShowUIModule extends AbstractTmmUIModule {
         }
         else {
           for (PostProcess process : new ArrayList<>(TvShowModuleManager.getInstance().getSettings().getPostProcessTvShow())) {
+            TvShowPostProcessExecutor executor = new TvShowPostProcessExecutor(process,
+                TvShowUIModule.getInstance().getSelectionModel().getSelectedTvShows()) {
+              @Override
+              protected void finish() {
+                super.finish();
+
+                if (getExecutionResults().isEmpty()) {
+                  return;
+                }
+
+                SwingUtilities.invokeLater(() -> new PostProcessResultDialog(process.getName(), getExecutionResults()).setVisible(true));
+              }
+            };
             JMenuItem menuItem = new JMenuItem(TmmResourceBundle.getString("metatag.tvshow") + " - " + process.getName(), IconManager.APPLY_INV);
-            menuItem.addActionListener(pp -> TmmTaskManager.getInstance()
-                .addUnnamedTask(new TvShowPostProcessExecutor(process, TvShowUIModule.getInstance().getSelectionModel().getSelectedTvShows())));
+            menuItem.addActionListener(pp -> TmmTaskManager.getInstance().addUnnamedTask(executor));
             postProcessingMenu.add(menuItem);
           }
 
@@ -562,10 +575,21 @@ public class TvShowUIModule extends AbstractTmmUIModule {
           }
 
           for (PostProcess process : new ArrayList<>(TvShowModuleManager.getInstance().getSettings().getPostProcessEpisode())) {
+            TvShowEpisodePostProcessExecutor executor = new TvShowEpisodePostProcessExecutor(process,
+                TvShowUIModule.getInstance().getSelectionModel().getSelectedEpisodes()) {
+              @Override
+              protected void finish() {
+                super.finish();
+
+                if (getExecutionResults().isEmpty()) {
+                  return;
+                }
+
+                SwingUtilities.invokeLater(() -> new PostProcessResultDialog(process.getName(), getExecutionResults()).setVisible(true));
+              }
+            };
             JMenuItem menuItem = new JMenuItem(TmmResourceBundle.getString("metatag.episode") + " - " + process.getName(), IconManager.APPLY_INV);
-            menuItem.addActionListener(pp -> TmmTaskManager.getInstance()
-                .addUnnamedTask(
-                    new TvShowEpisodePostProcessExecutor(process, TvShowUIModule.getInstance().getSelectionModel().getSelectedEpisodes())));
+            menuItem.addActionListener(pp -> TmmTaskManager.getInstance().addUnnamedTask(executor));
             postProcessingMenu.add(menuItem);
           }
 
