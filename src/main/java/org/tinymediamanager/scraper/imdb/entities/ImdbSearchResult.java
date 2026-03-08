@@ -19,6 +19,7 @@ public class ImdbSearchResult extends BaseJsonEntity {
     public String          titleNameText         = "";
     @JsonAlias("releaseYear")
     public String          titleReleaseText      = "";
+    public ImdbTitleType   titleType             = null;
     public String          titleTypeText         = "";
     @JsonAlias("primaryImage")
     public ImdbImageString titlePosterImageModel = null;

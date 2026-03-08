@@ -116,11 +116,6 @@ public abstract class ImdbParser {
 
   static final Pattern                   IMDB_ID_PATTERN          = Pattern.compile("/title/(tt[0-9]{6,})/");
   static final Pattern                   PERSON_ID_PATTERN        = Pattern.compile("/name/(nm[0-9]{6,})/");
-  static final Pattern                   MOVIE_PATTERN            = Pattern.compile("^.*?\\(\\d{4}\\)$");
-  static final Pattern                   TV_MOVIE_PATTERN         = Pattern.compile("^.*?\\(\\d{4}\\s+TV Movie\\)$");
-  static final Pattern                   TV_SERIES_PATTERN        = Pattern.compile("^.*?\\(\\d{4}\\)\\s+\\((TV Series|TV Mini[ -]Series)\\)$");
-  static final Pattern                   SHORT_PATTERN            = Pattern.compile("^.*?\\(\\d{4}\\)\\s+\\((Short|Video)\\)$");
-  static final Pattern                   VIDEOGAME_PATTERN        = Pattern.compile("^.*?\\(\\d{4}\\)\\s+\\(Video Game\\)$");
   static final Pattern                   IMAGE_SCALING_PATTERN    = Pattern.compile("S([XY])(.*?)_CR(\\d*),(\\d*),(\\d*),(\\d*)");
 
   static final String                    INCLUDE_MOVIE            = "includeMovieResults";
@@ -365,18 +360,18 @@ public abstract class ImdbParser {
 
     LOGGER.debug("========= BEGIN IMDB Scraper Search for: {}", searchTerm);
 
-    // 1) first advanced search
-    try {
-      results.addAll(getSearchResultsAdvanced(searchTerm, options));
-    }
-    catch (InterruptedException | InterruptedIOException e) {
-      // do not swallow these Exceptions
-      Thread.currentThread().interrupt();
-    }
-    catch (Exception e) {
-      LOGGER.debug("Error fetching advanced search via JSON", e.getMessage());
-      // do not throw here YET
-    }
+    // advanced search is blocked behind WAF - skip it for now
+    // try {
+    // results.addAll(getSearchResultsAdvanced(searchTerm, options));
+    // }
+    // catch (InterruptedException | InterruptedIOException e) {
+    // // do not swallow these Exceptions
+    // Thread.currentThread().interrupt();
+    // }
+    // catch (Exception e) {
+    // LOGGER.debug("Error fetching advanced search via JSON", e.getMessage());
+    // // do not throw here YET
+    // }
 
     // 2) exception? empty? Try basic search (has fuzzy search)
     if (results.isEmpty()) {
@@ -565,23 +560,45 @@ public abstract class ImdbParser {
     String language = options.getLanguage().getLanguage();
     String country = options.getCertificationCountry().getAlpha2(); // for passing the country to the scrape
 
-    String param = "";
+    List<String> wantedTitleTypes = new ArrayList<>();
+    String param = "&s=tt";
+
     if (options.getMediaType() == MediaType.MOVIE) {
-      param = "&s=tt&ttype=ft"; // movies
-      if (isIncludeMusicVideoResults()) {
-        param += "&ttype=mu";
+      wantedTitleTypes.add("movie");
+      wantedTitleTypes.add("video");
+
+      if (isIncludeTvMovieResults()) {
+        wantedTitleTypes.add("tvMovie");
+        wantedTitleTypes.add("tvSpecial");
+        wantedTitleTypes.add("documentary");
       }
-      if (isIncludeVideogameResults()) {
-        param += "&ttype=vg";
+      if (isIncludeShortResults()) {
+        wantedTitleTypes.add("shortMovie");
       }
     }
     else {
       if (options.getMediaType() == MediaType.TV_SHOW) {
-        param = "&s=tt&ttype=tv"; // all TV related, even TVmovies (which cannot be parsed as TV) - but there is no other option in basic search
-        if (isIncludePodcastResults()) {
-          param += "&ttype=pe&ttype=pe";
+        wantedTitleTypes.add("tvShow");
+        wantedTitleTypes.add("tvMiniSeries");
+        wantedTitleTypes.add("documentary");
+
+        if (isIncludeShortResults()) {
+          wantedTitleTypes.add("tvShort");
         }
       }
+    }
+
+    if (isIncludeMusicVideoResults()) {
+      wantedTitleTypes.add("musicVideo");
+    }
+    if (isIncludeVideogameResults()) {
+      wantedTitleTypes.add("video");
+    }
+    if (isIncludePodcastResults()) {
+      wantedTitleTypes.add("podcastSeries");
+    }
+    if (isIncludeAdultResults()) {
+      wantedTitleTypes.add("adult");
     }
 
     Url findUrl = new InMemoryCachedUrl(constructUrl("find/?q=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param));
@@ -610,10 +627,17 @@ public abstract class ImdbParser {
         }
         else {
           for (ImdbSearchResult result : JsonUtils.parseList(mapper, resultsNode, ImdbSearchResult.class)) {
-            if (result.listItem == null || StringUtils.isAnyBlank(result.listItem.id, result.listItem.titleNameText)) {
+            if (result.listItem == null || result.listItem.titleType == null
+                || StringUtils.isAnyBlank(result.listItem.id, result.listItem.titleNameText, result.listItem.titleReleaseText)) {
               LOGGER.debug("Could not parse search result: {}", result);
               continue;
             }
+
+            // check if we are interested in this result at all (movie search should not return TV shows and vice versa)
+            if (result.listItem.titleType == null || !options.getMediaType().equals(result.listItem.titleType.getMediaType())) {
+              continue;
+            }
+
             MediaSearchResult sr = new MediaSearchResult(ImdbMetadataProvider.ID, options.getMediaType());
             sr.setIMDBId(result.listItem.id);
             sr.setTitle(result.listItem.titleNameText);

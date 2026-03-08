@@ -1,6 +1,6 @@
 Version 5.2.9
 =======================
- x [IMDB] fixed search and actor parsing due to site changes #3223
+ x [IMDB] fixed/improved search and actor parsing due to site changes #3223 #3225
 
 
 Version 5.2.8
