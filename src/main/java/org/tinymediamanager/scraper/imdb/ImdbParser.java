@@ -592,7 +592,7 @@ public abstract class ImdbParser {
       wantedTitleTypes.add("musicVideo");
     }
     if (isIncludeVideogameResults()) {
-      wantedTitleTypes.add("video");
+      wantedTitleTypes.add("videoGame");
     }
     if (isIncludePodcastResults()) {
       wantedTitleTypes.add("podcastSeries");
@@ -634,7 +634,7 @@ public abstract class ImdbParser {
             }
 
             // check if we are interested in this result at all (movie search should not return TV shows and vice versa)
-            if (result.listItem.titleType == null || !options.getMediaType().equals(result.listItem.titleType.getMediaType())) {
+            if (!wantedTitleTypes.contains(result.listItem.titleType.id)) {
               continue;
             }
 
