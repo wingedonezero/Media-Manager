@@ -21,7 +21,8 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.Stack;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -55,7 +56,7 @@ import net.miginfocom.swing.MigLayout;
  */
 public abstract class TmmDialog extends JDialog implements IModalPopupPanelProvider {
 
-  private final Stack<Component> focusedComponents = new Stack<>();
+  private final Deque<Component> focusedComponents = new ArrayDeque<>();
 
   protected BindingGroup         bindingGroup      = null;
 
