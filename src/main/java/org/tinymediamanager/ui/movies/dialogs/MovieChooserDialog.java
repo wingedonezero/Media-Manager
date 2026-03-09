@@ -149,6 +149,8 @@ public class MovieChooserDialog extends TmmDialog implements ActionListener {
   private MovieChooserModel                                                    selectedResult = null;
 
   private SearchTask                                                           activeSearchTask;
+  private ScrapeTask                                                           activeScrapeTask;
+  private PropertyChangeListener                                               scraperListener;
 
   private boolean                                                              continueQueue  = true;
   private boolean                                                              navigateBack   = false;
@@ -359,7 +361,7 @@ public class MovieChooserDialog extends TmmDialog implements ActionListener {
     {
       {
         JPanel infoPanel = new JPanel();
-        infoPanel.setLayout(new MigLayout("hidemode 3", "[][grow]", "[]"));
+        infoPanel.setLayout(new MigLayout("insets 0 n 0 0, hidemode 3", "[][grow]", "[]"));
 
         progressBar = new JProgressBar();
         infoPanel.add(progressBar, "cell 0 0");
@@ -421,7 +423,7 @@ public class MovieChooserDialog extends TmmDialog implements ActionListener {
     });
 
     // add a change listener for the async loaded meta data
-    PropertyChangeListener listener = evt -> {
+    scraperListener = evt -> {
       String property = evt.getPropertyName();
       if ("scraped".equals(property)) {
         castMemberEventList.clear();
@@ -447,7 +449,7 @@ public class MovieChooserDialog extends TmmDialog implements ActionListener {
       int index = tableSearchResults.convertRowIndexToModel(tableSearchResults.getSelectedRow());
       castMemberEventList.clear();
       if (selectedResult != null) {
-        selectedResult.removePropertyChangeListener(listener);
+        selectedResult.removePropertyChangeListener(scraperListener);
       }
       if (index > -1 && index < searchResultEventList.size()) {
         MovieChooserModel model = searchResultEventList.get(index);
@@ -459,7 +461,7 @@ public class MovieChooserDialog extends TmmDialog implements ActionListener {
         taMovieDescription.setText(model.getOverview());
 
         selectedResult = model;
-        selectedResult.addPropertyChangeListener(listener);
+        selectedResult.addPropertyChangeListener(scraperListener);
       }
       else {
         selectedResult = null;
@@ -472,8 +474,12 @@ public class MovieChooserDialog extends TmmDialog implements ActionListener {
         try {
           MovieChooserModel model = searchResultEventList.get(selectedRow);
           if (model != MovieChooserModel.emptyResult && !model.isScraped()) {
-            ScrapeTask task = new ScrapeTask(model);
-            task.execute();
+            // cancel any running scrape task
+            if (activeScrapeTask != null && !activeScrapeTask.isDone()) {
+              activeScrapeTask.cancel(true);
+            }
+            activeScrapeTask = new ScrapeTask(model);
+            activeScrapeTask.execute();
           }
         }
         catch (Exception ex) {
@@ -805,9 +811,24 @@ public class MovieChooserDialog extends TmmDialog implements ActionListener {
 
   @Override
   public void dispose() {
+    // remove property change listener from selected result
+    if (selectedResult != null) {
+      selectedResult.removePropertyChangeListener(scraperListener);
+      selectedResult = null;
+    }
+
+    // cancel any running tasks
     if (activeSearchTask != null && !activeSearchTask.isDone()) {
       activeSearchTask.cancel();
     }
+    if (activeScrapeTask != null && !activeScrapeTask.isDone()) {
+      activeScrapeTask.cancel(true);
+    }
+
+    // clear event lists to release references
+    searchResultEventList.clear();
+    castMemberEventList.clear();
+
     super.dispose();
   }
 
@@ -915,9 +936,9 @@ public class MovieChooserDialog extends TmmDialog implements ActionListener {
 
       // disable button as long as its scraping
       try {
-        okButton.setEnabled(false);
+        SwingUtilities.invokeLater(() -> okButton.setEnabled(false));
         model.scrapeMetaData();
-        okButton.setEnabled(true);
+        SwingUtilities.invokeLater(() -> okButton.setEnabled(true));
       }
       catch (Exception e) {
         error = e;

@@ -75,6 +75,7 @@ import org.tinymediamanager.scraper.ScraperType;
 import org.tinymediamanager.scraper.entities.MediaArtwork;
 import org.tinymediamanager.scraper.entities.MediaType;
 import org.tinymediamanager.scraper.interfaces.IMovieSetMetadataProvider;
+import org.tinymediamanager.scraper.util.ListUtils;
 import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.TmmFontHelper;
 import org.tinymediamanager.ui.TmmUILayoutStore;
@@ -113,6 +114,9 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
   private final EventList<MovieInSet>                                             movieInSetEventList;
 
   private MovieSetChooserModel                                                    selectedResult = null;
+  private SearchTask                                                              activeSearchTask;
+  private ScrapeTask                                                              activeScrapeTask;
+  private PropertyChangeListener                                                  scraperListener;
 
   /**
    * UI components
@@ -242,7 +246,7 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
 
     {
       JPanel infoPanel = new JPanel();
-      infoPanel.setLayout(new MigLayout("hidemode 3", "[][grow]", "[]"));
+      infoPanel.setLayout(new MigLayout("insets 0 n 0 0, hidemode 3", "[][grow]", "[]"));
 
       progressBar = new JProgressBar();
       infoPanel.add(progressBar, "cell 0 0");
@@ -282,7 +286,7 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
     tableMovies.adjustColumnPreferredWidths(5);
 
     // add a change listener for the async loaded metadata
-    PropertyChangeListener listener = evt -> {
+    scraperListener = evt -> {
       String property = evt.getPropertyName();
       if ("scraped".equals(property)) {
         int row = tableMovieSets.convertRowIndexToModel(tableMovieSets.getSelectedRow());
@@ -301,14 +305,14 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
 
       int index = tableMovieSets.convertRowIndexToModel(tableMovieSets.getSelectedRow());
       if (selectedResult != null) {
-        selectedResult.removePropertyChangeListener(listener);
+        selectedResult.removePropertyChangeListener(scraperListener);
       }
       if (index > -1 && index < searchResultEventList.size()) {
         MovieSetChooserModel model = searchResultEventList.get(index);
         setData(model);
 
         selectedResult = model;
-        selectedResult.addPropertyChangeListener(listener);
+        selectedResult.addPropertyChangeListener(scraperListener);
       }
       else {
         selectedResult = null;
@@ -321,8 +325,12 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
         try {
           MovieSetChooserModel model = searchResultEventList.get(selectedRow);
           if (model != MovieSetChooserModel.EMPTY_RESULT && !model.isScraped()) {
-            ScrapeTask task = new ScrapeTask(model);
-            task.execute();
+            // cancel any running scrape task
+            if (activeScrapeTask != null && !activeScrapeTask.isDone()) {
+              activeScrapeTask.cancel(true);
+            }
+            activeScrapeTask = new ScrapeTask(model);
+            activeScrapeTask.execute();
           }
         }
         catch (Exception ex) {
@@ -346,7 +354,6 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
   }
 
   private void setData(MovieSetChooserModel model) {
-    movieInSetEventList.addAll(model.getMovies());
     if (!model.getPosterUrl().equals(lblMovieSetPoster.getImageUrl())) {
       lblMovieSetPoster.setImageUrl(model.getPosterUrl());
     }
@@ -358,23 +365,36 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
   }
 
   private void searchMovieSet() {
-    SearchTask task = new SearchTask(tfMovieSetName.getText());
-    task.execute();
+    // cancel any running search task
+    if (activeSearchTask != null && !activeSearchTask.isDone()) {
+      activeSearchTask.cancel(true);
+    }
+    activeSearchTask = new SearchTask(tfMovieSetName.getText());
+    activeSearchTask.execute();
   }
 
   private class SearchTask extends SwingWorker<Void, Void> {
     private final String            searchTerm;
 
     private List<MediaSearchResult> searchResult;
-    private Throwable               error  = null;
-    boolean                         cancel = false;
+    private Throwable               error;
+    private volatile boolean        cancelled = false;
 
     public SearchTask(String searchTerm) {
       this.searchTerm = searchTerm;
     }
 
+    public void cancel() {
+      cancelled = true;
+      cancel(true);
+    }
+
     @Override
     public Void doInBackground() {
+      if (cancelled) {
+        return null;
+      }
+
       startProgressBar(TmmResourceBundle.getString("chooser.searchingfor") + " " + searchTerm);
       try {
         List<MediaScraper> sets = MediaScraper.getMediaScrapers(ScraperType.MOVIE_SET);
@@ -386,7 +406,9 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
           options.setSearchQuery(searchTerm);
           options.setLanguage(MovieModuleManager.getInstance().getSettings().getScraperLanguage());
 
-          searchResult = mp.search(options);
+          if (!cancelled) {
+            searchResult = mp.search(options);
+          }
         }
       }
       catch (Exception e1) {
@@ -399,10 +421,15 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
 
     @Override
     public void done() {
+      if (cancelled) {
+        stopProgressBar();
+        return;
+      }
+
       stopProgressBar();
 
       searchResultEventList.clear();
-      if (searchResult.isEmpty()) {
+      if (ListUtils.isEmpty(searchResult)) {
         searchResultEventList.add(MovieSetChooserModel.EMPTY_RESULT);
       }
       else {
@@ -430,6 +457,29 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
     public void actionPerformed(ActionEvent e) {
       searchMovieSet();
     }
+  }
+
+  @Override
+  public void dispose() {
+    // remove property change listener from selected result
+    if (selectedResult != null) {
+      selectedResult.removePropertyChangeListener(scraperListener);
+      selectedResult = null;
+    }
+
+    // cancel any running tasks
+    if (activeSearchTask != null && !activeSearchTask.isDone()) {
+      activeSearchTask.cancel();
+    }
+    if (activeScrapeTask != null && !activeScrapeTask.isDone()) {
+      activeScrapeTask.cancel();
+    }
+
+    // clear event lists to release references
+    searchResultEventList.clear();
+    movieInSetEventList.clear();
+
+    super.dispose();
   }
 
   @Override
@@ -598,26 +648,42 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
 
   private class ScrapeTask extends SwingWorker<Void, Void> {
     private final MovieSetChooserModel model;
+    private volatile boolean           cancelled = false;
 
     ScrapeTask(MovieSetChooserModel model) {
       this.model = model;
     }
 
+    public void cancel() {
+      cancelled = true;
+      cancel(true);
+    }
+
     @Override
     public Void doInBackground() {
+      if (cancelled) {
+        return null;
+      }
+
       startProgressBar(TmmResourceBundle.getString("chooser.scrapeing") + " " + model.getName());
 
       // disable ok button as long as its scraping
-      btnOk.setEnabled(false);
-      model.scrapeMetadata();
-      btnOk.setEnabled(true);
+      SwingUtilities.invokeLater(() -> btnOk.setEnabled(false));
+
+      if (!cancelled) {
+        model.scrapeMetadata();
+      }
+
+      SwingUtilities.invokeLater(() -> btnOk.setEnabled(true));
 
       return null;
     }
 
     @Override
     public void done() {
-      stopProgressBar();
+      if (!cancelled) {
+        stopProgressBar();
+      }
     }
   }
 
