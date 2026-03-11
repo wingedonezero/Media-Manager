@@ -1076,7 +1076,13 @@ public class MediaMetadata {
    *          the place to be set
    */
   public void setTop250(int top250) {
-    this.top250 = top250;
+    // top250 is only valid if between 1 and 250 - otherwise set it to 0 (not set)
+    if (top250 >= 0 && top250 <= 250) {
+      this.top250 = top250;
+    }
+    else {
+      this.top250 = 0;
+    }
   }
 
   /**

@@ -1253,7 +1253,8 @@ public class TvShow extends MediaEntity implements IMediaInformation {
       setFirstAired(metadata.getReleaseDate());
     }
 
-    if (config.contains(TvShowScraperMetadataConfig.TOP250) && metadata.getTop250() > 0 && (overwriteExistingItems || getTop250() <= 0)) {
+    if (config.contains(TvShowScraperMetadataConfig.TOP250) && metadata.getTop250() > 0
+        && (overwriteExistingItems || getTop250() <= 0 || getTop250() > 250)) {
       setTop250(metadata.getTop250());
     }
 
