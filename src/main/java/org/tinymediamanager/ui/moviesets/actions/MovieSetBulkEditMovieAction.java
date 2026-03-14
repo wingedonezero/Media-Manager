@@ -39,8 +39,8 @@ import org.tinymediamanager.ui.moviesets.MovieSetUIModule;
  * 
  * @author Manuel Laggner
  */
-public class MovieSetBatchEditMovieAction extends TmmAction {
-  public MovieSetBatchEditMovieAction() {
+public class MovieSetBulkEditMovieAction extends TmmAction {
+  public MovieSetBulkEditMovieAction() {
     putValue(NAME, TmmResourceBundle.getString("movie.bulkedit"));
     putValue(SHORT_DESCRIPTION, TmmResourceBundle.getString("movie.bulkedit.desc"));
     putValue(SMALL_ICON, IconManager.EDIT);
