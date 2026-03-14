@@ -538,7 +538,7 @@ public class TvShowBulkEditorDialog extends TmmDialog {
      ********************/
     {
       JPanel panelContent = new JPanel();
-      panelContent.setLayout(new MigLayout("", "[][200lp:350lp,grow][][]", "[][][][][][][][][][][][]"));
+      panelContent.setLayout(new MigLayout("", "[][200lp:350lp,grow][][]", "[][][][][][][][][][][][][]"));
       tabbedPane.add(TmmResourceBundle.getString("metatag.episode"), panelContent);
 
       JTextArea textArea = new ReadOnlyTextArea(TmmResourceBundle.getString("tvshow.bulkedit.episodesfromshows"));
@@ -775,9 +775,25 @@ public class TvShowBulkEditorDialog extends TmmDialog {
         panelContent.add(btnDateAdded, "cell 2 9");
 
       }
+
+      {
+        JLabel lblOriginalFilename = new TmmLabel(TmmResourceBundle.getString("metatag.originalfile"));
+        panelContent.add(lblOriginalFilename, "cell 0 10,alignx right");
+
+        JButton btnDeleteOriginalFilename = new JButton(TmmResourceBundle.getString("edit.deleteoriginalfilename"));
+        btnDeleteOriginalFilename.addActionListener(e -> {
+          episodesChanged = true;
+          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+          for (TvShowEpisode episode : tvShowEpisodesToEdit) {
+            episode.setOriginalFilename("");
+          }
+          setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
+        panelContent.add(btnDeleteOriginalFilename, "cell 1 10");
+      }
       {
         JButton btnAddActors = new JButton(TmmResourceBundle.getString("cast.actor.add"));
-        panelContent.add(btnAddActors, "cell 1 10");
+        panelContent.add(btnAddActors, "cell 1 11");
         btnAddActors.addActionListener(e -> {
           // Open Person Dialog
           Person person = new Person(Person.Type.ACTOR, TmmResourceBundle.getString("cast.actor.unknown"),
@@ -812,7 +828,7 @@ public class TvShowBulkEditorDialog extends TmmDialog {
       }
       {
         JButton btnAddDirectors = new JButton(TmmResourceBundle.getString("cast.crew.add"));
-        panelContent.add(btnAddDirectors, "cell 1 10");
+        panelContent.add(btnAddDirectors, "cell 1 11");
         btnAddDirectors.addActionListener(e -> {
           // Open Director Dialog
           Person person = new Person(Person.Type.OTHER, "", "");
@@ -841,7 +857,7 @@ public class TvShowBulkEditorDialog extends TmmDialog {
 
       {
         JButton btnAddRating = new JButton(TmmResourceBundle.getString("rating.add"));
-        panelContent.add(btnAddRating, "cell 1 11");
+        panelContent.add(btnAddRating, "cell 1 12");
         btnAddRating.addActionListener(e -> {
           // Open Rating Dialog
           MediaRatingTable.Rating rating = new MediaRatingTable.Rating("");
@@ -874,7 +890,7 @@ public class TvShowBulkEditorDialog extends TmmDialog {
       }
       {
         JButton btnAddSubtitle = new JButton(TmmResourceBundle.getString("subtitle.add"));
-        panelContent.add(btnAddSubtitle, "cell 1 11");
+        panelContent.add(btnAddSubtitle, "cell 1 12");
         btnAddSubtitle.addActionListener(e -> {
           MediaFileSubtitle subtitle = new MediaFileSubtitle();
 
