@@ -54,6 +54,7 @@ public class MovieUnlockAction extends TmmAction {
     MainWindow.getInstance().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     for (Movie movie : selectedMovies) {
       movie.setLocked(false);
+      movie.writeNFO();
       movie.saveToDb();
     }
     MainWindow.getInstance().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));

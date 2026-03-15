@@ -1021,6 +1021,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
     if (movie.isLocked()) {
       tmmLocked.setTextContent("true");
     }
+    root.appendChild(tmmLocked);
   }
 
   /**
