@@ -95,6 +95,7 @@ public class MovieNfoParser {
   public String               originalFilename    = "";
   public String               userNote            = "";
   public String               englishTitle        = "";
+  public boolean              tmmLocked           = false;
 
   public Map<String, Object>  ids                 = new HashMap<>();
   public Map<String, Rating>  ratings             = new HashMap<>();
@@ -204,6 +205,7 @@ public class MovieNfoParser {
     parseTag(MovieNfoParser::parseOriginalFilename);
     parseTag(MovieNfoParser::parseUserNote);
     parseTag(MovieNfoParser::parseEnglishTitle);
+    parseTag(MovieNfoParser::parseTmmLocked);
 
     // MUST BE THE LAST ONE!
     parseTag(MovieNfoParser::findUnsupportedElements);
@@ -1661,6 +1663,19 @@ public class MovieNfoParser {
   }
 
   /**
+   * the tinyMediaManager locked state is usually in the tmm_locked tag
+   */
+  private Void parseTmmLocked() {
+    supportedElements.add("tmm_locked");
+    Element element = getSingleElement(root, "tmm_locked");
+    if (element != null) {
+      tmmLocked = Boolean.parseBoolean(element.ownText());
+    }
+
+    return null;
+  }
+
+  /**
    * a trailer is usually in the trailer tag
    */
   private Void parseTrailer() {
@@ -1954,7 +1969,7 @@ public class MovieNfoParser {
       List<org.tinymediamanager.core.entities.Person> newCrew = new ArrayList<>();
       for (Person crewMember : crew) {
         try {
-          newCrew.add(morphPerson(org.tinymediamanager.core.entities.Person.Type.valueOf(crewMember.type.toUpperCase(Locale.ROOT)), crewMember));
+          newCrew.add(morphPerson(ParserUtils.parsePersonType(crewMember.type), crewMember));
         }
         catch (Exception e) {
           LOGGER.debug("Could not unmarshal crew member with name '{}' and role '{}'", crewMember.name, crewMember.type);
@@ -2009,6 +2024,7 @@ public class MovieNfoParser {
 
     movie.setOriginalFilename(originalFilename);
     movie.setNote(userNote);
+    movie.setLocked(tmmLocked);
 
     return movie;
   }

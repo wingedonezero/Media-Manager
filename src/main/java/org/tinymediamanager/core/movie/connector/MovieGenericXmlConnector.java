@@ -943,6 +943,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
     addEnglishTitle();
     addCRC32();
     addCrew();
+    addTmmLocked();
   }
 
   /**
@@ -987,7 +988,7 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
       crew.appendChild(name);
 
       Element role = document.createElement("role");
-      role.setTextContent(StringUtils.capitalize(crewMember.getType().toString()));
+      role.setTextContent(StringUtils.capitalize(crewMember.getType().name()));
 
       if (StringUtils.isNotBlank(crewMember.getRole())) {
         role.setAttribute("subrole", crewMember.getRole());
@@ -1009,6 +1010,16 @@ public abstract class MovieGenericXmlConnector implements IMovieConnector {
       NfoUtils.addPersonIdsAsChildren(crew, crewMember);
 
       root.appendChild(crew);
+    }
+  }
+
+  /**
+   * writes the lock state of tinyMediaManager into an own field to be persisted across database rebuilds
+   */
+  protected void addTmmLocked() {
+    Element tmmLocked = document.createElement("tmm_locked");
+    if (movie.isLocked()) {
+      tmmLocked.setTextContent("true");
     }
   }
 

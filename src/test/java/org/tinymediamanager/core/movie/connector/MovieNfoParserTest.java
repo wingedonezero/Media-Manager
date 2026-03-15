@@ -50,6 +50,14 @@ public class MovieNfoParserTest extends BasicMovieTest {
   }
 
   @Test
+  public void testParseTmmLocked() {
+    MovieNfoParser parser = MovieNfoParser.parseNfo("<movie><title>foo</title><tmm_locked>true</tmm_locked></movie>");
+
+    assertThat(parser.tmmLocked).isTrue();
+    assertThat(parser.toMovie().isLocked()).isTrue();
+  }
+
+  @Test
   public void testKodi17_0() throws Exception {
     // Kodi version 17.0
     MovieNfoParser parser = MovieNfoParser.parseNfo(getWorkFolder().resolve("movie_nfo").resolve("kodi17.0.nfo"));

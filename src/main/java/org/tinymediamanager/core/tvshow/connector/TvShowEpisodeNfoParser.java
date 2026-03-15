@@ -193,6 +193,7 @@ public class TvShowEpisodeNfoParser {
     public MediaSource                source              = MediaSource.UNKNOWN;
     public TvShowEpisodeEdition       edition             = TvShowEpisodeEdition.NONE;
     public String                     userNote            = "";
+    public boolean                    tmmLocked           = false;
     public String                     originalFileName    = "";
 
     public Map<String, Object>        ids                 = new HashMap<>();
@@ -276,6 +277,7 @@ public class TvShowEpisodeNfoParser {
       parseTag(Episode::parseOriginalFilename);
       parseTag(Episode::parseUserNote);
       parseTag(Episode::parseEpisodeGroups);
+      parseTag(Episode::parseTmmLocked);
 
       // MUST BE THE LAST ONE!
       parseTag(Episode::findUnsupportedElements);
@@ -1681,6 +1683,19 @@ public class TvShowEpisodeNfoParser {
     }
 
     /**
+     * the tinyMediaManager locked state is usually in the tmm_locked tag
+     */
+    private Void parseTmmLocked() {
+      supportedElements.add("tmm_locked");
+
+      Element element = getSingleElement(root, "tmm_locked");
+      if (element != null) {
+        tmmLocked = Boolean.parseBoolean(element.ownText());
+      }
+      return null;
+    }
+
+    /**
      * morph this instance to a TvShowEpisode object
      *
      * @return the TvShowEpisode Object
@@ -1752,7 +1767,7 @@ public class TvShowEpisodeNfoParser {
         List<org.tinymediamanager.core.entities.Person> newCrew = new ArrayList<>();
         for (Person crewMember : crew) {
           try {
-            newCrew.add(morphPerson(org.tinymediamanager.core.entities.Person.Type.valueOf(crewMember.type.toUpperCase(Locale.ROOT)), crewMember));
+            newCrew.add(morphPerson(ParserUtils.parsePersonType(crewMember.type), crewMember));
           }
           catch (Exception e) {
             LOGGER.debug("Could not unmarshal crew member with name '{}' and role '{}'", crewMember.name, crewMember.type);
@@ -1785,6 +1800,7 @@ public class TvShowEpisodeNfoParser {
 
       episode.setOriginalFilename(originalFileName);
       episode.setNote(userNote);
+      episode.setLocked(tmmLocked);
 
       return episode;
     }

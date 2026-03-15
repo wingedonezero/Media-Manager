@@ -164,6 +164,7 @@ public class TvShowToNfoConnectorTest extends BasicTvShowTest {
     if (!newTvShow.getTags().isEmpty()) {
       assertThat(newTvShow.getTags().get(0)).isEqualTo(tvShow.getTags().get(0));
     }
+    assertThat(newTvShow.isLocked()).isEqualTo(tvShow.isLocked());
     assertThat(newTvShow.getActors().size()).isEqualTo(tvShow.getActors().size());
     assertThat(newTvShow.getActors().get(0)).isEqualTo(tvShow.getActors().get(0));
   }
@@ -213,6 +214,8 @@ public class TvShowToNfoConnectorTest extends BasicTvShowTest {
     tvShow.addToGenres(Arrays.asList(MediaGenres.ACTION, MediaGenres.ADVENTURE, MediaGenres.DRAMA));
 
     tvShow.addToTags(Collections.singletonList("80s"));
+
+    tvShow.setLocked(true);
 
     tvShow.addToActors(Arrays.asList(new Person(Person.Type.ACTOR, "Johnny Depp", "Officer Tom Hanson", "http://thumb1"),
         new Person(Person.Type.ACTOR, "Holly Robinson Peete", "Officer Judy Hoffs", "http://thumb2")));
