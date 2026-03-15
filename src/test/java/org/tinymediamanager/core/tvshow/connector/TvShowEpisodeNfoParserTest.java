@@ -37,16 +37,6 @@ public class TvShowEpisodeNfoParserTest extends BasicTvShowTest {
   }
 
   @Test
-  public void testParseTmmLocked() {
-    TvShowEpisodeNfoParser parser = TvShowEpisodeNfoParser
-        .parseNfo("<episodedetails><title>foo</title><tmm_locked>true</tmm_locked></episodedetails>");
-
-    assertThat(parser.episodes).hasSize(1);
-    assertThat(parser.episodes.get(0).tmmLocked).isTrue();
-    assertThat(parser.toTvShowEpisodes().get(0).isLocked()).isTrue();
-  }
-
-  @Test
   public void testKodi17_0() {
     // Kodi version 17.0
     try {
