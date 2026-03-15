@@ -203,7 +203,6 @@ public class TvShowEpisodeToNfoConnectorTest extends BasicTvShowTest {
 
     episode1.setMediaSource(MediaSource.BLURAY);
     episode1.setEdition(TvShowEpisodeEdition.DIRECTORS_CUT);
-    episode1.setLocked(true);
 
     episode1.addToTags(Collections.singletonList("Pilot"));
 
@@ -252,7 +251,6 @@ public class TvShowEpisodeToNfoConnectorTest extends BasicTvShowTest {
       episode2.setRating(new MediaRating(MediaRating.NFO, 8.0f, 10));
       episode2.setArtworkUrl("http://thumb1", MediaFileType.THUMB);
       episode2.setWatched(false);
-      episode2.setLocked(true);
 
       sdf = new SimpleDateFormat("yyyy-MM-dd");
       episode2.setFirstAired(sdf.parse("1987-04-19"));

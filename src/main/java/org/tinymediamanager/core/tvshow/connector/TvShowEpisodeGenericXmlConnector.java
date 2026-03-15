@@ -816,7 +816,6 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
     addEnglishTitle(episode, parser);
     addCRC32(episode, parser);
     addCrew(episode, parser);
-    addTmmLocked(episode, parser);
   }
 
   /**
@@ -936,17 +935,6 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
 
       root.appendChild(crew);
     }
-  }
-
-  /**
-   * writes the lock state of tinyMediaManager into an own field to be persisted across database rebuilds
-   */
-  protected void addTmmLocked(TvShowEpisode episode, TvShowEpisodeNfoParser.Episode parser) {
-    Element tmmLocked = document.createElement("tmm_locked");
-    if (episode.isLocked()) {
-      tmmLocked.setTextContent("true");
-    }
-    root.appendChild(tmmLocked);
   }
 
   /**
