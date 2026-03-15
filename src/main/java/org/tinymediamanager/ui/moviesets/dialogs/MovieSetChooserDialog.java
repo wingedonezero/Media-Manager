@@ -507,32 +507,12 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
           List<MovieSetScraperMetadataConfig> scraperConfig = cbScraperConfig.getSelectedItems();
           movieSetToScrape.setMetadata(md, scraperConfig);
           movieSetToScrape.setDummyMovies(model.getMovieSetMovies());
+          movieSetToScrape.writeNFO();
+          movieSetToScrape.saveToDb();
 
-          // assign movies
+          // assign movies as a background task to avoid blocking the EDT with file I/O and DB operations
           if (cbAssignMovies.isSelected()) {
-            movieSetToScrape.removeAllMovies();
-            for (int i = 0; i < model.getMovies().size(); i++) {
-              MovieInSet movieInSet = model.getMovies().get(i);
-              Movie movie = movieInSet.getMovie();
-              if (movie == null) {
-                continue;
-              }
-
-              // check if the found movie contains a matching set
-              if (movie.getMovieSet() != null) {
-                // unassign movie from set
-                MovieSet mSet = movie.getMovieSet();
-                mSet.removeMovie(movie, true);
-              }
-
-              movie.setMovieSet(movieSetToScrape);
-              movie.writeNFO();
-              movie.saveToDb();
-              movieSetToScrape.insertMovie(movie);
-            }
-
-            // and finally save assignments
-            movieSetToScrape.saveToDb();
+            model.startAssignMoviesTask(movieSetToScrape, model.getMovies());
           }
 
           // get images?
@@ -560,14 +540,17 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
               if (scraperConfig.contains(MovieSetScraperMetadataConfig.THUMB)) {
                 chooseArtwork(MediaFileType.THUMB);
               }
-              // write artwork urls to the NFO
-              movieSetToScrape.writeNFO();
+              // write artwork urls to the NFO as a background task
+              model.startWriteNfoTask(movieSetToScrape);
             }
             else {
-              // get artwork asynchronous
+              // get artwork asynchronous via the queue
               model.startArtworkScrapeTask(movieSetToScrape, scraperConfig);
             }
           }
+
+          // start all queued background tasks (assign movies, NFO write, artwork scrape)
+          model.startTasks();
         }
         setVisible(false);
       }

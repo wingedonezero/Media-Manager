@@ -38,6 +38,7 @@ import org.tinymediamanager.core.movie.MovieSetScraperMetadataConfig;
 import org.tinymediamanager.core.movie.MovieSetSearchAndScrapeOptions;
 import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.core.movie.entities.MovieSet;
+import org.tinymediamanager.core.tasks.QueueTask;
 import org.tinymediamanager.core.threading.TmmTask;
 import org.tinymediamanager.core.threading.TmmTaskManager;
 import org.tinymediamanager.scraper.ArtworkSearchAndScrapeOptions;
@@ -75,6 +76,7 @@ public class MovieSetChooserModel extends AbstractModelObject {
   private String                             overview       = "";
   private int                                tmdbId         = 0;
   private boolean                            scraped;
+  private QueueTask                          queueTask;
 
   public MovieSetChooserModel(MediaSearchResult result) {
     this.result = result;
@@ -297,7 +299,65 @@ public class MovieSetChooserModel extends AbstractModelObject {
   }
 
   public void startArtworkScrapeTask(MovieSet movieSet, List<MovieSetScraperMetadataConfig> config) {
-    TmmTaskManager.getInstance().addUnnamedTask(new ArtworkScrapeTask(movieSet, config));
+    addTask(new ArtworkScrapeTask(movieSet, config));
+  }
+
+  /**
+   * Adds a {@link TmmTask} to the internal {@link QueueTask} for deferred sequential execution.
+   * <p>
+   * All tasks added via this method will be executed in order when {@link #startTasks()} is called.
+   * </p>
+   *
+   * @param task
+   *          the task to add to the queue
+   */
+  public void addTask(TmmTask task) {
+    if (queueTask == null) {
+      queueTask = new QueueTask(TmmResourceBundle.getString("movieset.scraping"));
+    }
+    queueTask.addTask(task);
+  }
+
+  /**
+   * Submits the accumulated queue of tasks to the {@link TmmTaskManager} for background execution.
+   * <p>
+   * If no tasks have been added via {@link #addTask(TmmTask)}, this method does nothing.
+   * </p>
+   */
+  public void startTasks() {
+    if (queueTask != null) {
+      TmmTaskManager.getInstance().addUnnamedTask(queueTask);
+      queueTask = null;
+    }
+  }
+
+  /**
+   * Queues a background task that assigns matched movies to the given movie set.
+   * <p>
+   * The task handles removing each movie from its previous set (if any), linking it to the new set, writing its NFO and persisting it to the
+   * database. The movie set itself is also saved at the end.
+   * </p>
+   *
+   * @param movieSet
+   *          the movie set to assign movies to
+   * @param moviesToAssign
+   *          the list of {@link MovieInSet} entries whose matched {@link Movie} instances are to be assigned
+   */
+  public void startAssignMoviesTask(MovieSet movieSet, List<MovieInSet> moviesToAssign) {
+    addTask(new AssignMoviesTask(movieSet, moviesToAssign));
+  }
+
+  /**
+   * Queues a background task that writes the NFO file for the given movie set and persists it to the database.
+   * <p>
+   * This should be called after artwork URLs have been selected so that they are written into the NFO.
+   * </p>
+   *
+   * @param movieSet
+   *          the movie set whose NFO should be rewritten
+   */
+  public void startWriteNfoTask(MovieSet movieSet) {
+    addTask(new WriteNfoTask(movieSet));
   }
 
   private class ArtworkScrapeTask extends TmmTask {
@@ -368,6 +428,86 @@ public class MovieSetChooserModel extends AbstractModelObject {
 
   public MediaMetadata getMetadata() {
     return metadata;
+  }
+
+  /**
+   * The class {@link AssignMoviesTask} assigns matched movies from the chooser result to the movie set in a background thread.
+   * <p>
+   * This avoids blocking the EDT with file I/O (NFO writes) and database operations while scraping multiple movie sets in a queue.
+   * </p>
+   */
+  private static class AssignMoviesTask extends TmmTask {
+    private final MovieSet         movieSetToScrape;
+    private final List<MovieInSet> moviesToAssign;
+
+    /**
+     * Creates a new {@link AssignMoviesTask}.
+     *
+     * @param movieSet
+     *          the movie set to assign movies to
+     * @param moviesToAssign
+     *          the list of {@link MovieInSet} entries to process; a defensive copy is taken
+     */
+    AssignMoviesTask(MovieSet movieSet, List<MovieInSet> moviesToAssign) {
+      super(TmmResourceBundle.getString("movieset.movie.assign") + " " + movieSet.getTitle(), 0, TaskType.BACKGROUND_TASK);
+      this.movieSetToScrape = movieSet;
+      // defensive copy to avoid ConcurrentModificationException on the observable list
+      this.moviesToAssign = new ArrayList<>(moviesToAssign);
+    }
+
+    @Override
+    protected void doInBackground() {
+      movieSetToScrape.removeAllMovies();
+
+      for (MovieInSet movieInSet : moviesToAssign) {
+        Movie movie = movieInSet.getMovie();
+        if (movie == null) {
+          continue;
+        }
+
+        // check if the found movie already belongs to a different set
+        if (movie.getMovieSet() != null) {
+          // unassign movie from its current set first
+          MovieSet mSet = movie.getMovieSet();
+          mSet.removeMovie(movie, true);
+        }
+
+        movie.setMovieSet(movieSetToScrape);
+        movie.writeNFO();
+        movie.saveToDb();
+        movieSetToScrape.insertMovie(movie);
+      }
+
+      // persist the final state of the movie set
+      movieSetToScrape.saveToDb();
+    }
+  }
+
+  /**
+   * The class {@link WriteNfoTask} rewrites the NFO file for a movie set in a background thread.
+   * <p>
+   * This is used after the user has manually selected artwork URLs so that those URLs are flushed to disk without blocking the EDT.
+   * </p>
+   */
+  private static class WriteNfoTask extends TmmTask {
+    private final MovieSet movieSetToScrape;
+
+    /**
+     * Creates a new {@link WriteNfoTask}.
+     *
+     * @param movieSet
+     *          the movie set whose NFO should be rewritten
+     */
+    WriteNfoTask(MovieSet movieSet) {
+      super(TmmResourceBundle.getString("movieset.rewritenfo") + " " + movieSet.getTitle(), 0, TaskType.BACKGROUND_TASK);
+      this.movieSetToScrape = movieSet;
+    }
+
+    @Override
+    protected void doInBackground() {
+      movieSetToScrape.writeNFO();
+      movieSetToScrape.saveToDb();
+    }
   }
 
   public static class MovieInSet extends AbstractModelObject implements Comparable<MovieInSet> {
