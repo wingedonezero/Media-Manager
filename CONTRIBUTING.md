@@ -27,6 +27,9 @@ If you wish to propose an addition or change to the source code, the first step 
 
 Commit messages are sourced directly into the [Changelog][9], requiring them to be in common English, accurate and succinct. Changes made by atomic-style commits that are too granular/numerous to be suitable for the Changelog should select the option to "squash" them into a single commit when creating the merge request.
 
+**The use of AI-assisted coding tools is permitted for contributions, provided that all generated logic is thoroughly
+understood, manually verified, and explicitly tested by the contributor before submission.**
+
 ## Adding translations
 
 If you want to help us translating tinyMediaManager, please register at [Weblate][10].
