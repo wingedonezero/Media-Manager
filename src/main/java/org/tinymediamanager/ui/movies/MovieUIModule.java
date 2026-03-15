@@ -442,7 +442,7 @@ public class MovieUIModule extends AbstractTmmUIModule {
         postProcessingMenu.removeAll();
         for (PostProcess process : new ArrayList<>(MovieModuleManager.getInstance().getSettings().getPostProcess())) {
           MoviePostProcessExecutor executor = new MoviePostProcessExecutor(process,
-              MovieUIModule.getInstance().getSelectionModel().getSelectedMovies()) {
+              MovieUIModule.getInstance().getSelectionModel().getSelectedMovies(true)) {
             @Override
             protected void finish() {
               super.finish();

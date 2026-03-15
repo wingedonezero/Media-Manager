@@ -325,7 +325,7 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
           postProcessingMenu.add(new TmmMenuLabel(TmmResourceBundle.getString("metatag.movie")));
           for (PostProcess process : moviePostProcesses) {
             MovieSetMoviePostProcessExecutor executor = new MovieSetMoviePostProcessExecutor(process,
-                MovieSetUIModule.getInstance().getSelectionModel().getSelectedMoviesRecursive()) {
+                MovieSetUIModule.getInstance().getSelectionModel().getSelectedMoviesRecursive(true)) {
               @Override
               protected void finish() {
                 super.finish();

@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
@@ -230,8 +229,8 @@ public class MovieSelectionModel extends AbstractModelObject implements ListSele
       return new ArrayList<>(selectedMovies);
     }
 
-    boolean lockedFound = selectedMovies.parallelStream().anyMatch(MediaEntity::isLocked);
-    if (lockedFound && Boolean.FALSE.equals(TmmProperties.getInstance().getPropertyAsBoolean("movie.hidelockedhint"))) {
+    boolean lockedFound = selectedMovies.stream().anyMatch(MediaEntity::isLocked);
+    if (lockedFound && !TmmProperties.getInstance().getPropertyAsBoolean("movie.hidelockedhint")) {
       JCheckBox checkBox = new JCheckBox(TmmResourceBundle.getString("tmm.donotshowagain"));
       TmmFontHelper.changeFont(checkBox, L1);
       checkBox.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
@@ -246,7 +245,7 @@ public class MovieSelectionModel extends AbstractModelObject implements ListSele
       }
     }
 
-    return selectedMovies.stream().filter(movie -> !movie.isLocked()).collect(Collectors.toList());
+    return selectedMovies.stream().filter(movie -> !movie.isLocked()).toList();
   }
 
   /**

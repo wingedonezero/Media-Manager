@@ -553,7 +553,7 @@ public class TvShowUIModule extends AbstractTmmUIModule {
         else {
           for (PostProcess process : new ArrayList<>(TvShowModuleManager.getInstance().getSettings().getPostProcessTvShow())) {
             TvShowPostProcessExecutor executor = new TvShowPostProcessExecutor(process,
-                TvShowUIModule.getInstance().getSelectionModel().getSelectedTvShows()) {
+                TvShowUIModule.getInstance().getSelectionModel().getSelectedTvShows(true)) {
               @Override
               protected void finish() {
                 super.finish();
