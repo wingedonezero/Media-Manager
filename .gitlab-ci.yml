@@ -70,7 +70,7 @@ test:jdk21-de_DE:
     LANG: de_DE.UTF-8
     LC_ALL: de_DE.UTF-8
     LANGUAGE: de_DE:de
-    JAVA_TOOL_OPTIONS: "-Duser.language=de -Duser.country=DE -Duser.region=DE -Dfile.encoding=UTF-8"
+    JAVA_TOOL_OPTIONS: "-Duser.language=de -Duser.country=DE -Duser.region=DE -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
   rules:
     - if: $CI_PROJECT_NAMESPACE != "tinyMediaManager" # do not run on forks
       when: never
@@ -91,7 +91,7 @@ test:jdk25-de_DE:
     LANG: de_DE.UTF-8
     LC_ALL: de_DE.UTF-8
     LANGUAGE: de_DE:de
-    JAVA_TOOL_OPTIONS: "-Duser.language=de -Duser.country=DE -Duser.region=DE -Dfile.encoding=UTF-8"
+    JAVA_TOOL_OPTIONS: "-Duser.language=de -Duser.country=DE -Duser.region=DE -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
   rules:
     - if: $CI_PROJECT_NAMESPACE != "tinyMediaManager" # do not run on forks
       when: never
