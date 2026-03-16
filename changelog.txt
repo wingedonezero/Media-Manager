@@ -14,6 +14,7 @@ x [IMDB] fixed/improved search and actor parsing due to site changes #3223 #3225
 x [IMDB] only accept Top 250 values from 0...250, to avoid parsing errors due to site changes
 x [Library] upgraded FlatLaf to 3.7.1
 x [Docker] upgraded Docker images to Debian Trixie #3220
+x [Trakt.tv] updated trakt.tv API implementation and hard capped page limits
 
 
 Version 5.2.8

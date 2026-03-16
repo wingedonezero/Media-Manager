@@ -160,17 +160,19 @@ class TraktTvMovie {
     try {
       // Extended.DEFAULT adds url, poster, fanart, banner, genres
       // Extended.MAX adds certs, runtime, and other stuff (useful for scraper!)
-      // Fetch all pages using pagination with limit of 1000 (maximum according to Trakt API)
+      // Fetch all pages using pagination with limit of 500
       int page = 1;
-      int limit = 1000;
+      int limit = 500;
+      int maxPages = 500; // hard stop after this amount of pages
+
       while (true) {
         List<BaseMovie> pageResults = executeCall(api.sync().collectionMovies(page, limit, Extended.METADATA));
         if (pageResults.isEmpty()) {
           break;
         }
         traktMovies.addAll(pageResults);
-        // If we got fewer results than the limit, this was the last page
-        if (pageResults.size() < limit) {
+        // If we got fewer results than the limit, this was the last page; hard stop after max pages
+        if (pageResults.size() < limit || page > maxPages) {
           break;
         }
         page++;
@@ -581,17 +583,19 @@ class TraktTvMovie {
     List<BaseMovie> traktCollection = new ArrayList<>();
     List<BaseMovie> traktWatched = new ArrayList<>();
     try {
-      // Fetch all pages using pagination with limit of 1000 (maximum according to Trakt API)
+      // Fetch all pages using pagination with limit of 500
       int page = 1;
-      int limit = 1000;
+      int limit = 500;
+      int maxPages = 500; // hard stop after this amount of pages
+
       while (true) {
         List<BaseMovie> pageResults = executeCall(api.sync().collectionMovies(page, limit, null));
         if (pageResults.isEmpty()) {
           break;
         }
         traktCollection.addAll(pageResults);
-        // If we got fewer results than the limit, this was the last page
-        if (pageResults.size() < limit) {
+        // If we got fewer results than the limit, this was the last page; hard stop after max pages
+        if (pageResults.size() < limit || page > maxPages) {
           break;
         }
         page++;
