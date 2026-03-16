@@ -1697,7 +1697,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
       }
 
       // do not process locked movies
-      if (movie.isLocked()) {
+      if (movie.isLocked() && !movie.isNewlyAdded()) {
         continue;
       }
 
@@ -1732,7 +1732,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
       }
 
       // do not process locked movies
-      if (movie.isLocked()) {
+      if (movie.isLocked() && !movie.isNewlyAdded()) {
         continue;
       }
 
