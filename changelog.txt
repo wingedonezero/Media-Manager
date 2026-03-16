@@ -9,6 +9,7 @@ x [UI] pre-set the scraper in the episode editor with the one used for the TV sh
 x [UI] improved cleanup of chooser dialogs #3227
 x [UI] offloaded some scraping tasks to background threads to improve UI responsiveness in the movie set chooser #3227
 x [UI] improved subtitle searching and downloading #3210
+x [Movies, TV shows] fixed artwork detection for file names containing non ASCII characters
 x [NFO] fixed writing/parsing of crew member types
 x [IMDB] fixed/improved search and actor parsing due to site changes #3223 #3225
 x [IMDB] only accept Top 250 values from 0...250, to avoid parsing errors due to site changes

@@ -21,7 +21,14 @@ public class MediaFileTypeTests {
         "my-poster.gif", // dash separator before keyword
         "my_poster.jpeg", // underscore separator and jpeg ext
         "long.name.with.many-separators-movie.png", // multiple separators in prefix
-        "file name_with spaces_poster.jpg" // spaces allowed in prefix characters
+        "file name_with spaces_poster.jpg", // spaces allowed in prefix characters
+        "file with ÄÜÖ-poster.jpg", // umlauts are allowed
+        "movie'-poster.jpg", // apostrophe in prefix (not covered by \\w)
+        "@buelos-poster.jpg", // at-sign in prefix (not covered by \\w)
+        "movie!_poster.png", // exclamation mark in prefix (not covered by \\w)
+        "movie😀-poster.jpg", // emoji in prefix (not covered by \\w)
+        "电影-poster.jpg", // CJK letters in prefix (not covered by default ASCII \\w)
+        ".45-poster.webp" // starting with a dot
     );
     for (String name : positives) {
       MediaFile mf = new MediaFile(Path.of(name));
@@ -58,7 +65,13 @@ public class MediaFileTypeTests {
         "pre.v1-backdrop.webp", // prefix with dots, digits and hyphen
         "a-b_fanart.tbn", // combined hyphen and underscore in prefix, tbn ext
         "012_background.GIF", // numeric prefix and uppercase extension (case-insensitive)
-        "BACKDROP.JpG" // token and extension mixed-case (case-insensitive)
+        "BACKDROP.JpG", // token and extension mixed-case (case-insensitive)
+        "file with ÄÜÖ-fanart.jpg", // umlauts are allowed
+        "show'-backdrop.jpg", // apostrophe in prefix (not covered by \\w)
+        "@buelos_fanart.png", // at-sign in prefix (not covered by \\w)
+        "show!_background.jpeg", // exclamation mark in prefix (not covered by \\w)
+        "show😀-fanart.webp", // emoji in prefix (not covered by \\w)
+        "影片-background.jpg" // CJK letters in prefix (not covered by default ASCII \\w)
     );
     for (String name : positives) {
       MediaFile mf = new MediaFile(Path.of(name));
@@ -321,8 +334,6 @@ public class MediaFileTypeTests {
         "characterartjpg",
         // invalid extension (not in allowed list)
         "characterart.jpgx",
-        // invalid character '#' in prefix (not allowed by [\\w _.-])
-        "prefix#-characterart.png",
         // extra '.' between name and digits (digits must be directly after 'characterart')
         "characterart.01.jpg",
         // underscore immediately after name before dot (only digits or nothing allowed between name and dot)
