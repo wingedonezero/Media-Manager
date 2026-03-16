@@ -82,27 +82,17 @@ public class ImdbTvShowParser extends ImdbParser {
   }
 
   @Override
-  protected Logger getLogger() {
-    return LOGGER;
-  }
-
-  @Override
   protected boolean isIncludeTvSeriesResults() {
     return true;
   }
 
   @Override
   protected MediaMetadata getMetadata(MediaSearchAndScrapeOptions options) throws ScrapeException {
-    switch (options.getMediaType()) {
-      case TV_SHOW:
-        return getTvShowMetadata((TvShowSearchAndScrapeOptions) options);
-
-      case TV_EPISODE:
-        return getEpisodeMetadata((TvShowEpisodeSearchAndScrapeOptions) options);
-
-      default:
-        return new MediaMetadata(ImdbMetadataProvider.ID);
-    }
+    return switch (options.getMediaType()) {
+      case TV_SHOW -> getTvShowMetadata((TvShowSearchAndScrapeOptions) options);
+      case TV_EPISODE -> getEpisodeMetadata((TvShowEpisodeSearchAndScrapeOptions) options);
+      default -> new MediaMetadata(ImdbMetadataProvider.ID);
+    };
   }
 
   MediaMetadata getTvShowMetadata(TvShowSearchAndScrapeOptions options) throws ScrapeException {
@@ -598,7 +588,7 @@ public class ImdbTvShowParser extends ImdbParser {
       return epList;
     }
     catch (Exception e) {
-      getLogger().debug("Error parsing JSON: '{}'", e);
+      LOGGER.debug("Error parsing JSON: '{}'", e.getMessage(), e);
     }
     return null;
   }
@@ -806,7 +796,7 @@ public class ImdbTvShowParser extends ImdbParser {
           md.addRating(rating);
         }
         catch (Exception e) {
-          getLogger().trace("could not parse rating/vote count: {}", e.getMessage());
+          LOGGER.trace("could not parse rating/vote count: {}", e.getMessage());
         }
       }
     }

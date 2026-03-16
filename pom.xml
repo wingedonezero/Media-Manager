@@ -82,7 +82,7 @@
         <release.version>3.1.1</release.version>
         <jre.version>21.0.9-b1163</jre.version>
         <launcher.version>5.0.12</launcher.version>
-        <flatlaf.version>3.7</flatlaf.version>
+        <flatlaf.version>3.7.1</flatlaf.version>
         <jackson.version>2.20.0</jackson.version>
         <sonar.java.source>17</sonar.java.source>
     </properties>
@@ -195,7 +195,7 @@
         <dependency>
             <groupId>com.uwetrottmann.trakt5</groupId>
             <artifactId>trakt-java</artifactId>
-            <version>6.17.0</version>
+            <version>6.18.0</version>
         </dependency>
         <dependency>
             <groupId>it.tidalwave.betterbeansbinding</groupId>

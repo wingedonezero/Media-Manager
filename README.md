@@ -1,6 +1,9 @@
 # [tinyMediaManager][1]
 
-tinyMediaManager (https://www.tinymediamanager.org) full featured media manager to organize and clean up your media library. It is designed to allow you to create/view/edit the metadata, artwork and file structure for your media files used by Kodi (formerly XBMC), Plex, MediaPortal, Emby, Jellyfin and other compatible media center software. As a Java application it is truly cross-platform and will run on Windows, Linux and MacOS (and possibly more).
+tinyMediaManager (https://www.tinymediamanager.org) full-featured media manager to organize and clean up your media
+library. It is designed to allow you to create/view/edit the metadata, artwork and file structure for your media files
+used by Kodi (formerly XBMC), Plex, MediaPortal, Emby, Jellyfin and other compatible media center software. As a Java
+application it is truly cross-platform and will run on Windows, Linux and MacOS (and possibly more).
 
 ## [Features][4]
 
@@ -24,7 +27,8 @@ You can always find the latest release [here][5]. [Pre-release builds][6] and [n
 
 ## [Changelog][10]
 
-Each release's major improvements are announced on our [project blog][11] or you can view the full ChangeLog [here][12].
+Each release's major improvements are announced on our [project blog][11], or you can view the full
+ChangeLog [here][12].
 
 ## [Screenshots][13]
 
@@ -35,6 +39,11 @@ Each release's major improvements are announced on our [project blog][11] or you
 [![tvshows01](https://www.tinymediamanager.org/images/screenshots/thumbs/v5/tvshows/tvshows01-thumb.png)](https://www.tinymediamanager.org/images/screenshots/v5/tvshows/tvshows01.png) [![tvshows02](https://www.tinymediamanager.org/images/screenshots/thumbs/v5/tvshows/tvshows02-thumb.png)](https://www.tinymediamanager.org/images/screenshots/v5/tvshows/tvshows02.png)
 
 The complete gallery of screenshots can be viewed on our website [here][13].
+
+## Development
+
+To maintain a high pace of development, tinyMediaManager leverages AI-assisted tools like GitHub Copilot, ensuring all
+generated code is manually reviewed and integrated to meet our quality standards.
 
 ## [Contributing][14]
 

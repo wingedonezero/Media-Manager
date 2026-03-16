@@ -15,15 +15,12 @@
  */
 package org.tinymediamanager.ui.moviesets.actions;
 
-import java.awt.Toolkit;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import javax.swing.KeyStroke;
+import javax.swing.JOptionPane;
 
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.movie.entities.Movie;
@@ -31,39 +28,39 @@ import org.tinymediamanager.core.movie.entities.MovieSet;
 import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.MainWindow;
 import org.tinymediamanager.ui.actions.TmmAction;
-import org.tinymediamanager.ui.movies.dialogs.MovieBulkEditorDialog;
 import org.tinymediamanager.ui.moviesets.MovieSetUIModule;
 
 /**
- * The MovieSetBatchEditMovieAction - to start a bulk edit of movies
+ * The {@link MovieSetUnlockMovieAction} - to unlock a movie to allow modifications
  * 
  * @author Manuel Laggner
  */
-public class MovieSetBatchEditMovieAction extends TmmAction {
-  public MovieSetBatchEditMovieAction() {
-    putValue(NAME, TmmResourceBundle.getString("movie.bulkedit"));
-    putValue(SHORT_DESCRIPTION, TmmResourceBundle.getString("movie.bulkedit.desc"));
-    putValue(SMALL_ICON, IconManager.EDIT);
-    putValue(LARGE_ICON_KEY, IconManager.EDIT);
-    putValue(ACCELERATOR_KEY,
-        KeyStroke.getKeyStroke(KeyEvent.VK_B, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() + InputEvent.SHIFT_DOWN_MASK));
+public class MovieSetUnlockMovieAction extends TmmAction {
+  public MovieSetUnlockMovieAction() {
+    putValue(LARGE_ICON_KEY, IconManager.UNLOCK_BLUE);
+    putValue(SMALL_ICON, IconManager.UNLOCK_BLUE);
+    putValue(NAME, TmmResourceBundle.getString("movie.unlock"));
+    putValue(SHORT_DESCRIPTION, TmmResourceBundle.getString("movie.unlock"));
   }
 
   @Override
   protected void processAction(ActionEvent e) {
-    List<Movie> selectedMovies = new ArrayList<>(MovieSetUIModule.getInstance().getSelectionModel().getSelectedMovies());
+    List<Movie> selectedMovies = new ArrayList<>(MovieSetUIModule.getInstance().getSelectionModel().getSelectedMovies(true));
 
     // filter out dummy movies
-    selectedMovies = selectedMovies.stream().filter(movie -> !(movie instanceof MovieSet.MovieSetMovie)).collect(Collectors.toList());
+    selectedMovies = selectedMovies.stream().filter(movie -> !(movie instanceof MovieSet.MovieSetMovie)).toList();
 
     if (selectedMovies.isEmpty()) {
+      JOptionPane.showMessageDialog(MainWindow.getInstance(), TmmResourceBundle.getString("tmm.nothingselected"));
       return;
     }
 
-    // get data of all files within all selected movies
-    MovieBulkEditorDialog editor = new MovieBulkEditorDialog(selectedMovies);
-    editor.setLocationRelativeTo(MainWindow.getInstance());
-    editor.pack();
-    editor.setVisible(true);
+    MainWindow.getInstance().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+    for (Movie movie : selectedMovies) {
+      movie.setLocked(false);
+      movie.writeNFO();
+      movie.saveToDb();
+    }
+    MainWindow.getInstance().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
   }
 }

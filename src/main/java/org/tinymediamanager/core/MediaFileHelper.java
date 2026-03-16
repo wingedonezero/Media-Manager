@@ -176,7 +176,7 @@ public class MediaFileHelper {
     BINARY_FILETYPES = List.of("bin", "dat", "img", "nrg", "disc");
 
     String extensions = String.join("|", SUPPORTED_ARTWORK_FILETYPES);
-    String opt_delim = "(?:[\\w _.-]+[_.-])*"; // word incl delims & space, followed by a mandatory delim
+    String opt_delim = "(.+[_.-])?"; // word incl delims & space, followed by a mandatory delim
 
     MOVIESET_ARTWORK_PATTERN = Pattern.compile(
         "^movieset-(poster|fanart|backdrop|banner|disc|discart|logo|clearlogo|clearart|thumb)\\.(" + extensions + ")$", Pattern.CASE_INSENSITIVE);

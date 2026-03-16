@@ -457,7 +457,7 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
             TvShow tvShow = tvShowList.getTvShows().get(i);
 
             // do not process locked TV shows
-            if (tvShow.isLocked()) {
+            if (tvShow.isLocked() && !tvShow.isNewlyAdded()) {
               continue;
             }
 
@@ -475,7 +475,7 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
             TvShow tvShow = tvShowList.getTvShows().get(i);
 
             // do not process locked TV shows
-            if (tvShow.isLocked()) {
+            if (tvShow.isLocked() && !tvShow.isNewlyAdded()) {
               continue;
             }
 

@@ -18,7 +18,6 @@ package org.tinymediamanager.core.threading;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
@@ -62,8 +61,6 @@ public class TmmTaskManager implements TmmTaskListener {
   // main tasks (update datasource, scraping, renaming) are queueable tasks, but only one at a time can run; they can be cancelled individually
   private final ThreadPoolExecutor       mainTaskExecutor;
 
-  private final ExecutorService          uiTaskExecutor;
-
   // fake task handles to manage queues
   private final TmmTaskHandle            imageDownloadHandle;
   private final TmmTaskHandle            imageCacheHandle;
@@ -75,7 +72,6 @@ public class TmmTaskManager implements TmmTaskListener {
 
   private TmmTaskManager() {
     mainTaskExecutor = createMainTaskQueue();
-    uiTaskExecutor = Executors.newSingleThreadExecutor();
 
     imageDownloadHandle = new ImageDownloadTaskHandle();
     imageCacheHandle = new ImageCacheTaskHandle();
@@ -301,16 +297,6 @@ public class TmmTaskManager implements TmmTaskListener {
     // immediately inform this listener
     processTaskEvent(newTask);
     mainTaskExecutor.execute(newTask);
-  }
-
-  /**
-   * add a new UI related task which is not run in the EDT (like rebuilding tag lists, ...)
-   * 
-   * @param runnable
-   *          the runnable to queue
-   */
-  public void addUiTask(Runnable runnable) {
-    uiTaskExecutor.submit(runnable);
   }
 
   private ThreadPoolExecutor createMainTaskQueue() {

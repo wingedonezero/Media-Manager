@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -40,15 +41,19 @@ import org.tinymediamanager.core.threading.TmmTask;
  * @author Manuel Laggner, Wolfgang Janess, Myron Boyle
  */
 public abstract class PostProcessExecutor extends TmmTask {
-  private static final Logger                 LOGGER = LoggerFactory.getLogger(PostProcessExecutor.class);
+  private static final Logger                      LOGGER = LoggerFactory.getLogger(PostProcessExecutor.class);
 
-  protected final PostProcess                 postProcess;
-  protected final List<? extends MediaEntity> entities;
+  protected final PostProcess                      postProcess;
+  protected final List<? extends MediaEntity>      entities;
+  protected final List<String>                     processOutput;
+  protected final List<PostProcessExecutionResult> executionResults;
 
   protected PostProcessExecutor(PostProcess postProcess, List<? extends MediaEntity> entities) {
     super(postProcess.getName(), entities.size(), TaskType.BACKGROUND_TASK);
     this.postProcess = postProcess;
     this.entities = new ArrayList<>(entities);
+    this.processOutput = new ArrayList<>();
+    this.executionResults = new ArrayList<>();
   }
 
   @Override
@@ -61,6 +66,27 @@ public abstract class PostProcessExecutor extends TmmTask {
    */
   protected abstract void execute();
 
+  /**
+   * Gets all collected execution results.
+   *
+   * @return an unmodifiable list of execution results
+   */
+  public List<PostProcessExecutionResult> getExecutionResults() {
+    return Collections.unmodifiableList(executionResults);
+  }
+
+  /**
+   * execute the given command and return the response
+   *
+   * @param cmdline
+   *          the command to execute
+   * @param mediaEntity
+   *          the media entity for which the command is executed - used to set the working dir
+   * @throws IOException
+   *           if an I/O error occurs
+   * @throws InterruptedException
+   *           if the process is interrupted
+   */
   protected void executeCommand(String[] cmdline, MediaEntity mediaEntity) throws IOException, InterruptedException {
     List<String> commandList = new ArrayList<>();
     ProcessBuilder pb;
@@ -123,22 +149,27 @@ public abstract class PostProcessExecutor extends TmmTask {
     final Process process = pb.start();
 
     try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-      new Thread(() -> {
+      Thread outputReaderThread = new Thread(() -> {
         try {
           IOUtils.copy(process.getInputStream(), outputStream);
         }
         catch (IOException e) {
           LOGGER.debug("could not get output from the process", e);
         }
-      }).start();
+      });
+      outputReaderThread.start();
 
       int processValue = process.waitFor();
+      outputReaderThread.join();
+
       String response = outputStream.toString(StandardCharsets.UTF_8);
+      executionResults.add(new PostProcessExecutionResult(postProcess, mediaEntity.getTitle(), pb.command(), response));
       if (processValue != 0) {
         LOGGER.error("Error running post-process script - '{}'", response);
         throw new IOException("error running script - code '" + processValue + "'");
       }
       if (StringUtils.isNotBlank(response)) {
+        processOutput.add(response);
         LOGGER.debug(response);
       }
       LOGGER.trace("PostProcessing: END");

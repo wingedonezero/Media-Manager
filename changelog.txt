@@ -1,3 +1,23 @@
+Version 5.2.9
+=======================
++ [UI] show the result of the post-processing commands in a dedicated dialog
++ [UI] added an action to the bulk editors to remove the original filename
++ [UI] added an action to lock/unlock movies from within the movie set module #3224
++ [NFO] added writing of the locked state from tmm into the NFO files #3224
+---
+x [UI] pre-set the scraper in the episode editor with the one used for the TV show
+x [UI] improved cleanup of chooser dialogs #3227
+x [UI] offloaded some scraping tasks to background threads to improve UI responsiveness in the movie set chooser #3227
+x [UI] improved subtitle searching and downloading #3210
+x [Movies, TV shows] fixed artwork detection for file names containing non ASCII characters
+x [NFO] fixed writing/parsing of crew member types
+x [IMDB] fixed/improved search and actor parsing due to site changes #3223 #3225
+x [IMDB] only accept Top 250 values from 0...250, to avoid parsing errors due to site changes
+x [Library] upgraded FlatLaf to 3.7.1
+x [Docker] upgraded Docker images to Debian Trixie #3220
+x [Trakt.tv] updated trakt.tv API implementation and hard capped page limits
+
+
 Version 5.2.8
 =======================
 x [TV shows] corrected the tooltip for missing season artwork

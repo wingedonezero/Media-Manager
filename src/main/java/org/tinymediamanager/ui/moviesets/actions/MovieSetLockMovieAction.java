@@ -13,29 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinymediamanager.ui.movies.actions;
+package org.tinymediamanager.ui.moviesets.actions;
 
 import java.awt.Cursor;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JOptionPane;
 
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.movie.entities.Movie;
+import org.tinymediamanager.core.movie.entities.MovieSet;
 import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.MainWindow;
 import org.tinymediamanager.ui.actions.TmmAction;
-import org.tinymediamanager.ui.movies.MovieUIModule;
+import org.tinymediamanager.ui.moviesets.MovieSetUIModule;
 
 /**
- * the class {@link MovieLockAction} is used to lock a movie against modifications
- *
+ * The {@link MovieSetLockMovieAction} - to lock a movie against modifications
+ * 
  * @author Manuel Laggner
  */
-public class MovieLockAction extends TmmAction {
-
-  public MovieLockAction() {
+public class MovieSetLockMovieAction extends TmmAction {
+  public MovieSetLockMovieAction() {
     putValue(LARGE_ICON_KEY, IconManager.LOCK_BLUE);
     putValue(SMALL_ICON, IconManager.LOCK_BLUE);
     putValue(NAME, TmmResourceBundle.getString("movie.lock"));
@@ -44,7 +45,10 @@ public class MovieLockAction extends TmmAction {
 
   @Override
   protected void processAction(ActionEvent e) {
-    final List<Movie> selectedMovies = MovieUIModule.getInstance().getSelectionModel().getSelectedMovies(true);
+    List<Movie> selectedMovies = new ArrayList<>(MovieSetUIModule.getInstance().getSelectionModel().getSelectedMovies(true));
+
+    // filter out dummy movies
+    selectedMovies = selectedMovies.stream().filter(movie -> !(movie instanceof MovieSet.MovieSetMovie)).toList();
 
     if (selectedMovies.isEmpty()) {
       JOptionPane.showMessageDialog(MainWindow.getInstance(), TmmResourceBundle.getString("tmm.nothingselected"));

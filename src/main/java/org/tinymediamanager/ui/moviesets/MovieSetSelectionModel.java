@@ -98,8 +98,8 @@ public class MovieSetSelectionModel extends AbstractModelObject {
     List<MovieSet> selectedMovieSets = new ArrayList<>();
 
     for (Object obj : getSelectedObjects()) {
-      if (obj instanceof MovieSet) {
-        selectedMovieSets.add((MovieSet) obj);
+      if (obj instanceof MovieSet movieSet) {
+        selectedMovieSets.add(movieSet);
       }
     }
 
@@ -126,8 +126,7 @@ public class MovieSetSelectionModel extends AbstractModelObject {
     List<Movie> selectedMovies = new ArrayList<>();
 
     for (Object obj : getSelectedObjects()) {
-      if (obj instanceof Movie) {
-        Movie movie = (Movie) obj;
+      if (obj instanceof Movie movie) {
         if (withLocked) {
           selectedMovies.add(movie);
         }
@@ -144,20 +143,36 @@ public class MovieSetSelectionModel extends AbstractModelObject {
   /**
    * get all selected movies. selected movie sets will return all their movies
    *
+   * @param withLocked
+   *          also get locked movies
    * @return list of all selected movies
    */
-  public List<Movie> getSelectedMoviesRecursive() {
+  public List<Movie> getSelectedMoviesRecursive(boolean withLocked) {
     Set<Movie> selectedMovies = new LinkedHashSet<>();
 
     for (Object obj : getSelectedObjects()) {
-      if (obj instanceof MovieSet) {
-        selectedMovies.addAll(((MovieSet) obj).getMovies());
+      if (obj instanceof MovieSet movieSet) {
+        for (Movie movie : movieSet.getMovies()) {
+          if (withLocked) {
+            selectedMovies.add(movie);
+          }
+          else if (!movie.isLocked()) {
+            // just unlocked
+            selectedMovies.add(movie);
+          }
+        }
       }
       else if (obj instanceof MovieSet.MovieSetMovie) {
         // do nothing here
       }
-      else if (obj instanceof Movie) {
-        selectedMovies.add((Movie) obj);
+      else if (obj instanceof Movie movie) {
+        if (withLocked) {
+          selectedMovies.add(movie);
+        }
+        else if (!movie.isLocked()) {
+          // just unlocked
+          selectedMovies.add(movie);
+        }
       }
     }
 

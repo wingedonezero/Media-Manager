@@ -117,7 +117,7 @@ public class MovieBulkEditorDialog extends TmmDialog {
     getContentPane().add(tabbedPane, BorderLayout.CENTER);
     {
       JPanel panelContent = new JPanel();
-      panelContent.setLayout(new MigLayout("", "[20lp:n][200lp:350lp,grow][][][]", "[][][][][][][][][][][][][][]"));
+      panelContent.setLayout(new MigLayout("", "[20lp:n][200lp:350lp,grow][][][]", "[][][][][][][][][][][][][][][][]"));
 
       {
         JLabel lblYearT = new TmmLabel(TmmResourceBundle.getString("metatag.year"));
@@ -549,7 +549,7 @@ public class MovieBulkEditorDialog extends TmmDialog {
           }
           setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
-        panelContent.add(btnBestAudioStream, "cell 1 14");
+        panelContent.add(btnBestAudioStream, "cell 1 14 4 1");
 
         JButton btnAllAudioStreams = new JButton(TmmResourceBundle.getString("edit.audio.all"));
         btnAllAudioStreams.setToolTipText(TmmResourceBundle.getString("edit.audio.all.desc"));
@@ -561,19 +561,37 @@ public class MovieBulkEditorDialog extends TmmDialog {
           }
           setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
-        panelContent.add(btnAllAudioStreams, "cell 1 14");
+        panelContent.add(btnAllAudioStreams, "cell 1 14 4 1");
       }
 
-      JButton btnClearSorttitle = new JButton(TmmResourceBundle.getString("edit.clearsorttitle"));
-      btnClearSorttitle.addActionListener(e -> {
-        changed = true;
-        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        for (Movie movie : moviesToEdit) {
-          movie.setSortTitle("");
-        }
-        setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-      });
-      panelContent.add(btnClearSorttitle, "cell 1 13 4 1");
+      {
+        JButton btnClearSorttitle = new JButton(TmmResourceBundle.getString("edit.clearsorttitle"));
+        btnClearSorttitle.addActionListener(e -> {
+          changed = true;
+          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+          for (Movie movie : moviesToEdit) {
+            movie.setSortTitle("");
+          }
+          setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
+        panelContent.add(btnClearSorttitle, "cell 1 13 4 1");
+      }
+
+      {
+        JLabel lblOriginalFilename = new TmmLabel(TmmResourceBundle.getString("metatag.originalfile"));
+        panelContent.add(lblOriginalFilename, "cell 0 15,alignx right");
+
+        JButton btnDeleteOriginalFilename = new JButton(TmmResourceBundle.getString("edit.deleteoriginalfilename"));
+        btnDeleteOriginalFilename.addActionListener(e -> {
+          changed = true;
+          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+          for (Movie movie : moviesToEdit) {
+            movie.setOriginalFilename("");
+          }
+          setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
+        panelContent.add(btnDeleteOriginalFilename, "cell 1 15");
+      }
     }
 
     /*

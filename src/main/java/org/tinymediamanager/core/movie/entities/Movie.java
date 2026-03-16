@@ -951,7 +951,8 @@ public class Movie extends MediaEntity implements IMediaInformation {
       setRatings(newRatings);
     }
 
-    if (config.contains(MovieScraperMetadataConfig.TOP250) && metadata.getTop250() > 0 && (overwriteExistingItems || getTop250() <= 0)) {
+    if (config.contains(MovieScraperMetadataConfig.TOP250) && metadata.getTop250() > 0
+        && (overwriteExistingItems || getTop250() <= 0 || getTop250() > 250)) {
       setTop250(metadata.getTop250());
     }
 

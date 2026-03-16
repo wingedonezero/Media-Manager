@@ -912,7 +912,7 @@ public abstract class TvShowEpisodeGenericXmlConnector implements ITvShowEpisode
       crew.appendChild(name);
 
       Element role = document.createElement("role");
-      role.setTextContent(StringUtils.capitalize(crewMember.getType().toString()));
+      role.setTextContent(StringUtils.capitalize(crewMember.getType().name()));
 
       if (StringUtils.isNotBlank(crewMember.getRole())) {
         role.setAttribute("subrole", crewMember.getRole());

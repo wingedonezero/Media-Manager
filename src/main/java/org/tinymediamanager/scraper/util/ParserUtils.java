@@ -19,8 +19,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +30,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tinymediamanager.core.Utils;
+import org.tinymediamanager.core.entities.Person;
 import org.tinymediamanager.core.movie.MovieEdition;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 
@@ -38,30 +42,35 @@ import org.tinymediamanager.core.tvshow.TvShowModuleManager;
  */
 public class ParserUtils {
 
-  private static final Logger     LOGGER          = LoggerFactory.getLogger(ParserUtils.class);
-  private static final String     DELIMITER       = "[\\[\\](){} _,.-]";
+  private static final Logger                         LOGGER                   = LoggerFactory.getLogger(ParserUtils.class);
+  private static final String                         DELIMITER                = "[\\[\\](){} _,.-]";
 
   // hard stopwords are words which will always be cleaned
-  protected static final String[] HARD_STOPWORDS  = { "1080", "1080i", "1080p", "2160p", "2160i", "3d", "480i", "480p", "576i", "576p", "360p",
-      "10bit", "12bit", "360i", "720", "720i", "720p", "8bit", "ac3", "ac3ld", "ac3d", "ac3md", "amzn", "aoe", "atmos", "avc", "bd5", "bdrip",
-      "bdrip", "blueray", "bluray", "brrip", "cam", "cd1", "cd2", "cd3", "cd4", "cd5", "cd6", "cd7", "cd8", "cd9", "dd20", "dd51", "disc1", "disc2",
-      "disc3", "disc4", "disc5", "disc6", "disc7", "disc8", "disc9", "divx", "divx5", "dl", "dsr", "dsrip", "dts", "dtv", "dubbed", "dvd", "dvd1",
-      "dvd2", "dvd3", "dvd4", "dvd5", "dvd6", "dvd7", "dvd8", "dvd9", "dvdivx", "dvdrip", "dvdscr", "dvdscreener", "emule", "etm", "fs", "fps",
-      "h264", "h265", "hd", "hddvd", "hdr", "hdr10", "hdr10+", "hdrip", "hdtv", "hdtvrip", "hevc", "hrhd", "hrhdtv", "ind", "ituneshd", "ld", "md",
-      "microhd", "multisubs", "mp3", "netflixhd", "nfo", "nfofix", "ntg", "ntsc", "ogg", "ogm", "pal", "pdtv", "pso", "r3", "r5", "remastered",
-      "repack", "rerip", "remux", "roor", "rs", "rsvcd", "screener", "sd", "subbed", "subs", "svcd", "tc", "telecine", "telesync", "ts", "truehd",
-      "uhd", "uncut", "unrated", "vcf", "vhs", "vhsrip", "webdl", "webrip", "workprint", "ws", "x264", "x265", "xf", "xvid", "xvidvd", "4k" };
+  protected static final String[]                     HARD_STOPWORDS           = { "1080", "1080i", "1080p", "2160p", "2160i", "3d", "480i", "480p",
+      "576i", "576p", "360p", "10bit", "12bit", "360i", "720", "720i", "720p", "8bit", "ac3", "ac3ld", "ac3d", "ac3md", "amzn", "aoe", "atmos", "avc",
+      "bd5", "bdrip", "bdrip", "blueray", "bluray", "brrip", "cam", "cd1", "cd2", "cd3", "cd4", "cd5", "cd6", "cd7", "cd8", "cd9", "dd20", "dd51",
+      "disc1", "disc2", "disc3", "disc4", "disc5", "disc6", "disc7", "disc8", "disc9", "divx", "divx5", "dl", "dsr", "dsrip", "dts", "dtv", "dubbed",
+      "dvd", "dvd1", "dvd2", "dvd3", "dvd4", "dvd5", "dvd6", "dvd7", "dvd8", "dvd9", "dvdivx", "dvdrip", "dvdscr", "dvdscreener", "emule", "etm",
+      "fs", "fps", "h264", "h265", "hd", "hddvd", "hdr", "hdr10", "hdr10+", "hdrip", "hdtv", "hdtvrip", "hevc", "hrhd", "hrhdtv", "ind", "ituneshd",
+      "ld", "md", "microhd", "multisubs", "mp3", "netflixhd", "nfo", "nfofix", "ntg", "ntsc", "ogg", "ogm", "pal", "pdtv", "pso", "r3", "r5",
+      "remastered", "repack", "rerip", "remux", "roor", "rs", "rsvcd", "screener", "sd", "subbed", "subs", "svcd", "tc", "telecine", "telesync", "ts",
+      "truehd", "uhd", "uncut", "unrated", "vcf", "vhs", "vhsrip", "webdl", "webrip", "workprint", "ws", "x264", "x265", "xf", "xvid", "xvidvd",
+      "4k" };
 
   // soft stopwords are well known words which _may_ occur before the year token and will be cleaned conditionally
-  protected static final String[] SOFT_STOPWORDS  = { "complete", "custom", "dc", "docu", "doku", "extended", "fragment", "internal", "limited",
-      "local", "ma", "multi", "pal", "proper", "read", "retail", "se", "www", "xxx" };
+  protected static final String[]                     SOFT_STOPWORDS           = { "complete", "custom", "dc", "docu", "doku", "extended", "fragment",
+      "internal", "limited", "local", "ma", "multi", "pal", "proper", "read", "retail", "se", "www", "xxx" };
 
   // clean before splitting (needs delimiter in front!)
-  protected static final String[] CLEANWORDS      = { "24\\.000", "23\\.976", "23\\.98", "24\\.00", "web\\-dl", "web\\-rip", "blue\\-ray",
-      "blu\\-ray", "dvd\\-rip" };
+  protected static final String[]                     CLEANWORDS               = { "24\\.000", "23\\.976", "23\\.98", "24\\.00", "web\\-dl",
+      "web\\-rip", "blue\\-ray", "blu\\-ray", "dvd\\-rip" };
 
-  protected static final Pattern  TMDB_ID_PATTERN = Pattern.compile("(tmdbid|tmdb)[ ._=-]?(\\d+)", Pattern.CASE_INSENSITIVE);
-  protected static final Pattern  TVDB_ID_PATTERN = Pattern.compile("(tvdbid|tvdb)[ ._=-]?(\\d+)", Pattern.CASE_INSENSITIVE);
+  protected static final Pattern                      TMDB_ID_PATTERN          = Pattern.compile("(tmdbid|tmdb)[ ._=-]?(\\d+)",
+      Pattern.CASE_INSENSITIVE);
+  protected static final Pattern                      TVDB_ID_PATTERN          = Pattern.compile("(tvdbid|tvdb)[ ._=-]?(\\d+)",
+      Pattern.CASE_INSENSITIVE);
+
+  private static final Map<Person.Type, List<String>> PERSON_TYPE_TRANSLATIONS = new EnumMap<>(Person.Type.class);
 
   private ParserUtils() {
     throw new IllegalAccessError();
@@ -594,6 +603,36 @@ public class ParserUtils {
     }
 
     return result;
+  }
+
+  /**
+   * Parses the given String to a Person.Type. It checks all translations for all types and returns the first match. If no match is found,
+   * Person.Type.OTHER is returned.
+   *
+   * @param type
+   *          the type to parse
+   * @return the person type
+   */
+  public static Person.Type parsePersonType(String type) {
+    if (StringUtils.isBlank(type)) {
+      return Person.Type.OTHER;
+    }
+
+    if (PERSON_TYPE_TRANSLATIONS.isEmpty()) {
+      // fill the map with all translations for all types
+      for (Person.Type t : Person.Type.values()) {
+        List<String> translations = Utils.getAllTranslationsFor("Person." + t.name());
+        PERSON_TYPE_TRANSLATIONS.put(t, translations);
+      }
+    }
+
+    for (Map.Entry<Person.Type, List<String>> entry : PERSON_TYPE_TRANSLATIONS.entrySet()) {
+      if (entry.getValue().stream().anyMatch(s -> s.equalsIgnoreCase(type))) {
+        return entry.getKey();
+      }
+    }
+
+    return Person.Type.OTHER;
   }
 
   public static class ParserInfo {

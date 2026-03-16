@@ -468,7 +468,7 @@ public class MovieSetTreePanel extends TmmListPanel {
   }
 
   private void updateSelectionSums() {
-    List<Movie> movies = selectionModel.getSelectedMoviesRecursive();
+    List<Movie> movies = selectionModel.getSelectedMoviesRecursive(true);
 
     // episode
     String selectedMovies = TmmResourceBundle.getString("movie.selected").replace("{}", String.valueOf(movies.size()));

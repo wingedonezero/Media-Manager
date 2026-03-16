@@ -170,6 +170,7 @@ public class TvShowEpisodeToNfoConnectorTest extends BasicTvShowTest {
       assertThat(newEpisode.getMediaSource()).isEqualTo(episode.getMediaSource());
       assertThat(newEpisode.getEdition()).isEqualTo(episode.getEdition());
       assertThat(newEpisode.getTags()).isEqualTo(episode.getTags());
+      assertThat(newEpisode.isLocked()).isEqualTo(episode.isLocked());
 
       // since we do not write show actors to the episodes, we need to adopt this test
       for (Person person : newEpisode.getActors()) {

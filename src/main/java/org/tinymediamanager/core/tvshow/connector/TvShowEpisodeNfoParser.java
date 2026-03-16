@@ -1752,7 +1752,7 @@ public class TvShowEpisodeNfoParser {
         List<org.tinymediamanager.core.entities.Person> newCrew = new ArrayList<>();
         for (Person crewMember : crew) {
           try {
-            newCrew.add(morphPerson(org.tinymediamanager.core.entities.Person.Type.valueOf(crewMember.type.toUpperCase(Locale.ROOT)), crewMember));
+            newCrew.add(morphPerson(ParserUtils.parsePersonType(crewMember.type), crewMember));
           }
           catch (Exception e) {
             LOGGER.debug("Could not unmarshal crew member with name '{}' and role '{}'", crewMember.name, crewMember.type);

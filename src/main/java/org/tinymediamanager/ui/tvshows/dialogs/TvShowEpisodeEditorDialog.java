@@ -45,7 +45,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import javax.swing.AbstractAction;
 import javax.swing.InputMap;
@@ -645,9 +644,16 @@ public class TvShowEpisodeEditorDialog extends AbstractEditorDialog {
       cbScraper = new MediaScraperComboBox(tvShowList.getAvailableMediaScrapers()
           .stream()
           .filter(scraper -> !(scraper.getMediaProvider() instanceof KodiTvShowMetadataProvider))
-          .collect(Collectors.toList()));
-      MediaScraper defaultScraper = tvShowList.getDefaultMediaScraper();
+          .toList());
       scrapePanel.setLayout(new MigLayout("", "[100lp:200lp][][][grow]", "[]"));
+
+      MediaScraper defaultScraper = tvShowList.getDefaultMediaScraper();
+      if (episodeToEdit.getTvShow() != null && StringUtils.isNotBlank(episodeToEdit.getTvShow().getLastScraperId())) {
+        MediaScraper lastScraper = tvShowList.getMediaScraperById(episodeToEdit.getTvShow().getLastScraperId());
+        if (lastScraper != null) {
+          defaultScraper = lastScraper;
+        }
+      }
       cbScraper.setSelectedItem(defaultScraper);
       scrapePanel.add(cbScraper, "cell 0 0, growx, wmin 0");
 

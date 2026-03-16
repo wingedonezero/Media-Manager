@@ -65,6 +65,7 @@ import org.tinymediamanager.scraper.entities.MediaType;
 import org.tinymediamanager.scraper.exceptions.MissingIdException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
 import org.tinymediamanager.scraper.interfaces.ITvShowSubtitleProvider;
+import org.tinymediamanager.scraper.util.ListUtils;
 import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.TableColumnResizer;
 import org.tinymediamanager.ui.TmmFontHelper;
@@ -108,6 +109,9 @@ public class TvShowSubtitleChooserDialog extends TmmDialog {
   private JLabel                                      lblProgressAction;
   private JProgressBar                                progressBar;
   private JButton                                     btnSearch;
+
+  /** guard that prevents concurrent/double-click downloads */
+  private volatile boolean                            downloadInProgress = false;
 
   public TvShowSubtitleChooserDialog(TvShowEpisode episode, MediaFile mediaFile, boolean inQueue) {
     super(TmmResourceBundle.getString("tvshowepisodesubtitlechooser.search"), "episodeSubtitleChooser");
@@ -217,7 +221,7 @@ public class TvShowSubtitleChooserDialog extends TmmDialog {
     {
       {
         JPanel infoPanel = new JPanel();
-        infoPanel.setLayout(new MigLayout("", "[][grow]", "[]"));
+        infoPanel.setLayout(new MigLayout("insets 0 n 0 0, hidemode 3", "[][grow]", "[]"));
 
         progressBar = new JProgressBar();
         infoPanel.add(progressBar, "cell 0 0");
@@ -299,6 +303,7 @@ public class TvShowSubtitleChooserDialog extends TmmDialog {
     private final List<MediaScraper>         scrapers;
 
     boolean                                  cancel;
+    private String                           message;
 
     SearchTask(MediaFile mediaFile, Map<String, Object> episodeIds, Map<String, Object> tvShowIds, int season, int episode,
         List<MediaScraper> scrapers) {
@@ -317,6 +322,10 @@ public class TvShowSubtitleChooserDialog extends TmmDialog {
     public Void doInBackground() {
       startProgressBar(TmmResourceBundle.getString("chooser.searchingfor") + " " + episodeToScrape.getTitle());
       for (MediaScraper scraper : scrapers) {
+        // abort early when the task has been cancelled (e.g. because the user triggered a new search)
+        if (isCancelled()) {
+          break;
+        }
         try {
           ITvShowSubtitleProvider subtitleProvider = (ITvShowSubtitleProvider) scraper.getMediaProvider();
           SubtitleSearchAndScrapeOptions options = new SubtitleSearchAndScrapeOptions(MediaType.TV_SHOW);
@@ -335,6 +344,7 @@ public class TvShowSubtitleChooserDialog extends TmmDialog {
         catch (ScrapeException e) {
           LOGGER.error("Could not scrape subtitles of TV show '{}', S{} E{} with '{}' - '{}'", episodeToScrape.getTvShow().getTitle(), season,
               episode, scraper.getId(), e.getMessage());
+          message = e.getMessage();
           MessageManager.getInstance()
               .pushMessage(
                   new Message(Message.MessageLevel.ERROR, episode, "message.scrape.subtitlefailed", new String[] { ":", e.getLocalizedMessage() }));
@@ -342,6 +352,7 @@ public class TvShowSubtitleChooserDialog extends TmmDialog {
         catch (Exception e) {
           LOGGER.error("Unforeseen error while scraping TV show '{}', S{} E{} with '{}'", episodeToScrape.getTvShow().getTitle(), season, episode,
               scraper.getId(), e);
+          message = e.getMessage();
           MessageManager.getInstance()
               .pushMessage(
                   new Message(Message.MessageLevel.ERROR, episode, "message.scrape.subtitlefailed", new String[] { ":", e.getLocalizedMessage() }));
@@ -351,35 +362,44 @@ public class TvShowSubtitleChooserDialog extends TmmDialog {
       Collections.sort(searchResults);
       Collections.reverse(searchResults);
 
-      tableSubs.adjustColumnPreferredWidths(5);
-
       return null;
     }
 
+    /** Marks the task as cancelled and interrupts the background thread. */
     public void cancel() {
       cancel = true;
+      // also cancel the SwingWorker so the background thread is interrupted and
+      // any blocking HTTP call (e.g. waiting on a 429 Retry-After) is aborted
+      super.cancel(true);
     }
 
     @Override
     public void done() {
       if (!cancel) {
         subtitleEventList.clear();
-        if (searchResults == null || searchResults.isEmpty()) {
+        if (ListUtils.isEmpty(searchResults)) {
           // display empty result
           subtitleEventList.add(TvShowSubtitleChooserModel.EMPTY_RESULT);
         }
         else {
           for (SubtitleSearchResult result : searchResults) {
             subtitleEventList.add(new TvShowSubtitleChooserModel(result, language));
-            // get metadataProvider from searchresult
           }
         }
-        if (!subtitleEventList.isEmpty()) {
-          tableSubs.setRowSelectionInterval(0, 0); // select first row
-        }
+
+        tableSubs.setRowSelectionInterval(0, 0); // select first row
+
+        // column resize must happen on the EDT – do it here, not in doInBackground()
         TableColumnResizer.adjustColumnPreferredWidths(tableSubs, 7);
       }
       stopProgressBar();
+
+      if (!cancel && StringUtils.isNotBlank(message)) {
+        SwingUtilities.invokeLater(() -> {
+          lblProgressAction.setVisible(true);
+          lblProgressAction.setText(message);
+        });
+      }
     }
   }
 
@@ -449,13 +469,29 @@ public class TvShowSubtitleChooserDialog extends TmmDialog {
       int row = table.rowAtPoint(new Point(e.getX(), e.getY()));
       int col = table.columnAtPoint(new Point(e.getX(), e.getY()));
 
-      // click on the download button
-      if (col == 0) {
+      // click on the download button – guard against concurrent downloads
+      if (col == 0 && !downloadInProgress) {
         row = table.convertRowIndexToModel(row);
-        TvShowSubtitleChooserModel model = subtitleEventList.get(row);
+        final TvShowSubtitleChooserModel model = subtitleEventList.get(row);
 
-        try {
-          if (StringUtils.isNotBlank(model.getDownloadUrl())) {
+        downloadInProgress = true;
+        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        progressBar.setVisible(true);
+        progressBar.setIndeterminate(true);
+        lblProgressAction.setVisible(true);
+        lblProgressAction.setText(TmmResourceBundle.getString("subtitle.downloading"));
+
+        // run both the URL resolution (HTTP call) and the file download off the EDT
+        // so the UI stays responsive and ScrapeExceptions (e.g. 429 / download limit)
+        // are properly propagated back to the status label
+        new SwingWorker<Void, Void>() {
+          @Override
+          protected Void doInBackground() throws Exception {
+            String downloadUrl = model.getDownloadUrl(); // may throw ScrapeException
+            if (StringUtils.isBlank(downloadUrl)) {
+              return null;
+            }
+
             MediaLanguages language = model.getLanguage();
             // the right language tag from the renamer settings
             String lang = LanguageStyle.getLanguageCodeForStyle(language.name(),
@@ -465,26 +501,29 @@ public class TvShowSubtitleChooserDialog extends TmmDialog {
             }
 
             String filename = FilenameUtils.getBaseName(fileToScrape.getFilename()) + "." + lang;
-            DownloadTask task = new SubtitleDownloadTask(model.getDownloadUrl(), episodeToScrape.getPathNIO().resolve(filename), episodeToScrape,
-                lang);
-
-            // blocking
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            lblProgressAction.setVisible(true);
-            lblProgressAction.setText(TmmResourceBundle.getString("subtitle.downloading"));
-
+            DownloadTask task = new SubtitleDownloadTask(downloadUrl, episodeToScrape.getPathNIO().resolve(filename), episodeToScrape, lang);
             task.run();
-
-            lblProgressAction.setText(TmmResourceBundle.getString("subtitle.downloaded") + " - " + model.getReleaseName());
+            return null;
           }
-        }
-        catch (Exception ex) {
-          lblProgressAction.setVisible(true);
-          lblProgressAction.setText(TmmResourceBundle.getString("message.scrape.subtitlefaileddownload") + " - " + ex.getLocalizedMessage());
-        }
-        finally {
-          setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-        }
+
+          @Override
+          protected void done() {
+            downloadInProgress = false;
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            progressBar.setIndeterminate(false);
+            progressBar.setVisible(false);
+            try {
+              get(); // rethrow any exception that occurred in doInBackground()
+              lblProgressAction.setText(TmmResourceBundle.getString("subtitle.downloaded") + " - " + model.getReleaseName());
+            }
+            catch (Exception ex) {
+              Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+              LOGGER.error("Could not download subtitle for TV show '{}', episode '{}'", episodeToScrape.getTvShow().getTitle(),
+                  episodeToScrape.getTitle(), cause);
+              lblProgressAction.setText(TmmResourceBundle.getString("message.scrape.subtitlefaileddownload") + " - " + cause.getLocalizedMessage());
+            }
+          }
+        }.execute();
       }
     }
 

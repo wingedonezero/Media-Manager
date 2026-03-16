@@ -16,6 +16,7 @@
 package org.tinymediamanager.core.movie;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -25,7 +26,6 @@ import org.tinymediamanager.core.PostProcessExecutor;
 import org.tinymediamanager.core.entities.MediaEntity;
 import org.tinymediamanager.core.jmte.TmmModelAdaptor;
 import org.tinymediamanager.core.movie.entities.MovieSet;
-import org.tinymediamanager.ui.moviesets.MovieSetUIModule;
 
 import com.floreysoft.jmte.Engine;
 
@@ -37,10 +37,19 @@ import com.floreysoft.jmte.Engine;
 public class MovieSetPostProcessExecutor extends PostProcessExecutor {
   private static final Logger LOGGER = LoggerFactory.getLogger(MovieSetPostProcessExecutor.class);
 
-  public MovieSetPostProcessExecutor(PostProcess postProcess) {
-    super(postProcess, MovieSetUIModule.getInstance().getSelectionModel().getSelectedMovieSets());
+  /**
+   * Creates a new movie set post-process executor.
+   *
+   * @param postProcess
+   *          the post-process definition
+   * @param movieSets
+   *          the movie sets to process
+   */
+  public MovieSetPostProcessExecutor(PostProcess postProcess, List<MovieSet> movieSets) {
+    super(postProcess, movieSets);
   }
 
+  @Override
   public void execute() {
     for (MediaEntity mediaEntity : entities) {
       if (!(mediaEntity instanceof MovieSet movieSet)) {

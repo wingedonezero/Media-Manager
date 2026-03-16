@@ -44,6 +44,7 @@ import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.TmmLazyMenuAdapter;
 import org.tinymediamanager.ui.components.MenuScroller;
 import org.tinymediamanager.ui.components.tabbedpane.MainTabbedPane;
+import org.tinymediamanager.ui.dialogs.PostProcessResultDialog;
 import org.tinymediamanager.ui.movies.actions.DebugDumpMovieAction;
 import org.tinymediamanager.ui.movies.actions.DebugLoadMovieAction;
 import org.tinymediamanager.ui.movies.actions.MovieAddDatasourceAction;
@@ -440,9 +441,21 @@ public class MovieUIModule extends AbstractTmmUIModule {
         // Post-processing
         postProcessingMenu.removeAll();
         for (PostProcess process : new ArrayList<>(MovieModuleManager.getInstance().getSettings().getPostProcess())) {
+          MoviePostProcessExecutor executor = new MoviePostProcessExecutor(process,
+              MovieUIModule.getInstance().getSelectionModel().getSelectedMovies(true)) {
+            @Override
+            protected void finish() {
+              super.finish();
+
+              if (getExecutionResults().isEmpty()) {
+                return;
+              }
+
+              SwingUtilities.invokeLater(() -> new PostProcessResultDialog(process.getName(), getExecutionResults()).setVisible(true));
+            }
+          };
           JMenuItem menuItem = new JMenuItem(process.getName(), IconManager.APPLY);
-          menuItem.addActionListener(pp -> TmmTaskManager.getInstance()
-              .addUnnamedTask(new MoviePostProcessExecutor(process, MovieUIModule.getInstance().getSelectionModel().getSelectedMovies())));
+          menuItem.addActionListener(pp -> TmmTaskManager.getInstance().addUnnamedTask(executor));
           postProcessingMenu.add(menuItem);
         }
         if (postProcessingMenu.getItemCount() == 0) {

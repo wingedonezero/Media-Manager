@@ -1021,6 +1021,7 @@ public abstract class TvShowGenericXmlConnector implements ITvShowConnector {
     addEpisodeGroups();
     addEnglishTitle();
     addCrew();
+    addTmmLocked();
   }
 
   /**
@@ -1072,7 +1073,7 @@ public abstract class TvShowGenericXmlConnector implements ITvShowConnector {
       crew.appendChild(name);
 
       Element role = document.createElement("role");
-      role.setTextContent(StringUtils.capitalize(crewMember.getType().toString()));
+      role.setTextContent(StringUtils.capitalize(crewMember.getType().name()));
 
       if (StringUtils.isNotBlank(crewMember.getRole())) {
         role.setAttribute("subrole", crewMember.getRole());
@@ -1095,6 +1096,17 @@ public abstract class TvShowGenericXmlConnector implements ITvShowConnector {
 
       root.appendChild(crew);
     }
+  }
+
+  /**
+   * writes the lock state of tinyMediaManager into an own field to be persisted across database rebuilds
+   */
+  protected void addTmmLocked() {
+    Element tmmLocked = document.createElement("tmm_locked");
+    if (tvShow.isLocked()) {
+      tmmLocked.setTextContent("true");
+    }
+    root.appendChild(tmmLocked);
   }
 
   /**

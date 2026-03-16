@@ -47,6 +47,7 @@ import org.tinymediamanager.ui.AbstractTmmUIModule;
 import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.components.label.TmmMenuLabel;
 import org.tinymediamanager.ui.components.tabbedpane.MainTabbedPane;
+import org.tinymediamanager.ui.dialogs.PostProcessResultDialog;
 import org.tinymediamanager.ui.movies.MovieSelectionModel;
 import org.tinymediamanager.ui.movies.panels.MovieArtworkPanel;
 import org.tinymediamanager.ui.movies.panels.MovieCastPanel;
@@ -55,12 +56,13 @@ import org.tinymediamanager.ui.movies.panels.MovieMediaInformationPanel;
 import org.tinymediamanager.ui.movies.panels.MovieTrailerPanel;
 import org.tinymediamanager.ui.moviesets.actions.DebugDumpMovieSetAction;
 import org.tinymediamanager.ui.moviesets.actions.MovieSetAddAction;
-import org.tinymediamanager.ui.moviesets.actions.MovieSetBatchEditMovieAction;
+import org.tinymediamanager.ui.moviesets.actions.MovieSetBulkEditMovieAction;
 import org.tinymediamanager.ui.moviesets.actions.MovieSetCleanupArtworkAction;
 import org.tinymediamanager.ui.moviesets.actions.MovieSetEditAction;
 import org.tinymediamanager.ui.moviesets.actions.MovieSetEditMovieAction;
 import org.tinymediamanager.ui.moviesets.actions.MovieSetExportAction;
 import org.tinymediamanager.ui.moviesets.actions.MovieSetExportMovieAction;
+import org.tinymediamanager.ui.moviesets.actions.MovieSetLockMovieAction;
 import org.tinymediamanager.ui.moviesets.actions.MovieSetMissingArtworkAction;
 import org.tinymediamanager.ui.moviesets.actions.MovieSetReadMovieNfoAction;
 import org.tinymediamanager.ui.moviesets.actions.MovieSetRemoveAction;
@@ -74,6 +76,7 @@ import org.tinymediamanager.ui.moviesets.actions.MovieSetSyncSelectedRatingTrakt
 import org.tinymediamanager.ui.moviesets.actions.MovieSetSyncSelectedTraktTvAction;
 import org.tinymediamanager.ui.moviesets.actions.MovieSetSyncSelectedWatchedTraktTvAction;
 import org.tinymediamanager.ui.moviesets.actions.MovieSetToggleWatchedFlagAction;
+import org.tinymediamanager.ui.moviesets.actions.MovieSetUnlockMovieAction;
 import org.tinymediamanager.ui.moviesets.actions.MovieSetUpdateMovieAction;
 import org.tinymediamanager.ui.moviesets.dialogs.MovieSetFilterDialog;
 import org.tinymediamanager.ui.moviesets.panels.MovieSetArtworkPanel;
@@ -239,7 +242,9 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
     popupMenu.add(new TmmMenuLabel(TmmResourceBundle.getString("metatag.movie")));
     popupMenu.add(createAndRegisterAction(MovieSetUpdateMovieAction.class));
     popupMenu.add(createAndRegisterAction(MovieSetEditMovieAction.class));
-    popupMenu.add(createAndRegisterAction(MovieSetBatchEditMovieAction.class));
+    popupMenu.add(createAndRegisterAction(MovieSetBulkEditMovieAction.class));
+    popupMenu.add(createAndRegisterAction(MovieSetLockMovieAction.class));
+    popupMenu.add(createAndRegisterAction(MovieSetUnlockMovieAction.class));
     popupMenu.add(createAndRegisterAction(MovieSetToggleWatchedFlagAction.class));
     popupMenu.add(createAndRegisterAction(MovieSetReadMovieNfoAction.class));
     popupMenu.add(createAndRegisterAction(MovieSetRenameAction.class));
@@ -296,8 +301,21 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
         if (!movieSetPostProcesses.isEmpty()) {
           postProcessingMenu.add(new TmmMenuLabel(TmmResourceBundle.getString("metatag.movieset")));
           for (PostProcess process : movieSetPostProcesses) {
+            MovieSetPostProcessExecutor executor = new MovieSetPostProcessExecutor(process,
+                MovieSetUIModule.getInstance().getSelectionModel().getSelectedMovieSets()) {
+              @Override
+              protected void finish() {
+                super.finish();
+
+                if (getExecutionResults().isEmpty()) {
+                  return;
+                }
+
+                SwingUtilities.invokeLater(() -> new PostProcessResultDialog(process.getName(), getExecutionResults()).setVisible(true));
+              }
+            };
             JMenuItem menuItem = new JMenuItem(process.getName(), IconManager.APPLY);
-            menuItem.addActionListener(pp -> new MovieSetPostProcessExecutor(process).execute());
+            menuItem.addActionListener(pp -> TmmTaskManager.getInstance().addUnnamedTask(executor));
             postProcessingMenu.add(menuItem);
           }
         }
@@ -306,10 +324,21 @@ public class MovieSetUIModule extends AbstractTmmUIModule {
         if (!moviePostProcesses.isEmpty()) {
           postProcessingMenu.add(new TmmMenuLabel(TmmResourceBundle.getString("metatag.movie")));
           for (PostProcess process : moviePostProcesses) {
+            MovieSetMoviePostProcessExecutor executor = new MovieSetMoviePostProcessExecutor(process,
+                MovieSetUIModule.getInstance().getSelectionModel().getSelectedMoviesRecursive(true)) {
+              @Override
+              protected void finish() {
+                super.finish();
+
+                if (getExecutionResults().isEmpty()) {
+                  return;
+                }
+
+                SwingUtilities.invokeLater(() -> new PostProcessResultDialog(process.getName(), getExecutionResults()).setVisible(true));
+              }
+            };
             JMenuItem menuItem = new JMenuItem(process.getName(), IconManager.APPLY);
-            menuItem.addActionListener(pp -> TmmTaskManager.getInstance()
-                .addUnnamedTask(
-                    new MovieSetMoviePostProcessExecutor(process, MovieSetUIModule.getInstance().getSelectionModel().getSelectedMoviesRecursive())));
+            menuItem.addActionListener(pp -> TmmTaskManager.getInstance().addUnnamedTask(executor));
             postProcessingMenu.add(menuItem);
           }
         }

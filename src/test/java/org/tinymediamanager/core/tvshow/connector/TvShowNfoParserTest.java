@@ -37,6 +37,14 @@ public class TvShowNfoParserTest extends BasicTvShowTest {
   }
 
   @Test
+  public void testParseTmmLocked() {
+    TvShowNfoParser parser = TvShowNfoParser.parseNfo("<tvshow><title>foo</title><tmm_locked>true</tmm_locked></tvshow>");
+
+    assertThat(parser.tmmLocked).isTrue();
+    assertThat(parser.toTvShow().isLocked()).isTrue();
+  }
+
+  @Test
   public void testNfoParserKodi142() {
     testKodi14_2();
   }

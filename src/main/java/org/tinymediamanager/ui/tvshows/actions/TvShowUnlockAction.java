@@ -54,6 +54,7 @@ public class TvShowUnlockAction extends TmmAction {
     MainWindow.getInstance().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     for (TvShow tvShow : selectedTvShows) {
       tvShow.setLocked(false);
+      tvShow.writeNFO();
       tvShow.saveToDb();
     }
     MainWindow.getInstance().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
