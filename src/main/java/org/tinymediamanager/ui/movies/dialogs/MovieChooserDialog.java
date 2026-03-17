@@ -482,6 +482,9 @@ public class MovieChooserDialog extends TmmDialog implements ActionListener {
             activeScrapeTask.execute();
           }
         }
+        catch (IndexOutOfBoundsException ignored) {
+          // can happen on close/cleanup - just ignore
+        }
         catch (Exception ex) {
           LOGGER.debug("scraping", ex);
         }
