@@ -138,3 +138,12 @@ deploy:RELEASE:
   trigger:
     include: .ci/deploy_release.yml
     strategy: depend
+
+deploy:DOCKER_REMOTE:
+  stage: deploy
+  only:
+    variables:
+      - $DOCKER_REMOTE == "true"
+  trigger:
+    include: .ci/deploy_docker_remote.yml
+    strategy: depend
