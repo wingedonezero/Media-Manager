@@ -1,5 +1,5 @@
 # Building application container
-FROM tinymediamanager/base-arm64:20260314203232
+FROM tinymediamanager/base-arm64:20260317161108
 
 ENV APP=tinyMediaManager
 ENV ALLOW_DIRECT_VNC=true
