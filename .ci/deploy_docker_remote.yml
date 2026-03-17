@@ -6,6 +6,11 @@ variables:
   TMM_DOCKER_VERSION: "5.2.9"
   TMM_DOCKER_ARCHIVE_BASE_URL: "https://release.tinymediamanager.org/v5/dist"
   TMM_DOCKER_PUSH_LATEST: "true"
+  TMM_DOCKER_PROJECT_ARTIFACT_ID: "tinyMediaManager"
+  TMM_DOCKER_PROJECT_DESCRIPTION: "a media management tool written in Java"
+  TMM_DOCKER_PROJECT_URL: "https://www.tinymediamanager.org/"
+  TMM_DOCKER_PROJECT_SCM_URL: "https://gitlab.com/tinyMediaManager/tinyMediaManager"
+  TMM_DOCKER_BUILD_NUMBER: "-"
 
 .deploy-docker-remote-validate:
   before_script:
@@ -37,6 +42,12 @@ deploy-docker-amd64:
       --context "${CI_PROJECT_DIR}/target/docker" \
       --dockerfile "${CI_PROJECT_DIR}/src/docker/Dockerfile.amd64" \
       --custom-platform=linux/amd64/ \
+      --build-arg "human.version=${TMM_DOCKER_VERSION}" \
+      --build-arg "project.artifactId=${TMM_DOCKER_PROJECT_ARTIFACT_ID}" \
+      --build-arg "project.description=${TMM_DOCKER_PROJECT_DESCRIPTION}" \
+      --build-arg "project.url=${TMM_DOCKER_PROJECT_URL}" \
+      --build-arg "project.scm.url=${TMM_DOCKER_PROJECT_SCM_URL}" \
+      --build-arg "buildNumber=${TMM_DOCKER_BUILD_NUMBER}" \
       --destination "${IMAGE_NAME}:${TMM_DOCKER_VERSION}-amd64"
 
 deploy-docker-arm64:
@@ -66,6 +77,12 @@ deploy-docker-arm64:
       --context "${CI_PROJECT_DIR}/target/docker" \
       --dockerfile "${CI_PROJECT_DIR}/src/docker/Dockerfile.arm64" \
       --custom-platform=linux/arm64/ \
+      --build-arg "human.version=${TMM_DOCKER_VERSION}" \
+      --build-arg "project.artifactId=${TMM_DOCKER_PROJECT_ARTIFACT_ID}" \
+      --build-arg "project.description=${TMM_DOCKER_PROJECT_DESCRIPTION}" \
+      --build-arg "project.url=${TMM_DOCKER_PROJECT_URL}" \
+      --build-arg "project.scm.url=${TMM_DOCKER_PROJECT_SCM_URL}" \
+      --build-arg "buildNumber=${TMM_DOCKER_BUILD_NUMBER}" \
       --destination "${IMAGE_NAME}:${TMM_DOCKER_VERSION}-arm64"
 
 deploy-docker:
