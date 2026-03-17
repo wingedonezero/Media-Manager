@@ -578,7 +578,7 @@ public abstract class ImdbParser {
     }
     else {
       if (options.getMediaType() == MediaType.TV_SHOW) {
-        wantedTitleTypes.add("tvShow");
+        wantedTitleTypes.add("tvSeries");
         wantedTitleTypes.add("tvMiniSeries");
         wantedTitleTypes.add("documentary");
 

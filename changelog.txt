@@ -1,5 +1,6 @@
 Version 5.2.10
 =======================
+x [IMDB] improved filtering for TV show search results
 
 
 Version 5.2.9
