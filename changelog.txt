@@ -1,3 +1,7 @@
+Version 5.2.10
+=======================
+
+
 Version 5.2.9
 =======================
 + [UI] show the result of the post-processing commands in a dedicated dialog
