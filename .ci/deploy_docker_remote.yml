@@ -36,18 +36,23 @@ deploy-docker-amd64:
     - /busybox/wget -q -O /tmp/tmm-download/tinyMediaManager-linux-amd64.tar.xz "$AMD64_URL"
     - tar xJf /tmp/tmm-download/tinyMediaManager-linux-amd64.tar.xz -C target/docker/
 
+    # render Dockerfile labels (Kaniko cannot expand placeholders with dots)
+    - cp src/docker/Dockerfile.amd64 target/docker/Dockerfile.amd64
+    - /busybox/sed -i
+      -e 's|${human.version}|'"${TMM_DOCKER_VERSION}"'|g'
+      -e 's|${project.artifactId}|'"${TMM_DOCKER_PROJECT_ARTIFACT_ID}"'|g'
+      -e 's|${project.description}|'"${TMM_DOCKER_PROJECT_DESCRIPTION}"'|g'
+      -e 's|${project.url}|'"${TMM_DOCKER_PROJECT_URL}"'|g'
+      -e 's|${project.scm.url}|'"${TMM_DOCKER_PROJECT_SCM_URL}"'|g'
+      -e 's|${buildNumber}|'"${TMM_DOCKER_BUILD_NUMBER}"'|g'
+      target/docker/Dockerfile.amd64
+
     # build image
     - |
       /kaniko/executor \
       --context "${CI_PROJECT_DIR}/target/docker" \
-      --dockerfile "${CI_PROJECT_DIR}/src/docker/Dockerfile.amd64" \
+      --dockerfile "${CI_PROJECT_DIR}/target/docker/Dockerfile.amd64" \
       --custom-platform=linux/amd64/ \
-      --build-arg "human.version=${TMM_DOCKER_VERSION}" \
-      --build-arg "project.artifactId=${TMM_DOCKER_PROJECT_ARTIFACT_ID}" \
-      --build-arg "project.description=${TMM_DOCKER_PROJECT_DESCRIPTION}" \
-      --build-arg "project.url=${TMM_DOCKER_PROJECT_URL}" \
-      --build-arg "project.scm.url=${TMM_DOCKER_PROJECT_SCM_URL}" \
-      --build-arg "buildNumber=${TMM_DOCKER_BUILD_NUMBER}" \
       --destination "${IMAGE_NAME}:${TMM_DOCKER_VERSION}-amd64"
 
 deploy-docker-arm64:
@@ -71,18 +76,23 @@ deploy-docker-arm64:
     - cd target/docker
     - mv tinyMediaManager/tinyMediaManager-arm tinyMediaManager/tinyMediaManager
 
+    # render Dockerfile labels (Kaniko cannot expand placeholders with dots)
+    - cp src/docker/Dockerfile.arm64 target/docker/Dockerfile.arm64
+    - /busybox/sed -i
+      -e 's|${human.version}|'"${TMM_DOCKER_VERSION}"'|g'
+      -e 's|${project.artifactId}|'"${TMM_DOCKER_PROJECT_ARTIFACT_ID}"'|g'
+      -e 's|${project.description}|'"${TMM_DOCKER_PROJECT_DESCRIPTION}"'|g'
+      -e 's|${project.url}|'"${TMM_DOCKER_PROJECT_URL}"'|g'
+      -e 's|${project.scm.url}|'"${TMM_DOCKER_PROJECT_SCM_URL}"'|g'
+      -e 's|${buildNumber}|'"${TMM_DOCKER_BUILD_NUMBER}"'|g'
+      target/docker/Dockerfile.arm64
+
     # build image
     - |
       /kaniko/executor \
       --context "${CI_PROJECT_DIR}/target/docker" \
-      --dockerfile "${CI_PROJECT_DIR}/src/docker/Dockerfile.arm64" \
+      --dockerfile "${CI_PROJECT_DIR}/target/docker/Dockerfile.arm64" \
       --custom-platform=linux/arm64/ \
-      --build-arg "human.version=${TMM_DOCKER_VERSION}" \
-      --build-arg "project.artifactId=${TMM_DOCKER_PROJECT_ARTIFACT_ID}" \
-      --build-arg "project.description=${TMM_DOCKER_PROJECT_DESCRIPTION}" \
-      --build-arg "project.url=${TMM_DOCKER_PROJECT_URL}" \
-      --build-arg "project.scm.url=${TMM_DOCKER_PROJECT_SCM_URL}" \
-      --build-arg "buildNumber=${TMM_DOCKER_BUILD_NUMBER}" \
       --destination "${IMAGE_NAME}:${TMM_DOCKER_VERSION}-arm64"
 
 deploy-docker:
