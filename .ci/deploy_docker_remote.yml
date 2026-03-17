@@ -28,7 +28,7 @@ deploy-docker-amd64:
     # download data
     - mkdir -p /tmp/tmm-download target/docker
     - AMD64_URL="${TMM_DOCKER_AMD64_URL:-${TMM_DOCKER_ARCHIVE_BASE_URL}/tinyMediaManager-${TMM_DOCKER_VERSION}-linux-amd64.tar.xz}"
-    - curl -fL "$AMD64_URL" -o /tmp/tmm-download/tinyMediaManager-linux-amd64.tar.xz
+    - /busybox/wget -q -O /tmp/tmm-download/tinyMediaManager-linux-amd64.tar.xz "$AMD64_URL"
     - tar xJf /tmp/tmm-download/tinyMediaManager-linux-amd64.tar.xz -C target/docker/
 
     # build image
@@ -55,7 +55,7 @@ deploy-docker-arm64:
     # download data
     - mkdir -p /tmp/tmm-download target/docker
     - ARM64_URL="${TMM_DOCKER_ARM64_URL:-${TMM_DOCKER_ARCHIVE_BASE_URL}/tinyMediaManager-${TMM_DOCKER_VERSION}-linux-arm64.tar.xz}"
-    - curl -fL "$ARM64_URL" -o /tmp/tmm-download/tinyMediaManager-linux-arm64.tar.xz
+    - /busybox/wget -q -O /tmp/tmm-download/tinyMediaManager-linux-arm64.tar.xz "$ARM64_URL"
     - tar xJf /tmp/tmm-download/tinyMediaManager-linux-arm64.tar.xz -C target/docker/
     - cd target/docker
     - mv tinyMediaManager/tinyMediaManager-arm tinyMediaManager/tinyMediaManager
@@ -99,4 +99,3 @@ deploy-docker:
         --template ${IMAGE_NAME}:${TMM_DOCKER_VERSION}-ARCH \
         --target ${IMAGE_NAME}:latest
       fi
-
