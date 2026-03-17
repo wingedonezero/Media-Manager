@@ -77,6 +77,7 @@ deploy-docker-arm64:
     - mv tinyMediaManager/tinyMediaManager-arm tinyMediaManager/tinyMediaManager
 
     # render Dockerfile labels (Kaniko cannot expand placeholders with dots)
+    - cd "${CI_PROJECT_DIR}"
     - cp src/docker/Dockerfile.arm64 target/docker/Dockerfile.arm64
     - /busybox/sed -i
       -e 's|${human.version}|'"${TMM_DOCKER_VERSION}"'|g'
