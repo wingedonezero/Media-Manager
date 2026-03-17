@@ -16,12 +16,15 @@
 
 package org.tinymediamanager.core.movie.tasks;
 
+import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.tinymediamanager.core.MediaFileType;
 import org.tinymediamanager.core.TmmModuleManager;
+import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.movie.BasicMovieTest;
 import org.tinymediamanager.core.movie.MovieComparator;
 import org.tinymediamanager.core.movie.MovieModuleManager;
@@ -40,7 +43,7 @@ public class MovieUpdateDatasourceTaskTest extends BasicMovieTest {
   private static final int NUMBER_OF_STACKED_MOVIES      = 14;
   private static final int NUMBER_OF_DISC_MOVIES         = 7;
   private static final int NUMBER_OF_MOVIES_IN_MMD       = 59;
-  private static final int NUMBER_OF_EXPECTED_MEDIAFILES = 227;
+  private static final int NUMBER_OF_EXPECTED_MEDIAFILES = 233;
 
   @Before
   public void setup() throws Exception {
@@ -106,6 +109,128 @@ public class MovieUpdateDatasourceTaskTest extends BasicMovieTest {
     assertEqual("Amount of disc folders does not match!", NUMBER_OF_DISC_MOVIES, disc);
     assertEqual("Amount of movies in multimoviedirs does not match!", NUMBER_OF_MOVIES_IN_MMD, mmd);
     assertEqual("Amount of mediafiles does not match!", NUMBER_OF_EXPECTED_MEDIAFILES, mfCnt);
+
+    // check the found files
+    Path testMoviesFolder = getWorkFolder().resolve("testmovies");
+
+    Movie hp7Movie = getMovieByFolder(testMoviesFolder, "Harry Potter/HP7 Deathly Hallows Part 1 (2010)");
+    assertMediaFileCount(hp7Movie, "Harry Potter/HP7 Deathly Hallows Part 1 (2010)", 7);
+    assertMediaFileType(hp7Movie, "HP7 DH Part 1 (2010) [x265].avi", MediaFileType.VIDEO);
+    assertMediaFileType(hp7Movie, "HP7 DH Part 1 (2010) [x265]-poster.jpg", MediaFileType.POSTER);
+    assertMediaFileType(hp7Movie, "HP7 DH Part 1 (2010) [x265]-fanart.jpg", MediaFileType.FANART);
+    assertMediaFileType(hp7Movie, "HP7 DH Part 1 (2010) [x265]-banner.jpg", MediaFileType.BANNER);
+    assertMediaFileType(hp7Movie, "HP7 DH Part 1 (2010) [x265]-clearart.jpg", MediaFileType.CLEARART);
+    assertMediaFileType(hp7Movie, "HP7 DH Part 1 (2010) [x265]-clearlogo.jpg", MediaFileType.CLEARLOGO);
+    assertMediaFileType(hp7Movie, "HP7 DH Part 1 (2010) [x265]-logo.jpg", MediaFileType.CLEARLOGO);
+
+    Movie singleMovie = getMovieByFolder(testMoviesFolder, "Single");
+    assertMediaFileCount(singleMovie, "Single", 3);
+    assertMediaFileType(singleMovie, "singlefile.avi", MediaFileType.VIDEO);
+    assertMediaFileType(singleMovie, "singlefile-poster.png", MediaFileType.POSTER);
+    assertMediaFileType(singleMovie, "singlefile-fanart.png", MediaFileType.FANART);
+
+    Movie synologyMovie = getMovieByFolder(testMoviesFolder, "Synology/101 Dalmatiner");
+    assertMediaFileCount(synologyMovie, "Synology/101 Dalmatiner", 2);
+    assertMediaFileType(synologyMovie, "101 Dalmatiner.avi", MediaFileType.VIDEO);
+    assertMediaFileType(synologyMovie, "101 Dalmatiner.avi.vsmeta", MediaFileType.VSMETA);
+
+    Movie partMovie = getMovieByFolder(testMoviesFolder, "Part X/Movie Part I");
+    assertMediaFileCount(partMovie, "Part X/Movie Part I", 2);
+    assertMediaFileType(partMovie, "moviefile part I.avi", MediaFileType.VIDEO);
+    assertMediaFileType(partMovie, "moviefile part I.srt", MediaFileType.SUBTITLE);
+
+    Movie trailerFolderMovie = getMovieByFolder(testMoviesFolder, "MovieWithTrailersInFolder");
+    assertMediaFileCount(trailerFolderMovie, "MovieWithTrailersInFolder", 5);
+    assertMediaFileType(trailerFolderMovie, "MovieWithTrailersInFolder.avi", MediaFileType.VIDEO);
+    assertMediaFileType(trailerFolderMovie, "cool.avi", MediaFileType.TRAILER);
+    assertMediaFileType(trailerFolderMovie, "another.avi", MediaFileType.TRAILER);
+    assertMediaFileType(trailerFolderMovie, "cools.avi", MediaFileType.TRAILER);
+    assertMediaFileType(trailerFolderMovie, "anothers.avi", MediaFileType.TRAILER);
+
+    Movie extrasFolderMovie = getMovieByFolder(testMoviesFolder, "MovieWithExtrasInFolder");
+    assertMediaFileCount(extrasFolderMovie, "MovieWithExtrasInFolder", 9);
+    assertMediaFileType(extrasFolderMovie, "MovieWithExtrasInFolderMovieWithExtrasInFolder.avi", MediaFileType.VIDEO);
+    assertMediaFileType(extrasFolderMovie, "MovieWithExtrasInFolderMovieWithExtrasInFolder-poster.jpg", MediaFileType.POSTER);
+    assertMediaFileType(extrasFolderMovie, "stuff.avi", MediaFileType.EXTRA);
+    assertMediaFileType(extrasFolderMovie, "stuff.jpg", MediaFileType.EXTRA);
+    assertMediaFileType(extrasFolderMovie, "another_extra.avi", MediaFileType.EXTRA);
+    assertMediaFileType(extrasFolderMovie, "another_extra.nfo", MediaFileType.EXTRA);
+    assertMediaFileType(extrasFolderMovie, "another_extra-poster.jpg", MediaFileType.EXTRA);
+    assertMediaFileType(extrasFolderMovie, "cool.avi", MediaFileType.EXTRA);
+    assertMediaFileType(extrasFolderMovie, "another_extras.avi", MediaFileType.EXTRA);
+
+    Movie subtitleFolderMovie = getMovieByFolder(testMoviesFolder, "SubtitleFolder");
+    assertMediaFileCount(subtitleFolderMovie, "SubtitleFolder", 6);
+    assertMediaFileType(subtitleFolderMovie, "SubtitleFolder.mkv", MediaFileType.VIDEO);
+    assertMediaFileType(subtitleFolderMovie, "01_english-eng_sdh.srt", MediaFileType.SUBTITLE);
+    assertMediaFileType(subtitleFolderMovie, "02_german.de.srt", MediaFileType.SUBTITLE);
+    assertMediaFileType(subtitleFolderMovie, "23_Romanian.srt", MediaFileType.SUBTITLE);
+    assertMediaFileType(subtitleFolderMovie, "english.srt", MediaFileType.SUBTITLE);
+    assertMediaFileType(subtitleFolderMovie, "german.srt", MediaFileType.SUBTITLE);
+
+    Movie themeMovie = getMovieByFolder(testMoviesFolder, "MovieWithTheme");
+    assertMediaFileCount(themeMovie, "MovieWithTheme", 5);
+    assertMediaFileType(themeMovie, "TMovie.avi", MediaFileType.VIDEO);
+    assertMediaFileType(themeMovie, "TMovie-theme.mp3", MediaFileType.THEME);
+    assertMediaFileType(themeMovie, "theme.mp3", MediaFileType.THEME);
+    assertMediaFileType(themeMovie, "theme2.mp3", MediaFileType.THEME);
+    assertMediaFileType(themeMovie, "theme.mp4", MediaFileType.THEME);
+  }
+
+  /**
+   * Gets the first movie from the movie list for the given relative folder inside testmovies.
+   *
+   * @param testMoviesFolder
+   *          the copied testmovies root in the work folder
+   * @param relativeMovieFolder
+   *          the movie folder relative to testmovies
+   * @return the detected movie
+   */
+  private Movie getMovieByFolder(Path testMoviesFolder, String relativeMovieFolder) {
+    Movie movie = MovieModuleManager.getInstance().getMovieList().findFirstByPath(testMoviesFolder.resolve(relativeMovieFolder));
+    assertEqual("Movie not found for folder: " + relativeMovieFolder, false, movie == null);
+    return movie;
+  }
+
+  /**
+   * Asserts that all expected media files from the folder have been associated to the movie.
+   *
+   * @param movie
+   *          the movie to test
+   * @param movieFolder
+   *          the tested folder (for assertion messages)
+   * @param expectedCount
+   *          the expected amount of associated media files
+   */
+  private void assertMediaFileCount(Movie movie, String movieFolder, int expectedCount) {
+    assertEqual("Unexpected amount of found media files for folder: " + movieFolder, expectedCount, movie.getMediaFiles().size());
+  }
+
+  /**
+   * Asserts that a specific media file has been found and assigned to the expected media file type.
+   *
+   * @param movie
+   *          the movie to test
+   * @param filename
+   *          the media file name to search for
+   * @param expectedType
+   *          the expected media file type
+   */
+  private void assertMediaFileType(Movie movie, String filename, MediaFileType expectedType) {
+    MediaFile mediaFile = null;
+    for (MediaFile mf : movie.getMediaFiles()) {
+      if (filename.equalsIgnoreCase(mf.getFilename())) {
+        mediaFile = mf;
+        break;
+      }
+    }
+
+    if (mediaFile == null) {
+      assertEqual("Media file not found: " + filename + " for movie " + movie.getPathNIO(), false, true);
+      return;
+    }
+
+    assertEqual("Unexpected media file type for file " + filename, expectedType, mediaFile.getType());
   }
 
   public static String rpad(Object s, int n) {

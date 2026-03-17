@@ -22,6 +22,7 @@ public class MediaFileTypeTests {
         "my_poster.jpeg", // underscore separator and jpeg ext
         "long.name.with.many-separators-movie.png", // multiple separators in prefix
         "file name_with spaces_poster.jpg", // spaces allowed in prefix characters
+        "file name_with spaces and brackets (2006) [x264]_poster.jpg", // brackets allowed in prefix characters
         "file with ÄÜÖ-poster.jpg", // umlauts are allowed
         "movie'-poster.jpg", // apostrophe in prefix (not covered by \\w)
         "@buelos-poster.jpg", // at-sign in prefix (not covered by \\w)
@@ -71,7 +72,8 @@ public class MediaFileTypeTests {
         "@buelos_fanart.png", // at-sign in prefix (not covered by \\w)
         "show!_background.jpeg", // exclamation mark in prefix (not covered by \\w)
         "show😀-fanart.webp", // emoji in prefix (not covered by \\w)
-        "影片-background.jpg" // CJK letters in prefix (not covered by default ASCII \\w)
+        "影片-background.jpg", // CJK letters in prefix (not covered by default ASCII \\w)
+        "file name_with spaces and brackets (2006) [x264]-fanart.jpg" // brackets allowed in prefix characters
     );
     for (String name : positives) {
       MediaFile mf = new MediaFile(Path.of(name));
