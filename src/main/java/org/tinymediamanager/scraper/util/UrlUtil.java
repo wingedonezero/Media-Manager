@@ -15,8 +15,10 @@
  */
 package org.tinymediamanager.scraper.util;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -24,8 +26,15 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.LocaleUtils;
@@ -45,9 +54,10 @@ import org.tinymediamanager.scraper.http.Url;
  * @since 1.0
  */
 public class UrlUtil {
-  private static final Logger LOGGER = LoggerFactory.getLogger(UrlUtil.class);
+  private static final Map<String, List<Pattern>> ROBOTS_CACHE = new HashMap<>();
+  private static final Logger                     LOGGER       = LoggerFactory.getLogger(UrlUtil.class);
 
-  public static final String  UTF_8  = "UTF-8";
+  public static final String                      UTF_8        = "UTF-8";
 
   public enum UrlImpl {
     DIRECT,
@@ -485,5 +495,103 @@ public class UrlUtil {
       default:
         return new Url(urlAsString);
     }
+  }
+
+  /**
+   * Checks the url against robots.txt
+   * 
+   * @param url
+   * @return FALSE when it matches some disallowed path - do not open url!<br>
+   *         TRUE if not found/matched, or on any failure - you're good to go :)
+   */
+  public static boolean isAllowed(Url url) {
+    try {
+      String baseUrl = url.getUrl().getProtocol() + "://" + url.getUrl().getHost();
+      String path = url.getUrl().getPath();
+
+      List<Pattern> rules = ROBOTS_CACHE.computeIfAbsent(baseUrl, UrlUtil::fetchRules);
+      for (Pattern p : rules) {
+        if (p.matcher(path).find()) {
+          return false;
+        }
+      }
+      return true;
+    }
+    catch (Exception e) {
+      return true; // fail open
+    }
+  }
+
+  // Fetch + parse
+  private static List<Pattern> fetchRules(String baseUrl) {
+    List<Pattern> patterns = new ArrayList<>();
+    try {
+      OnDiskCachedUrl url = new OnDiskCachedUrl(baseUrl.replaceAll("/+$", "") + "/robots.txt", 7, TimeUnit.DAYS);
+      BufferedReader reader = new BufferedReader(new InputStreamReader(url.getInputStream()));
+      String line;
+      Set<String> currentAgents = new HashSet<>();
+      boolean appliesToUs = false;
+      while ((line = reader.readLine()) != null) {
+        line = line.trim();
+        if (line.isEmpty()) {
+          // new group starts
+          currentAgents.clear();
+          appliesToUs = false;
+          continue;
+        }
+
+        if (line.startsWith("#")) {
+          continue;
+        }
+
+        String lower = line.toLowerCase();
+        if (lower.startsWith("user-agent:")) {
+          String agent = line.substring(11).trim().toLowerCase();
+          currentAgents.add(agent);
+          if (agent.equals("*")) {
+            appliesToUs = true;
+          }
+        }
+        else if (lower.startsWith("disallow:")) {
+          if (appliesToUs) {
+            String rule = line.substring(9).trim();
+            if (!rule.isEmpty()) {
+              patterns.add(toRegex(rule));
+            }
+          }
+        }
+      }
+      reader.close();
+    }
+    catch (Exception e) {
+      LOGGER.debug("Error parsing robots.txt; {}", e.getMessage());
+    }
+    return patterns;
+  }
+
+  // Convert robots rule → regex
+  private static Pattern toRegex(String rule) {
+    StringBuilder regex = new StringBuilder();
+    regex.append("^"); // match from start
+    for (int i = 0; i < rule.length(); i++) {
+      char c = rule.charAt(i);
+      switch (c) {
+        case '*':
+          regex.append(".*");
+          break;
+
+        case '$':
+          regex.append("$");
+          break;
+
+        default:
+          // escape regex special chars
+          if ("\\.[]{}()+-^$|".indexOf(c) >= 0) {
+            regex.append("\\");
+          }
+          regex.append(c);
+      }
+    }
+    return Pattern.compile(regex.toString());
   }
 }
