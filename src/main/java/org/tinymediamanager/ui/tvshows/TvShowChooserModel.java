@@ -255,7 +255,7 @@ public class TvShowChooserModel extends AbstractModelObject {
   /**
    * Scrape meta data.
    */
-  public void scrapeMetaData() {
+  public void scrapeMetaData() throws Exception {
     try {
       // poster for preview
       setPosterUrl(result.getPosterUrl());
@@ -325,22 +325,18 @@ public class TvShowChooserModel extends AbstractModelObject {
     }
     catch (MissingIdException e) {
       LOGGER.warn("Missing IDs for scraping TV show '{}' with '{}'", tvShow.getTitle(), mediaScraper.getId());
-      MessageManager.getInstance().pushMessage(new Message(Message.MessageLevel.ERROR, "TvShowChooser", "scraper.error.missingid"));
+      throw e;
     }
     catch (NothingFoundException e) {
       LOGGER.debug("nothing found");
     }
     catch (ScrapeException e) {
       LOGGER.error("Could not scrape TV show '{}' with '{}' - '{}'", tvShow.getTitle(), mediaScraper.getId(), e.getMessage());
-      MessageManager.getInstance()
-          .pushMessage(new Message(Message.MessageLevel.ERROR, "TvShowChooser", "message.scrape.metadatatvshowfailed",
-              new String[] { ":", e.getLocalizedMessage() }));
+      throw e;
     }
     catch (Exception e) {
       LOGGER.error("Unforeseen error in TV show scrape", e);
-      MessageManager.getInstance()
-          .pushMessage(new Message(Message.MessageLevel.ERROR, "TvShowChooser", "message.scrape.metadatatvshowfailed",
-              new String[] { ":", e.getLocalizedMessage() }));
+      throw new ScrapeException(e);
     }
   }
 

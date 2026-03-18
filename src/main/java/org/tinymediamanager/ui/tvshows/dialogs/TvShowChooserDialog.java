@@ -41,6 +41,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
+import java.io.InterruptedIOException;
 import java.text.Collator;
 import java.text.RuleBasedCollator;
 import java.util.ArrayList;
@@ -102,6 +103,7 @@ import org.tinymediamanager.scraper.entities.MediaEpisodeGroup;
 import org.tinymediamanager.scraper.entities.MediaEpisodeNumber;
 import org.tinymediamanager.scraper.entities.MediaLanguages;
 import org.tinymediamanager.scraper.entities.MediaType;
+import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.rating.RatingProvider;
 import org.tinymediamanager.scraper.util.ListUtils;
 import org.tinymediamanager.scraper.util.StrgUtils;
@@ -988,6 +990,24 @@ public class TvShowChooserDialog extends TmmDialog implements ActionListener {
     });
   }
 
+  private static String getExceptionMessage(Throwable exception, MediaScraper mediaScraper) {
+    String errorMessage;
+
+    if ("imdb".equalsIgnoreCase(mediaScraper.getId()) && exception.getCause() instanceof HttpException httpException
+        && httpException.getStatusCode() == 202) {
+      errorMessage = TmmResourceBundle.getString("message.scrape.imdb202");
+    }
+    else if (exception instanceof InterruptedIOException || exception instanceof InterruptedException
+        || exception.getCause() instanceof InterruptedIOException || exception.getCause() instanceof InterruptedException) {
+      errorMessage = "";
+    }
+    else {
+      errorMessage = exception.getMessage();
+    }
+
+    return errorMessage;
+  }
+
   private class SearchTask extends SwingWorker<Void, Void> {
     private final String            searchTerm;
     private final TvShow            show;
@@ -1030,7 +1050,12 @@ public class TvShowChooserDialog extends TmmDialog implements ActionListener {
       if (error != null) {
         // display empty result
         searchResultEventList.add(TvShowChooserModel.emptyResult);
-        SwingUtilities.invokeLater(() -> lblError.setText(error.getMessage()));
+
+        // build the error message to display
+        String errorMessage = getExceptionMessage(error, mediaScraper);
+        if (StringUtils.isNotBlank(errorMessage)) {
+          SwingUtilities.invokeLater(() -> lblError.setText(errorMessage));
+        }
       }
       else if (!cancel) {
         if (ListUtils.isEmpty(searchResult)) {
@@ -1086,7 +1111,10 @@ public class TvShowChooserDialog extends TmmDialog implements ActionListener {
     @Override
     public void done() {
       if (error != null) {
-        SwingUtilities.invokeLater(() -> lblError.setText(error.getMessage()));
+        String errorMessage = getExceptionMessage(error, mediaScraper);
+        if (StringUtils.isNotBlank(errorMessage)) {
+          SwingUtilities.invokeLater(() -> lblError.setText(errorMessage));
+        }
       }
       stopProgressBar();
     }

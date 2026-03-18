@@ -21,7 +21,7 @@ import java.io.IOException;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * the class {@link HttpException} is thrown if there has been a HTTP exception while querying the external source
+ * the class {@link HttpException} is thrown if there has been an HTTP exception while querying the external source
  *
  * @author Manuel Laggner
  * @since 3.0

@@ -66,6 +66,7 @@ import org.tinymediamanager.scraper.entities.MediaCertification;
 import org.tinymediamanager.scraper.entities.MediaEpisodeGroup;
 import org.tinymediamanager.scraper.entities.MediaEpisodeNumber;
 import org.tinymediamanager.scraper.entities.MediaType;
+import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
 import org.tinymediamanager.scraper.http.InMemoryCachedUrl;
 import org.tinymediamanager.scraper.http.Url;
@@ -118,9 +119,7 @@ public abstract class ImdbParser {
   static final Pattern                   PERSON_ID_PATTERN        = Pattern.compile("/name/(nm[0-9]{6,})/");
   static final Pattern                   IMAGE_SCALING_PATTERN    = Pattern.compile("S([XY])(.*?)_CR(\\d*),(\\d*),(\\d*),(\\d*)");
 
-  static final String                    INCLUDE_MOVIE            = "includeMovieResults";
   static final String                    INCLUDE_TV_MOVIE         = "includeTvMovieResults";
-  static final String                    INCLUDE_TV_SERIES        = "includeTvSeriesResults";
   static final String                    INCLUDE_SHORT            = "includeShortResults";
   static final String                    INCLUDE_VIDEOGAME        = "includeVideogameResults";
   static final String                    INCLUDE_MUSICVIDEO       = "includeMusicVideoResults";
@@ -182,30 +181,12 @@ public abstract class ImdbParser {
   protected abstract MediaMetadata getMetadata(MediaSearchAndScrapeOptions options) throws ScrapeException;
 
   /**
-   * should we include movie results
-   *
-   * @return true/false
-   */
-  protected boolean isIncludeMovieResults() {
-    return config.getValueAsBool(INCLUDE_MOVIE, false);
-  }
-
-  /**
    * should we include TV movie results
    *
    * @return true/false
    */
   protected boolean isIncludeTvMovieResults() {
     return config.getValueAsBool(INCLUDE_TV_MOVIE, false);
-  }
-
-  /**
-   * should we include TV series results
-   *
-   * @return true/false
-   */
-  protected boolean isIncludeTvSeriesResults() {
-    return config.getValueAsBool(INCLUDE_TV_SERIES, false);
   }
 
   /**
@@ -383,8 +364,11 @@ public abstract class ImdbParser {
         // do not swallow these Exceptions
         Thread.currentThread().interrupt();
       }
+      catch (ScrapeException e) {
+        throw e;
+      }
       catch (Exception e) {
-        LOGGER.debug("Error fetching basic search via JSON", e.getMessage());
+        LOGGER.debug("Error fetching basic search via JSON - '{}'", e.getMessage());
         throw new ScrapeException(e);
       }
     }
@@ -604,6 +588,12 @@ public abstract class ImdbParser {
     Url findUrl = new InMemoryCachedUrl(constructUrl("find/?q=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param));
     findUrl.addHeader("Accept-Language", getAcceptLanguage(language, country));
     InputStream is = findUrl.getInputStream();
+
+    if (findUrl.getStatusCode() == 202) {
+      // 202 indicates that the WAF is active
+      throw new ScrapeException(new HttpException(202, "Request blocked - WAF active"));
+    }
+
     Document doc = Jsoup.parse(is, UrlUtil.UTF_8, "");
     doc.setBaseUri(metadataProvider.getApiKey());
 
@@ -2396,6 +2386,11 @@ public abstract class ImdbParser {
 
       try (InputStream is = url.getInputStream()) {
         doc = Jsoup.parse(is, "UTF-8", "");
+
+        if (url.getStatusCode() == 202) {
+          // 202 indicates that the WAF is active
+          throw new HttpException(202, "Request blocked - WAF active");
+        }
       }
       catch (InterruptedException | InterruptedIOException e) {
         // do not swallow these Exceptions
