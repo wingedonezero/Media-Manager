@@ -175,7 +175,7 @@ class TraktTvTvShow {
       // Fetch all pages using pagination with limit of 500
       int page = 1;
       int limit = 500;
-      int maxPages = 500; // hard stop after this amount of pages
+      int maxPages = 50; // hard stop after this amount of pages
 
       while (true) {
         List<BaseShow> pageResults = executeCall(api.sync().collectionShows(page, limit, null));
@@ -183,8 +183,10 @@ class TraktTvTvShow {
           break;
         }
         traktShows.addAll(pageResults);
-        // If we got fewer results than the limit, this was the last page; hard stop after max pages
-        if (pageResults.size() < limit || page > maxPages) {
+        // If we got fewer results than the limit, this was the last page
+        // If we get more results than the limit - the API is broken - stop too
+        // hard stop after max pages
+        if (pageResults.size() < limit || pageResults.size() > limit || page > maxPages) {
           break;
         }
         page++;
@@ -411,9 +413,10 @@ class TraktTvTvShow {
     try {
       // Extended.DEFAULT adds url, poster, fanart, banner, genres
       // Extended.MAX adds certs, runtime, and other stuff (useful for scraper!)
-      // Fetch all pages using pagination with limit of 1000 (maximum according to Trakt API)
+      // Fetch all pages using pagination with limit of 500 (maximum according to Trakt API)
       int page = 1;
-      int limit = 1000;
+      int limit = 500;
+      int maxPages = 50;
       while (true) {
         List<RatedShow> pageResults = executeCall(api.sync().ratingsShows(RatingsFilter.ALL, null, page, limit));
         if (pageResults.isEmpty()) {
@@ -421,7 +424,9 @@ class TraktTvTvShow {
         }
         traktShows.addAll(pageResults);
         // If we got fewer results than the limit, this was the last page
-        if (pageResults.size() < limit) {
+        // If we get more results than the limit - the API is broken - stop too
+        // hard stop after max pages
+        if (pageResults.size() < limit || pageResults.size() > limit || page > maxPages) {
           break;
         }
         page++;
@@ -436,9 +441,10 @@ class TraktTvTvShow {
     try {
       // Extended.DEFAULT adds url, poster, fanart, banner, genres
       // Extended.MAX adds certs, runtime, and other stuff (useful for scraper!)
-      // Fetch all pages using pagination with limit of 1000 (maximum according to Trakt API)
+      // Fetch all pages using pagination with limit of 500 (maximum according to Trakt API)
       int page = 1;
-      int limit = 1000;
+      int limit = 500;
+      int maxPages = 50;
       while (true) {
         List<RatedEpisode> pageResults = executeCall(api.sync().ratingsEpisodes(RatingsFilter.ALL, null, page, limit));
         if (pageResults.isEmpty()) {
@@ -446,7 +452,9 @@ class TraktTvTvShow {
         }
         traktEpisodes.addAll(pageResults);
         // If we got fewer results than the limit, this was the last page
-        if (pageResults.size() < limit) {
+        // If we get more results than the limit - the API is broken - stop too
+        // hard stop after max pages
+        if (pageResults.size() < limit || pageResults.size() > limit || page > maxPages) {
           break;
         }
         page++;
@@ -607,7 +615,7 @@ class TraktTvTvShow {
       // Fetch all pages using pagination with limit of 500
       int page = 1;
       int limit = 500;
-      int maxPages = 500; // hard stop after this amount of pages
+      int maxPages = 50; // hard stop after this amount of pages
 
       while (true) {
         List<BaseShow> pageResults = executeCall(api.sync().collectionShows(page, limit, null));
@@ -615,8 +623,10 @@ class TraktTvTvShow {
           break;
         }
         traktCollection.addAll(pageResults);
-        // If we got fewer results than the limit, this was the last page; hard stop after max pages
-        if (pageResults.size() < limit || page > maxPages) {
+        // If we got fewer results than the limit, this was the last page
+        // If we get more results than the limit - the API is broken - stop too
+        // hard stop after max pages
+        if (pageResults.size() < limit || pageResults.size() > limit || page > maxPages) {
           break;
         }
         page++;
