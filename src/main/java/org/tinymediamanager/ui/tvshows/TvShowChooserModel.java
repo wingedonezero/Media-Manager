@@ -553,7 +553,7 @@ public class TvShowChooserModel extends AbstractModelObject {
         catch (ScrapeException e) {
           LOGGER.error("Could not scrape TV show trailer of '{}' with '{}' - '{}'", tvShow.getTitle(), trailerScraper.getId(), e.getMessage());
           MessageManager.getInstance()
-              .pushMessage(new Message(MessageLevel.ERROR, tvShow, "message.scrape.trailerfailed", new String[] { ":", e.getLocalizedMessage() }));
+              .pushMessage(new Message(MessageLevel.ERROR, tvShow, "message.scrape.trailerfailed", new String[] { ":", tvShow.getTitle() }));
         }
         catch (Error e) {
           LOGGER.error("Unforeseen error in TV show trailer scrape for '{}'", tvShow.getTitle(), e);

@@ -513,7 +513,7 @@ public class MovieChooserModel extends AbstractModelObject {
           LOGGER.error("Could not scrape movie trailers of '{}' with '{}' - '{}'", movieToScrape.getTitle(), trailerScraper.getId(), e.getMessage());
           MessageManager.getInstance()
               .pushMessage(
-                  new Message(MessageLevel.ERROR, "MovieChooser", "message.scrape.trailerfailed", new String[] { ":", e.getLocalizedMessage() }));
+                  new Message(MessageLevel.ERROR, "MovieChooser", "message.scrape.trailerfailed", new String[] { ":", movieToScrape.getTitle() }));
         }
         catch (Exception e) {
           LOGGER.error("Unforeseen error in movie trailer scrape for '{}'", movieToScrape.getTitle(), e);
