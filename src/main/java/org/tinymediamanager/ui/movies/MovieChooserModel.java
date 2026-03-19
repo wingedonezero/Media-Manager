@@ -224,7 +224,7 @@ public class MovieChooserModel extends AbstractModelObject {
   /**
    * Scrape meta data.
    */
-  public void scrapeMetaData() {
+  public void scrapeMetaData() throws Exception {
     try {
       // poster for preview
       setPosterUrl(result.getPosterUrl());
@@ -259,8 +259,7 @@ public class MovieChooserModel extends AbstractModelObject {
       }
       catch (MissingIdException e) {
         LOGGER.warn("Missing IDs for scraping movie '{}' with '{}'", movieToScrape.getTitle(), metadataProvider.getId());
-        MessageManager.getInstance().pushMessage(new Message(MessageLevel.ERROR, "MovieChooser", "scraper.error.missingid"));
-        return;
+        throw e;
       }
       catch (NothingFoundException e) {
         LOGGER.debug("nothing found");
@@ -268,13 +267,11 @@ public class MovieChooserModel extends AbstractModelObject {
       }
       catch (ScrapeException e) {
         LOGGER.error("Could not scrape movie '{}' with '{}' - '{}'", movieToScrape.getTitle(), metadataProvider.getId(), e.getMessage());
-        MessageManager.getInstance()
-            .pushMessage(
-                new Message(MessageLevel.ERROR, "MovieChooser", "message.scrape.metadatamoviefailed", new String[] { ":", e.getLocalizedMessage() }));
-        return;
+        throw e;
       }
       catch (Exception e) {
         LOGGER.error("Unforeseen error in movie scrape for '{}'", movieToScrape.getTitle(), e);
+        throw new ScrapeException(e);
       }
 
       if (StringUtils.isNotBlank(metadata.getTitle())) {
@@ -316,6 +313,10 @@ public class MovieChooserModel extends AbstractModelObject {
       }
 
       setScraped(true);
+    }
+    catch (ScrapeException e) {
+      // just re-throw
+      throw e;
     }
     catch (Exception e) {
       LOGGER.error("Unforeseen error in movie scrape for '{}'", movieToScrape.getTitle(), e);
@@ -512,7 +513,7 @@ public class MovieChooserModel extends AbstractModelObject {
           LOGGER.error("Could not scrape movie trailers of '{}' with '{}' - '{}'", movieToScrape.getTitle(), trailerScraper.getId(), e.getMessage());
           MessageManager.getInstance()
               .pushMessage(
-                  new Message(MessageLevel.ERROR, "MovieChooser", "message.scrape.trailerfailed", new String[] { ":", e.getLocalizedMessage() }));
+                  new Message(MessageLevel.ERROR, "MovieChooser", "message.scrape.trailerfailed", new String[] { ":", movieToScrape.getTitle() }));
         }
         catch (Exception e) {
           LOGGER.error("Unforeseen error in movie trailer scrape for '{}'", movieToScrape.getTitle(), e);

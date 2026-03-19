@@ -27,6 +27,7 @@ import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -517,7 +518,7 @@ public class TvShowTreePanel extends TmmListPanel {
   }
 
   private void updateSelectionSums() {
-    List<TvShow> tvShows = selectionModel.getSelectedTvShows(true);
+    Set<TvShow> tvShows = new HashSet<>(selectionModel.getSelectedTvShows(true));
     List<TvShowEpisode> episodes = selectionModel.getSelectedEpisodes(true);
 
     // tv show
@@ -528,19 +529,28 @@ public class TvShowTreePanel extends TmmListPanel {
       String selectedTvShows = TmmResourceBundle.getString("tvshow.selected").replace("{}", String.valueOf(tvShows.size()));
 
       // Collect all unique media files from selected episodes
-      Set<MediaFile> uniqueMediaFiles = episodes.stream()
-          .filter(e -> tvShows.contains(e.getTvShow()))
-          .flatMap(e -> e.getMediaFiles().stream())
-          .collect(Collectors.toSet());
+      Set<MediaFile> uniqueMediaFiles = new HashSet<>();
+      for (TvShowEpisode episode : episodes) {
+        if (tvShows.contains(episode.getTvShow())) {
+          uniqueMediaFiles.addAll(episode.getMediaFiles());
+        }
+      }
 
       uniqueMediaFiles.addAll(tvShows.stream().flatMap(e -> e.getMediaFiles().stream()).collect(Collectors.toSet()));
 
-      double videoFileSize = uniqueMediaFiles.stream()
-          .filter(mediaFile -> mediaFile.getType() == MediaFileType.VIDEO)
-          .mapToLong(MediaFile::getFilesize)
-          .sum() / (1000.0 * 1000.0 * 1000);
+      double videoFileSize = 0;
+      for (MediaFile mediaFile : uniqueMediaFiles) {
+        if (mediaFile.getType() == MediaFileType.VIDEO) {
+          videoFileSize += mediaFile.getFilesize();
+        }
+      }
+      videoFileSize = videoFileSize / (1000.0 * 1000.0 * 1000);
 
-      double totalFileSize = uniqueMediaFiles.stream().mapToLong(MediaFile::getFilesize).sum() / (1000.0 * 1000.0 * 1000);
+      double totalFileSize = 0;
+      for (MediaFile mediaFile : uniqueMediaFiles) {
+        totalFileSize += mediaFile.getFilesize();
+      }
+      totalFileSize = totalFileSize / (1000.0 * 1000.0 * 1000);
 
       String text = String.format("%s (%.2f G)", selectedTvShows, totalFileSize);
       lblSelectedTvShowCount.setText(text);
@@ -562,12 +572,19 @@ public class TvShowTreePanel extends TmmListPanel {
       // Collect all unique media files from selected episodes
       Set<MediaFile> uniqueMediaFiles = episodes.stream().flatMap(e -> e.getMediaFiles().stream()).collect(Collectors.toSet());
 
-      double videoFileSize = uniqueMediaFiles.stream()
-          .filter(mediaFile -> mediaFile.getType() == MediaFileType.VIDEO)
-          .mapToLong(MediaFile::getFilesize)
-          .sum() / (1000.0 * 1000.0 * 1000);
+      double videoFileSize = 0;
+      for (MediaFile mediaFile : uniqueMediaFiles) {
+        if (mediaFile.getType() == MediaFileType.VIDEO) {
+          videoFileSize += mediaFile.getFilesize();
+        }
+      }
+      videoFileSize = videoFileSize / (1000.0 * 1000.0 * 1000);
 
-      double totalFileSize = uniqueMediaFiles.stream().mapToLong(MediaFile::getFilesize).sum() / (1000.0 * 1000.0 * 1000);
+      double totalFileSize = 0;
+      for (MediaFile mediaFile : uniqueMediaFiles) {
+        totalFileSize += mediaFile.getFilesize();
+      }
+      totalFileSize = totalFileSize / (1000.0 * 1000.0 * 1000);
 
       String text = String.format("%s (%.2f G)", selectedEpisodes, totalFileSize);
       lblSelectedEpisodeCount.setVisible(true);

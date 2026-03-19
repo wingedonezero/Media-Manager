@@ -1,3 +1,13 @@
+Version 5.2.10
+=======================
++ [Artwork] added support for the fanart file naming scheme "background"
+---
+x [UI] some performance optimizations for large TV show libraries
+x [IMDB] improved filtering for TV show search results
+x [IMDB] show an error when requests have been blocked by IMDB
+x [Trakt.tv] guarded the trakt.tv API implementation against faulty responses
+
+
 Version 5.2.9
 =======================
 + [UI] show the result of the post-processing commands in a dedicated dialog

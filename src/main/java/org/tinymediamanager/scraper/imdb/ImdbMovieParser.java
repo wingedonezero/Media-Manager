@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -55,11 +56,6 @@ public class ImdbMovieParser extends ImdbParser {
 
   ImdbMovieParser(IMediaProvider mediaProvider, ExecutorService executor) {
     super(mediaProvider, MediaType.MOVIE, executor);
-  }
-
-  @Override
-  protected boolean isIncludeMovieResults() {
-    return true;
   }
 
   @Override
@@ -109,6 +105,25 @@ public class ImdbMovieParser extends ImdbParser {
         options.getCertificationCountry().getAlpha2(), true);
     Future<Document> futureDetail = executor.submit(worker);
 
+    // check if the detail page is scrapable
+    try {
+      doc = futureDetail.get();
+      parseDetailPageJson(doc, options, md);
+      json = true;
+    }
+    catch (ScrapeException e) {
+      throw e;
+    }
+    catch (ExecutionException e) {
+      // any exception thrown in the future worker is wrapped by this one
+      throw new ScrapeException(e.getCause());
+    }
+    catch (Exception e) {
+      LOGGER.debug("Could not get detailpage for id '{}' - '{}'", imdbId, e.getMessage());
+      throw new ScrapeException(e);
+    }
+
+    // start other workers afterward
     worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L3JlZmVyZW5jZQ==")), options.getLanguage().getLanguage(),
         options.getCertificationCountry().getAlpha2(), true);
     Future<Document> futureReference = executor.submit(worker);
@@ -131,15 +146,7 @@ public class ImdbMovieParser extends ImdbParser {
       futureReleaseInfo = executor.submit(worker);
     }
 
-    try {
-      doc = futureDetail.get();
-      parseDetailPageJson(doc, options, md);
-      json = true;
-    }
-    catch (Exception e) {
-      LOGGER.debug("Could not get detailpage for id '{}' - '{}'", imdbId, e.getMessage());
-    }
-
+    // process results
     if (json) {
       // detail page worked, mix-in missing
       try {
