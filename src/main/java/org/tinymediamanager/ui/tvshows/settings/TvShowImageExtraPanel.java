@@ -59,6 +59,7 @@ class TvShowImageExtraPanel extends JPanel {
   private JRadioButton         rbExtraFanart1;
   private JRadioButton         rbExtraFanart2;
   private JRadioButton         rbExtraFanart3;
+  private JRadioButton         rbExtraFanart4;
 
   TvShowImageExtraPanel() {
     checkBoxListener = e -> checkChanges();
@@ -72,6 +73,7 @@ class TvShowImageExtraPanel extends JPanel {
     buttonGroup.add(rbExtraFanart1);
     buttonGroup.add(rbExtraFanart2);
     buttonGroup.add(rbExtraFanart3);
+    buttonGroup.add(rbExtraFanart4);
 
     settings.addPropertyChangeListener(evt -> {
       if ("preset".equals(evt.getPropertyName())) {
@@ -84,7 +86,7 @@ class TvShowImageExtraPanel extends JPanel {
 
   private void buildCheckBoxes() {
     // initialize
-    clearSelection(rbExtraFanart1, rbExtraFanart2, rbExtraFanart3);
+    clearSelection(rbExtraFanart1, rbExtraFanart2, rbExtraFanart3, rbExtraFanart4);
 
     // extrafanart filenames
     for (TvShowExtraFanartNaming fanart : settings.getExtraFanartFilenames()) {
@@ -100,6 +102,10 @@ class TvShowImageExtraPanel extends JPanel {
         case EXTRABACKDROP:
           rbExtraFanart3.setSelected(true);
           break;
+
+        case EXTRABACKGROUND:
+          rbExtraFanart4.setSelected(true);
+          break;
       }
     }
 
@@ -107,6 +113,7 @@ class TvShowImageExtraPanel extends JPanel {
     rbExtraFanart1.addItemListener(checkBoxListener);
     rbExtraFanart2.addItemListener(checkBoxListener);
     rbExtraFanart3.addItemListener(checkBoxListener);
+    rbExtraFanart4.addItemListener(checkBoxListener);
   }
 
   private void clearSelection(JToggleButton... toggleButtons) {
@@ -131,6 +138,9 @@ class TvShowImageExtraPanel extends JPanel {
     }
     if (rbExtraFanart3.isSelected()) {
       settings.addExtraFanartFilename(TvShowExtraFanartNaming.EXTRABACKDROP);
+    }
+    if (rbExtraFanart4.isSelected()) {
+      settings.addExtraFanartFilename(TvShowExtraFanartNaming.EXTRABACKGROUND);
     }
   }
 
@@ -162,6 +172,9 @@ class TvShowImageExtraPanel extends JPanel {
 
         rbExtraFanart3 = new JRadioButton("backdropX." + TmmResourceBundle.getString("Settings.artwork.extension"));
         panel.add(rbExtraFanart3, "cell 0 1");
+
+        rbExtraFanart4 = new JRadioButton("backgroundX." + TmmResourceBundle.getString("Settings.artwork.extension"));
+        panel.add(rbExtraFanart4, "cell 2 1");
 
         JLabel lblDownloadCount = new JLabel(TmmResourceBundle.getString("Settings.amount.autodownload"));
         panelOptions.add(lblDownloadCount, "cell 2 3");
@@ -211,5 +224,9 @@ class TvShowImageExtraPanel extends JPanel {
     AutoBinding autoBinding_11 = Bindings.createAutoBinding(UpdateStrategy.READ, chckbxEnableExtrafanart, jCheckBoxBeanProperty, rbExtraFanart3,
         jCheckBoxBeanProperty_2);
     autoBinding_11.bind();
+    //
+    AutoBinding autoBinding_12 = Bindings.createAutoBinding(UpdateStrategy.READ, chckbxEnableExtrafanart, jCheckBoxBeanProperty, rbExtraFanart4,
+        jCheckBoxBeanProperty_2);
+    autoBinding_12.bind();
   }
 }

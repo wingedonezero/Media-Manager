@@ -46,5 +46,13 @@ public enum TvShowExtraFanartNaming implements IFileNaming {
     public String getFilename(String basename, String extension) {
       return "backdrop." + extension;
     }
+  },
+
+  /** backgroundX.* */
+  EXTRABACKGROUND {
+    @Override
+    public String getFilename(String basename, String extension) {
+      return "background." + extension;
+    }
   }
 }

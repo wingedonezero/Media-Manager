@@ -80,5 +80,29 @@ public enum MovieExtraFanartNaming implements IFileNaming {
     public String getFilename(String basename, String extension) {
       return "backdrop." + extension;
     }
+  },
+
+  /** [filename]-backgroundX.* */
+  FILENAME_EXTRABACKGROUND {
+    @Override
+    public String getFilename(String basename, String extension) {
+      return StringUtils.isNotBlank(basename) ? basename + "-background." + extension : "";
+    }
+  },
+
+  /** [filename].backgroundX.* */
+  FILENAME_EXTRABACKGROUND2 {
+    @Override
+    public String getFilename(String basename, String extension) {
+      return StringUtils.isNotBlank(basename) ? basename + ".background." + extension : "";
+    }
+  },
+
+  /** backgroundX.* */
+  EXTRABACKGROUND {
+    @Override
+    public String getFilename(String basename, String extension) {
+      return "background." + extension;
+    }
   }
 }
