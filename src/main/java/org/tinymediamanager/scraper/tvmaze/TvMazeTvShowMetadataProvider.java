@@ -180,14 +180,7 @@ public class TvMazeTvShowMetadataProvider extends TvMazeMetadataProvider
     // Get Cast
     if (show._embedded.cast != null) {
       for (Cast cast : show._embedded.cast) {
-        Person person = new Person(Person.Type.ACTOR);
-        person.setId(MediaMetadata.TVMAZE, cast.person.id);
-        person.setName(cast.person.name);
-        person.setRole(cast.character.name);
-        person.setProfileUrl(cast.person.url);
-        if (cast.person.image != null) {
-          person.setThumbUrl(cast.person.image.medium);
-        }
+        Person person = createTmmPerson(cast, Person.Type.ACTOR);
         md.addCastMember(person);
       }
     }
@@ -195,8 +188,10 @@ public class TvMazeTvShowMetadataProvider extends TvMazeMetadataProvider
     // Get Crew
     if (show._embedded.crew != null) {
       for (Crew crew : show._embedded.crew) {
-        Person person = createTmmCrew(crew);
-        md.addCastMember(person);
+        Person person = createTmmPerson(crew);
+        if (person.getType() != Person.Type.OTHER) {
+          md.addCastMember(person); // do not add unknown
+        }
       }
     }
 
@@ -209,7 +204,19 @@ public class TvMazeTvShowMetadataProvider extends TvMazeMetadataProvider
     return md;
   }
 
-  private Person createTmmCrew(Crew crew) {
+  private Person createTmmPerson(Cast cast, Person.Type type) {
+    Person person = new Person(type);
+    person.setId(MediaMetadata.TVMAZE, cast.person.id);
+    person.setName(cast.person.name);
+    person.setRole(cast.character.name);
+    person.setProfileUrl(cast.person.url);
+    if (cast.person.image != null) {
+      person.setThumbUrl(cast.person.image.medium);
+    }
+    return person;
+  }
+
+  private Person createTmmPerson(Crew crew) {
     Person person = new Person();
     person.setId(MediaMetadata.TVMAZE, crew.person.id);
     person.setName(crew.person.name);
@@ -246,7 +253,8 @@ public class TvMazeTvShowMetadataProvider extends TvMazeMetadataProvider
       }
 
       default:
-        return person;
+        person.setType(Person.Type.OTHER);
+        break;
     }
     return person;
   }
@@ -636,22 +644,17 @@ public class TvMazeTvShowMetadataProvider extends TvMazeMetadataProvider
       // Get Guests
       if (episode._embedded.guestcast != null) {
         for (Cast cast : episode._embedded.guestcast) {
-          Person person = new Person(Person.Type.GUEST);
-          person.setId(MediaMetadata.TVMAZE, cast.person.id);
-          person.setName(cast.person.name);
-          person.setRole(cast.character.name);
-          person.setProfileUrl(cast.person.url);
-          if (cast.person.image != null) {
-            person.setThumbUrl(cast.person.image.medium);
-          }
+          Person person = createTmmPerson(cast, Person.Type.GUEST);
           md.addCastMember(person);
         }
       }
       // Get Crew
       if (episode._embedded.crew != null) {
         for (Crew crew : episode._embedded.crew) {
-          Person person = createTmmCrew(crew);
-          md.addCastMember(person);
+          Person person = createTmmPerson(crew);
+          if (person.getType() != Person.Type.OTHER) {
+            md.addCastMember(person); // do not add unknown
+          }
         }
       }
 
