@@ -49,6 +49,6 @@ public interface TvMazeService {
   @GET("/shows/{id}/episodes?specials=1")
   Call<List<Episode>> episodeList(@Path("id") int id);
 
-  @GET("/seasons/{id}/episodes?embed=guestcast")
+  @GET("/seasons/{id}/episodes?embed[]=guestcast&embed[]=guestcrew")
   Call<List<Episode>> seasonEpisodes(@Path("id") int id);
 }

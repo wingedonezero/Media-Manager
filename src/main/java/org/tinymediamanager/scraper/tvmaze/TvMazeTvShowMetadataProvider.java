@@ -195,44 +195,7 @@ public class TvMazeTvShowMetadataProvider extends TvMazeMetadataProvider
     // Get Crew
     if (show._embedded.crew != null) {
       for (Crew crew : show._embedded.crew) {
-        Person person = new Person();
-        person.setId(MediaMetadata.TVMAZE, crew.person.id);
-        person.setName(crew.person.name);
-        person.setProfileUrl(crew.person.url);
-        if (crew.person.image != null) {
-          person.setThumbUrl(crew.person.image.medium);
-        }
-        person.setRole(crew.type);
-        switch (crew.type) {
-          case "Executive Producer":
-          case "Producer": {
-            person.setType(Person.Type.PRODUCER);
-            break;
-          }
-
-          case "Director Of Photography": {
-            person.setType(Person.Type.CAMERA);
-            break;
-          }
-
-          case "Creator": {
-            person.setType(Person.Type.WRITER);
-            break;
-          }
-
-          case "Editor": {
-            person.setType(Person.Type.EDITOR);
-            break;
-          }
-
-          case "Music": {
-            person.setType(Person.Type.COMPOSER);
-            break;
-          }
-
-          default:
-            continue; // do not add unknown
-        }
+        Person person = createTmmCrew(crew);
         md.addCastMember(person);
       }
     }
@@ -244,6 +207,48 @@ public class TvMazeTvShowMetadataProvider extends TvMazeMetadataProvider
     }
 
     return md;
+  }
+
+  private Person createTmmCrew(Crew crew) {
+    Person person = new Person();
+    person.setId(MediaMetadata.TVMAZE, crew.person.id);
+    person.setName(crew.person.name);
+    person.setProfileUrl(crew.person.url);
+    if (crew.person.image != null) {
+      person.setThumbUrl(crew.person.image.medium);
+    }
+    person.setRole(crew.type);
+    switch (crew.type) {
+      case "Executive Producer":
+      case "Producer": {
+        person.setType(Person.Type.PRODUCER);
+        break;
+      }
+
+      case "Director Of Photography": {
+        person.setType(Person.Type.CAMERA);
+        break;
+      }
+
+      case "Creator": {
+        person.setType(Person.Type.WRITER);
+        break;
+      }
+
+      case "Editor": {
+        person.setType(Person.Type.EDITOR);
+        break;
+      }
+
+      case "Music": {
+        person.setType(Person.Type.COMPOSER);
+        break;
+      }
+
+      default:
+        return person;
+    }
+    return person;
   }
 
   /**
@@ -642,6 +647,14 @@ public class TvMazeTvShowMetadataProvider extends TvMazeMetadataProvider
           md.addCastMember(person);
         }
       }
+      // Get Crew
+      if (episode._embedded.crew != null) {
+        for (Crew crew : episode._embedded.crew) {
+          Person person = createTmmCrew(crew);
+          md.addCastMember(person);
+        }
+      }
+
       returnList.add(md);
     }
 
