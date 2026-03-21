@@ -109,26 +109,26 @@ import org.tinymediamanager.thirdparty.trakttv.TvShowSyncTraktTvTask;
  */
 
 public class TvShowUpdateDatasourceTask extends TmmThreadPool {
-  private static final Logger                  LOGGER         = LoggerFactory.getLogger(TvShowUpdateDatasourceTask.class);
+  private static final Logger                    LOGGER         = LoggerFactory.getLogger(TvShowUpdateDatasourceTask.class);
 
   // skip well-known, but unneeded folders (UPPERCASE)
-  private static final List<String>            SKIP_FOLDERS   = Arrays.asList(".", "..", "CERTIFICATE", "$RECYCLE.BIN", "RECYCLER",
+  private static final List<String>              SKIP_FOLDERS   = Arrays.asList(".", "..", "CERTIFICATE", "$RECYCLE.BIN", "RECYCLER",
       "SYSTEM VOLUME INFORMATION", "@EADIR", "ADV_OBJ", "EXTRATHUMB", "PLEX VERSIONS");
 
   // skip folders starting with a SINGLE "." or "._"
-  private static final String                  SKIP_REGEX     = "^[.][\\w@]+.*";
+  private static final String                    SKIP_REGEX     = "^[.][\\w@]+.*";
 
-  private static long                          preDir         = 0;
-  private static long                          postDir        = 0;
-  private static long                          visFile        = 0;
+  private static long                            preDir         = 0;
+  private static long                            postDir        = 0;
+  private static long                            visFile        = 0;
 
-  private final List<String>                   dataSources    = new ArrayList<>();
-  private final List<Pattern>                  skipFolders    = new ArrayList<>();
-  private final List<TvShow>                   showsToUpdate  = new ArrayList<>();
-  private final TvShowList                     tvShowList;
-  private final Set<Path>                      filesFound     = new HashSet<>();
-  private final Map<Path, BasicFileAttributes> fileAttributes = new HashMap<>();
-  private final ReentrantReadWriteLock         fileLock       = new ReentrantReadWriteLock();
+  private final List<String>                     dataSources    = new ArrayList<>();
+  private final List<Pattern>                    skipFolders    = new ArrayList<>();
+  private final List<TvShow>                     showsToUpdate  = new ArrayList<>();
+  private final TvShowList                       tvShowList;
+  private final Set<Path>                        filesFound     = new HashSet<>();
+  private final Map<String, BasicFileAttributes> fileAttributes = new HashMap<>();
+  private final ReentrantReadWriteLock           fileLock       = new ReentrantReadWriteLock();
 
   /**
    * Instantiates a new scrape task - to update all datasources
@@ -636,7 +636,7 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
       }
       else {
         // did the file dates/size change?
-        if (MediaFileHelper.gatherBasicFileInformation(mf, fileAttributes.get(mf.getFileAsPath()))) {
+        if (MediaFileHelper.gatherBasicFileInformation(mf, fileAttributes.get(mf.getFileAsPath().toString()))) {
           submitTask(new TvShowMediaFileInformationFetcherTask(mf, tvShow, true));
         }
       }
@@ -650,7 +650,7 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
         }
         else {
           // did the file dates/size change?
-          if (MediaFileHelper.gatherBasicFileInformation(mf, fileAttributes.get(mf.getFileAsPath()))) {
+          if (MediaFileHelper.gatherBasicFileInformation(mf, fileAttributes.get(mf.getFileAsPath().toString()))) {
             submitTask(new TvShowMediaFileInformationFetcherTask(mf, season, true));
           }
         }
@@ -665,7 +665,7 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
         }
         else {
           // at least update the file dates
-          if (MediaFileHelper.gatherBasicFileInformation(mf, fileAttributes.get(mf.getFileAsPath()))) {
+          if (MediaFileHelper.gatherBasicFileInformation(mf, fileAttributes.get(mf.getFileAsPath().toString()))) {
             // okay, something changed with that episode file - force fetching mediainfo (and drop medianfo.xml for MAIN video only)
             if (mf.getType() == MediaFileType.VIDEO) {
               episode.getMediaFiles(MediaFileType.MEDIAINFO).forEach(mediaFile -> {
@@ -1023,6 +1023,10 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
                 if (StringUtils.isBlank(episode.getOriginalFilename())) {
                   episode.setOriginalFilename(vid.getFilename());
                 }
+                else if (!FilenameUtils.getExtension(episode.getOriginalFilename()).equals(vid.getExtension())) {
+                  // if the found filename has a different extension than the already stored one, we update to the new one (e.g. .mkv -> .mp4)
+                  episode.setOriginalFilename(vid.getFilename());
+                }
 
                 // add main video file
                 episode.addToMediaFiles(vid);
@@ -1098,6 +1102,10 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
                   if (StringUtils.isBlank(ep.getOriginalFilename())) {
                     ep.setOriginalFilename(vid.getFilename());
                   }
+                  else if (!FilenameUtils.getExtension(ep.getOriginalFilename()).equals(vid.getExtension())) {
+                    // if the found filename has a different extension than the already stored one, we update to the new one (e.g. .mkv -> .mp4)
+                    ep.setOriginalFilename(vid.getFilename());
+                  }
 
                   ep.addToMediaFiles(vid);
                   found = true;
@@ -1149,6 +1157,10 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
 
               // remember the filename the first time the show gets added to tmm
               if (StringUtils.isBlank(episode.getOriginalFilename())) {
+                episode.setOriginalFilename(vid.getFilename());
+              }
+              else if (!FilenameUtils.getExtension(episode.getOriginalFilename()).equals(vid.getExtension())) {
+                // if the found filename has a different extension than the already stored one, we update to the new one (e.g. .mkv -> .mp4)
                 episode.setOriginalFilename(vid.getFilename());
               }
 
@@ -1242,6 +1254,10 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
 
             // remember the filename the first time the show gets added to tmm
             if (StringUtils.isBlank(episode.getOriginalFilename())) {
+              episode.setOriginalFilename(vid.getFilename());
+            }
+            else if (!FilenameUtils.getExtension(episode.getOriginalFilename()).equals(vid.getExtension())) {
+              // if the found filename has a different extension than the already stored one, we update to the new one (e.g. .mkv -> .mp4)
               episode.setOriginalFilename(vid.getFilename());
             }
 
@@ -1645,7 +1661,7 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
       }
 
       fileLock.writeLock().lock();
-      fileAttributes.put(file, attr);
+      fileAttributes.put(file.toAbsolutePath().toString(), attr);
       fileLock.writeLock().unlock();
 
       try {
