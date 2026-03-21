@@ -1,5 +1,6 @@
 Version 5.2.11
 =======================
+x [Launcher] refactored the launcher and recompiled with Go 1.24.13
 
 
 Version 5.2.10
