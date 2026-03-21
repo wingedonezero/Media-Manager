@@ -1,7 +1,8 @@
 Version 5.2.11
 =======================
 x [Java] upgraded Java to 21.0.10
-x [Launcher] refactored the launcher and recompiled with Go 1.24.13
+x [Launcher] refactored the launcher and recompiled with Go 1.24.13 (security update)
+x [Library] upgraded Jackson to 2.21.1 (security update)
 
 
 Version 5.2.10

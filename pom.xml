@@ -84,7 +84,7 @@
         <jre.version>21.0.10-b1163</jre.version>
         <launcher.version>5.0.13</launcher.version>
         <flatlaf.version>3.7.1</flatlaf.version>
-        <jackson.version>2.20.0</jackson.version>
+        <jackson.version>2.21.1</jackson.version>
         <sonar.java.source>17</sonar.java.source>
     </properties>
     <dependencies>
