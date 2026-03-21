@@ -16,7 +16,10 @@
 package org.tinymediamanager.core;
 
 import java.util.Locale;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * this is a wrapper of the {@link java.util.ResourceBundle} to buffer loading and prevent getting exceptions on missing properties
@@ -36,19 +39,34 @@ public class TmmResourceBundle {
    *          the key to get from the resource bundle
    * @return the {@link String} from the {@link ResourceBundle} or "???"
    */
-  public static String getString(String accessKey) {
+  @NotNull
+  public static String getString(@NotNull String accessKey) {
+    try {
+      return getStringUnsafe(accessKey);
+    }
+    catch (Exception e) {
+      return "???";
+    }
+  }
+
+  /**
+   * get the given {@link String} from the default {@link ResourceBundle}
+   *
+   * @param accessKey
+   *          the key to get from the resource bundle
+   * @return the {@link String} from the {@link ResourceBundle}
+   * @throws MissingResourceException
+   *           the exception thrown, when the key is not found in the resource bundle
+   */
+  @NotNull
+  public static String getStringUnsafe(@NotNull String accessKey) throws MissingResourceException {
     // no need for locking here, if there is multi thread access to a null value of instance,
     // the same instance will be returned by ResourceBundle
     if (instance == null) {
       instance = ResourceBundle.getBundle("messages", Locale.getDefault());
     }
 
-    try {
-      return instance.getString(accessKey);
-    }
-    catch (Exception e) {
-      return "???";
-    }
+    return instance.getString(accessKey);
   }
 
   public static void clearCache() {
