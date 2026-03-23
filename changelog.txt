@@ -3,6 +3,7 @@ Version 5.2.11
 x [Movies, TV shows] update the original filename when exchanging a video file
 x [TV shows] consume less memory on update data sources
 x [UI] display translated subtitle flags (default, forced, SDH) in the filter #3150
+x [UI] fixed loading/saving of complex TV show filters #3236
 x [Java] upgraded Java to 21.0.10
 x [Launcher] refactored the launcher and recompiled with Go 1.24.13 (security update)
 x [Library] upgraded Jackson to 2.21.1 (security update)
