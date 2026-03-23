@@ -72,6 +72,6 @@ public class TvShowSeasonCountFilter extends AbstractNumberTvShowUIFilter {
 
   @Override
   public String getId() {
-    return "tvShowEpisodeCount";
+    return "tvShowSeasonCount";
   }
 }
