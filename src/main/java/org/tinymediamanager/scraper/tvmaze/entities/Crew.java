@@ -17,7 +17,11 @@ package org.tinymediamanager.scraper.tvmaze.entities;
 
 import org.tinymediamanager.scraper.entities.BaseJsonEntity;
 
+import com.google.gson.annotations.SerializedName;
+
 public class Crew extends BaseJsonEntity {
+  // "crew" has "type", "guestcrew" has "guestCrewType" - oh c'mon
+  @SerializedName(value = "type", alternate = { "guestCrewType" })
   public String type;
   public Person person;
 }
