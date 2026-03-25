@@ -477,7 +477,18 @@ public class TmmUIHelper {
 
     // handle urls
     if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-      Desktop.getDesktop().browse(new URI(url));
+      URI uri = new URI(url);
+      // best practice: open the browser in a new thread
+      new Thread(() -> {
+        try {
+          Desktop.getDesktop().browse(uri);
+        }
+        catch (Exception e) {
+          // handle exceptions in the EDT
+          SwingUtilities.invokeLater(() -> MessageManager.getInstance()
+              .pushMessage(new Message(Message.MessageLevel.ERROR, url, "message.erroropenurl", new String[] { ":", e.getLocalizedMessage() })));
+        }
+      }).start();
     }
     else if (SystemUtils.IS_OS_LINUX) {
       // try all different starters
