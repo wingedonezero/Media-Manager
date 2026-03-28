@@ -2275,59 +2275,14 @@ public class TvShowRenamer {
     }
     else {
       // multi episodes
-      String loopNumbers = "";
-
-      // *******************
-      // LOOP 1 - season/episode
-      // *******************
-      String seasonToken = getTokenFromTemplate(newDestination, seasonNumbers);
-      if (StringUtils.isNotBlank(seasonToken)) {
-        String seasonPart = "";
-        Matcher matcher = seDelimiter.matcher(newDestination);
-        if (matcher.find()) {
-          seasonPart = matcher.group(0);
-        }
-        else {
-          // no season info found? search for the token itself
-          Pattern pattern = Pattern.compile("\\$\\{" + Pattern.quote(seasonToken) + ".*?\\}");
-          matcher = pattern.matcher(newDestination);
-          if (matcher.find()) {
-            seasonPart = matcher.group(0);
-          }
-        }
-        loopNumbers += seasonPart;
-      }
-
-      String episodeToken = getTokenFromTemplate(newDestination, episodeNumbers);
-      if (StringUtils.isNotBlank(episodeToken)) {
-        String episodePart = "";
-        Matcher matcher = epDelimiter.matcher(newDestination);
-        if (matcher.find()) {
-          episodePart += matcher.group(0);
-        }
-        else {
-          // no episode info found? search for the token itself
-          Pattern pattern = Pattern.compile("\\$\\{" + Pattern.quote(episodeToken) + ".*?\\}");
-          matcher = pattern.matcher(newDestination);
-          if (matcher.find()) {
-            episodePart = matcher.group(0);
-          }
-        }
-
-        loopNumbers += episodePart;
-      }
+      String seasonPart = getSeasonPatternPart(newDestination);
+      String episodeNumberPart = getEpisodePatternPart(newDestination);
+      String loopNumbers = seasonPart + episodeNumberPart;
       loopNumbers = loopNumbers.strip();
-
-      // foreach episode, replace and append pattern:
-      StringBuilder episodeParts = new StringBuilder();
-      for (TvShowEpisode episode : episodes) {
-        String episodePart = getTokenValue(episode.getTvShow(), episode, loopNumbers);
-        episodeParts.append(" ").append(episodePart);
-      }
 
       // replace original pattern, with our combined
       if (StringUtils.isNotBlank(loopNumbers)) {
-        newDestination = newDestination.replace(loopNumbers, episodeParts.toString().strip());
+        newDestination = newDestination.replace(loopNumbers, renderMultiEpisodeNumbers(loopNumbers, seasonPart, episodeNumberPart, episodes));
       }
 
       // *******************
@@ -2347,7 +2302,7 @@ public class TvShowRenamer {
 
       // foreach episode, replace and append pattern:
       if (StringUtils.isNotBlank(loopTitles)) {
-        episodeParts = new StringBuilder();
+        StringBuilder episodeParts = new StringBuilder();
         String previous = "";
         for (TvShowEpisode episode : episodes) {
           String episodePart = getTokenValue(episode.getTvShow(), episode, loopTitles);
@@ -2383,7 +2338,7 @@ public class TvShowRenamer {
 
       // foreach episode, replace and append pattern:
       if (StringUtils.isNotBlank(loopAired)) {
-        episodeParts = new StringBuilder();
+        StringBuilder episodeParts = new StringBuilder();
         for (TvShowEpisode episode : episodes) {
           String episodePart = getTokenValue(episode.getTvShow(), episode, loopAired);
 
@@ -2411,6 +2366,219 @@ public class TvShowRenamer {
     newDestination = cleanupDestination(newDestination, spaceSubstitution, spaceReplacement);
 
     return newDestination;
+  }
+
+  /**
+   * Gets the season-specific token fragment from the given template.
+   * <p>
+   * The fragment includes any leading season marker such as {@code S}, {@code Season }, or the bare season token when no marker is present.
+   * </p>
+   *
+   * @param template
+   *          the template to inspect
+   * @return the season fragment or an empty string
+   */
+  private static String getSeasonPatternPart(String template) {
+    String seasonToken = getTokenFromTemplate(template, seasonNumbers);
+    if (StringUtils.isBlank(seasonToken)) {
+      return "";
+    }
+
+    Matcher matcher = seDelimiter.matcher(template);
+    if (matcher.find()) {
+      return matcher.group(0);
+    }
+
+    Pattern pattern = Pattern.compile("\\$\\{" + Pattern.quote(seasonToken) + ".*?\\}");
+    matcher = pattern.matcher(template);
+    if (matcher.find()) {
+      return matcher.group(0);
+    }
+
+    return "";
+  }
+
+  /**
+   * Gets the episode-specific token fragment from the given template.
+   * <p>
+   * The fragment includes any leading episode marker such as {@code E}, {@code Episode }, or {@code x} when present.
+   * </p>
+   *
+   * @param template
+   *          the template to inspect
+   * @return the episode fragment or an empty string
+   */
+  private static String getEpisodePatternPart(String template) {
+    String episodeToken = getTokenFromTemplate(template, episodeNumbers);
+    if (StringUtils.isBlank(episodeToken)) {
+      return "";
+    }
+
+    Matcher matcher = epDelimiter.matcher(template);
+    if (matcher.find()) {
+      return matcher.group(0);
+    }
+
+    Pattern pattern = Pattern.compile("\\$\\{" + Pattern.quote(episodeToken) + ".*?\\}");
+    matcher = pattern.matcher(template);
+    if (matcher.find()) {
+      return matcher.group(0);
+    }
+
+    return "";
+  }
+
+  /**
+   * Renders the season/episode portion for a multi-episode file according to the configured style.
+   *
+   * @param loopNumbers
+   *          the complete season/episode token fragment
+   * @param seasonPart
+   *          the extracted season fragment
+   * @param episodePart
+   *          the extracted episode fragment
+   * @param episodes
+   *          the episodes to render
+   * @return the rendered season/episode fragment
+   */
+  private static String renderMultiEpisodeNumbers(String loopNumbers, String seasonPart, String episodePart, List<TvShowEpisode> episodes) {
+    TvShowMultiEpisodeStyle multiEpisodeStyle = TvShowModuleManager.getInstance().getSettings().getRenamerMultiEpisodeStyle();
+    if (multiEpisodeStyle == TvShowMultiEpisodeStyle.RANGE && isRangeStyleApplicable(episodePart, episodes)) {
+      String rangeEpisodeNumbers = renderRangeEpisodeNumbers(loopNumbers, seasonPart, episodePart, episodes);
+      if (StringUtils.isNotBlank(rangeEpisodeNumbers)) {
+        return rangeEpisodeNumbers;
+      }
+    }
+
+    return renderRepeatedEpisodeNumbers(loopNumbers, episodes);
+  }
+
+  /**
+   * Renders every episode marker separately for multi-episode files.
+   *
+   * @param loopNumbers
+   *          the complete season/episode token fragment
+   * @param episodes
+   *          the episodes to render
+   * @return the rendered season/episode fragment
+   */
+  private static String renderRepeatedEpisodeNumbers(String loopNumbers, List<TvShowEpisode> episodes) {
+    StringBuilder episodeParts = new StringBuilder();
+    for (TvShowEpisode episode : episodes) {
+      String episodePart = getTokenValue(episode.getTvShow(), episode, loopNumbers);
+      episodeParts.append(" ").append(episodePart);
+    }
+    return episodeParts.toString().strip();
+  }
+
+  /**
+   * Checks whether the given episodes can safely be rendered as a compact range.
+   * <p>
+   * Range rendering is only safe for same-season, contiguous episode sequences because anything else would suggest episodes that are not actually
+   * part of the file.
+   * </p>
+   *
+   * @param episodePart
+   *          the extracted episode fragment
+   * @param episodes
+   *          the episodes to validate
+   * @return {@code true} if the range style can be used
+   */
+  private static boolean isRangeStyleApplicable(String episodePart, List<TvShowEpisode> episodes) {
+    if (StringUtils.isBlank(episodePart) || episodes.size() < 2) {
+      return false;
+    }
+
+    TvShowEpisode firstEpisode = episodes.get(0);
+    int season = firstEpisode.getSeason();
+    int previousEpisodeNumber = firstEpisode.getEpisode();
+
+    for (int i = 1; i < episodes.size(); i++) {
+      TvShowEpisode episode = episodes.get(i);
+      if (episode.getSeason() != season || episode.getEpisode() != previousEpisodeNumber + 1) {
+        return false;
+      }
+      previousEpisodeNumber = episode.getEpisode();
+    }
+
+    return true;
+  }
+
+  /**
+   * Renders the compact range representation for a multi-episode file.
+   * <p>
+   * The first episode is rendered in full. The trailing episode is shortened to the smallest stable suffix, such as {@code E02} for
+   * {@code S01E01-E02} or {@code 02} for {@code 1x01-02}.
+   * </p>
+   *
+   * @param loopNumbers
+   *          the complete season/episode token fragment
+   * @param seasonPart
+   *          the extracted season fragment
+   * @param episodePart
+   *          the extracted episode fragment
+   * @param episodes
+   *          the episodes to render
+   * @return the rendered range fragment or an empty string if the range could not be created safely
+   */
+  private static String renderRangeEpisodeNumbers(String loopNumbers, String seasonPart, String episodePart, List<TvShowEpisode> episodes) {
+    TvShowEpisode firstEpisode = episodes.get(0);
+    TvShowEpisode lastEpisode = episodes.get(episodes.size() - 1);
+
+    String firstPart = getTokenValue(firstEpisode.getTvShow(), firstEpisode, loopNumbers).strip();
+    if (StringUtils.isBlank(firstPart)) {
+      return "";
+    }
+
+    String lastPart = getRangeEpisodeSuffix(seasonPart, episodePart, lastEpisode);
+    if (StringUtils.isBlank(lastPart)) {
+      return "";
+    }
+
+    return firstPart + "-" + lastPart;
+  }
+
+  /**
+   * Builds the trailing range suffix for the last episode in a multi-episode file.
+   *
+   * @param seasonPart
+   *          the extracted season fragment
+   * @param episodePart
+   *          the extracted episode fragment
+   * @param lastEpisode
+   *          the last episode in the range
+   * @return the trailing suffix or an empty string if it could not be determined
+   */
+  private static String getRangeEpisodeSuffix(String seasonPart, String episodePart, TvShowEpisode lastEpisode) {
+    String token = extractTokenPattern(episodePart);
+    if (StringUtils.isBlank(token)) {
+      return getTokenValue(lastEpisode.getTvShow(), lastEpisode, episodePart).strip();
+    }
+
+    String prefix = StringUtils.substringBefore(episodePart, token);
+    String suffixPattern = episodePart;
+
+    // The x-delimiter links season and episode values (1x01), so only the episode number should be repeated in ranges.
+    if (StringUtils.isNotBlank(seasonPart) && StringUtils.equalsIgnoreCase(prefix.strip(), "x")) {
+      suffixPattern = token;
+    }
+
+    return getTokenValue(lastEpisode.getTvShow(), lastEpisode, suffixPattern).strip();
+  }
+
+  /**
+   * Extracts the first JMTE token placeholder from the given pattern fragment.
+   *
+   * @param patternFragment
+   *          the pattern fragment to inspect
+   * @return the token placeholder or an empty string
+   */
+  private static String extractTokenPattern(String patternFragment) {
+    Matcher matcher = Pattern.compile("\\$\\{.*?\\}").matcher(patternFragment);
+    if (matcher.find()) {
+      return matcher.group(0);
+    }
+    return "";
   }
 
   /**

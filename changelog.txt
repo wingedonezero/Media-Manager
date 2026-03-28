@@ -1,5 +1,7 @@
 Version 5.2.11
 =======================
++ [TV shows] added support for renaming multi episode numbers in ranges (e.g. S01E01-02) #3057
+---
 x [Movies, TV shows] update the original filename when exchanging a video file
 x [TV shows] consume less memory on update data sources
 x [UI] display translated subtitle flags (default, forced, SDH) in the filter #3150

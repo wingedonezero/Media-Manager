@@ -86,6 +86,56 @@ public class TvShowRenamerTest extends BasicTvShowTest {
     return multi;
   }
 
+  private TvShow createNonContiguousMultiTvShow() {
+    MediaFile dmf = new MediaFile(Paths.get("/path/to", "video.avi"));
+
+    TvShow multi = new TvShow();
+    multi.setTitle("multishow");
+    multi.setYear(2009);
+    multi.setPath("multishow");
+
+    TvShowEpisode ep = new TvShowEpisode();
+    ep.setTitle("multiEP2");
+    ep.setEpisode(new MediaEpisodeNumber(MediaEpisodeGroup.DEFAULT_AIRED, 1, 2));
+    ep.addToMediaFiles(dmf);
+    ep.setTvShow(multi);
+    multi.addEpisode(ep);
+
+    ep = new TvShowEpisode();
+    ep.setTitle("multiEP4");
+    ep.setEpisode(new MediaEpisodeNumber(MediaEpisodeGroup.DEFAULT_AIRED, 1, 4));
+    ep.addToMediaFiles(dmf);
+    ep.setTvShow(multi);
+    multi.addEpisode(ep);
+
+    return multi;
+  }
+
+  private TvShow createCrossSeasonMultiTvShow() {
+    MediaFile dmf = new MediaFile(Paths.get("/path/to", "video.avi"));
+
+    TvShow multi = new TvShow();
+    multi.setTitle("multishow");
+    multi.setYear(2009);
+    multi.setPath("multishow");
+
+    TvShowEpisode ep = new TvShowEpisode();
+    ep.setTitle("multiEP10");
+    ep.setEpisode(new MediaEpisodeNumber(MediaEpisodeGroup.DEFAULT_AIRED, 1, 10));
+    ep.addToMediaFiles(dmf);
+    ep.setTvShow(multi);
+    multi.addEpisode(ep);
+
+    ep = new TvShowEpisode();
+    ep.setTitle("multiEP201");
+    ep.setEpisode(new MediaEpisodeNumber(MediaEpisodeGroup.DEFAULT_AIRED, 2, 1));
+    ep.addToMediaFiles(dmf);
+    ep.setTvShow(multi);
+    multi.addEpisode(ep);
+
+    return multi;
+  }
+
   private TvShow createDiscTvShow(String path) {
     TvShow disc = new TvShow();
     disc.setTitle(path);
@@ -208,6 +258,39 @@ public class TvShowRenamerTest extends BasicTvShowTest {
 
     TvShow discEp = createDiscEpTvShow("testtvshows/DVDEpisodeInRoot");
     TvShowRenamer.renameEpisode(discEp.getEpisode(1, 1).get(0));
+  }
+
+  @Test
+  public void testMultiEpisodeRangeStyle() {
+    TvShowModuleManager.getInstance().getSettings().setRenamerMultiEpisodeStyle(TvShowMultiEpisodeStyle.RANGE);
+
+    TvShow multi = createMultiTvShow();
+    assertEqual("multishow - S01E02-E03 - multiEP2 - multiEP3",
+        TvShowRenamer.createDestination("${showTitle} - S${seasonNr2}E${episodeNr2} - ${title}", multi.getEpisodes()));
+    assertEqual("E02-E03 - multiEP2 - multiEP3", TvShowRenamer.createDestination("E${episodeNr2} - ${title}", multi.getEpisodes()));
+    assertEqual("1x04-05 - multiEP2 - multiEP3", TvShowRenamer.createDestination("${seasonNr}x${episodeNrDvd2} - ${title}", multi.getEpisodes()));
+
+    TvShow single = createSingleTvShow();
+    assertEqual("singleshow - S01E02 - singleEP",
+        TvShowRenamer.createDestination("${showTitle} - S${seasonNr2}E${episodeNr2} - ${title}", single.getEpisodes()));
+  }
+
+  @Test
+  public void testMultiEpisodeRangeFallbackForNonContiguousEpisodes() {
+    TvShowModuleManager.getInstance().getSettings().setRenamerMultiEpisodeStyle(TvShowMultiEpisodeStyle.RANGE);
+
+    TvShow multi = createNonContiguousMultiTvShow();
+    assertEqual("multishow - S01E02 S01E04 - multiEP2 - multiEP4",
+        TvShowRenamer.createDestination("${showTitle} - S${seasonNr2}E${episodeNr2} - ${title}", multi.getEpisodes()));
+  }
+
+  @Test
+  public void testMultiEpisodeRangeFallbackForCrossSeasonEpisodes() {
+    TvShowModuleManager.getInstance().getSettings().setRenamerMultiEpisodeStyle(TvShowMultiEpisodeStyle.RANGE);
+
+    TvShow multi = createCrossSeasonMultiTvShow();
+    assertEqual("multishow - S01E10 S02E01 - multiEP10 - multiEP201",
+        TvShowRenamer.createDestination("${showTitle} - S${seasonNr2}E${episodeNr2} - ${title}", multi.getEpisodes()));
   }
 
   private Path gen(TvShow show, String showPattern, String seasonPattern, String filePattern, boolean recommended) {
