@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
@@ -49,33 +48,14 @@ public class TmmOsUtils {
   }
 
   /**
-   * check if .desktop file exists in default paths in linux and unix (not osx)
-   */
-  public static boolean existsDesktopFileForLinux() {
-    if (SystemUtils.IS_OS_WINDOWS || SystemUtils.IS_OS_MAC) {
-      return false;
-    }
-
-    String currentUsersHomeDir = System.getProperty("user.home");
-
-    // use absolute /usr paths for system-wide locations
-    for (Path path : Arrays.asList(Paths.get(currentUsersHomeDir, ".local", "share", "applications", TmmOsUtils.DESKTOP_FILE).toAbsolutePath(),
-        Paths.get("/", "usr", "local", "share", "applications", TmmOsUtils.DESKTOP_FILE).toAbsolutePath(),
-        Paths.get("/", "usr", "share", "applications", TmmOsUtils.DESKTOP_FILE).toAbsolutePath())) {
-      if (path.toFile().exists()) {
-        return true; // at least one .desktop file exists
-      }
-    }
-    return false;
-  }
-
-  /**
    * create a .desktop file for linux and unix (not osx)
    * 
    * @param desktop
    *          .desktop file
+   * @throws IOException
+   *           any IO exception occurred while writing the .desktop file
    */
-  public static void createDesktopFileForLinux(File desktop) {
+  public static void createDesktopFileForLinux(File desktop) throws IOException {
     if (SystemUtils.IS_OS_WINDOWS || SystemUtils.IS_OS_MAC) {
       return;
     }
@@ -121,6 +101,7 @@ public class TmmOsUtils {
     }
     catch (IOException e) {
       LOGGER.warn("Could not create .desktop file - '{}'", e.getMessage());
+      throw e;
     }
   }
 
