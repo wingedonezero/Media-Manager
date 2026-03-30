@@ -95,6 +95,9 @@ public class MainMenuPanel extends JPanel {
   private final JPopupMenu    menuTools;
   private final JPopupMenu    menuInfo;
 
+  private final JButton       btnTools;
+  private final JButton       btnSettings;
+
   public MainMenuPanel() {
     buttons = new ButtonGroup();
     setLayout(new BorderLayout());
@@ -108,12 +111,12 @@ public class MainMenuPanel extends JPanel {
     add(bottomPanel, BorderLayout.SOUTH);
 
     menuTools = buildToolsMenu();
-    JButton btnTools = new ToolbarButton(IconManager.TOOLBAR_TOOLS, IconManager.TOOLBAR_TOOLS_HOVER, menuTools);
+
+    btnTools = new ToolbarButton(IconManager.TOOLBAR_TOOLS, IconManager.TOOLBAR_TOOLS_HOVER, menuTools);
     btnTools.setToolTipText(TmmResourceBundle.getString("Toolbar.tools"));
     bottomPanel.add(btnTools, "growx");
 
-    JButton btnSettings = new ToolbarButton(IconManager.TOOLBAR_SETTINGS, IconManager.TOOLBAR_SETTINGS_HOVER);
-
+    btnSettings = new ToolbarButton(IconManager.TOOLBAR_SETTINGS, IconManager.TOOLBAR_SETTINGS_HOVER);
     btnSettings.setToolTipText(TmmResourceBundle.getString("Toolbar.settings"));
     btnSettings.addActionListener(listener -> {
       JDialog settingsDialog = SettingsDialog.getInstance();
@@ -326,6 +329,11 @@ public class MainMenuPanel extends JPanel {
     }
 
     return menu;
+  }
+
+  void addHints() {
+    HintManager.getInstance().addHint(TmmResourceBundle.getString("hintmanager.tools"), btnTools, SwingConstants.RIGHT);
+    HintManager.getInstance().addHint(TmmResourceBundle.getString("hintmanager.settings"), btnSettings, SwingConstants.RIGHT);
   }
 
   private JPopupMenu buildInfoMenu() {
