@@ -390,7 +390,7 @@ public final class MovieModuleManager implements ITmmModule {
     // write pending changes
     if (mvStore != null && !mvStore.isClosed()) {
       writePendingChanges(true);
-      mvStore.close();
+      mvStore.close(500);
     }
 
     if (Settings.getInstance().isDeleteTrashOnExit()) {
