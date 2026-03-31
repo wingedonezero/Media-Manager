@@ -34,7 +34,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -121,12 +120,9 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
   private boolean                    isAnimatedGraphic = false;
   @JsonProperty
   private String                     hdrFormat         = "";
-  @JsonProperty
-  protected Map<String, String>      checksums         = new ConcurrentHashMap<>(0);
+  protected Map<String, String>      checksums         = null;
 
-  @JsonProperty
   private List<MediaFileAudioStream> audioStreams      = null;
-  @JsonProperty
   private List<MediaFileSubtitle>    subtitles         = null;
 
   private Path                       file              = null;
@@ -163,16 +159,23 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
     this.isISO = clone.isISO;
     this.isAnimatedGraphic = clone.isAnimatedGraphic;
     this.hdrFormat = clone.hdrFormat;
+    this.videoBitRate = clone.videoBitRate;
 
     if (ListUtils.isNotEmpty(clone.audioStreams)) {
       audioStreams = new CopyOnWriteArrayList<>(clone.audioStreams);
     }
+
     if (ListUtils.isNotEmpty(clone.subtitles)) {
       subtitles = new CopyOnWriteArrayList<>(clone.subtitles);
     }
 
-    checksums.clear();
-    checksums = clone.getChecksums();
+    if (clone.checksums != null && !clone.checksums.isEmpty()) {
+      checksums = new HashMap<>(clone.checksums);
+    }
+
+    if (clone.extraData != null && !clone.extraData.isEmpty()) {
+      extraData = new HashMap<>(clone.extraData);
+    }
   }
 
   /**
@@ -665,6 +668,7 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
     }
   }
 
+  @JsonProperty
   public List<MediaFileSubtitle> getSubtitles() {
 
     if (this.subtitles == null) {
@@ -743,30 +747,31 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
         continue;
       }
 
-      if (sb.length() > 0) {
+      if (!sb.isEmpty()) {
         sb.append(", ");
       }
+
       sb.append(sub.getLanguage());
     }
 
     return sb.toString();
   }
 
+  @JsonProperty
   public void setSubtitles(List<MediaFileSubtitle> subtitles) {
 
-    if (this.subtitles == null && subtitles.isEmpty()) {
+    if (this.subtitles == null && ListUtils.isEmpty(subtitles)) {
       // nothing to do
       return;
     }
 
-    if (this.subtitles == null) {
-      this.subtitles = new CopyOnWriteArrayList<>();
+    if (ListUtils.isNotEmpty(subtitles)) {
+      this.subtitles = new CopyOnWriteArrayList<>(subtitles);
     }
     else {
-      this.subtitles.clear();
+      this.subtitles = null;
     }
 
-    this.subtitles.addAll(subtitles);
     firePropertyChange("subtitles", null, subtitles);
   }
 
@@ -1545,8 +1550,8 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
     firePropertyChange("durationHHMMSS", oldValue, newValue);
   }
 
+  @JsonProperty
   public List<MediaFileAudioStream> getAudioStreams() {
-
     if (this.audioStreams == null) {
       return Collections.emptyList();
     }
@@ -1577,21 +1582,20 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
     return ret;
   }
 
+  @JsonProperty
   public void setAudioStreams(List<MediaFileAudioStream> audioStreams) {
-
-    if (this.audioStreams == null && audioStreams.isEmpty()) {
+    if (this.audioStreams == null && ListUtils.isEmpty(audioStreams)) {
       // nothing to do
       return;
     }
 
-    if (this.audioStreams == null) {
-      this.audioStreams = new CopyOnWriteArrayList<>();
+    if (ListUtils.isNotEmpty(audioStreams)) {
+      this.audioStreams = new CopyOnWriteArrayList<>(audioStreams);
     }
     else {
-      this.audioStreams.clear();
+      this.audioStreams = null;
     }
 
-    this.audioStreams.addAll(audioStreams);
     firePropertyChange("audioStreams", null, audioStreams);
   }
 
@@ -1707,12 +1711,28 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
     return this.hdrFormat;
   }
 
+  @JsonProperty
   public Map<String, String> getChecksums() {
+    if (this.checksums == null) {
+      return Collections.emptyMap();
+    }
     return checksums;
   }
 
-  public void setChecksums(Map<String, String> checksums) {
-    this.checksums = checksums;
+  @JsonProperty
+  public void setChecksums(Map<String, String> newValue) {
+    if (this.checksums == null && (newValue == null || newValue.isEmpty())) {
+      // nothing to do
+      return;
+    }
+
+    if (newValue != null && !newValue.isEmpty()) {
+      this.checksums = new HashMap<>(newValue.size());
+      this.checksums.putAll(newValue);
+    }
+    else {
+      this.checksums = null;
+    }
   }
 
   /**
@@ -1721,10 +1741,16 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
    * @return String or empty, not null
    */
   public String getCRC32() {
+    if (this.checksums == null) {
+      return "";
+    }
     return checksums.get("crc32") == null ? "" : checksums.get("crc32");
   }
 
   public void setCRC32(String crc) {
+    if (this.checksums == null) {
+      this.checksums = new HashMap<>(0);
+    }
     this.checksums.put("crc32", crc);
   }
 
@@ -1739,7 +1765,7 @@ public class MediaFile extends AbstractModelObject implements Comparable<MediaFi
   public void addExtraData(String key, String value) {
 
     if (extraData == null) {
-      extraData = new HashMap<>();
+      extraData = new HashMap<>(0);
     }
     extraData.put(key, value);
   }

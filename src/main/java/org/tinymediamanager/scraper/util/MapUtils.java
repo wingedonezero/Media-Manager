@@ -87,4 +87,26 @@ public class MapUtils {
 
     return map1.equals(map2);
   }
+
+  /**
+   * Check whether the given {@link Map} is empty or null
+   * 
+   * @param map
+   *          the {@link Map} to check
+   * @return true/false
+   */
+  public static boolean isEmpty(Map<?, ?> map) {
+    return map == null || map.isEmpty();
+  }
+
+  /**
+   * Check whether the given {@link Map} is not empty and not null
+   *
+   * @param map
+   *          the {@link Map} to check
+   * @return true/false
+   */
+  public static boolean isNotEmpty(Map<?, ?> map) {
+    return !isEmpty(map);
+  }
 }
