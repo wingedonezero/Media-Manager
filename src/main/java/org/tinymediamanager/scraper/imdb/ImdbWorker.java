@@ -61,12 +61,11 @@ public class ImdbWorker implements Callable<Document> {
     }
 
     try (InputStream is = url.getInputStream()) {
-      doc = Jsoup.parse(is, "UTF-8", "");
-
       if (url.getStatusCode() == 202) {
         // 202 indicates that the WAF is active
         throw new HttpException(202, "Request blocked - WAF active");
       }
+      doc = Jsoup.parse(is, "UTF-8", "");
     }
     catch (InterruptedException | InterruptedIOException e) {
       // do not swallow these Exceptions

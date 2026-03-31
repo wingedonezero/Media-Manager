@@ -17,7 +17,6 @@ package org.tinymediamanager.scraper.imdb;
 
 import static org.tinymediamanager.scraper.entities.MediaArtwork.MediaArtworkType.THUMB;
 
-import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -33,6 +32,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
@@ -42,7 +42,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.LocaleUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -68,8 +67,6 @@ import org.tinymediamanager.scraper.entities.MediaEpisodeNumber;
 import org.tinymediamanager.scraper.entities.MediaType;
 import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
-import org.tinymediamanager.scraper.http.InMemoryCachedUrl;
-import org.tinymediamanager.scraper.http.Url;
 import org.tinymediamanager.scraper.imdb.entities.ImdbAdvancedSearchResult;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCast;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCategory;
@@ -427,7 +424,20 @@ public abstract class ImdbParser {
     Callable<Document> advUrl = createImdbWorker(constructUrl("search/title/?title=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param),
         language, country);
     Future<Document> futureAdv = executor.submit(advUrl);
-    Document doc = futureAdv.get();
+    Document doc = null;
+    try {
+      doc = futureAdv.get();
+    }
+    catch (Exception futureEx) {
+      if (futureEx instanceof ExecutionException) {
+        // ImdbWorker Future adds another layer - this is by design to not let checked exceptions escape directly.
+        Throwable cause = futureEx.getCause();
+        if (cause instanceof HttpException) {
+          throw new ScrapeException(cause); // rewrap
+        }
+      }
+      throw new ScrapeException(futureEx);
+    }
     doc.setBaseUri(metadataProvider.getApiKey());
 
     try {
@@ -588,7 +598,20 @@ public abstract class ImdbParser {
     Callable<Document> findUrl = createImdbWorker(constructUrl("find/?q=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param), language,
         country);
     Future<Document> futureFind = executor.submit(findUrl);
-    Document doc = futureFind.get();
+    Document doc = null;
+    try {
+      doc = futureFind.get();
+    }
+    catch (Exception futureEx) {
+      if (futureEx instanceof ExecutionException) {
+        // ImdbWorker Future adds another layer - this is by design to not let checked exceptions escape directly.
+        Throwable cause = futureEx.getCause();
+        if (cause instanceof HttpException) {
+          throw new ScrapeException(cause); // rewrap
+        }
+      }
+      throw new ScrapeException(futureEx);
+    }
     doc.setBaseUri(metadataProvider.getApiKey());
 
     try {
