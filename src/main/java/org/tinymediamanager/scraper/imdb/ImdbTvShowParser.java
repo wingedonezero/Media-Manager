@@ -587,7 +587,7 @@ public class ImdbTvShowParser extends ImdbParser {
     return episodes;
   }
 
-  private ImdbEpisodeList parseEpisodeListJSON(Document doc) {
+  protected ImdbEpisodeList parseEpisodeListJSON(Document doc) {
     try {
       Element jsonNode = doc.getElementById("__NEXT_DATA__");
       if (jsonNode == null) {
@@ -608,7 +608,7 @@ public class ImdbTvShowParser extends ImdbParser {
     return null;
   }
 
-  private boolean parseEpisodeList(int season, List<MediaMetadata> episodes, Document doc) {
+  protected boolean parseEpisodeList(int season, List<MediaMetadata> episodes, Document doc) {
     Pattern unknownPattern = Pattern.compile("Unknown");
     Pattern seasonEpisodePattern = Pattern.compile("S([0-9]*), Ep([0-9]*)");
     int specialEpisodeCounter = 0;
@@ -726,7 +726,7 @@ public class ImdbTvShowParser extends ImdbParser {
     return true;
   }
 
-  private void parseEpisodeReference(Document doc, MediaMetadata md, String imdbId) {
+  protected void parseEpisodeReference(Document doc, MediaMetadata md, String imdbId) {
     // title (h3 itemprop=name)
     Element header = doc.getElementsByClass("titlereference-header").first();
     if (header != null) {

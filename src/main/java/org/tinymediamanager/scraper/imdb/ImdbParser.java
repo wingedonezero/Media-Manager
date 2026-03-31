@@ -2452,7 +2452,7 @@ public abstract class ImdbParser {
     }
   }
 
-  private void addArtworkSize(MediaArtwork artwork, int width, int height, int sizeOrder) {
+  protected void addArtworkSize(MediaArtwork artwork, int width, int height, int sizeOrder) {
     // get the highest artwork size (from scraper)
     ImageSizeAndUrl originalSize = !artwork.getImageSizes().isEmpty() ? artwork.getImageSizes().get(0) : null;
     if (originalSize != null) {

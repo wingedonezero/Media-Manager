@@ -305,7 +305,7 @@ public class ImdbMovieParser extends ImdbParser {
     return md.getRatings();
   }
 
-  private void parseCritics(Document doc, MediaMetadata md) {
+  protected void parseCritics(Document doc, MediaMetadata md) {
     // <div class="metascore_block" itemprop="aggregateRating" itemscope="" itemtype="http://schema.org/AggregateRating">
     // <span itemprop="ratingValue">53</span>
     // Based on <span itemprop="ratingCount">36</span>
@@ -337,7 +337,7 @@ public class ImdbMovieParser extends ImdbParser {
   }
 
   // AKAs and original title
-  private void parseReleaseinfoPageAKAs(Document doc, MediaMetadata md) {
+  protected void parseReleaseinfoPageAKAs(Document doc, MediaMetadata md) {
     // <table id="akas" class="subpage_data spEven2Col">
     // <tr class="even">
     // <td>(original title)</td>
