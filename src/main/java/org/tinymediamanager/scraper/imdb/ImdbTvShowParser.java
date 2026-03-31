@@ -122,7 +122,7 @@ public class ImdbTvShowParser extends ImdbParser {
     // default workers which always run
     Document doc = null;
     boolean json = false;
-    Callable<Document> worker = new ImdbWorker(constructUrl("title/", imdbId), options.getLanguage().getLanguage(),
+    Callable<Document> worker = createImdbWorker(constructUrl("title/", imdbId), options.getLanguage().getLanguage(),
         options.getCertificationCountry().getAlpha2(), true);
     Future<Document> futureDetail = executor.submit(worker);
 
@@ -145,24 +145,24 @@ public class ImdbTvShowParser extends ImdbParser {
     }
 
     // start other workers afterward
-    worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L3JlZmVyZW5jZQ==")), options.getLanguage().getLanguage(),
+    worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3JlZmVyZW5jZQ==")), options.getLanguage().getLanguage(),
         options.getCertificationCountry().getAlpha2(), true);
     Future<Document> futureReference = executor.submit(worker);
 
     // we must parse this as fixed language, since the IDs seem not to be fixated yet...?
-    worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L2Z1bGxjcmVkaXRz")), "en", "US", true);
+    worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2Z1bGxjcmVkaXRz")), "en", "US", true);
     Future<Document> futureCredits = executor.submit(worker);
 
     Future<Document> futureKeywords = null;
     if (isScrapeKeywordsPage() && getMaxKeywordCount() > 5) {
-      worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L2tleXdvcmRz")), options.getLanguage().getLanguage(),
+      worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2tleXdvcmRz")), options.getLanguage().getLanguage(),
           options.getCertificationCountry().getAlpha2(), true);
       futureKeywords = executor.submit(worker);
     }
 
     Future<Document> futureReleaseInfo = null;
     if (!isScrapeLocalReleaseDate()) {
-      worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
+      worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
           options.getCertificationCountry().getAlpha2(), true);
       futureReleaseInfo = executor.submit(worker);
     }
@@ -217,12 +217,12 @@ public class ImdbTvShowParser extends ImdbParser {
     else {
       // fallback old style, when json parsing was not ok
       Future<Document> futurePlotsummary;
-      worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L3Bsb3RzdW1tYXJ5")), options.getLanguage().getLanguage(),
+      worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3Bsb3RzdW1tYXJ5")), options.getLanguage().getLanguage(),
           options.getCertificationCountry().getAlpha2(), true);
       futurePlotsummary = executor.submit(worker);
 
       Future<Document> futureReleaseinfo;
-      worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
+      worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
           options.getCertificationCountry().getAlpha2(), true);
       futureReleaseinfo = executor.submit(worker);
 
@@ -349,28 +349,28 @@ public class ImdbTvShowParser extends ImdbParser {
       // default workers which always run
       Document doc = null;
       boolean json = false;
-      Callable<Document> worker = new ImdbWorker(constructUrl("title/", episodeId), options.getLanguage().getLanguage(),
+      Callable<Document> worker = createImdbWorker(constructUrl("title/", episodeId), options.getLanguage().getLanguage(),
           options.getCertificationCountry().getAlpha2(), true);
       Future<Document> futureDetail = executor.submit(worker);
 
-      worker = new ImdbWorker(constructUrl("title/", episodeId, decode("L3JlZmVyZW5jZQ==")), options.getLanguage().getLanguage(),
+      worker = createImdbWorker(constructUrl("title/", episodeId, decode("L3JlZmVyZW5jZQ==")), options.getLanguage().getLanguage(),
           options.getCertificationCountry().getAlpha2(), true);
       Future<Document> futureReference = executor.submit(worker);
 
       // we must parse this as fixed language, since the IDs seem not to be fixated yet...?
-      worker = new ImdbWorker(constructUrl("title/", episodeId, decode("L2Z1bGxjcmVkaXRz")), "en", "US", true);
+      worker = createImdbWorker(constructUrl("title/", episodeId, decode("L2Z1bGxjcmVkaXRz")), "en", "US", true);
       Future<Document> futureCredits = executor.submit(worker);
 
       Future<Document> futureKeywords = null;
       if (isScrapeKeywordsPage() && getMaxKeywordCount() > 5) {
-        worker = new ImdbWorker(constructUrl("title/", episodeId, decode("L2tleXdvcmRz")), options.getLanguage().getLanguage(),
+        worker = createImdbWorker(constructUrl("title/", episodeId, decode("L2tleXdvcmRz")), options.getLanguage().getLanguage(),
             options.getCertificationCountry().getAlpha2(), true);
         futureKeywords = executor.submit(worker);
       }
 
       Future<Document> futureReleaseInfo = null;
       if (!isScrapeLocalReleaseDate()) {
-        worker = new ImdbWorker(constructUrl("title/", episodeId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
+        worker = createImdbWorker(constructUrl("title/", episodeId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
             options.getCertificationCountry().getAlpha2(), true);
         futureReleaseInfo = executor.submit(worker);
       }

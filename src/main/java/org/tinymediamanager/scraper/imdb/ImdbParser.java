@@ -424,10 +424,10 @@ public abstract class ImdbParser {
       param += "&adult=include";
     }
 
-    Url advUrl = new InMemoryCachedUrl(constructUrl("search/title/?title=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param));
-    advUrl.addHeader("Accept-Language", getAcceptLanguage(language, country));
-    InputStream is = advUrl.getInputStream();
-    Document doc = Jsoup.parse(is, UrlUtil.UTF_8, "");
+    Callable<Document> advUrl = createImdbWorker(constructUrl("search/title/?title=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param),
+        language, country);
+    Future<Document> futureAdv = executor.submit(advUrl);
+    Document doc = futureAdv.get();
     doc.setBaseUri(metadataProvider.getApiKey());
 
     try {
@@ -585,16 +585,10 @@ public abstract class ImdbParser {
       wantedTitleTypes.add("adult");
     }
 
-    Url findUrl = new InMemoryCachedUrl(constructUrl("find/?q=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param));
-    findUrl.addHeader("Accept-Language", getAcceptLanguage(language, country));
-    InputStream is = findUrl.getInputStream();
-
-    if (findUrl.getStatusCode() == 202) {
-      // 202 indicates that the WAF is active
-      throw new ScrapeException(new HttpException(202, "Request blocked - WAF active"));
-    }
-
-    Document doc = Jsoup.parse(is, UrlUtil.UTF_8, "");
+    Callable<Document> findUrl = createImdbWorker(constructUrl("find/?q=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param), language,
+        country);
+    Future<Document> futureFind = executor.submit(findUrl);
+    Document doc = futureFind.get();
     doc.setBaseUri(metadataProvider.getApiKey());
 
     try {
@@ -2345,64 +2339,12 @@ public abstract class ImdbParser {
   /****************************************************************************
    * local helper classes
    ****************************************************************************/
-  protected class ImdbWorker implements Callable<Document> {
-    private final String  pageUrl;
-    private final String  language;
-    private final String  country;
-    private final boolean useCachedUrl;
+  protected ImdbWorker createImdbWorker(String url, String language, String country) {
+    return new ImdbWorker(url, language, country);
+  }
 
-    ImdbWorker(String url, String language, String country) {
-      this(url, language, country, true);
-    }
-
-    ImdbWorker(String url, String language, String country, boolean useCachedUrl) {
-      this.pageUrl = url;
-      this.language = language;
-      this.country = country;
-      this.useCachedUrl = useCachedUrl;
-    }
-
-    @Override
-    public Document call() throws Exception {
-      Document doc = null;
-
-      Url url;
-
-      try {
-        // inject language into the url for correct caching
-        String urlWithHeader = this.pageUrl + "|Accept-Language=" + getAcceptLanguage(language, country);
-        if (useCachedUrl) {
-          url = new InMemoryCachedUrl(urlWithHeader);
-        }
-        else {
-          url = new Url(urlWithHeader);
-        }
-        // url.addHeader("Accept-Language", getAcceptLanguage(language, country));
-      }
-      catch (Exception e) {
-        LOGGER.debug("tried to fetch imdb page {} - {}", this.pageUrl, e.getMessage());
-        throw new ScrapeException(e);
-      }
-
-      try (InputStream is = url.getInputStream()) {
-        doc = Jsoup.parse(is, "UTF-8", "");
-
-        if (url.getStatusCode() == 202) {
-          // 202 indicates that the WAF is active
-          throw new HttpException(202, "Request blocked - WAF active");
-        }
-      }
-      catch (InterruptedException | InterruptedIOException e) {
-        // do not swallow these Exceptions
-        Thread.currentThread().interrupt();
-      }
-      catch (Exception e) {
-        LOGGER.debug("tried to fetch imdb page {} - {}", this.pageUrl, e.getMessage());
-        throw e;
-      }
-
-      return doc;
-    }
+  protected ImdbWorker createImdbWorker(String url, String language, String country, boolean useCachedUrl) {
+    return new ImdbWorker(url, language, country, useCachedUrl);
   }
 
   protected void processMediaArt(MediaMetadata md, MediaArtwork.MediaArtworkType type, String image) {
