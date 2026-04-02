@@ -22,7 +22,6 @@ import java.util.Locale;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
-import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.movie.MovieEdition;
 import org.tinymediamanager.core.movie.entities.Movie;
@@ -64,9 +63,7 @@ public class MovieEditionFilter extends AbstractCheckComboBoxMovieUIFilter<Movie
     List<MovieEdition> editions = new ArrayList<>();
 
     for (MovieEdition movieEdition : MovieEdition.values()) {
-      if (StringUtils.isNotBlank(movieEdition.toString())) {
-        editions.add(movieEdition);
-      }
+      editions.add(movieEdition);
     }
 
     editions.sort(comparator);

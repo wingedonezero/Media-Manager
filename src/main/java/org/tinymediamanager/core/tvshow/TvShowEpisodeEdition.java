@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public class TvShowEpisodeEdition extends DynaEnum<TvShowEpisodeEdition> {
   private static final Comparator<TvShowEpisodeEdition> COMPARATOR    = new TvShowEditionComparator();
 
-  public static final TvShowEpisodeEdition              NONE          = new TvShowEpisodeEdition("NONE", 0, "-", "");
+  public static final TvShowEpisodeEdition              NONE          = new TvShowEpisodeEdition("NONE", 0, "", "");
   public static final TvShowEpisodeEdition              DIRECTORS_CUT = new TvShowEpisodeEdition("DIRECTORS_CUT", 1, "Director's Cut",
       ".Director.?s.(Cut|Edition|Version)");
   public static final TvShowEpisodeEdition              UNCUT         = new TvShowEpisodeEdition("UNCUT", 2, "Uncut",

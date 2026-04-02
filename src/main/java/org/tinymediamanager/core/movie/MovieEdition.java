@@ -45,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public class MovieEdition extends DynaEnum<MovieEdition> {
   private static final Comparator<MovieEdition> COMPARATOR           = new MovieEditionComparator();
 
-  public static final MovieEdition              NONE                 = new MovieEdition("NONE", 0, "-", "");
+  public static final MovieEdition              NONE                 = new MovieEdition("NONE", 0, "", "");
   public static final MovieEdition              DIRECTORS_CUT        = new MovieEdition("DIRECTORS_CUT", 1, "Director's Cut",
       ".Director.?s.(Cut|Edition|Version)");
   public static final MovieEdition              EXTENDED_EDITION     = new MovieEdition("EXTENDED_EDITION", 2, "Extended Edition",
