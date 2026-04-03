@@ -11,6 +11,7 @@ x [TV shows] consume less memory on update data sources
 x [UI] display translated subtitle flags (default, forced, SDH) in the filter #3150
 x [UI] fixed loading/saving of complex TV show filters #3236
 x [UI] added the empty/none edition value to the edition filter #3250
+x [UI] fixed a crash in the movie set and TV show tree while scraping #3251
 x [Java] upgraded Java to 21.0.10
 x [Launcher] refactored the launcher and recompiled with Go 1.24.13 (security update)
 x [TvMaze] fix scraping guest crew #3239
