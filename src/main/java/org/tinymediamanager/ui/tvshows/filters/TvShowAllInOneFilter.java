@@ -48,18 +48,22 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
  */
 public class TvShowAllInOneFilter extends AbstractTextTvShowUIFilter {
 
-  private final TvShowSettings       settings;
+  private final TvShowSettings          settings;
 
-  private final TvShowNoteFilter     tvShowNoteFilter;
-  private final TvShowFilenameFilter tvShowFilenameFilter;
-  private final TvShowStudioFilter   tvShowStudioFilter;
-  private final TvShowCountryFilter  tvShowCountryFilter;
+  private final TvShowNoteFilter        tvShowNoteFilter;
+  private final TvShowSeasonNoteFilter  tvShowSeasonNoteFilter;
+  private final TvShowEpisodeNoteFilter tvShowEpisodeNoteFilter;
+  private final TvShowFilenameFilter    tvShowFilenameFilter;
+  private final TvShowStudioFilter      tvShowStudioFilter;
+  private final TvShowCountryFilter     tvShowCountryFilter;
 
   public TvShowAllInOneFilter() {
     super();
     settings = TvShowModuleManager.getInstance().getSettings();
 
     tvShowNoteFilter = new TvShowNoteFilter();
+    tvShowSeasonNoteFilter = new TvShowSeasonNoteFilter();
+    tvShowEpisodeNoteFilter = new TvShowEpisodeNoteFilter();
     tvShowFilenameFilter = new TvShowFilenameFilter();
     tvShowStudioFilter = new TvShowStudioFilter();
     tvShowCountryFilter = new TvShowCountryFilter();
@@ -90,6 +94,14 @@ public class TvShowAllInOneFilter extends AbstractTextTvShowUIFilter {
     if (filterFields.contains(NOTE)) {
       setFields(tvShowNoteFilter);
       if (tvShowNoteFilter.accept(tvShow, episodes, invert)) {
+        return true;
+      }
+      setFields(tvShowSeasonNoteFilter);
+      if (tvShowSeasonNoteFilter.accept(tvShow, episodes, invert)) {
+        return true;
+      }
+      setFields(tvShowEpisodeNoteFilter);
+      if (tvShowEpisodeNoteFilter.accept(tvShow, episodes, invert)) {
         return true;
       }
     }

@@ -24,24 +24,25 @@ import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
+import org.tinymediamanager.core.tvshow.entities.TvShowSeason;
 import org.tinymediamanager.scraper.util.StrgUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
- * the class {@link TvShowNoteFilter} is used to filter TV shows for their note
+ * the class {@link TvShowSeasonNoteFilter} is used to filter seasons for their note
  *
  * @author Wolfgang Janes
  */
-public class TvShowNoteFilter extends AbstractTextTvShowUIFilter {
+public class TvShowSeasonNoteFilter extends AbstractTextTvShowUIFilter {
 
   @Override
   protected JLabel createLabel() {
-    return new TmmLabel(TmmResourceBundle.getString("metatag.note") + " (" + TmmResourceBundle.getString("metatag.tvshow") + ")");
+    return new TmmLabel(TmmResourceBundle.getString("metatag.note") + " (" + TmmResourceBundle.getString("metatag.season") + ")");
   }
 
   @Override
   public String getId() {
-    return "TvShowNote";
+    return "TvShowSeasonNote";
   }
 
   @Override
@@ -51,11 +52,30 @@ public class TvShowNoteFilter extends AbstractTextTvShowUIFilter {
     }
 
     try {
-      Matcher matcher = filterPattern.matcher(StrgUtils.normalizeString(tvShow.getNote()));
-      return invert ^ matcher.find();
+
+      // need to search bottom up, or otherwise all season match if one does
+      for (TvShowEpisode episode : episodes) {
+        TvShowSeason season = episode.getTvShowSeason();
+
+        boolean foundSeason = false;
+
+        Matcher matcher = filterPattern.matcher(StrgUtils.normalizeString(season.getNote()));
+        if (matcher.find()) {
+          foundSeason = true;
+        }
+
+        if (invert && !foundSeason) {
+          return true;
+        }
+        else if (!invert && foundSeason) {
+          return true;
+        }
+      }
     }
     catch (Exception e) {
       return true;
     }
+
+    return false;
   }
 }

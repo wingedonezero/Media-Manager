@@ -28,20 +28,20 @@ import org.tinymediamanager.scraper.util.StrgUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
- * the class {@link TvShowNoteFilter} is used to filter TV shows for their note
+ * the class {@link TvShowEpisodeNoteFilter} is used to filter episodes for their note
  *
  * @author Wolfgang Janes
  */
-public class TvShowNoteFilter extends AbstractTextTvShowUIFilter {
+public class TvShowEpisodeNoteFilter extends AbstractTextTvShowUIFilter {
 
   @Override
   protected JLabel createLabel() {
-    return new TmmLabel(TmmResourceBundle.getString("metatag.note") + " (" + TmmResourceBundle.getString("metatag.tvshow") + ")");
+    return new TmmLabel(TmmResourceBundle.getString("metatag.note") + " (" + TmmResourceBundle.getString("metatag.episode") + ")");
   }
 
   @Override
   public String getId() {
-    return "TvShowNote";
+    return "TvShowEpisodeNote";
   }
 
   @Override
@@ -51,11 +51,26 @@ public class TvShowNoteFilter extends AbstractTextTvShowUIFilter {
     }
 
     try {
-      Matcher matcher = filterPattern.matcher(StrgUtils.normalizeString(tvShow.getNote()));
-      return invert ^ matcher.find();
+      for (TvShowEpisode episode : episodes) {
+        boolean foundEpisode = false;
+
+        Matcher matcher = filterPattern.matcher(StrgUtils.normalizeString(episode.getNote()));
+        if (matcher.find()) {
+          foundEpisode = true;
+        }
+
+        if (invert && !foundEpisode) {
+          return true;
+        }
+        else if (!invert && foundEpisode) {
+          return true;
+        }
+      }
     }
     catch (Exception e) {
       return true;
     }
+
+    return false;
   }
 }
