@@ -58,7 +58,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -71,6 +70,7 @@ import org.tinymediamanager.UpgradeTasks;
 import org.tinymediamanager.core.IMediaInformation;
 import org.tinymediamanager.core.MediaFileHelper;
 import org.tinymediamanager.core.MediaFileType;
+import org.tinymediamanager.core.MediaInfoSnapshot;
 import org.tinymediamanager.core.TmmDateFormat;
 import org.tinymediamanager.core.Utils;
 import org.tinymediamanager.core.entities.MediaEntity;
@@ -158,6 +158,11 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
   private MediaEpisodeNumber                 mainEpisodeNumber     = null;
   private int                                runtimeFromMediaFiles = 0;
 
+  /**
+   * Cached mediainfo snapshot to avoid expensive recalculation.
+   */
+  private MediaInfoSnapshot                  mediaInfoSnapshot     = null;
+
   // LEGACY
   @JsonIgnore
   public Map<String, Object>                 additionalProperties  = new HashMap<>();
@@ -244,6 +249,39 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
     actors.removeIf(Objects::isNull);
     crew.removeIf(Objects::isNull);
     episodeNumbers.removeIf(Objects::isNull);
+  }
+
+  /**
+   * Updates the mediainfo snapshot. Called whenever media files or path changes.
+   */
+  private void updateMediaInfoSnapshot() {
+    mediaInfoSnapshot = new MediaInfoSnapshot(getMediaFiles());
+  }
+
+  @Override
+  public void fireEventForChangedMediaInformation() {
+    super.fireEventForChangedMediaInformation();
+    updateMediaInfoSnapshot();
+  }
+
+  @Override
+  protected void mediaFilesChanged() {
+    super.mediaFilesChanged();
+
+    // update the mediainfo snapshot every time the media files change
+    updateMediaInfoSnapshot();
+  }
+
+  private MediaInfoSnapshot getMediaInfoSnapshot() {
+    // return cached value if present and main video file is not the empty sentinel
+    if (mediaInfoSnapshot != null && (StringUtils.isNotBlank(mediaInfoSnapshot.getMediaInfoContainerFormat()) || isDummy())) {
+      return mediaInfoSnapshot;
+    }
+
+    // cache not initialized yet (e.g., during early lifecycle) -> compute and cache once
+    updateMediaInfoSnapshot();
+
+    return mediaInfoSnapshot;
   }
 
   /**
@@ -1753,7 +1791,6 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
     return result;
   }
 
-  @Override
   public MediaCertification getCertification() {
     // we do not have a dedicated certification for the episode
     return null;
@@ -1761,19 +1798,9 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
 
   @Override
   public MediaFile getMainVideoFile() {
-    MediaFile vid;
-
-    if (stacked) {
-      // search the first stacked media file (e.g. CD1)
-      vid = getMediaFiles(MediaFileType.VIDEO).stream().min(Comparator.comparingInt(MediaFile::getStacking)).orElse(MediaFile.EMPTY_MEDIAFILE);
-    }
-    else {
-      // get the biggest one
-      vid = getBiggestMediaFile(MediaFileType.VIDEO);
-    }
-
-    if (vid != null) {
-      return vid;
+    MediaFile mainVideoFile = getMediaInfoSnapshot().getMainVideoFile();
+    if (mainVideoFile != MediaFile.EMPTY_MEDIAFILE) {
+      return mainVideoFile;
     }
 
     // dummy episodes might not have a video file
@@ -1787,36 +1814,36 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
 
   @Override
   public String getMediaInfoVideoResolution() {
-    return getMainVideoFile().getVideoResolution();
+    return getMediaInfoSnapshot().getMediaInfoVideoResolution();
   }
 
   @Override
   public String getMediaInfoVideoFormat() {
-    return getMainVideoFile().getVideoFormat();
+    return getMediaInfoSnapshot().getMediaInfoVideoFormat();
   }
 
   @Override
   public String getMediaInfoVideoCodec() {
-    return getMainVideoFile().getVideoCodec();
+    return getMediaInfoSnapshot().getMediaInfoVideoCodec();
   }
 
   @Override
   public float getMediaInfoAspectRatio() {
-    return getMainVideoFile().getAspectRatio();
+    return getMediaInfoSnapshot().getMediaInfoAspectRatio();
   }
 
   public String getMediaInfoAspectRatioAsString() {
     DecimalFormat df = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.US));
-    return df.format(getMainVideoFile().getAspectRatio()).replace(".", "");
+    return df.format(getMediaInfoSnapshot().getMediaInfoAspectRatio()).replace(".", "");
   }
 
   @Override
   public Float getMediaInfoAspectRatio2() {
-    return getMainVideoFile().getAspectRatio2();
+    return getMediaInfoSnapshot().getMediaInfoAspectRatio2();
   }
 
   public String getMediaInfoAspectRatio2AsString() {
-    Float aspectRatio2 = getMainVideoFile().getAspectRatio2();
+    Float aspectRatio2 = getMediaInfoSnapshot().getMediaInfoAspectRatio2();
     String formatedValue = "";
     if (aspectRatio2 != null) {
       DecimalFormat df = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.US));
@@ -1827,71 +1854,52 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
 
   @Override
   public Integer getMediaInfoAudioStreamCount() {
-    int audioStreamCount = getMainVideoFile().getAudioStreams().size();
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
-      audioStreamCount += mf.getAudioStreams().size();
-    }
-    return audioStreamCount;
+    return getMediaInfoSnapshot().getMediaInfoAudioStreamCount();
   }
 
   @Override
   public String getMediaInfoAudioCodec() {
-    return getMainVideoFile().getAudioCodec();
+    return getMediaInfoSnapshot().getMediaInfoAudioCodec();
   }
 
   @Override
   public List<String> getMediaInfoAudioCodecList() {
-    List<String> lang = new ArrayList<>(getMainVideoFile().getAudioCodecList());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
-      lang.addAll(mf.getAudioCodecList());
-    }
-    return lang;
+    return getMediaInfoSnapshot().getMediaInfoAudioCodecList();
   }
 
   @Override
   public double getMediaInfoFrameRate() {
-    return getMainVideoFile().getFrameRate();
+    return getMediaInfoSnapshot().getMediaInfoFrameRate();
   }
 
   @Override
   public String getMediaInfoAudioChannels() {
-    return getMainVideoFile().getAudioChannels();
+    return getMediaInfoSnapshot().getMediaInfoAudioChannels();
   }
 
   @Override
   public List<String> getMediaInfoAudioChannelList() {
-    List<String> lang = new ArrayList<>(getMainVideoFile().getAudioChannelsList());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
-      lang.addAll(mf.getAudioChannelsList());
-    }
-    return lang;
+    return getMediaInfoSnapshot().getMediaInfoAudioChannelList();
   }
 
   @Override
   public String getMediaInfoAudioChannelsDot() {
-    return getMainVideoFile().getAudioChannelsDot();
+    return getMediaInfoSnapshot().getMediaInfoAudioChannelsDot();
   }
 
   @Override
   public List<String> getMediaInfoAudioChannelDotList() {
-    List<String> lang = new ArrayList<>(getMainVideoFile().getAudioChannelsDotList());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
-      lang.addAll(mf.getAudioChannelsDotList());
-    }
-    return lang;
+    return getMediaInfoSnapshot().getMediaInfoAudioChannelDotList();
   }
 
   @Override
   public String getMediaInfoAudioLanguage() {
-    return getMainVideoFile().getAudioLanguage();
+    return getMediaInfoSnapshot().getMediaInfoAudioLanguage();
   }
 
   @Override
   public int getMediaInfoVideoBitDepth() {
-    return getMainVideoFile().getBitDepth();
+    return getMediaInfoSnapshot().getMediaInfoVideoBitDepth();
   }
 
   public int getMediaInfoVideoBitrate() {
@@ -1900,78 +1908,45 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
 
   @Override
   public List<String> getMediaInfoAudioLanguageList() {
-    List<String> lang = new ArrayList<>(getMainVideoFile().getAudioLanguagesList());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
-      lang.addAll(mf.getAudioLanguagesList());
-    }
-    return lang;
+    return getMediaInfoSnapshot().getMediaInfoAudioLanguageList();
   }
 
   @Override
   public Integer getMediaInfoSubtitleStreamCount() {
-    int subtitleStreamCount = getMainVideoFile().getSubtitles().size();
-    for (MediaFile mf : getMediaFiles(MediaFileType.SUBTITLE)) {
-      subtitleStreamCount += mf.getSubtitles().size();
-    }
-    return subtitleStreamCount;
+    return getMediaInfoSnapshot().getMediaInfoSubtitleStreamCount();
   }
 
   @Override
   public List<String> getMediaInfoSubtitleLanguageList() {
-    Set<String> lang = new TreeSet<>(getMainVideoFile().getSubtitleLanguages());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO, MediaFileType.SUBTITLE)) {
-      lang.addAll(mf.getSubtitleLanguages());
-    }
-
-    return new ArrayList<>(lang);
+    return getMediaInfoSnapshot().getMediaInfoSubtitleLanguageList();
   }
 
   @Override
   public List<String> getMediaInfoSubtitleCodecList() {
-    Set<String> codecs = new TreeSet<>(getMainVideoFile().getSubtitleCodecs());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO, MediaFileType.SUBTITLE)) {
-      codecs.addAll(mf.getSubtitleCodecs());
-    }
-
-    return new ArrayList<>(codecs);
+    return getMediaInfoSnapshot().getMediaInfoSubtitleCodecList();
   }
 
   @Override
   public List<MediaStreamInfo.Flags> getMediaInfoSubtitleTypeList() {
-    Set<MediaStreamInfo.Flags> types = new TreeSet<>(getMainVideoFile().getSubtitleTypes());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO, MediaFileType.SUBTITLE)) {
-      types.addAll(mf.getSubtitleTypes());
-    }
-    return new ArrayList<>(types);
+    return getMediaInfoSnapshot().getMediaInfoSubtitleTypeList();
   }
 
   @Override
   public String getMediaInfoContainerFormat() {
-    List<MediaFile> videos = getMediaFiles(MediaFileType.VIDEO);
-    if (!videos.isEmpty()) {
-      MediaFile mediaFile = videos.get(0);
-      return mediaFile.getContainerFormat();
-    }
-
-    return "";
+    return getMediaInfoSnapshot().getMediaInfoContainerFormat();
   }
 
-  @Override
   public MediaSource getMediaInfoSource() {
     return getMediaSource();
   }
 
   @Override
   public String getVideoHDRFormat() {
-    return getMainVideoFile().getHdrFormat();
+    return getMediaInfoSnapshot().getVideoHDRFormat();
   }
 
   public Boolean isVideoInHDR() {
-    return StringUtils.isNotEmpty(getMainVideoFile().getHdrFormat());
+    return StringUtils.isNotEmpty(getMediaInfoSnapshot().getVideoHDRFormat());
   }
 
   public String getVideoHDR() {
@@ -1980,23 +1955,12 @@ public class TvShowEpisode extends MediaEntity implements Comparable<TvShowEpiso
 
   @Override
   public boolean isVideoIn3D() {
-    String video3DFormat = "";
-    List<MediaFile> videos = getMediaFiles(MediaFileType.VIDEO);
-    if (!videos.isEmpty()) {
-      MediaFile mediaFile = videos.get(0);
-      video3DFormat = mediaFile.getVideo3DFormat();
-    }
-
-    return StringUtils.isNotBlank(video3DFormat);
+    return getMediaInfoSnapshot().isVideoIn3D();
   }
 
   @Override
   public long getVideoFilesize() {
-    long filesize = 0;
-    for (MediaFile mf : getMediaFiles(MediaFileType.VIDEO)) {
-      filesize += mf.getFilesize();
-    }
-    return filesize;
+    return getMediaInfoSnapshot().getVideoFilesize();
   }
 
   public boolean isDummy() {

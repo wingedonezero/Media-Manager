@@ -20,7 +20,6 @@ import java.util.List;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaSource;
 import org.tinymediamanager.core.entities.MediaStreamInfo;
-import org.tinymediamanager.scraper.entities.MediaCertification;
 
 /**
  * The interface IMediaInformation is used to provide an interface to common media related infos
@@ -28,13 +27,6 @@ import org.tinymediamanager.scraper.entities.MediaCertification;
  * @author Manuel Laggner
  */
 public interface IMediaInformation {
-
-  /**
-   * gets the certification for this video file
-   * 
-   * @return the certification
-   */
-  MediaCertification getCertification();
 
   /**
    * gets the main video file
@@ -60,7 +52,7 @@ public interface IMediaInformation {
   /**
    * Returns the bit depth of video (eg 8 / 10)
    * 
-   * @return
+   * @return the bit depth
    */
   int getMediaInfoVideoBitDepth();
 
@@ -107,9 +99,9 @@ public interface IMediaInformation {
   boolean isVideoIn3D();
 
   /**
-   * is the video in HighDynamicRange (HDR)
+   * get the video in HighDynamicRange (HDR) format
    * 
-   * @return true if the video is HDR
+   * @return the video is HDR format
    */
   String getVideoHDRFormat();
 
