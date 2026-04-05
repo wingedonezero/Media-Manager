@@ -137,7 +137,13 @@ public class ImdbTvShowParser extends ImdbParser {
     }
     catch (ExecutionException e) {
       // any exception thrown in the future worker is wrapped by this one
-      throw new ScrapeException(e.getCause());
+      if (e.getCause() instanceof HttpException httpException && httpException.getStatusCode() == 202) {
+        // just continue - maybe the old logic works
+        json = false;
+      }
+      else {
+        throw new ScrapeException(e.getCause());
+      }
     }
     catch (Exception e) {
       LOGGER.debug("Could not get detailpage for id '{}' - '{}'", imdbId, e.getMessage());
@@ -227,11 +233,21 @@ public class ImdbTvShowParser extends ImdbParser {
       futureReleaseinfo = executor.submit(worker);
 
       try {
+        // parse reference - this must not fail
         doc = futureReference.get();
         if (doc != null) {
           parseReferencePage(doc, options, md);
         }
+      }
+      catch (ExecutionException e) {
+        throw new ScrapeException(e.getCause());
+      }
+      catch (Exception e) {
+        throw new ScrapeException(e);
+      }
 
+      try {
+        // parse others - this may fail
         doc = futurePlotsummary.get();
         if (doc != null) {
           parsePlotsummaryPage(doc, options, md);
@@ -251,12 +267,15 @@ public class ImdbTvShowParser extends ImdbParser {
           }
         }
       }
+      catch (ExecutionException e) {
+        // just log
+        LOGGER.debug("problem while scraping: {}", e.getCause().getMessage());
+      }
       catch (Exception e) {
         LOGGER.debug("problem while scraping: {}", e.getMessage());
-        throw new ScrapeException(e);
       }
 
-      if (md.getIds().isEmpty()) {
+      if (md.getIds().isEmpty() || StringUtils.isBlank(md.getTitle())) {
         LOGGER.debug("nothing found");
         throw new NothingFoundException();
       }
@@ -380,8 +399,21 @@ public class ImdbTvShowParser extends ImdbParser {
         parseDetailPageJson(doc, options, md);
         json = true;
       }
-      catch (Exception e1) {
-        LOGGER.debug("Could not get detailpage for id '{}' - '{}'", episodeId, e1.getMessage());
+      catch (ExecutionException e) {
+        // any exception thrown in the future worker is wrapped by this one
+        if (e.getCause() instanceof HttpException httpException && httpException.getStatusCode() == 202) {
+          // just continue - maybe the old logic works
+          json = false;
+        }
+        else {
+          throw new ScrapeException(e.getCause());
+        }
+      }
+      catch (ScrapeException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        throw new ScrapeException(e);
       }
 
       if (json) {
@@ -432,13 +464,21 @@ public class ImdbTvShowParser extends ImdbParser {
       }
       else {
         try {
-          if (futureReference != null) {
-            Document docReference = futureReference.get();
-            if (docReference != null) {
-              parseEpisodeReference(docReference, md, episodeId);
-            }
+          // parse reference - this must not fail
+          Document docReference = futureReference.get();
+          if (docReference != null) {
+            parseEpisodeReference(docReference, md, episodeId);
           }
+        }
+        catch (ExecutionException e) {
+          throw new ScrapeException(e.getCause());
+        }
+        catch (Exception e) {
+          throw new ScrapeException(e);
+        }
 
+        try {
+          // parse others - this may fail
           if (futureKeywords != null) {
             Document docKeywords = futureKeywords.get();
             if (docKeywords != null) {
@@ -446,8 +486,17 @@ public class ImdbTvShowParser extends ImdbParser {
             }
           }
         }
+        catch (ExecutionException e) {
+          // just log
+          LOGGER.debug("problem while scraping: {}", e.getCause().getMessage());
+        }
         catch (Exception e) {
-          LOGGER.trace("problem parsing: {}", e.getMessage());
+          LOGGER.debug("problem while scraping: {}", e.getMessage());
+        }
+
+        if (md.getIds().isEmpty() || StringUtils.isBlank(md.getTitle())) {
+          LOGGER.debug("nothing found");
+          throw new NothingFoundException();
         }
       }
     }

@@ -17,6 +17,7 @@ x [UI] improved layout/scaling in the movie set chooser dialog
 x [Performance] implemented caching of mediainfo data to reduce CPU usage for large libraries
 x [Java] upgraded Java to 21.0.10
 x [Launcher] refactored the launcher and recompiled with Go 1.24.13 (security update)
+x [IMDB] try to fall back to parsing reference page - this still works for some users
 x [TvMaze] fix scraping guest crew #3239
 x [Trakt.tv] fixed syncing ratings with trakt.tv #2683
 x [Linux] removed automatically creating the .desktop file #3247

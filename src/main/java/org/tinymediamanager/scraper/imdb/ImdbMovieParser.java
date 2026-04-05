@@ -38,6 +38,7 @@ import org.tinymediamanager.scraper.MediaSearchAndScrapeOptions;
 import org.tinymediamanager.scraper.entities.MediaArtwork;
 import org.tinymediamanager.scraper.entities.MediaArtwork.MediaArtworkType;
 import org.tinymediamanager.scraper.entities.MediaType;
+import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.exceptions.MissingIdException;
 import org.tinymediamanager.scraper.exceptions.NothingFoundException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
@@ -116,7 +117,13 @@ public class ImdbMovieParser extends ImdbParser {
     }
     catch (ExecutionException e) {
       // any exception thrown in the future worker is wrapped by this one
-      throw new ScrapeException(e.getCause());
+      if (e.getCause() instanceof HttpException httpException && httpException.getStatusCode() == 202) {
+        // just continue - maybe the old logic works
+        json = false;
+      }
+      else {
+        throw new ScrapeException(e.getCause());
+      }
     }
     catch (Exception e) {
       LOGGER.debug("Could not get detailpage for id '{}' - '{}'", imdbId, e.getMessage());
@@ -215,11 +222,21 @@ public class ImdbMovieParser extends ImdbParser {
       }
 
       try {
+        // parse reference - this must not fail
         doc = futureReference.get();
         if (doc != null) {
           parseReferencePage(doc, options, md);
         }
+      }
+      catch (ExecutionException e) {
+        throw new ScrapeException(e.getCause());
+      }
+      catch (Exception e) {
+        throw new ScrapeException(e);
+      }
 
+      try {
+        // parse others - this may fail
         doc = futurePlotsummary.get();
         if (doc != null) {
           parsePlotsummaryPage(doc, options, md);
@@ -250,12 +267,15 @@ public class ImdbMovieParser extends ImdbParser {
           }
         }
       }
+      catch (ExecutionException e) {
+        // just log
+        LOGGER.debug("problem while scraping: {}", e.getCause().getMessage());
+      }
       catch (Exception e) {
         LOGGER.debug("problem while scraping: {}", e.getMessage());
-        throw new ScrapeException(e);
       }
 
-      if (md.getIds().isEmpty()) {
+      if (md.getIds().isEmpty() || StringUtils.isBlank(md.getTitle())) {
         LOGGER.debug("nothing found");
         throw new NothingFoundException();
       }
