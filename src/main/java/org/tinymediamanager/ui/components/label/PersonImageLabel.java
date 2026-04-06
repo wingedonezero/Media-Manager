@@ -111,15 +111,16 @@ public class PersonImageLabel extends ImageLabel {
 
       // no file found, try to cache url (if visible, otherwise load on demand in paintComponent)
       if (StringUtils.isNotBlank(actor.getThumbUrl())) {
-        if (!Settings.getInstance().isImageCache()) {
+        if (Settings.getInstance().isImageCache()) {
           Path p = ImageCache.getCachedFile(actor.getThumbUrl());
           if (p != null) {
             imagePath = p;
+            return null;
           }
         }
-        else {
-          imageUrl = actor.getThumbUrl();
-        }
+
+        // last but not least load from url
+        imageUrl = actor.getThumbUrl();
       }
 
       return null;
