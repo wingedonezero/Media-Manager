@@ -1,8 +1,5 @@
 Version 5.2.11
 =======================
-ATTENTION: IMDb has updated its protection/firewall, which currently prevents the IMDb scraper from working reliably.
-As a result, the IMDb scraper has been moved to the FREE tier, with no estimated timeline for restoring full functionality.
-
 + [TV shows] added support for renaming multi episode numbers in ranges (e.g. S01E01-02) #3057
 + [UI] split the note filter into dedicated TV show/season/episode note filters #3237
 ---
