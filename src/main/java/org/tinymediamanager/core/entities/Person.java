@@ -237,7 +237,6 @@ public class Person extends AbstractModelObject implements IPrintable {
    *          the ID-key
    * @return the id for this key
    */
-  @JsonProperty
   public Object getId(String key) {
     if (this.ids == null) {
       return null;
@@ -269,6 +268,7 @@ public class Person extends AbstractModelObject implements IPrintable {
    *
    * @return a map of all IDs
    */
+  @JsonProperty
   public Map<String, Object> getIds() {
     if (this.ids == null) {
       return Collections.emptyMap();
