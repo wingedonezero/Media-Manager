@@ -3,6 +3,7 @@ Version 5.2.11
 + [TV shows] added support for renaming multi episode numbers in ranges (e.g. S01E01-02) #3057
 + [UI] split the note filter into dedicated TV show/season/episode note filters #3237
 + [Fanart.tv] added an option to fetch old/low quality clearlogo images too
++ [Scraper] added ImdbAPI.dev scraper
 ---
 x [Movies, TV shows] update the original filename when exchanging a video file
 x [Movies, TV shows] reduced memory usage of the loaded library
