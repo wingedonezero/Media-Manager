@@ -523,8 +523,7 @@ class MovieCommandTask extends TmmThreadPool {
             paths.add(Path.of(path).toAbsolutePath());
           }
 
-          moviesToProcess.addAll(
-              movieList.getMovies().stream().filter(movie -> paths.contains(movie.getPathNIO().toAbsolutePath())).collect(Collectors.toList()));
+          moviesToProcess.addAll(movieList.getMovies().stream().filter(movie -> paths.contains(movie.getPathNIO().toAbsolutePath())).toList());
         }
         break;
 
@@ -542,8 +541,7 @@ class MovieCommandTask extends TmmThreadPool {
             }
           }
 
-          moviesToProcess
-              .addAll(movieList.getMovies().stream().filter(movie -> dataSources.contains(movie.getDataSource())).collect(Collectors.toList()));
+          moviesToProcess.addAll(movieList.getMovies().stream().filter(movie -> dataSources.contains(movie.getDataSource())).toList());
         }
         break;
 
@@ -561,7 +559,8 @@ class MovieCommandTask extends TmmThreadPool {
         break;
     }
 
-    return moviesToProcess;
+    // filter out locked ones
+    return moviesToProcess.stream().filter(movie -> !movie.isLocked()).collect(Collectors.toList());
   }
 
   @Override

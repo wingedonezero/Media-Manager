@@ -213,7 +213,7 @@ class TvShowCommandTask extends TmmThreadPool {
         List<TvShow> tvshows = getTvShowsForScope(command.scope);
         List<TvShowEpisode> tvShowEpisodes = getEpisodesForScope(command.scope);
 
-        if (!tvshows.isEmpty() && !tvShowEpisodes.isEmpty()) {
+        if (!tvshows.isEmpty() || !tvShowEpisodes.isEmpty()) {
 
           setTaskName(TmmResourceBundle.getString("tvshow.updatemediainfo"));
           publishState(TmmResourceBundle.getString("tvshow.updatemediainfo"), getProgressDone());
@@ -583,7 +583,7 @@ class TvShowCommandTask extends TmmThreadPool {
       }
     }
 
-    if (!tvShowsToRename.isEmpty()) {
+    if (!tvShowsToRename.isEmpty() || !episodesToRename.isEmpty()) {
       setTaskName(TmmResourceBundle.getString("tvshow.rename"));
       publishState(TmmResourceBundle.getString("tvshow.rename"), getProgressDone());
 
@@ -654,16 +654,14 @@ class TvShowCommandTask extends TmmThreadPool {
             paths.add(Path.of(path).toAbsolutePath());
           }
 
-          tvShowsToProcess.addAll(
-              tvShowList.getTvShows().stream().filter(movie -> paths.contains(movie.getPathNIO().toAbsolutePath())).collect(Collectors.toList()));
+          tvShowsToProcess.addAll(tvShowList.getTvShows().stream().filter(movie -> paths.contains(movie.getPathNIO().toAbsolutePath())).toList());
         }
         break;
 
       case "dataSource":
         if (scope.args != null && scope.args.length > 0) {
           List<String> dataSources = Arrays.asList(scope.args);
-          tvShowsToProcess
-              .addAll(tvShowList.getTvShows().stream().filter(movie -> dataSources.contains(movie.getDataSource())).collect(Collectors.toList()));
+          tvShowsToProcess.addAll(tvShowList.getTvShows().stream().filter(movie -> dataSources.contains(movie.getDataSource())).toList());
         }
         break;
 
@@ -681,7 +679,8 @@ class TvShowCommandTask extends TmmThreadPool {
         break;
     }
 
-    return tvShowsToProcess;
+    // filter out locked ones
+    return tvShowsToProcess.stream().filter(tvShow -> !tvShow.isLocked()).collect(Collectors.toList());
   }
 
   private List<TvShowEpisode> getEpisodesForScope(CommandScope scope) {
@@ -730,7 +729,8 @@ class TvShowCommandTask extends TmmThreadPool {
         break;
     }
 
-    return episodesToProcess;
+    // filter out locked ones
+    return episodesToProcess.stream().filter(episode -> !episode.isLocked()).collect(Collectors.toList());
   }
 
   @Override

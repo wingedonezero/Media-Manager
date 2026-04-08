@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -200,6 +201,10 @@ class TvShowCommand implements Runnable {
       scrapeEpisode.addAll(TvShowModuleManager.getInstance().getTvShowList().getUnscrapedEpisodes());
     }
 
+    // filter out locked ones
+    scrapeShow = scrapeShow.stream().filter(tvShow -> !tvShow.isLocked()).collect(Collectors.toSet());
+    scrapeEpisode = scrapeEpisode.stream().filter(episode -> !episode.isLocked()).collect(Collectors.toSet());
+
     // if we scrape already the whole show, no need to scrape dedicated episodes for it
     Set<TvShowEpisode> removedEpisode = new HashSet<>(); // no dupes
     for (TvShowEpisode ep : scrapeEpisode) {
@@ -310,6 +315,9 @@ class TvShowCommand implements Runnable {
       episodesToDetect.addAll(TvShowModuleManager.getInstance().getTvShowList().getNewEpisodes());
     }
 
+    // filter out locked ones
+    episodesToDetect = episodesToDetect.stream().filter(episode -> !episode.isLocked()).collect(Collectors.toList());
+
     if (!episodesToDetect.isEmpty()) {
       TmmTask task = new TvShowARDetectorTask(episodesToDetect);
       task.run();
@@ -317,7 +325,12 @@ class TvShowCommand implements Runnable {
   }
 
   private void gatherMediaInfo() {
-    List<TvShow> tvShows = TvShowModuleManager.getInstance().getTvShowList().getTvShows();
+    List<TvShow> tvShows = TvShowModuleManager.getInstance()
+        .getTvShowList()
+        .getTvShows()
+        .stream()
+        .filter(tvShow -> !tvShow.isLocked())
+        .collect(Collectors.toList());
 
     if (!tvShows.isEmpty()) {
       TmmTask task = new TvShowReloadMediaInformationTask(tvShows, Collections.emptyList());
@@ -331,6 +344,7 @@ class TvShowCommand implements Runnable {
         .getTvShowList()
         .getTvShows()
         .stream()
+        .filter(tvShow -> !tvShow.isLocked())
         .filter(tvShow -> tvShow.getMediaFiles(MediaFileType.TRAILER).isEmpty() && !tvShow.getTrailer().isEmpty())
         .toList();
 
@@ -371,11 +385,17 @@ class TvShowCommand implements Runnable {
 
     List<TvShowEpisode> episodesWithoutSubtitles = new ArrayList<>();
 
-    TvShowModuleManager.getInstance().getTvShowList().getTvShows().forEach(tvShow -> tvShow.getEpisodes().forEach(episode -> {
-      if (!episode.getHasSubtitles()) {
-        episodesWithoutSubtitles.add(episode);
+    TvShowModuleManager.getInstance().getTvShowList().getTvShows().forEach(tvShow -> {
+      if (tvShow.isLocked()) {
+        return;
       }
-    }));
+
+      tvShow.getEpisodes().forEach(episode -> {
+        if (!episode.getHasSubtitles()) {
+          episodesWithoutSubtitles.add(episode);
+        }
+      });
+    });
 
     for (MediaLanguages language : languages) {
       Runnable task = new TvShowSubtitleSearchAndDownloadTask(episodesWithoutSubtitles, language);
@@ -397,6 +417,10 @@ class TvShowCommand implements Runnable {
       tvShowsToRename.addAll(TvShowModuleManager.getInstance().getTvShowList().getTvShows());
       episodesToRename.addAll(TvShowModuleManager.getInstance().getTvShowList().getEpisodes());
     }
+
+    // filter out locked ones
+    tvShowsToRename = tvShowsToRename.stream().filter(tvShow -> !tvShow.isLocked()).toList();
+    episodesToRename = episodesToRename.stream().filter(episode -> !episode.isLocked()).toList();
 
     if (!tvShowsToRename.isEmpty() || !episodesToRename.isEmpty()) {
       // rename tvShows
@@ -435,6 +459,10 @@ class TvShowCommand implements Runnable {
     }
 
     for (TvShow tvShow : TvShowModuleManager.getInstance().getTvShowList().getTvShows()) {
+      if (tvShow.isLocked()) {
+        continue;
+      }
+
       tvShow.writeNFO();
       for (TvShowSeason season : tvShow.getSeasons()) {
         season.writeNfo();

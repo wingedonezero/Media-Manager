@@ -15,6 +15,7 @@ x [UI] fixed loading actor images when cache is not active
 x [Performance] implemented caching of mediainfo data to reduce CPU usage for large libraries
 x [Java] upgraded Java to 21.0.10
 x [Launcher] refactored the launcher and recompiled with Go 1.24.13 (security update)
+x [CLI, HTTP] do not process locked movies/TV shows #3254
 x [IMDB] try to fall back to parsing reference page - this still works for some users
 x [TvMaze] fix scraping guest crew #3239
 x [Trakt.tv] fixed syncing ratings with trakt.tv #2683
