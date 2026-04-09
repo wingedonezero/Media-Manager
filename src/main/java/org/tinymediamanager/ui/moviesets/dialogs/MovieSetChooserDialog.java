@@ -175,7 +175,7 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
     {
       JPanel panelContent = new JPanel();
       getContentPane().add(panelContent, BorderLayout.CENTER);
-      panelContent.setLayout(new MigLayout("", "[950lp,grow]", "[500,grow][][][]"));
+      panelContent.setLayout(new MigLayout("", "[500lp:600lp,grow]", "[500,grow][][][]"));
 
       JSplitPane splitPane = new JSplitPane();
       splitPane.setName(getName() + ".splitPane");
@@ -183,7 +183,7 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
       panelContent.add(splitPane, "cell 0 0,grow");
       {
         JPanel panelResults = new JPanel();
-        panelResults.setLayout(new MigLayout("", "[300lp:400lp,grow]", "[300lp,grow]"));
+        panelResults.setLayout(new MigLayout("", "[350lp:400lp,grow]", "[150lp:300lp,grow]"));
         JScrollPane panelSearchResults = new JScrollPane();
         panelResults.add(panelSearchResults, "cell 0 0,grow");
         splitPane.setLeftComponent(panelResults);
@@ -197,7 +197,7 @@ public class MovieSetChooserDialog extends TmmDialog implements ActionListener {
         JPanel panelSearchDetail = new JPanel();
         splitPane.setRightComponent(panelSearchDetail);
         panelSearchDetail
-            .setLayout(new MigLayout("", "[150lp:15%:20%,grow][15lp!][500lp:600lp,grow 3]", "[][15lp!][100lp:25%:40%,grow][100lp:25%:40%,grow][]"));
+            .setLayout(new MigLayout("", "[150lp:15%:20%,grow][15lp!][300lp:500lp,grow 3]", "[][15lp!][100lp:25%:40%,grow][100lp:25%:40%,grow][]"));
         {
           lblMovieSetName = new JLabel("");
           TmmFontHelper.changeFont(lblMovieSetName, 1.166, Font.BOLD);

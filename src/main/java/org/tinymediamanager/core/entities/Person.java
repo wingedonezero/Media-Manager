@@ -28,17 +28,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.tinymediamanager.core.AbstractModelObject;
-import org.tinymediamanager.core.EmptyHashMap;
 import org.tinymediamanager.core.IPrintable;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.TmmToStringStyle;
 import org.tinymediamanager.core.Utils;
+import org.tinymediamanager.scraper.util.MapUtils;
 import org.tinymediamanager.scraper.util.MediaIdUtil;
 import org.tinymediamanager.scraper.util.StrgUtils;
 
 import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * The Class Actor. This class represents actors/cast
@@ -82,8 +81,7 @@ public class Person extends AbstractModelObject implements IPrintable {
   private String              thumbUrl   = "";
   @JsonProperty
   private String              profileUrl = "";
-  @JsonProperty
-  @JsonDeserialize(as = EmptyHashMap.class)
+
   private Map<String, Object> ids        = null;
 
   /**
@@ -183,6 +181,30 @@ public class Person extends AbstractModelObject implements IPrintable {
   }
 
   /**
+   * Set the new ids for this person
+   * 
+   * @param newValue
+   *          a {@link Map} containing the new ids
+   */
+  @JsonProperty
+  public void setIds(Map<String, Object> newValue) {
+    if (this.ids == null && MapUtils.isEmpty(newValue)) {
+      // nothing to do
+      return;
+    }
+
+    if (MapUtils.isNotEmpty(newValue)) {
+      this.ids = new HashMap<>(newValue.size());
+      this.ids.putAll(newValue);
+    }
+    else {
+      this.ids = null;
+    }
+
+    firePropertyChange("ids", null, newValue);
+  }
+
+  /**
    * set the given ID; if the value is zero/"" or null, the key is removed from the existing keys
    *
    * @param key
@@ -204,6 +226,8 @@ public class Person extends AbstractModelObject implements IPrintable {
     else {
       ids.put(key, value);
     }
+
+    firePropertyChange("ids", null, ids);
   }
 
   /**
@@ -244,6 +268,7 @@ public class Person extends AbstractModelObject implements IPrintable {
    *
    * @return a map of all IDs
    */
+  @JsonProperty
   public Map<String, Object> getIds() {
     if (this.ids == null) {
       return Collections.emptyMap();

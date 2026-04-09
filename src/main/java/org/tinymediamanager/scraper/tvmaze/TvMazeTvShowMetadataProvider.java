@@ -237,7 +237,8 @@ public class TvMazeTvShowMetadataProvider extends TvMazeMetadataProvider
         break;
       }
 
-      case "Creator": {
+      case "Creator":
+      case "Writer": {
         person.setType(Person.Type.WRITER);
         break;
       }
@@ -249,6 +250,11 @@ public class TvMazeTvShowMetadataProvider extends TvMazeMetadataProvider
 
       case "Music": {
         person.setType(Person.Type.COMPOSER);
+        break;
+      }
+
+      case "Director": {
+        person.setType(Person.Type.DIRECTOR);
         break;
       }
 
@@ -648,9 +654,9 @@ public class TvMazeTvShowMetadataProvider extends TvMazeMetadataProvider
           md.addCastMember(person);
         }
       }
-      // Get Crew
-      if (episode._embedded.crew != null) {
-        for (Crew crew : episode._embedded.crew) {
+      // Get GuestCrew
+      if (episode._embedded.guestcrew != null) {
+        for (Crew crew : episode._embedded.guestcrew) {
           Person person = createTmmPerson(crew);
           if (person.getType() != Person.Type.OTHER) {
             md.addCastMember(person); // do not add unknown

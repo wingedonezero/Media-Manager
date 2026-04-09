@@ -1,3 +1,31 @@
+Version 5.2.11
+=======================
++ [TV shows] added support for renaming multi episode numbers in ranges (e.g. S01E01-02) #3057
++ [UI] split the note filter into dedicated TV show/season/episode note filters #3237
++ [Fanart.tv] added an option to fetch old/low quality clearlogo images too
++ [Scraper] added ImdbAPI.dev scraper
+---
+x [Movies, TV shows] update the original filename when exchanging a video file
+x [Movies, TV shows] reduced memory usage of the loaded library
+x [TV shows] consume less memory on update data sources
+x [UI] display translated subtitle flags (default, forced, SDH) in the filter #3150
+x [UI] fixed loading/saving of complex TV show filters #3236
+x [UI] added the empty/none edition value to the edition filter #3250
+x [UI] fixed a crash in the movie set and TV show tree while scraping #3251
+x [UI] improved layout/scaling in the movie set chooser dialog
+x [UI] fixed loading actor images when cache is not active
+x [UI] fixed image selection in the image chooser when filtering is active
+x [Performance] implemented caching of mediainfo data to reduce CPU usage for large libraries
+x [Java] upgraded Java to 21.0.10
+x [Launcher] refactored the launcher and recompiled with Go 1.24.13 (security update)
+x [CLI, HTTP] do not process locked movies/TV shows #3254
+x [IMDB] try to fall back to parsing reference page - this still works for some users
+x [TvMaze] fix scraping guest crew #3239
+x [Trakt.tv] fixed syncing ratings with trakt.tv #2683
+x [Linux] removed automatically creating the .desktop file #3247
+x [Library] upgraded many libraries (security update)
+
+
 Version 5.2.10
 =======================
 + [Artwork] added support for the fanart file naming scheme "background"

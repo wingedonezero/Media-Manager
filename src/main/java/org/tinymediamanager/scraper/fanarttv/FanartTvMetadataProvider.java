@@ -63,6 +63,7 @@ abstract class FanartTvMetadataProvider implements IMediaProvider {
 
     // configure/load settings
     info.getConfig().addText("clientKey", "", true);
+    info.getConfig().addBoolean("fetcholdclearlogo", false);
     info.getConfig().load();
 
     return info;
@@ -109,6 +110,10 @@ abstract class FanartTvMetadataProvider implements IMediaProvider {
 
   abstract Logger getLogger();
 
+  protected boolean fetchOldClearLogo() {
+    return providerInfo.getConfig().getValueAsBool("fetcholdclearlogo");
+  }
+
   protected List<MediaArtwork> getArtwork(Images images, MediaArtworkType artworkType) {
     List<MediaArtwork> artworks = new ArrayList<>();
 
@@ -141,6 +146,9 @@ abstract class FanartTvMetadataProvider implements IMediaProvider {
       case CLEARLOGO:
         artworks.addAll(prepareArtwork(images.hdmovielogo, ImageType.HDMOVIELOGO));
         artworks.addAll(prepareArtwork(images.hdtvlogo, ImageType.HDTVLOGO));
+        if (fetchOldClearLogo()) {
+          artworks.addAll(prepareArtwork(images.clearlogo, ImageType.CLEARLOGO));
+        }
         break;
 
       case SEASON_POSTER:
@@ -278,7 +286,8 @@ abstract class FanartTvMetadataProvider implements IMediaProvider {
     TVBANNER(1000, 185, MediaArtworkType.BANNER, FanartSizes.MEDIUM.getOrder()),
     TVKEYART(1000, 1426, MediaArtworkType.KEYART, PosterSizes.LARGE.getOrder()),
     TVPOSTER(1000, 1426, MediaArtworkType.POSTER, PosterSizes.LARGE.getOrder()),
-    TVTHUMB(1000, 562, MediaArtworkType.THUMB, ThumbSizes.BIG.getOrder());
+    TVTHUMB(1000, 562, MediaArtworkType.THUMB, ThumbSizes.BIG.getOrder()),
+    CLEARLOGO(400, 155, MediaArtworkType.CLEARLOGO, FanartSizes.SMALL.getOrder());
 
     ImageType(int width, int height, MediaArtworkType type, int sizeOrder) {
       this.width = width;

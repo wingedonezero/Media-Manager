@@ -208,6 +208,9 @@ public class MainWindow extends JFrame implements IModalPopupPanelProvider {
     addModule(TvShowUIModule.getInstance());
     LOGGER.debug("Done initializing UI modules :)");
 
+    // add a hint for the tools and settings
+    menuPanel.addHints();
+
     // shutdown listener - to clean database connections safely
     addWindowListener(new WindowAdapter() {
       @Override
@@ -220,7 +223,7 @@ public class MainWindow extends JFrame implements IModalPopupPanelProvider {
 
     // mouse event listener for context menu
     Toolkit.getDefaultToolkit().addAWTEventListener(arg0 -> {
-      if (arg0 instanceof MouseEvent mouseEvent && ((MouseEvent) arg0).isPopupTrigger() && arg0.getSource() instanceof JTextComponent textComponent) {
+      if (arg0 instanceof MouseEvent mouseEvent && mouseEvent.isPopupTrigger() && arg0.getSource() instanceof JTextComponent textComponent) {
         if (mouseEvent.isPopupTrigger() && textComponent.getComponentPopupMenu() == null) {
           TextFieldPopupMenu.buildCutCopyPaste().show(textComponent, mouseEvent.getX(), mouseEvent.getY());
         }

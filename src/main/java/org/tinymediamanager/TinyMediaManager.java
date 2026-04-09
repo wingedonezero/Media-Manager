@@ -23,7 +23,6 @@ import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.GraphicsEnvironment;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
@@ -45,7 +44,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
-import org.apache.commons.lang3.SystemUtils;
 import org.h2.mvstore.MVStoreException;
 import org.jdesktop.beansbinding.ELProperty;
 import org.slf4j.Logger;
@@ -555,19 +553,6 @@ public final class TinyMediaManager {
     Path db = Paths.get(Settings.getInstance().getSettingsFolder());
     Utils.createBackupFile(db);
     Utils.deleteOldBackupFile(db, 5);
-
-    // check if a .desktop file exists
-    if (SystemUtils.IS_OS_LINUX) {
-      if (!TmmOsUtils.existsDesktopFileForLinux()) {
-        Path desktopFile = Paths.get(System.getProperty("user.home"), ".local", "share", "applications", "tinyMediaManager.desktop").toAbsolutePath();
-        if (Files.isWritable(desktopFile.getParent())) {
-          TmmOsUtils.createDesktopFileForLinux(desktopFile.toFile());
-        }
-        else {
-          TmmOsUtils.createDesktopFileForLinux(new File(TmmOsUtils.DESKTOP_FILE));
-        }
-      }
-    }
   }
 
   private void doPostStartupTasks() {
@@ -624,7 +609,7 @@ public final class TinyMediaManager {
     Thread.setDefaultUncaughtExceptionHandler(new Log4jBackstop());
 
     try {
-      License.getInstance().init522();
+      License.getInstance().init523();
     }
     catch (Exception e) {
       LOGGER.error("Could not initialize license module!");

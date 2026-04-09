@@ -66,7 +66,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -78,6 +77,7 @@ import org.tinymediamanager.UpgradeTasks;
 import org.tinymediamanager.core.IMediaInformation;
 import org.tinymediamanager.core.MediaFileHelper;
 import org.tinymediamanager.core.MediaFileType;
+import org.tinymediamanager.core.MediaInfoSnapshot;
 import org.tinymediamanager.core.Settings;
 import org.tinymediamanager.core.TmmDateFormat;
 import org.tinymediamanager.core.TrailerQuality;
@@ -205,9 +205,9 @@ public class Movie extends MediaEntity implements IMediaInformation {
   private String                                localizedSpokenLanguages   = "";
 
   /**
-   * Cached main video file to avoid expensive recalculation.
+   * Cached mediainfo snaphot to avoid expensive recalculation.
    */
-  private transient volatile MediaFile          cachedMainVideoFile        = null;
+  private MediaInfoSnapshot                     mediaInfoSnapshot          = null;
 
   /**
    * Instantiates a new movie. To initialize the propertychangesupport after loading
@@ -237,9 +237,6 @@ public class Movie extends MediaEntity implements IMediaInformation {
     if (movieSetId != null) {
       movieSet = MovieModuleManager.getInstance().getMovieList().lookupMovieSet(movieSetId);
     }
-
-    // initialize cached main video file
-    updateCachedMainVideoFile();
   }
 
   /**
@@ -315,29 +312,16 @@ public class Movie extends MediaEntity implements IMediaInformation {
   }
 
   /**
-   * Updates the cached main video file and path. Called whenever VIDEO media files or path changes.
+   * Updates the mediainfo snapshot. Called whenever VIDEO media files or path changes.
    */
-  private void updateCachedMainVideoFile() {
-    // compute current main video file using existing logic
-    MediaFile vid = null;
-    if (stacked) {
-      vid = getMediaFiles(MediaFileType.VIDEO).stream().min(Comparator.comparingInt(MediaFile::getStacking)).orElse(MediaFile.EMPTY_MEDIAFILE);
-    }
-    else {
-      if (isDisc()) {
-        vid = getMainDVDVideoFile();
-      }
-    }
-    if (vid == null || vid == MediaFile.EMPTY_MEDIAFILE) {
-      vid = getBiggestMediaFile(MediaFileType.VIDEO);
-    }
+  private void updateMediaInfoSnapshot() {
+    mediaInfoSnapshot = new MediaInfoSnapshot(getMediaFiles());
+  }
 
-    if (vid != null && vid != MediaFile.EMPTY_MEDIAFILE) {
-      cachedMainVideoFile = vid;
-    }
-    else {
-      cachedMainVideoFile = null;
-    }
+  @Override
+  public void fireEventForChangedMediaInformation() {
+    super.fireEventForChangedMediaInformation();
+    updateMediaInfoSnapshot();
   }
 
   @Override
@@ -348,11 +332,14 @@ public class Movie extends MediaEntity implements IMediaInformation {
     if (mediaFile.getType() == MediaFileType.TRAILER) {
       mixinLocalTrailers();
     }
+  }
 
-    // update cached main video file if a VIDEO file was added
-    if (mediaFile.getType() == MediaFileType.VIDEO) {
-      updateCachedMainVideoFile();
-    }
+  @Override
+  protected void mediaFilesChanged() {
+    super.mediaFilesChanged();
+
+    // update the mediafile snapshot every time the MediaFiles change
+    updateMediaInfoSnapshot();
   }
 
   @Override
@@ -380,7 +367,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
   public void setPath(String newValue) {
     super.setPath(newValue);
     // update cached main video file when path changes
-    updateCachedMainVideoFile();
+    updateMediaInfoSnapshot();
   }
 
   /**
@@ -1820,7 +1807,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
 
   @Override
   public int getMediaInfoVideoBitDepth() {
-    return getMainVideoFile().getBitDepth();
+    return getMediaInfoSnapshot().getMediaInfoVideoBitDepth();
   }
 
   /**
@@ -2141,7 +2128,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
   }
 
   public boolean isVideoIn3D() {
-    return videoIn3D || StringUtils.isNotBlank(getMainVideoFile().getVideo3DFormat());
+    return videoIn3D || getMediaInfoSnapshot().isVideoIn3D();
   }
 
   public void setTop250(int newValue) {
@@ -2420,7 +2407,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
     }
 
     // changing the stacking marker may change the main video file!
-    updateCachedMainVideoFile();
+    updateMediaInfoSnapshot();
   }
 
   /**
@@ -2452,18 +2439,23 @@ public class Movie extends MediaEntity implements IMediaInformation {
     }
   }
 
-  @Override
-  public MediaFile getMainVideoFile() {
-    // return cached value if present
-    if (cachedMainVideoFile != null) {
-      return cachedMainVideoFile;
+  private MediaInfoSnapshot getMediaInfoSnapshot() {
+    // return cached value if present and if the main video file is not the empty media file
+    if (mediaInfoSnapshot != null && StringUtils.isNotBlank(mediaInfoSnapshot.getMediaInfoContainerFormat())) {
+      return mediaInfoSnapshot;
     }
 
     // cache not initialized yet (e.g., during early lifecycle) -> compute and cache once
-    updateCachedMainVideoFile();
+    updateMediaInfoSnapshot();
 
-    if (cachedMainVideoFile != null) {
-      return cachedMainVideoFile;
+    return mediaInfoSnapshot;
+  }
+
+  @Override
+  public MediaFile getMainVideoFile() {
+    MediaFile mainVideoFile = getMediaInfoSnapshot().getMainVideoFile();
+    if (mainVideoFile != MediaFile.EMPTY_MEDIAFILE) {
+      return mainVideoFile;
     }
 
     if (StringUtils.isNotBlank(getTitle())) {
@@ -2474,48 +2466,6 @@ public class Movie extends MediaEntity implements IMediaInformation {
     return MediaFile.EMPTY_MEDIAFILE;
   }
 
-  public MediaFile getMainDVDVideoFile() {
-    MediaFile vid = null;
-
-    // find IFO file with the longest duration
-    for (MediaFile mf : getMediaFiles(MediaFileType.VIDEO)) {
-      if (mf.getExtension().equalsIgnoreCase("ifo")) {
-        if (vid == null || mf.getDuration() > vid.getDuration()) {
-          vid = mf;
-        }
-      }
-    }
-    // find the vob matching to our ifo
-    if (vid != null) {
-      // check DVD VOBs
-      String prefix = StrgUtils.substr(vid.getFilename(), "(?i)^(VTS_\\d+).*");
-      if (prefix.isEmpty()) {
-        // check HD-DVD
-        prefix = StrgUtils.substr(vid.getFilename(), "(?i)^(HV\\d+)I.*");
-      }
-      for (MediaFile mif : getMediaFiles(MediaFileType.VIDEO)) {
-        // TODO: check HD-DVD
-        if (mif.getFilename().startsWith(prefix) && !mif.getFilename().endsWith("IFO")) {
-          vid = mif;
-          // take last to not get the menu one...
-        }
-      }
-    }
-
-    // no IFO/VOB? - might be bluray
-    if (vid == null) {
-      for (MediaFile mf : getMediaFiles(MediaFileType.VIDEO)) {
-        if (mf.getExtension().equalsIgnoreCase("m2ts")) {
-          if (vid == null || mf.getDuration() > vid.getDuration()) {
-            vid = mf;
-          }
-        }
-      }
-    }
-
-    return vid;
-  }
-
   @Override
   public MediaFile getMainFile() {
     return getMainVideoFile();
@@ -2523,37 +2473,37 @@ public class Movie extends MediaEntity implements IMediaInformation {
 
   @Override
   public String getMediaInfoVideoResolution() {
-    return getMainVideoFile().getVideoResolution();
+    return getMediaInfoSnapshot().getMediaInfoVideoResolution();
   }
 
   @Override
   public String getMediaInfoVideoFormat() {
-    return getMainVideoFile().getVideoFormat();
+    return getMediaInfoSnapshot().getMediaInfoVideoFormat();
   }
 
   @Override
   public String getMediaInfoVideoCodec() {
-    return getMainVideoFile().getVideoCodec();
+    return getMediaInfoSnapshot().getMediaInfoVideoCodec();
   }
 
   @Override
   public double getMediaInfoFrameRate() {
-    return getMainVideoFile().getFrameRate();
+    return getMediaInfoSnapshot().getMediaInfoFrameRate();
   }
 
   @Override
   public float getMediaInfoAspectRatio() {
-    return getMainVideoFile().getAspectRatio();
+    return getMediaInfoSnapshot().getMediaInfoAspectRatio();
   }
 
   public String getMediaInfoAspectRatioAsString() {
     DecimalFormat df = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.US));
-    return df.format(getMainVideoFile().getAspectRatio()).replaceAll("\\.", "");
+    return df.format(getMediaInfoSnapshot().getMediaInfoAspectRatio()).replaceAll("\\.", "");
   }
 
   @Override
   public Float getMediaInfoAspectRatio2() {
-    return getMainVideoFile().getAspectRatio2();
+    return getMediaInfoSnapshot().getMediaInfoAspectRatio2();
   }
 
   public String getMediaInfoAspectRatio2AsString() {
@@ -2561,127 +2511,83 @@ public class Movie extends MediaEntity implements IMediaInformation {
     String ar2AsString = "";
     if (aspectRatio2 != null) {
       DecimalFormat df = new DecimalFormat("0.00", new DecimalFormatSymbols(Locale.US));
-      ar2AsString = df.format(getMainVideoFile().getAspectRatio2()).replaceAll("\\.", "");
+      ar2AsString = df.format(getMediaInfoSnapshot().getMediaInfoAspectRatio2()).replaceAll("\\.", "");
     }
     return ar2AsString;
   }
 
   public boolean isMultiFormat() {
-    return getMainVideoFile().getAspectRatio2() != null;
+    return getMediaInfoSnapshot().getMediaInfoAspectRatio2() != null;
   }
 
   @Override
   public Integer getMediaInfoAudioStreamCount() {
-    int audioStreamCount = getMainVideoFile().getAudioStreams().size();
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
-      audioStreamCount += mf.getAudioStreams().size();
-    }
-    return audioStreamCount;
+    return getMediaInfoSnapshot().getMediaInfoAudioStreamCount();
   }
 
   @Override
   public String getMediaInfoAudioCodec() {
-    return getMainVideoFile().getAudioCodec();
+    return getMediaInfoSnapshot().getMediaInfoAudioCodec();
   }
 
   @Override
   public List<String> getMediaInfoAudioCodecList() {
-    List<String> lang = new ArrayList<>(getMainVideoFile().getAudioCodecList());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
-      lang.addAll(mf.getAudioCodecList());
-    }
-    return lang;
+    return getMediaInfoSnapshot().getMediaInfoAudioCodecList();
   }
 
   @Override
   public String getMediaInfoAudioChannels() {
-    return getMainVideoFile().getAudioChannels();
+    return getMediaInfoSnapshot().getMediaInfoAudioChannels();
   }
 
   @Override
   public List<String> getMediaInfoAudioChannelList() {
-    List<String> lang = new ArrayList<>(getMainVideoFile().getAudioChannelsList());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
-      lang.addAll(mf.getAudioChannelsList());
-    }
-    return lang;
+    return getMediaInfoSnapshot().getMediaInfoAudioChannelList();
   }
 
   @Override
   public String getMediaInfoAudioChannelsDot() {
-    return getMainVideoFile().getAudioChannelsDot();
+    return getMediaInfoSnapshot().getMediaInfoAudioChannelsDot();
   }
 
   @Override
   public List<String> getMediaInfoAudioChannelDotList() {
-    List<String> lang = new ArrayList<>();
-    lang.addAll(getMainVideoFile().getAudioChannelsDotList());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
-      lang.addAll(mf.getAudioChannelsDotList());
-    }
-    return lang;
+    return getMediaInfoSnapshot().getMediaInfoAudioChannelDotList();
   }
 
   @Override
   public String getMediaInfoAudioLanguage() {
-    return getMainVideoFile().getAudioLanguage();
+    return getMediaInfoSnapshot().getMediaInfoAudioLanguage();
   }
 
   @Override
   public List<String> getMediaInfoAudioLanguageList() {
-    List<String> lang = new ArrayList<>(getMainVideoFile().getAudioLanguagesList());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO)) {
-      lang.addAll(mf.getAudioLanguagesList());
-    }
-    return lang;
+    return getMediaInfoSnapshot().getMediaInfoAudioLanguageList();
   }
 
   @Override
   public Integer getMediaInfoSubtitleStreamCount() {
-    int subtitleStreamCount = getMainVideoFile().getSubtitles().size();
-    for (MediaFile mf : getMediaFiles(MediaFileType.SUBTITLE)) {
-      subtitleStreamCount += mf.getSubtitles().size();
-    }
-    return subtitleStreamCount;
+    return getMediaInfoSnapshot().getMediaInfoSubtitleStreamCount();
   }
 
   @Override
   public List<String> getMediaInfoSubtitleLanguageList() {
-    Set<String> lang = new TreeSet<>(getMainVideoFile().getSubtitleLanguages());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO, MediaFileType.SUBTITLE)) {
-      lang.addAll(mf.getSubtitleLanguages());
-    }
-    return new ArrayList<>(lang);
+    return getMediaInfoSnapshot().getMediaInfoSubtitleLanguageList();
   }
 
   @Override
   public List<String> getMediaInfoSubtitleCodecList() {
-    Set<String> codecs = new TreeSet<>(getMainVideoFile().getSubtitleCodecs());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO, MediaFileType.SUBTITLE)) {
-      codecs.addAll(mf.getSubtitleCodecs());
-    }
-    return new ArrayList<>(codecs);
+    return getMediaInfoSnapshot().getMediaInfoSubtitleCodecList();
   }
 
   @Override
   public List<MediaStreamInfo.Flags> getMediaInfoSubtitleTypeList() {
-    Set<MediaStreamInfo.Flags> types = new TreeSet<>(getMainVideoFile().getSubtitleTypes());
-
-    for (MediaFile mf : getMediaFiles(MediaFileType.AUDIO, MediaFileType.SUBTITLE)) {
-      types.addAll(mf.getSubtitleTypes());
-    }
-    return new ArrayList<>(types);
+    return getMediaInfoSnapshot().getMediaInfoSubtitleTypeList();
   }
 
   @Override
   public String getMediaInfoContainerFormat() {
-    return getMainVideoFile().getContainerFormat();
+    return getMediaInfoSnapshot().getMediaInfoContainerFormat();
   }
 
   @Override
@@ -2691,11 +2597,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
 
   @Override
   public long getVideoFilesize() {
-    long filesize = 0;
-    for (MediaFile mf : getMediaFiles(MediaFileType.VIDEO)) {
-      filesize += mf.getFilesize();
-    }
-    return filesize;
+    return getMediaInfoSnapshot().getVideoFilesize();
   }
 
   /**
@@ -2736,7 +2638,7 @@ public class Movie extends MediaEntity implements IMediaInformation {
 
   @Override
   public String getVideoHDRFormat() {
-    return getMainVideoFile().getHdrFormat();
+    return getMediaInfoSnapshot().getVideoHDRFormat();
   }
 
   public Boolean isVideoInHDR() {

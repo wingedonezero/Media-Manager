@@ -19,9 +19,11 @@ package org.tinymediamanager.core.entities;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.MissingResourceException;
 import java.util.Set;
 
 import org.tinymediamanager.core.AbstractModelObject;
+import org.tinymediamanager.core.TmmResourceBundle;
 
 import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -34,25 +36,42 @@ public class MediaStreamInfo extends AbstractModelObject {
   public enum Flags {
     // FLAG_NONE, // just empty
     @JsonEnumDefaultValue
-    FLAG_DEFAULT("Default"),
+    FLAG_DEFAULT("Default", "metatag.default"),
     FLAG_DUB("Dubbed"),
     FLAG_ORIGINAL("Original"),
     FLAG_COMMENT("Commentary"),
     FLAG_LYRICS("Lyrics"),
     FLAG_KARAOKE("Karaoke"),
-    FLAG_FORCED("Forced"),
-    FLAG_HEARING_IMPAIRED("SDH"), // subtitles for the deaf and hard of hearing
+    FLAG_FORCED("Forced", "metatag.forced"),
+    FLAG_HEARING_IMPAIRED("SDH", "metatag.sdh"), // subtitles for the deaf and hard of hearing
     FLAG_VISUAL_IMPAIRED("Audio description for the visually impaired");
 
     private final String displayName;
+    private final String translationKey;
 
     Flags(String displayName) {
+      this(displayName, null);
+    }
+
+    Flags(String displayName, String translationKey) {
       this.displayName = displayName;
+      this.translationKey = translationKey;
     }
 
     @Override
     public String toString() {
-      return displayName;
+      String name = displayName;
+
+      if (translationKey != null) {
+        try {
+          name = TmmResourceBundle.getStringUnsafe(translationKey);
+        }
+        catch (MissingResourceException e) {
+          // default is already set to displayName, so we can ignore this exception
+        }
+      }
+
+      return name;
     }
   }
 

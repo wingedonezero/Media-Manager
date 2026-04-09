@@ -505,8 +505,8 @@ class TraktTvTvShow {
       List<TvShow> matchingTmmTvShows = getTmmTvShowForTraktShow(tvShows, traktEpisode.show);
 
       for (TvShow tmmShow : matchingTmmTvShows) {
-        List<TvShowEpisode> matchingEpisodes = tmmShow.getEpisode(MetadataUtil.unboxInteger(traktEpisode.episode.number, -1),
-            MetadataUtil.unboxInteger(traktEpisode.episode.season, -1));
+        List<TvShowEpisode> matchingEpisodes = tmmShow.getEpisode(MetadataUtil.unboxInteger(traktEpisode.episode.season, -1),
+            MetadataUtil.unboxInteger(traktEpisode.episode.number, -1));
 
         for (TvShowEpisode tmmEpisode : matchingEpisodes) {
           if (!tmmEpisode.isLocked()) {

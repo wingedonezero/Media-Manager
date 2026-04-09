@@ -324,7 +324,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
       Set<Path> rootFiles = new TreeSet<>(); // avoid duplicates
       for (Path path : rootList) {
         // prefer cached attribute checks when available
-        BasicFileAttributes attr = fsAttrCache.get(path);
+        BasicFileAttributes attr = fsAttrCache.get(path.toAbsolutePath().toString());
         boolean isDir = (attr != null ? attr.isDirectory() : Files.isDirectory(path));
         if (isDir) {
           String name = path.getFileName().toString();
@@ -1051,7 +1051,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
 
     for (MediaFile mediaFile : movie.getMediaFiles()) {
       Path mfPath = mediaFile.getFile();
-      BasicFileAttributes cached = fsAttrCache.get(mfPath);
+      BasicFileAttributes cached = fsAttrCache.get(mfPath.toAbsolutePath().toString());
       boolean exists = (cached != null) || Files.exists(mfPath, LinkOption.NOFOLLOW_LINKS);
       if (!exists) {
         if (mediaFile.getType() == MediaFileType.VIDEO) {
@@ -1084,6 +1084,10 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
 
         // remember the filename the first time the movie gets added to tmm
         if (StringUtils.isBlank(movie.getOriginalFilename())) {
+          movie.setOriginalFilename(vid.getFilename());
+        }
+        else if (!FilenameUtils.getExtension(movie.getOriginalFilename()).equals(vid.getExtension())) {
+          // if the found filename has a different extension than the already stored one, we update to the new one (e.g. .mkv -> .mp4)
           movie.setOriginalFilename(vid.getFilename());
         }
 
@@ -1179,7 +1183,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
     fileLock.writeLock().unlock();
 
     // convert to MFs
-    ArrayList<MediaFile> mfs = new ArrayList<>();
+    List<MediaFile> mfs = new ArrayList<>();
     for (Path file : allFiles) {
       mfs.add(new MediaFile(file));
     }
@@ -1282,6 +1286,10 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
         if (StringUtils.isBlank(movie.getOriginalFilename())) {
           movie.setOriginalFilename(mf.getFilename());
         }
+        else if (!FilenameUtils.getExtension(movie.getOriginalFilename()).equals(mf.getExtension())) {
+          // if the found filename has a different extension than the already stored one, we update to the new one (e.g. .mkv -> .mp4)
+          movie.setOriginalFilename(mf.getFilename());
+        }
 
         movies.add(movie); // add to our cached copy
       }
@@ -1318,7 +1326,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
       // ***************************************************************
       for (MediaFile mediaFile : movie.getMediaFiles()) {
         Path mfPath = mediaFile.getFile();
-        BasicFileAttributes cached = fsAttrCache.get(mfPath);
+        BasicFileAttributes cached = fsAttrCache.get(mfPath.toAbsolutePath().toString());
         boolean exists = (cached != null) || Files.exists(mfPath);
         if (!exists) {
           movie.removeFromMediaFiles(mediaFile);
@@ -1707,7 +1715,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
         }
         else {
           // at least update the file dates (prefer cached attributes to reduce I/O)
-          BasicFileAttributes cached = fsAttrCache.get(mf.getFileAsPath());
+          BasicFileAttributes cached = fsAttrCache.get(mf.getFileAsPath().toString());
           if (MediaFileHelper.gatherBasicFileInformation(mf, cached)) {
             // okay, something changed with that movie file - force fetching mediainfo
             submitTask(new MovieMediaFileInformationFetcherTask(mf, movie, true));
@@ -1742,7 +1750,7 @@ public class MovieUpdateDatasourceTask extends TmmThreadPool {
         }
         else {
           // did the file dates/size change? (prefer cached attributes to reduce I/O)
-          BasicFileAttributes cached = fsAttrCache.get(mf.getFileAsPath());
+          BasicFileAttributes cached = fsAttrCache.get(mf.getFileAsPath().toString());
           if (MediaFileHelper.gatherBasicFileInformation(mf, cached)) {
             // okay, something changed with that movie file - force fetching mediainfo (and drop medianfo.xml for MAIN video only)
             if (mf.getType() == MediaFileType.VIDEO) {

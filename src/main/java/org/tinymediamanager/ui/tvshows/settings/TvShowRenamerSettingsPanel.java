@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -54,6 +55,7 @@ import org.tinymediamanager.core.AbstractModelObject;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
+import org.tinymediamanager.core.tvshow.TvShowMultiEpisodeStyle;
 import org.tinymediamanager.core.tvshow.TvShowRenamer;
 import org.tinymediamanager.core.tvshow.TvShowSettings;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
@@ -102,6 +104,7 @@ public class TvShowRenamerSettingsPanel extends JPanel implements HierarchyListe
   private JComboBox                                cbSeasonFoldernameSpaceReplacement;
   private JCheckBox                                chckbxFilenameSpaceReplacement;
   private JComboBox                                cbFilenameSpaceReplacement;
+  private JComboBox<TvShowMultiEpisodeStyle>       cbMultiEpisodeStyle;
   private JComboBox<TvShowEpisodePreviewContainer> cbEpisodeForPreview;
   private JTextArea                                tfTvShowFolder;
   private JTextArea                                tfEpisodeFilename;
@@ -187,6 +190,7 @@ public class TvShowRenamerSettingsPanel extends JPanel implements HierarchyListe
     chckbxFilenameSpaceReplacement.addActionListener(renamerActionListener);
     chckbxAsciiReplacement.addActionListener(renamerActionListener);
     cbEpisodeForPreview.addActionListener(arg0 -> createRenamerExample());
+    cbMultiEpisodeStyle.addActionListener(renamerActionListener);
     cbShowFoldernameSpaceReplacement.addActionListener(renamerActionListener);
     cbSeasonFoldernameSpaceReplacement.addActionListener(renamerActionListener);
     cbFilenameSpaceReplacement.addActionListener(renamerActionListener);
@@ -212,7 +216,7 @@ public class TvShowRenamerSettingsPanel extends JPanel implements HierarchyListe
   private void initComponents() {
     setLayout(new MigLayout("", "[grow]", "[][15lp!][][15lp!][][15lp!][]"));
     {
-      JPanel panelPatterns = new JPanel(new MigLayout("insets 0, hidemode 1", "[20lp!][15lp][][400lp,grow][grow]", "[][][][][][][]"));
+      JPanel panelPatterns = new JPanel(new MigLayout("insets 0, hidemode 1", "[20lp!][15lp][][400lp,grow][grow]", "[][][][][][][15lp!][]"));
 
       JLabel lblPatternsT = new TmmLabel(TmmResourceBundle.getString("Settings.tvshow.renamer.title"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelPatterns, lblPatternsT, true);
@@ -281,7 +285,7 @@ public class TvShowRenamerSettingsPanel extends JPanel implements HierarchyListe
       }
       {
         JLabel lblRenamerHintT = new JLabel(TmmResourceBundle.getString("Settings.tvshow.renamer.hint"));
-        panelPatterns.add(lblRenamerHintT, "cell 1 6 3 1");
+        panelPatterns.add(lblRenamerHintT, "cell 1 7 3 1");
       }
       {
         JButton btnJmteExplorer = new JButton(TmmResourceBundle.getString("jmteexplorer.title"));
@@ -294,7 +298,7 @@ public class TvShowRenamerSettingsPanel extends JPanel implements HierarchyListe
     }
     {
       JPanel panelAdvancedOptions = new JPanel();
-      panelAdvancedOptions.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][]")); // 16lp ~ width of the
+      panelAdvancedOptions.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][][]")); // 16lp ~ width of the
 
       JLabel lblAdvancedOptions = new TmmLabel(TmmResourceBundle.getString("Settings.advancedoptions"), H3);
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelAdvancedOptions, lblAdvancedOptions, true);
@@ -312,6 +316,14 @@ public class TvShowRenamerSettingsPanel extends JPanel implements HierarchyListe
       {
         chckbxCleanupUnwanted = new JCheckBox(TmmResourceBundle.getString("Settings.cleanupfiles"));
         panelAdvancedOptions.add(chckbxCleanupUnwanted, "cell 1 1 2 1");
+      }
+      JLabel lblMultiEpisodeStyle = new JLabel(TmmResourceBundle.getString("Settings.tvshow.renamer.multiepisodestyle"));
+      panelAdvancedOptions.add(lblMultiEpisodeStyle, "flowx,cell 1 2 2 1");
+      {
+
+        cbMultiEpisodeStyle = new JComboBox<>();
+        panelAdvancedOptions.add(cbMultiEpisodeStyle, "cell 1 2 2 1");
+        cbMultiEpisodeStyle.setModel(new DefaultComboBoxModel<>(TvShowMultiEpisodeStyle.values()));
       }
     }
     {
@@ -687,6 +699,12 @@ public class TvShowRenamerSettingsPanel extends JPanel implements HierarchyListe
     AutoBinding autoBinding = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, tvShowSettingsBeanProperty_1, tfTvShowFolder,
         jTextFieldBeanProperty_1);
     autoBinding.bind();
+    //
+    Property tvShowSettingsBeanProperty_10 = BeanProperty.create("renamerMultiEpisodeStyle");
+    Property jComboBoxBeanProperty_2 = BeanProperty.create("selectedItem");
+    AutoBinding autoBinding_11 = Bindings.createAutoBinding(UpdateStrategy.READ_WRITE, settings, tvShowSettingsBeanProperty_10, cbMultiEpisodeStyle,
+        jComboBoxBeanProperty_2);
+    autoBinding_11.bind();
     //
     Property tvShowSettingsBeanProperty_2 = BeanProperty.create("renamerFilename");
     Property jTextFieldBeanProperty_2 = BeanProperty.create("text");

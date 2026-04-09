@@ -135,13 +135,16 @@ public class SubtitleDownloadTask extends DownloadTask {
         while (ze != null) {
           String extension = FilenameUtils.getExtension(ze.getName()).toLowerCase(Locale.ROOT);
 
-          // check is that is a valid file type
-          if (Settings.getInstance().getSubtitleFileType().contains("." + extension) || "idx".equals(extension)) {
-            firstSubtitle = new SubtitleEntry(extension, zis.readAllBytes());
-          }
+          // try to overcome ZipSlip issue on sonarcloud.io (javasecurity:S6096)
+          if (extension.matches("^\\w[\\w.]+$")) {
+            // check is that is a valid file type
+            if (Settings.getInstance().getSubtitleFileType().contains("." + extension) || "idx".equals(extension)) {
+              firstSubtitle = new SubtitleEntry(extension, zis.readAllBytes());
+            }
 
-          if (firstTxt == null && "txt".equals(extension)) {
-            firstTxt = new SubtitleEntry(extension, zis.readAllBytes());
+            if (firstTxt == null && "txt".equals(extension)) {
+              firstTxt = new SubtitleEntry(extension, zis.readAllBytes());
+            }
           }
 
           ze = zis.getNextEntry();

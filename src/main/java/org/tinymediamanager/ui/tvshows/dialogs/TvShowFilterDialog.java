@@ -79,6 +79,7 @@ import org.tinymediamanager.ui.tvshows.filters.TvShowDuplicateEpisodesFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowEmptyFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowEpisodeCountFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowEpisodeCrc32Filter;
+import org.tinymediamanager.ui.tvshows.filters.TvShowEpisodeNoteFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowFanartSizeFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowFilenameFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowFirstAiredFilter;
@@ -99,6 +100,7 @@ import org.tinymediamanager.ui.tvshows.filters.TvShowPathFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowPosterSizeFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowRuntimeFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowSeasonCountFilter;
+import org.tinymediamanager.ui.tvshows.filters.TvShowSeasonNoteFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowStatusFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowStudioFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowSubtitleCountFilter;
@@ -187,6 +189,8 @@ public class TvShowFilterDialog extends TmmDialog {
         addFilter(new TvShowStudioFilter(), panelMetadata);
         addFilter(new TvShowTagFilter(), panelMetadata);
         addFilter(new TvShowNoteFilter(), panelMetadata);
+        addFilter(new TvShowSeasonNoteFilter(), panelMetadata);
+        addFilter(new TvShowEpisodeNoteFilter(), panelMetadata);
         addFilter(new TvShowEpisodeCountFilter(), panelMetadata);
         addFilter(new TvShowSeasonCountFilter(), panelMetadata);
       }

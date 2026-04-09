@@ -38,6 +38,7 @@ import org.tinymediamanager.scraper.MediaSearchAndScrapeOptions;
 import org.tinymediamanager.scraper.entities.MediaArtwork;
 import org.tinymediamanager.scraper.entities.MediaArtwork.MediaArtworkType;
 import org.tinymediamanager.scraper.entities.MediaType;
+import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.exceptions.MissingIdException;
 import org.tinymediamanager.scraper.exceptions.NothingFoundException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
@@ -101,7 +102,7 @@ public class ImdbMovieParser extends ImdbParser {
     // default workers which always run
     Document doc = null;
     boolean json = false;
-    Callable<Document> worker = new ImdbWorker(constructUrl("title/", imdbId), options.getLanguage().getLanguage(),
+    Callable<Document> worker = createImdbWorker(constructUrl("title/", imdbId), options.getLanguage().getLanguage(),
         options.getCertificationCountry().getAlpha2(), true);
     Future<Document> futureDetail = executor.submit(worker);
 
@@ -116,7 +117,13 @@ public class ImdbMovieParser extends ImdbParser {
     }
     catch (ExecutionException e) {
       // any exception thrown in the future worker is wrapped by this one
-      throw new ScrapeException(e.getCause());
+      if (e.getCause() instanceof HttpException httpException && httpException.getStatusCode() == 202) {
+        // just continue - maybe the old logic works
+        json = false;
+      }
+      else {
+        throw new ScrapeException(e.getCause());
+      }
     }
     catch (Exception e) {
       LOGGER.debug("Could not get detailpage for id '{}' - '{}'", imdbId, e.getMessage());
@@ -124,24 +131,24 @@ public class ImdbMovieParser extends ImdbParser {
     }
 
     // start other workers afterward
-    worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L3JlZmVyZW5jZQ==")), options.getLanguage().getLanguage(),
+    worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3JlZmVyZW5jZQ==")), options.getLanguage().getLanguage(),
         options.getCertificationCountry().getAlpha2(), true);
     Future<Document> futureReference = executor.submit(worker);
 
     // we must parse this as fixed language, since the IDs seem not to be fixated yet...?
-    worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L2Z1bGxjcmVkaXRz")), "en", "US", true);
+    worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2Z1bGxjcmVkaXRz")), "en", "US", true);
     Future<Document> futureCredits = executor.submit(worker);
 
     Future<Document> futureKeywords = null;
     if (isScrapeKeywordsPage() && getMaxKeywordCount() > 5) {
-      worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L2tleXdvcmRz")), options.getLanguage().getLanguage(),
+      worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2tleXdvcmRz")), options.getLanguage().getLanguage(),
           options.getCertificationCountry().getAlpha2(), true);
       futureKeywords = executor.submit(worker);
     }
 
     Future<Document> futureReleaseInfo = null;
     if (!isScrapeLocalReleaseDate()) {
-      worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
+      worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
           options.getCertificationCountry().getAlpha2(), true);
       futureReleaseInfo = executor.submit(worker);
     }
@@ -198,28 +205,38 @@ public class ImdbMovieParser extends ImdbParser {
     else {
       // fallback old style, when json parsing was not ok
       Future<Document> futurePlotsummary;
-      worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L3Bsb3RzdW1tYXJ5")), options.getLanguage().getLanguage(),
+      worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3Bsb3RzdW1tYXJ5")), options.getLanguage().getLanguage(),
           options.getCertificationCountry().getAlpha2(), true);
       futurePlotsummary = executor.submit(worker);
 
       Future<Document> futureReleaseinfo;
-      worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
+      worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
           options.getCertificationCountry().getAlpha2(), true);
       futureReleaseinfo = executor.submit(worker);
 
       Future<Document> futureCritics = null;
       if (Boolean.TRUE.equals(config.getValueAsBool("includeMetacritic"))) {
-        worker = new ImdbWorker(constructUrl("title/", imdbId, decode("L2NyaXRpY3Jldmlld3M=")), options.getLanguage().getLanguage(),
+        worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2NyaXRpY3Jldmlld3M=")), options.getLanguage().getLanguage(),
             options.getCertificationCountry().getAlpha2(), true);
         futureCritics = executor.submit(worker);
       }
 
       try {
+        // parse reference - this must not fail
         doc = futureReference.get();
         if (doc != null) {
           parseReferencePage(doc, options, md);
         }
+      }
+      catch (ExecutionException e) {
+        throw new ScrapeException(e.getCause());
+      }
+      catch (Exception e) {
+        throw new ScrapeException(e);
+      }
 
+      try {
+        // parse others - this may fail
         doc = futurePlotsummary.get();
         if (doc != null) {
           parsePlotsummaryPage(doc, options, md);
@@ -250,12 +267,15 @@ public class ImdbMovieParser extends ImdbParser {
           }
         }
       }
+      catch (ExecutionException e) {
+        // just log
+        LOGGER.debug("problem while scraping: {}", e.getCause().getMessage());
+      }
       catch (Exception e) {
         LOGGER.debug("problem while scraping: {}", e.getMessage());
-        throw new ScrapeException(e);
       }
 
-      if (md.getIds().isEmpty()) {
+      if (md.getIds().isEmpty() || StringUtils.isBlank(md.getTitle())) {
         LOGGER.debug("nothing found");
         throw new NothingFoundException();
       }
@@ -283,7 +303,7 @@ public class ImdbMovieParser extends ImdbParser {
     MediaMetadata md = new MediaMetadata(ImdbMetadataProvider.ID);
 
     // get critics
-    Callable<Document> worker = new ImdbParser.ImdbWorker(constructUrl("title/", imdbId, decode("L2NyaXRpY3Jldmlld3M=")), "en", "US", true);
+    Callable<Document> worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2NyaXRpY3Jldmlld3M=")), "en", "US", true);
     Future<Document> futureCritics = executor.submit(worker);
 
     try {
@@ -305,7 +325,7 @@ public class ImdbMovieParser extends ImdbParser {
     return md.getRatings();
   }
 
-  private void parseCritics(Document doc, MediaMetadata md) {
+  protected void parseCritics(Document doc, MediaMetadata md) {
     // <div class="metascore_block" itemprop="aggregateRating" itemscope="" itemtype="http://schema.org/AggregateRating">
     // <span itemprop="ratingValue">53</span>
     // Based on <span itemprop="ratingCount">36</span>
@@ -337,7 +357,7 @@ public class ImdbMovieParser extends ImdbParser {
   }
 
   // AKAs and original title
-  private void parseReleaseinfoPageAKAs(Document doc, MediaMetadata md) {
+  protected void parseReleaseinfoPageAKAs(Document doc, MediaMetadata md) {
     // <table id="akas" class="subpage_data spEven2Col">
     // <tr class="even">
     // <td>(original title)</td>

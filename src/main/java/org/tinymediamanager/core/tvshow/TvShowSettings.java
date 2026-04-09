@@ -95,6 +95,7 @@ public final class TvShowSettings extends AbstractSettings {
 
   static final String                            CERTIFICATION_COUNTRY                  = "certificationCountry";
   static final String                            RENAMER_SEASON_FOLDER                  = "renamerSeasonFoldername";
+  static final String                            RENAMER_MULTI_EPISODE_STYLE            = "renamerMultiEpisodeStyle";
   static final String                            BAD_WORD                               = "badWord";
   static final String                            SKIP_FOLDER                            = "skipFolder";
   static final String                            SUBTITLE_SCRAPERS                      = "subtitleScrapers";
@@ -178,6 +179,7 @@ public final class TvShowSettings extends AbstractSettings {
   String                                         renamerTvShowFoldername                = DEFAULT_RENAMER_FOLDER_PATTERN;
   String                                         renamerSeasonFoldername                = DEFAULT_RENAMER_SEASON_PATTERN;
   String                                         renamerFilename                        = DEFAULT_RENAMER_FILE_PATTERN;
+  TvShowMultiEpisodeStyle                        renamerMultiEpisodeStyle               = TvShowMultiEpisodeStyle.REPEAT;
   boolean                                        renamerShowPathnameSpaceSubstitution   = false;
   String                                         renamerShowPathnameSpaceReplacement    = "_";
   boolean                                        renamerSeasonPathnameSpaceSubstitution = false;
@@ -745,6 +747,27 @@ public final class TvShowSettings extends AbstractSettings {
     String oldValue = this.renamerFilename;
     this.renamerFilename = newValue;
     firePropertyChange("renamerFilename", oldValue, newValue);
+  }
+
+  /**
+   * Gets the configured multi-episode rendering style for the TV show renamer.
+   *
+   * @return the configured multi-episode rendering style
+   */
+  public TvShowMultiEpisodeStyle getRenamerMultiEpisodeStyle() {
+    return renamerMultiEpisodeStyle;
+  }
+
+  /**
+   * Sets the configured multi-episode rendering style for the TV show renamer.
+   *
+   * @param newValue
+   *          the new multi-episode rendering style
+   */
+  public void setRenamerMultiEpisodeStyle(TvShowMultiEpisodeStyle newValue) {
+    TvShowMultiEpisodeStyle oldValue = this.renamerMultiEpisodeStyle;
+    this.renamerMultiEpisodeStyle = newValue;
+    firePropertyChange(RENAMER_MULTI_EPISODE_STYLE, oldValue, this.renamerMultiEpisodeStyle);
   }
 
   public boolean isUpdateOnStart() {

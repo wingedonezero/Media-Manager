@@ -18,9 +18,11 @@ package org.tinymediamanager.scraper.http;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tinymediamanager.scraper.util.MetadataUtil;
 
 import okhttp3.Interceptor;
 import okhttp3.Request;
@@ -39,6 +41,8 @@ public class TmmHttp429RetryInterceptor implements Interceptor {
   private static final Logger LOGGER                  = LoggerFactory.getLogger(TmmHttp429RetryInterceptor.class);
   // maximum number of 429 retries to avoid an infinite loop when the server keeps rate-limiting us
   private static final int    MAX_RETRIES             = 3;
+  // default wait time when there is no parsable header
+  private static final int    DEFAULT_WAIT            = 10;
   // refuse to wait longer than this many seconds; surface the information as an exception instead
   private static final int    MAX_RETRY_AFTER_SECONDS = 30;
 
@@ -62,38 +66,48 @@ public class TmmHttp429RetryInterceptor implements Interceptor {
     Request request = chain.request();
     Response response = chain.proceed(request);
 
-    if (!response.isSuccessful()) {
-      // re-try if the server indicates we should, but only up to MAX_RETRIES times
-      String retryHeader = response.header("Retry-After");
-      if (retryHeader != null && retryCount < MAX_RETRIES) {
+    if (!response.isSuccessful() && response.code() == 429) {
+      // 429 Too Many Requests - we are being rate-limited
+
+      if (retryCount < MAX_RETRIES) {
+        // re-try, but only up to MAX_RETRIES times
+        String retryHeader = response.header("Retry-After");
+        int retryAfterSeconds;
+
+        if (StringUtils.isNotBlank(retryHeader)) {
+          // parse the Retry-After header
+          retryAfterSeconds = MetadataUtil.parseInt(retryHeader, DEFAULT_WAIT);
+        }
+        else {
+          // some server may not send this - just wait DEFAULT_WAIT seconds and try again
+          retryAfterSeconds = DEFAULT_WAIT;
+        }
+
         try {
-          int retry = Integer.parseInt(retryHeader);
-          if (retry > 0) {
-            // refuse to wait longer than the configured maximum
-            if (retry > MAX_RETRY_AFTER_SECONDS) {
-              LOGGER.debug("Server requested a Retry-After of {} seconds which exceeds the limit of {} seconds - aborting", retry,
-                  MAX_RETRY_AFTER_SECONDS);
-              if (response.body() != null) {
-                response.body().close();
-              }
-              throw new IOException("HTTP 429: server requested a Retry-After of " + retry + " seconds, which exceeds the maximum wait of "
-                  + MAX_RETRY_AFTER_SECONDS + " seconds");
-            }
-
-            LOGGER.debug("Hold your horses! The server is asking us to wait {} seconds before retrying (attempt {}/{})", retry, retryCount + 1,
-                MAX_RETRIES);
-            Thread.sleep((int) ((retry + 0.5) * 1000));
-
-            // close body of unsuccessful response
+          // refuse to wait longer than the configured maximum
+          if (retryAfterSeconds > MAX_RETRY_AFTER_SECONDS) {
+            LOGGER.debug("Server requested a Retry-After of {} seconds which exceeds the limit of {} seconds - aborting", retryAfterSeconds,
+                MAX_RETRY_AFTER_SECONDS);
             if (response.body() != null) {
               response.body().close();
             }
-            // is fine because, unlike a network interceptor, an application interceptor can re-try requests
-            return handleIntercept(chain, retryCount + 1);
+            throw new IOException("HTTP 429: server requested a Retry-After of " + retryAfterSeconds + " seconds, which exceeds the maximum wait of "
+                + MAX_RETRY_AFTER_SECONDS + " seconds");
           }
-        }
-        catch (NumberFormatException e) {
-          LOGGER.debug("Invalid Retry-After header: {}", retryHeader);
+
+          LOGGER.debug("Hold your horses! The server is asking us to wait {} seconds before retrying (attempt {}/{})", retryAfterSeconds,
+              retryCount + 1, MAX_RETRIES);
+
+          // close body of unsuccessful response
+          if (response.body() != null) {
+            response.body().close();
+          }
+
+          // wait the Retry-After and just a little longer
+          Thread.sleep((int) ((retryAfterSeconds + 1) * 1000));
+
+          // is fine because, unlike a network interceptor, an application interceptor can re-try requests
+          return handleIntercept(chain, retryCount + 1);
         }
         catch (InterruptedException e) {
           // restore the interrupt flag so callers can detect the cancellation, then abort
@@ -101,7 +115,7 @@ public class TmmHttp429RetryInterceptor implements Interceptor {
           throw new IOException("Interrupted while waiting to retry after HTTP 429", e);
         }
       }
-      else if (retryHeader != null) {
+      else {
         LOGGER.debug("Giving up after {} retries due to persistent HTTP 429 rate-limiting", MAX_RETRIES);
       }
     }

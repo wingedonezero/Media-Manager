@@ -1873,7 +1873,6 @@ public class TvShow extends MediaEntity implements IMediaInformation {
    *
    * @return the certifications
    */
-  @Override
   public MediaCertification getCertification() {
     return certification;
   }
@@ -2498,7 +2497,6 @@ public class TvShow extends MediaEntity implements IMediaInformation {
     return 0;
   }
 
-  @Override
   public MediaSource getMediaInfoSource() {
     return MediaSource.UNKNOWN;
   }

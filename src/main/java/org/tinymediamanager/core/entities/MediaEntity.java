@@ -962,7 +962,8 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
     }
 
     if (changed) {
-      firePropertyChange(MEDIA_FILES, null, mediaFiles);
+      // call the hook for changed media files
+      mediaFilesChanged();
       fireAddedEventForMediaFile(mediaFile);
     }
   }
@@ -1293,6 +1294,9 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
     for (MediaFile mediaFile : changedMediafiles) {
       fireRemoveEventForMediaFile(mediaFile);
     }
+
+    // call the hook for changed media files
+    mediaFilesChanged();
   }
 
   public void removeFromMediaFiles(MediaFile mediaFile) {
@@ -1307,7 +1311,8 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
     }
 
     if (changed) {
-      firePropertyChange(MEDIA_FILES, null, mediaFiles);
+      // call the hook for changed media files
+      mediaFilesChanged();
       fireRemoveEventForMediaFile(mediaFile);
     }
   }
@@ -1333,7 +1338,8 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
       for (MediaFile mediaFile : changedMediafiles) {
         fireRemoveEventForMediaFile(mediaFile);
       }
-      firePropertyChange(MEDIA_FILES, null, mediaFiles);
+      // call the hook for changed media files
+      mediaFilesChanged();
     }
   }
 
@@ -1358,7 +1364,9 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
       for (MediaFile mediaFile : changedMediafiles) {
         fireRemoveEventForMediaFile(mediaFile);
       }
-      firePropertyChange(MEDIA_FILES, null, mediaFiles);
+
+      // call the hook for changed media files
+      mediaFilesChanged();
     }
   }
 
@@ -1373,6 +1381,13 @@ public abstract class MediaEntity extends AbstractModelObject implements IPrinta
       mediaFile.deleteSafely(getDataSource());
       removeFromMediaFiles(mediaFile);
     });
+  }
+
+  /**
+   * hook for changed media files
+   */
+  protected void mediaFilesChanged() {
+    firePropertyChange(MEDIA_FILES, null, mediaFiles);
   }
 
   public void updateMediaFilePath(Path oldPath, Path newPath) {

@@ -109,10 +109,18 @@ public abstract class TmmTreeDataProvider<E extends TmmTreeNode> extends Abstrac
   }
 
   protected TmmTreeNode getNodeFromCache(MediaEntity mediaEntity) {
+    if (mediaEntity == null) {
+      return null;
+    }
+
     return getNodeFromCache(mediaEntity.getDbId());
   }
 
   protected TmmTreeNode getNodeFromCache(Object obj) {
+    if (obj == null) {
+      return null;
+    }
+
     readWriteLock.readLock().lock();
     try {
       return nodeMap.get(obj);
@@ -123,10 +131,18 @@ public abstract class TmmTreeDataProvider<E extends TmmTreeNode> extends Abstrac
   }
 
   protected void putNodeToCache(MediaEntity mediaEntity, TmmTreeNode node) {
+    if (mediaEntity == null || node == null) {
+      return;
+    }
+
     putNodeToCache(mediaEntity.getDbId(), node);
   }
 
   protected void putNodeToCache(Object obj, TmmTreeNode node) {
+    if (obj == null || node == null) {
+      return;
+    }
+
     readWriteLock.writeLock().lock();
     try {
       nodeMap.put(obj, node);
@@ -137,10 +153,18 @@ public abstract class TmmTreeDataProvider<E extends TmmTreeNode> extends Abstrac
   }
 
   protected TmmTreeNode removeNodeFromCache(MediaEntity mediaEntity) {
+    if (mediaEntity == null) {
+      return null;
+    }
+
     return removeNodeFromCache(mediaEntity.getDbId());
   }
 
   protected TmmTreeNode removeNodeFromCache(Object obj) {
+    if (obj == null) {
+      return null;
+    }
+
     readWriteLock.writeLock().lock();
     try {
       return nodeMap.remove(obj);

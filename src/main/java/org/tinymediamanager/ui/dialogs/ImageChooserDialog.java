@@ -1135,9 +1135,19 @@ public class ImageChooserDialog extends TmmDialog {
 
     panelImages.removeAll();
     ButtonModel selectedButton = null;
+    MediaArtwork selectedArtwork = null;
 
     if (buttonGroup != null) {
       selectedButton = buttonGroup.getSelection();
+      // Also store which artwork is currently selected so we can restore it if it's still visible
+      if (selectedButton != null) {
+        for (JToggleButton btn : buttons) {
+          if (btn.getModel() == selectedButton && btn.getClientProperty("MediaArtwork") instanceof MediaArtwork art) {
+            selectedArtwork = art;
+            break;
+          }
+        }
+      }
     }
 
     buttonGroup = new NoneSelectedButtonGroup();
@@ -1223,6 +1233,7 @@ public class ImageChooserDialog extends TmmDialog {
             }
 
             if (child instanceof JToggleButton button) {
+              buttonGroup.add(button);
               // Update the resolution combobox to only show matching sizes
               updateResolutionCombobox(button, !widthSlider.isUnchanged() || !heightSlider.isUnchanged());
             }
@@ -1231,8 +1242,24 @@ public class ImageChooserDialog extends TmmDialog {
       }
     }
 
-    if (selectedButton != null) {
-      buttonGroup.setSelected(selectedButton, true);
+    // Restore the selection if the previously selected artwork is still visible
+    if (selectedArtwork != null) {
+      for (Component comp : panelImages.getComponents()) {
+        if (comp instanceof JPanel panel) {
+          if (panel.getClientProperty("MediaArtwork") == selectedArtwork) {
+            for (Component child : panel.getComponents()) {
+              if (child instanceof JCheckBox) {
+                continue;
+              }
+              if (child instanceof JToggleButton button && button.getModel() == selectedButton) {
+                buttonGroup.setSelected(button.getModel(), true);
+                break;
+              }
+            }
+            break;
+          }
+        }
+      }
     }
 
     viewport.setLocked(true);

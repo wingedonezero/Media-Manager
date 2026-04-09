@@ -18,9 +18,7 @@ package org.tinymediamanager.cli;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -170,7 +168,7 @@ class MovieCommand implements Runnable {
   }
 
   private void scrapeMovies(List<Movie> moviesToScrape) {
-    Set<Movie> movies = new LinkedHashSet<>();
+    List<Movie> movies = new ArrayList<>();
 
     if (scrape.scrapeAll) {
       LOGGER.info("scraping ALL movies...");
@@ -184,6 +182,9 @@ class MovieCommand implements Runnable {
       LOGGER.info("scraping UNSCRAPED movies...");
       movies.addAll(MovieModuleManager.getInstance().getMovieList().getUnscrapedMovies());
     }
+
+    // filter out locked ones
+    movies = movies.stream().filter(movie -> !movie.isLocked()).collect(Collectors.toList());
 
     if (!movies.isEmpty()) {
       moviesToScrape.addAll(movies);
@@ -218,6 +219,9 @@ class MovieCommand implements Runnable {
       moviesToDetect = MovieModuleManager.getInstance().getMovieList().getNewMovies();
     }
 
+    // filter out locked oned
+    moviesToDetect = moviesToDetect.stream().filter(movie -> !movie.isLocked()).collect(Collectors.toList());
+
     if (!moviesToDetect.isEmpty()) {
       TmmTask task = new MovieARDetectorTask(moviesToDetect);
       task.run();
@@ -225,7 +229,12 @@ class MovieCommand implements Runnable {
   }
 
   private void gatherMediaInfo() {
-    List<Movie> movies = MovieModuleManager.getInstance().getMovieList().getMovies();
+    List<Movie> movies = MovieModuleManager.getInstance()
+        .getMovieList()
+        .getMovies()
+        .stream()
+        .filter(movie -> !movie.isLocked())
+        .collect(Collectors.toList());
 
     if (!movies.isEmpty()) {
       TmmTask task = new MovieReloadMediaInformationTask(movies);
@@ -239,8 +248,9 @@ class MovieCommand implements Runnable {
         .getMovieList()
         .getMovies()
         .stream()
+        .filter(movie -> !movie.isLocked())
         .filter(movie -> movie.getMediaFiles(MediaFileType.TRAILER).isEmpty())
-        .collect(Collectors.toList());
+        .toList();
 
     for (Movie movie : moviesWithoutTrailer) {
       TmmTask task = new MovieTrailerDownloadTask(movie);
@@ -271,6 +281,7 @@ class MovieCommand implements Runnable {
         .getMovieList()
         .getMovies()
         .stream()
+        .filter(movie -> !movie.isLocked())
         .filter(movie -> !movie.getHasSubtitles())
         .collect(Collectors.toList());
 
@@ -291,8 +302,11 @@ class MovieCommand implements Runnable {
       moviesToRename.addAll(MovieModuleManager.getInstance().getMovieList().getMovies());
     }
 
+    // filter out locked ones
+    moviesToRename = moviesToRename.stream().filter(movie -> !movie.isLocked()).collect(Collectors.toList());
+
     if (!moviesToRename.isEmpty()) {
-      Runnable task = new MovieRenameTask(moviesToScrape);
+      Runnable task = new MovieRenameTask(moviesToRename);
       task.run(); // blocking
     }
   }
@@ -327,6 +341,10 @@ class MovieCommand implements Runnable {
     }
 
     for (Movie movie : MovieModuleManager.getInstance().getMovieList().getMovies()) {
+      if (movie.isLocked()) {
+        continue;
+      }
+
       movie.writeNFO();
     }
   }

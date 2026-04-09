@@ -24,12 +24,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
-import org.tinymediamanager.core.tvshow.entities.TvShowSeason;
 import org.tinymediamanager.scraper.util.StrgUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
- * the class {@link TvShowNoteFilter} is used to filter TV shows/episodes for their note
+ * the class {@link TvShowNoteFilter} is used to filter TV shows for their note
  *
  * @author Wolfgang Janes
  */
@@ -37,7 +36,7 @@ public class TvShowNoteFilter extends AbstractTextTvShowUIFilter {
 
   @Override
   protected JLabel createLabel() {
-    return new TmmLabel(TmmResourceBundle.getString("metatag.note"));
+    return new TmmLabel(TmmResourceBundle.getString("metatag.note") + " (" + TmmResourceBundle.getString("metatag.tvshow") + ")");
   }
 
   @Override
@@ -52,54 +51,11 @@ public class TvShowNoteFilter extends AbstractTextTvShowUIFilter {
     }
 
     try {
-      for (TvShowEpisode episode : episodes) {
-        boolean foundEpisode = false;
-        Matcher matcher = filterPattern.matcher(StrgUtils.normalizeString(episode.getNote()));
-        if (matcher.find()) {
-          foundEpisode = true;
-        }
-
-        if (invert && !foundEpisode) {
-          return true;
-        }
-        else if (!invert && foundEpisode) {
-          return true;
-        }
-      }
-
-      boolean foundShow = false;
       Matcher matcher = filterPattern.matcher(StrgUtils.normalizeString(tvShow.getNote()));
-      if (matcher.find()) {
-        foundShow = true;
-      }
-
-      if (!invert && foundShow) {
-        return true;
-      }
-      else if (invert && foundShow) {
-        return false;
-      }
-
-      // also look in the seasons
-      for (TvShowSeason season : tvShow.getSeasons()) {
-        boolean foundSeason = false;
-        matcher = filterPattern.matcher(StrgUtils.normalizeString(season.getNote()));
-        if (matcher.find()) {
-          foundSeason = true;
-        }
-
-        if (invert && !foundSeason) {
-          return true;
-        }
-        else if (!invert && foundSeason) {
-          return true;
-        }
-      }
+      return invert ^ matcher.find();
     }
     catch (Exception e) {
       return true;
     }
-
-    return false;
   }
 }

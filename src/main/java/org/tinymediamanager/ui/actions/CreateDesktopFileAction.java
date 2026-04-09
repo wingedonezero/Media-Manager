@@ -22,10 +22,12 @@ import java.nio.file.Paths;
 
 import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.TmmOsUtils;
+import org.tinymediamanager.core.Message;
+import org.tinymediamanager.core.MessageManager;
 import org.tinymediamanager.core.TmmResourceBundle;
 
 /**
- * The {@link CreateDesktopFileAction} is used the create a .desktop file in ~/.local/share/applications on linux
+ * The {@link CreateDesktopFileAction} is used create a .desktop file in ~/.local/share/applications on Linux
  * 
  * @author Manuel Laggner
  */
@@ -38,23 +40,20 @@ public class CreateDesktopFileAction extends TmmAction {
   @Override
   protected void processAction(ActionEvent e) {
     // create in ~/.local/share/applications
-    {
+    try {
       String currentUsersHomeDir = System.getProperty("user.home");
       if (StringUtils.isNotBlank(currentUsersHomeDir)) {
-        // build the path to the
-        Path desktopFile = Paths.get(currentUsersHomeDir, ".local", "share", "applications", "tinyMediaManager.desktop").toAbsolutePath();
+        // build the path to the .desktop file
+        Path desktopFile = Paths.get(currentUsersHomeDir, ".local", "share", "applications", TmmOsUtils.DESKTOP_FILE).toAbsolutePath();
         if (Files.isWritable(desktopFile.getParent())) {
           TmmOsUtils.createDesktopFileForLinux(desktopFile.toFile());
         }
       }
     }
-
-    // create in tmm folder
-    {
-      Path desktop = Paths.get(TmmOsUtils.DESKTOP_FILE).toAbsolutePath();
-      if (Files.isWritable(desktop.getParent())) {
-        TmmOsUtils.createDesktopFileForLinux(desktop.toFile());
-      }
+    catch (Exception ex) {
+      MessageManager.getInstance()
+          .pushMessage(new Message(Message.MessageLevel.ERROR, "tinyMediaManager.desktop", "message.writeerror",
+              new String[] { ":", ex.getLocalizedMessage() }));
     }
   }
 }

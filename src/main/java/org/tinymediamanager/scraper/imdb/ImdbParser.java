@@ -17,7 +17,6 @@ package org.tinymediamanager.scraper.imdb;
 
 import static org.tinymediamanager.scraper.entities.MediaArtwork.MediaArtworkType.THUMB;
 
-import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -33,6 +32,7 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
@@ -42,7 +42,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.LocaleUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -68,8 +67,6 @@ import org.tinymediamanager.scraper.entities.MediaEpisodeNumber;
 import org.tinymediamanager.scraper.entities.MediaType;
 import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
-import org.tinymediamanager.scraper.http.InMemoryCachedUrl;
-import org.tinymediamanager.scraper.http.Url;
 import org.tinymediamanager.scraper.imdb.entities.ImdbAdvancedSearchResult;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCast;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCategory;
@@ -424,10 +421,23 @@ public abstract class ImdbParser {
       param += "&adult=include";
     }
 
-    Url advUrl = new InMemoryCachedUrl(constructUrl("search/title/?title=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param));
-    advUrl.addHeader("Accept-Language", getAcceptLanguage(language, country));
-    InputStream is = advUrl.getInputStream();
-    Document doc = Jsoup.parse(is, UrlUtil.UTF_8, "");
+    Callable<Document> advUrl = createImdbWorker(constructUrl("search/title/?title=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param),
+        language, country);
+    Future<Document> futureAdv = executor.submit(advUrl);
+    Document doc = null;
+    try {
+      doc = futureAdv.get();
+    }
+    catch (Exception futureEx) {
+      if (futureEx instanceof ExecutionException) {
+        // ImdbWorker Future adds another layer - this is by design to not let checked exceptions escape directly.
+        Throwable cause = futureEx.getCause();
+        if (cause instanceof HttpException) {
+          throw new ScrapeException(cause); // rewrap
+        }
+      }
+      throw new ScrapeException(futureEx);
+    }
     doc.setBaseUri(metadataProvider.getApiKey());
 
     try {
@@ -585,16 +595,23 @@ public abstract class ImdbParser {
       wantedTitleTypes.add("adult");
     }
 
-    Url findUrl = new InMemoryCachedUrl(constructUrl("find/?q=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param));
-    findUrl.addHeader("Accept-Language", getAcceptLanguage(language, country));
-    InputStream is = findUrl.getInputStream();
-
-    if (findUrl.getStatusCode() == 202) {
-      // 202 indicates that the WAF is active
-      throw new ScrapeException(new HttpException(202, "Request blocked - WAF active"));
+    Callable<Document> findUrl = createImdbWorker(constructUrl("find/?q=", URLEncoder.encode(searchTerm, StandardCharsets.UTF_8), param), language,
+        country);
+    Future<Document> futureFind = executor.submit(findUrl);
+    Document doc = null;
+    try {
+      doc = futureFind.get();
     }
-
-    Document doc = Jsoup.parse(is, UrlUtil.UTF_8, "");
+    catch (Exception futureEx) {
+      if (futureEx instanceof ExecutionException) {
+        // ImdbWorker Future adds another layer - this is by design to not let checked exceptions escape directly.
+        Throwable cause = futureEx.getCause();
+        if (cause instanceof HttpException) {
+          throw new ScrapeException(cause); // rewrap
+        }
+      }
+      throw new ScrapeException(futureEx);
+    }
     doc.setBaseUri(metadataProvider.getApiKey());
 
     try {
@@ -2345,64 +2362,12 @@ public abstract class ImdbParser {
   /****************************************************************************
    * local helper classes
    ****************************************************************************/
-  protected class ImdbWorker implements Callable<Document> {
-    private final String  pageUrl;
-    private final String  language;
-    private final String  country;
-    private final boolean useCachedUrl;
+  protected ImdbWorker createImdbWorker(String url, String language, String country) {
+    return new ImdbWorker(url, language, country);
+  }
 
-    ImdbWorker(String url, String language, String country) {
-      this(url, language, country, true);
-    }
-
-    ImdbWorker(String url, String language, String country, boolean useCachedUrl) {
-      this.pageUrl = url;
-      this.language = language;
-      this.country = country;
-      this.useCachedUrl = useCachedUrl;
-    }
-
-    @Override
-    public Document call() throws Exception {
-      Document doc = null;
-
-      Url url;
-
-      try {
-        // inject language into the url for correct caching
-        String urlWithHeader = this.pageUrl + "|Accept-Language=" + getAcceptLanguage(language, country);
-        if (useCachedUrl) {
-          url = new InMemoryCachedUrl(urlWithHeader);
-        }
-        else {
-          url = new Url(urlWithHeader);
-        }
-        // url.addHeader("Accept-Language", getAcceptLanguage(language, country));
-      }
-      catch (Exception e) {
-        LOGGER.debug("tried to fetch imdb page {} - {}", this.pageUrl, e.getMessage());
-        throw new ScrapeException(e);
-      }
-
-      try (InputStream is = url.getInputStream()) {
-        doc = Jsoup.parse(is, "UTF-8", "");
-
-        if (url.getStatusCode() == 202) {
-          // 202 indicates that the WAF is active
-          throw new HttpException(202, "Request blocked - WAF active");
-        }
-      }
-      catch (InterruptedException | InterruptedIOException e) {
-        // do not swallow these Exceptions
-        Thread.currentThread().interrupt();
-      }
-      catch (Exception e) {
-        LOGGER.debug("tried to fetch imdb page {} - {}", this.pageUrl, e.getMessage());
-        throw e;
-      }
-
-      return doc;
-    }
+  protected ImdbWorker createImdbWorker(String url, String language, String country, boolean useCachedUrl) {
+    return new ImdbWorker(url, language, country, useCachedUrl);
   }
 
   protected void processMediaArt(MediaMetadata md, MediaArtwork.MediaArtworkType type, String image) {
@@ -2452,7 +2417,7 @@ public abstract class ImdbParser {
     }
   }
 
-  private void addArtworkSize(MediaArtwork artwork, int width, int height, int sizeOrder) {
+  protected void addArtworkSize(MediaArtwork artwork, int width, int height, int sizeOrder) {
     // get the highest artwork size (from scraper)
     ImageSizeAndUrl originalSize = !artwork.getImageSizes().isEmpty() ? artwork.getImageSizes().get(0) : null;
     if (originalSize != null) {
