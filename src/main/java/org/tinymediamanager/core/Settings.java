@@ -1517,6 +1517,8 @@ public final class Settings extends AbstractSettings {
    *
    * @return the Kodi HTTP port
    */
+  @JsonSerialize(using = EncryptedStringSerializer.class)
+  @JsonDeserialize(using = EncryptedStringDeserializer.class)
   public String getMdbListApiKey() {
     return mdbListApiKey;
   }

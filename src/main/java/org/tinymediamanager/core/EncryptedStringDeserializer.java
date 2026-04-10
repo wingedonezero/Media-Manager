@@ -29,6 +29,13 @@ public class EncryptedStringDeserializer extends JsonDeserializer<String> {
 
   @Override
   public String deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
-    return AesUtil.DEFAULT_INSTANCE.decrypt(AesUtil.DEFAULT_SALT, AesUtil.DEFAULT_VECTOR, AesUtil.DEFAULT_VECTOR, jsonParser.getText());
+    String value = jsonParser.getText();
+    try {
+      return AesUtil.DEFAULT_INSTANCE.decrypt(AesUtil.DEFAULT_SALT, AesUtil.DEFAULT_VECTOR, AesUtil.DEFAULT_VECTOR, jsonParser.getText());
+    }
+    catch (Exception e) {
+      // could not decrypt - return plain value
+      return value;
+    }
   }
 }
