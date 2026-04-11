@@ -177,7 +177,7 @@ public class MovieScrapeMetadataDialog extends TmmDialog {
     }
 
     // pre-set config
-    List<MovieScraperMetadataConfig> configs = MovieModuleManager.getInstance().getSettings().getScraperMetadataConfig();
+    List<MovieScraperMetadataConfig> configs = new ArrayList<>(MovieModuleManager.getInstance().getSettings().getScraperMetadataConfig());
     // if automatic artwork scrape is not wanted, strip out artwork options
     if (!MovieModuleManager.getInstance().getSettings().isScrapeBestImage()) {
       configs.removeAll(MovieScraperMetadataConfig.valuesForType(ScraperMetadataConfig.Type.ARTWORK));

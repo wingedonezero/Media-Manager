@@ -15,6 +15,7 @@ x [UI] fixed a crash in the movie set and TV show tree while scraping #3251
 x [UI] improved layout/scaling in the movie set chooser dialog
 x [UI] fixed loading actor images when cache is not active
 x [UI] fixed image selection in the image chooser when filtering is active
+x [UI] fixed a problem, where the scrape metadata dialog removed artwork settings in some cases
 x [Performance] implemented caching of mediainfo data to reduce CPU usage for large libraries
 x [Java] upgraded Java to 21.0.10
 x [Launcher] refactored the launcher and recompiled with Go 1.24.13 (security update)
