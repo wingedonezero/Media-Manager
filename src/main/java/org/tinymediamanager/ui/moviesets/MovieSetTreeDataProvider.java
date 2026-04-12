@@ -19,8 +19,11 @@ import static org.tinymediamanager.core.bus.EventBus.TOPIC_MOVIES;
 import static org.tinymediamanager.core.bus.EventBus.TOPIC_MOVIE_SETS;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.SwingUtilities;
 
@@ -234,10 +237,24 @@ public class MovieSetTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
       // cross-check if the parent (movie set) has the same node
       TmmTreeNode parent = getNodeFromCache(movie.getMovieSet());
       if (parent == cachedNode.getParent()) {
+        // already correctly placed in the tree - nothing to do
+        return;
+      }
+      else if (cachedNode.getParent() == null) {
+        // the node exists in the cache but has no parent (e.g., temporarily detached from the
+        // tree due to active filtering). It is still tracked in the raw node cache of the tree
+        // model and will reappear when the filter changes. Creating a second node here would
+        // result in both the old and the new node being added to the visible tree once the
+        // filter is cleared, producing duplicate entries.
         return;
       }
       else {
+        // the node is attached to a different parent (e.g., movie moved between sets).
+        // fire NODE_REMOVED so the tree model can properly clean up the old node from the
+        // tree structure AND from its rawNodeChildrenCache - a plain removeNodeFromCache()
+        // call is not sufficient because it only updates the data-provider's own nodeMap.
         removeNodeFromCache(movie);
+        firePropertyChange(NODE_REMOVED, null, cachedNode);
       }
     }
 
@@ -269,12 +286,21 @@ public class MovieSetTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
     }
 
     List<Movie> movies = movieSet.getMoviesForDisplay();
+    Set<Movie> moviesForDisplay = Collections.newSetFromMap(new IdentityHashMap<>(movies.size()));
+    moviesForDisplay.addAll(movies);
 
-    // a) check if there is a (dummy) movie in the tree which has to be removed
+    // a) check if there is a (dummy) movie in the tree which has to be removed.
+    // Use reference-identity (==) instead of equals() for the membership test so that stale
+    // MovieSetMovie (dummy) instances are detected correctly: when setDummyMovies() replaces
+    // the dummy list with new instances that have new UUIDs, MovieSetMovie.equals() matches
+    // by title and would therefore NOT flag the old instance as stale - leaving both the old
+    // and the new node in the tree and producing duplicate entries.
     List<TmmTreeNode> nodesToRemove = new ArrayList<>();
     for (int i = 0; i < movieSetNode.getChildCount(); i++) {
       TmmTreeNode child = (TmmTreeNode) movieSetNode.getChildAt(i);
-      if (!movies.contains(child.getUserObject())) {
+      Object userObject = child.getUserObject();
+      boolean found = userObject instanceof Movie movie && moviesForDisplay.contains(movie);
+      if (!found) {
         nodesToRemove.add(child);
       }
     }

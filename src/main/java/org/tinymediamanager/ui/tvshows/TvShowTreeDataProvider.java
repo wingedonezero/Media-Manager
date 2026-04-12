@@ -19,7 +19,9 @@ import static org.tinymediamanager.core.bus.EventBus.TOPIC_TV_SHOWS;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.tree.TreeNode;
 
@@ -147,12 +149,13 @@ public class TvShowTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
       }
       else {
         List<TvShowEpisode> episodesForDisplay = season.getEpisodesForDisplay();
+        Set<TvShowEpisode> episodesForDisplayLookup = new HashSet<>(episodesForDisplay);
 
         // remove episodes which are no more to display
         for (Enumeration<TreeNode> e = seasonNode.children(); e.hasMoreElements();) {
           TreeNode child = e.nextElement();
           if (child instanceof TmmTreeNode tmmTreeNode && tmmTreeNode.getUserObject() instanceof TvShowEpisode episode) {
-            if (!episodesForDisplay.contains(episode)) {
+            if (!episodesForDisplayLookup.contains(episode)) {
               removeTvShowEpisode(episode);
             }
           }
@@ -205,14 +208,15 @@ public class TvShowTreeDataProvider extends TmmTreeDataProvider<TmmTreeNode> {
 
     List<TvShowEpisode> dummyEpisodes = tvShow.getDummyEpisodes();
     List<TvShowEpisode> episodesForDisplay = tvShow.getEpisodesForDisplay();
+    Set<TvShowEpisode> episodesForDisplayLookup = new HashSet<>(episodesForDisplay);
 
     // iterate over all episodes for display and re-add/remove dummy episodes which needs an update
     for (TvShowEpisode episode : dummyEpisodes) {
-      if (episodesForDisplay.contains(episode) && getNodeFromCache(episode) == null) {
+      if (episodesForDisplayLookup.contains(episode) && getNodeFromCache(episode) == null) {
         // should be here, but isn't -> re-add
         addTvShowEpisode(episode);
       }
-      else if (!episodesForDisplay.contains(episode) && getNodeFromCache(episode) != null) {
+      else if (!episodesForDisplayLookup.contains(episode) && getNodeFromCache(episode) != null) {
         // is here but shouldn't -> remove
         removeTvShowEpisode(episode);
       }
