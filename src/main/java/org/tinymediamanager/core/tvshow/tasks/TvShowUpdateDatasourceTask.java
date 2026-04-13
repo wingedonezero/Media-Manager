@@ -706,7 +706,7 @@ public class TvShowUpdateDatasourceTask extends TmmThreadPool {
 
       this.extraMfFiletypePatterns = new ArrayList<>();
       for (String extr : MediaFileHelper.EXTRA_FOLDERS) {
-        this.extraMfFiletypePatterns.add(Pattern.compile("(?i)[_.-]" + extr + "\\d?[.].{2,4}"));
+        this.extraMfFiletypePatterns.add(Pattern.compile("(?i)[_.-]" + extr + "\\d?\\.[^.]{2,4}$"));
       }
     }
 

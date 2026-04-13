@@ -8,6 +8,7 @@ Version 5.2.11
 x [Movies, TV shows] update the original filename when exchanging a video file
 x [Movies, TV shows] reduced memory usage of the loaded library
 x [TV shows] consume less memory on update data sources
+x [TV shows] fixed detection of sidecar files for some episode filename patterns #3252
 x [UI] display translated subtitle flags (default, forced, SDH) in the filter #3150
 x [UI] fixed loading/saving of complex TV show filters #3236
 x [UI] added the empty/none edition value to the edition filter #3250
