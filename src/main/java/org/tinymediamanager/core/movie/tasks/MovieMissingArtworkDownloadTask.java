@@ -58,7 +58,7 @@ public class MovieMissingArtworkDownloadTask extends TmmThreadPool {
     super(TmmResourceBundle.getString("task.missingartwork"));
     this.moviesToScrape = moviesToScrape;
     this.scrapeOptions = scrapeOptions;
-    this.metadataConfig = metadataConfig;
+    this.metadataConfig = new ArrayList<>(metadataConfig);
   }
 
   @Override

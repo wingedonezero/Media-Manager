@@ -8,6 +8,7 @@ Version 5.2.11
 x [Movies, TV shows] update the original filename when exchanging a video file
 x [Movies, TV shows] reduced memory usage of the loaded library
 x [TV shows] consume less memory on update data sources
+x [TV shows] fixed detection of sidecar files for some episode filename patterns #3252
 x [UI] display translated subtitle flags (default, forced, SDH) in the filter #3150
 x [UI] fixed loading/saving of complex TV show filters #3236
 x [UI] added the empty/none edition value to the edition filter #3250
@@ -15,6 +16,8 @@ x [UI] fixed a crash in the movie set and TV show tree while scraping #3251
 x [UI] improved layout/scaling in the movie set chooser dialog
 x [UI] fixed loading actor images when cache is not active
 x [UI] fixed image selection in the image chooser when filtering is active
+x [UI] fixed a problem, where the scrape metadata dialog removed artwork settings in some cases
+x [UI] fixed loading duplicate items into the movie set/TV show tree
 x [Performance] implemented caching of mediainfo data to reduce CPU usage for large libraries
 x [Java] upgraded Java to 21.0.10
 x [Launcher] refactored the launcher and recompiled with Go 1.24.13 (security update)

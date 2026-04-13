@@ -35,9 +35,9 @@ import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
 import org.tinymediamanager.core.tvshow.entities.TvShowSeason;
 
 public class TvShowUpdateDatasourceTaskTest extends BasicTvShowTest {
-  private static final int NUMBER_OF_EXPECTED_SHOWS      = 17;
-  private static final int NUMBER_OF_EXPECTED_EPISODES   = 164;
-  private static final int NUMBER_OF_EXPECTED_MEDIAFILES = 408;
+  private static final int NUMBER_OF_EXPECTED_SHOWS      = 18;
+  private static final int NUMBER_OF_EXPECTED_EPISODES   = 165;
+  private static final int NUMBER_OF_EXPECTED_MEDIAFILES = 410;
 
   @Before
   public void setup() throws Exception {
@@ -183,5 +183,17 @@ public class TvShowUpdateDatasourceTaskTest extends BasicTvShowTest {
     assertThat(show.getEpisodes().size()).isEqualTo(1);
     assertThat(show.getEpisodes().get(0).getSeason() == -1);
     assertThat(show.getEpisodes().get(0).getEpisode() == -1);
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    // Dr. Who
+    ///////////////////////////////////////////////////////////////////////////////////////
+    show = tvShowList.getTvShowByPath(getWorkFolder().resolve("testtvshows/Dr.Who"));
+    assertThat(show).isNotNull();
+    assertThat(show.getEpisodes().size()).isEqualTo(1);
+
+    TvShowEpisode episode = show.getEpisodes().get(0);
+    assertThat(episode.getSeason()).isEqualTo(1);
+    assertThat(episode.getEpisode()).isEqualTo(1);
+    assertThat(episode.getMediaFiles(MediaFileType.NFO)).isNotEmpty();
   }
 }
