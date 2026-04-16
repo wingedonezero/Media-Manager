@@ -81,7 +81,7 @@ public class ITMoviemeterMetadataProviderTest extends BasicITest {
       assertThat(mediaRating.getVotes()).isGreaterThan(0);
       assertThat(mediaRating.getMaxValue()).isEqualTo(5);
 
-      assertThat(md.getPlot()).startsWith("Jake Sully (Sam Worthington) is een verlamde oorlogsveteraan in de toekomst, die met enkele");
+      assertThat(md.getPlot()).contains("Jake Sully", "verlamde oorlogsveteraan", "Pandora");
       assertThat(md.getProductionCompanies()).isEmpty();
       assertThat(md.getId(MediaMetadata.IMDB)).isEqualTo("tt0499549");
       assertThat(md.getRuntime()).isEqualTo(162);

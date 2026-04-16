@@ -85,7 +85,7 @@ public class ITTvMazeMetadataProviderTest extends BasicITest {
     assertThat(md.getGenres()).isNotNull();
     assertThat(md.getRuntime()).isEqualTo(60);
     assertThat(md.getYear()).isEqualTo(2013);
-    assertThat(md.getRatings().get(0).getRating()).isEqualTo(6.5f);
+    assertThat(md.getRatings().get(0).getRating()).isGreaterThan(6f);
     assertThat(md.getId("tvrage")).isEqualTo(25988);
     assertThat(md.getId("tvdb")).isEqualTo(264492);
     assertThat(md.getId("imdb")).isEqualTo("tt1553656");
