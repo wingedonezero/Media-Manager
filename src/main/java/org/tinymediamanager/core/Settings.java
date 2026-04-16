@@ -264,9 +264,17 @@ public final class Settings extends AbstractSettings {
   /**
    * Gets the single instance of Settings.
    *
+   * <p>
+   * Access from SPI addon classes registered via {@link TmmCoreAccessGuard} is denied at runtime to prevent external scraper plugins from reading or
+   * mutating global application settings directly.
+   * </p>
+   *
    * @return single instance of Settings
+   * @throws SecurityException
+   *           if the caller is a registered SPI addon class
    */
   public static Settings getInstance() {
+    TmmCoreAccessGuard.checkAccess();
     return getInstance(Globals.DATA_FOLDER);
   }
 

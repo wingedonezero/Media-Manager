@@ -28,6 +28,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tinymediamanager.core.TmmCoreAccessGuard;
 import org.tinymediamanager.scraper.anidb.AniDbMovieMetadataProvider;
 import org.tinymediamanager.scraper.anidb.AniDbTvShowMetadataProvider;
 import org.tinymediamanager.scraper.fanarttv.FanartTvMovieArtworkProvider;
@@ -115,7 +116,15 @@ public class MediaProviders {
     Iterator<IAddonProvider> addonIterator = ServiceLoader.load(IAddonProvider.class).iterator();
     while (addonIterator.hasNext()) {
       try {
-        addons.addAll(addonIterator.next().getAddonClasses());
+        List<Class<? extends IMediaProvider>> addonClasses = addonIterator.next().getAddonClasses();
+
+        // register every addon class with the access guard so that core singletons cannot be
+        // accessed directly from SPI-provided code
+        for (Class<? extends IMediaProvider> addonClass : addonClasses) {
+          TmmCoreAccessGuard.registerAddonClass(addonClass);
+        }
+
+        addons.addAll(addonClasses);
       }
       catch (Exception | Error e) {
         LOGGER.error("Could not load addon - '{}'", e.getMessage());

@@ -44,6 +44,7 @@ import org.tinymediamanager.core.Message;
 import org.tinymediamanager.core.MessageManager;
 import org.tinymediamanager.core.NullKeySerializer;
 import org.tinymediamanager.core.Settings;
+import org.tinymediamanager.core.TmmCoreAccessGuard;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.Utils;
 import org.tinymediamanager.core.entities.MediaEntity;
@@ -116,7 +117,20 @@ public final class TvShowModuleManager implements ITmmModule {
     }
   }
 
+  /**
+   * Gets the single instance of {@link TvShowModuleManager}.
+   *
+   * <p>
+   * Access from SPI addon classes registered via {@link TmmCoreAccessGuard} is denied at runtime to prevent external scraper plugins from directly
+   * manipulating or reading the TV show module state.
+   * </p>
+   *
+   * @return single instance of {@link TvShowModuleManager}
+   * @throws SecurityException
+   *           if the caller is a registered SPI addon class
+   */
   public static TvShowModuleManager getInstance() {
+    TmmCoreAccessGuard.checkAccess();
     if (instance == null) {
       instance = new TvShowModuleManager();
     }
