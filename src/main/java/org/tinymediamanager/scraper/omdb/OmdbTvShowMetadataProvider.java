@@ -370,7 +370,7 @@ public class OmdbTvShowMetadataProvider extends OmdbMetadataProvider implements 
         md.setId(MediaMetadata.IMDB, result.attr("imdbID"));
       }
 
-      md.setEpisodeNumber(MediaEpisodeGroup.DEFAULT_AIRED, season, TvUtils.getEpisodeNumber(result.attr("episode"), -1));
+      md.setEpisodeNumber(MediaEpisodeGroup.DEFAULT_AIRED, season, TvUtils.getEpisodeNumber(result.attr("episode")));
 
       md.setTitle(result.attr("Title"));
       try {

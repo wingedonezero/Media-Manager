@@ -3,6 +3,7 @@ Version 5.2.12
 + [TMDB] added support for fetching external IDs (IMDb, TVRage, ...) for cast and crew members #3255
 ---
 x [UI] fixed sorting by rating in the TV show module
+x [OMDB] fixed parsing of episode lists
 
 
 Version 5.2.11
