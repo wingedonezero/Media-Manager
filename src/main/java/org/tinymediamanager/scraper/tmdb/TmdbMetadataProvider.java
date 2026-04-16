@@ -15,25 +15,40 @@
  */
 package org.tinymediamanager.scraper.tmdb;
 
+import static org.tinymediamanager.core.entities.Person.Type.CAMERA;
+import static org.tinymediamanager.core.entities.Person.Type.COMPOSER;
+import static org.tinymediamanager.core.entities.Person.Type.DIRECTOR;
+import static org.tinymediamanager.core.entities.Person.Type.EDITOR;
+import static org.tinymediamanager.core.entities.Person.Type.PRODUCER;
+import static org.tinymediamanager.core.entities.Person.Type.WRITER;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.lang3.LocaleUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.tinymediamanager.core.FeatureNotEnabledException;
 import org.tinymediamanager.core.entities.MediaGenres;
+import org.tinymediamanager.core.entities.Person;
 import org.tinymediamanager.scraper.MediaMetadata;
 import org.tinymediamanager.scraper.MediaProviderInfo;
 import org.tinymediamanager.scraper.entities.MediaLanguages;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
 import org.tinymediamanager.scraper.interfaces.IMediaProvider;
+import org.tinymediamanager.scraper.tmdb.entities.CastMember;
 import org.tinymediamanager.scraper.tmdb.entities.Configuration;
+import org.tinymediamanager.scraper.tmdb.entities.CrewMember;
 import org.tinymediamanager.scraper.tmdb.entities.ExternalIds;
 import org.tinymediamanager.scraper.tmdb.entities.Genre;
+import org.tinymediamanager.scraper.tmdb.entities.PersonExternalIds;
 import org.tinymediamanager.scraper.tmdb.entities.Translations;
+import org.tinymediamanager.scraper.util.ListUtils;
 import org.tinymediamanager.scraper.util.MetadataUtil;
 
 import retrofit2.Response;
@@ -476,5 +491,119 @@ abstract class TmdbMetadataProvider implements IMediaProvider {
     }
 
     return locale.toLanguageTag();
+  }
+
+  protected List<Person> parseCast(List<CastMember> cast) {
+    List<Person> castMembers = new ArrayList<>();
+    for (CastMember castMember : ListUtils.nullSafe(cast)) {
+      Person cm = new Person(Person.Type.ACTOR);
+
+      cm.setId(getProviderInfo().getId(), castMember.id);
+      cm.setName(castMember.name);
+      cm.setRole(castMember.character);
+
+      if (StringUtils.isNotBlank(castMember.profile_path)) {
+        cm.setThumbUrl(artworkBaseUrl + "h632" + castMember.profile_path);
+      }
+      if (castMember.id != null) {
+        cm.setProfileUrl("https://www.themoviedb.org/person/" + castMember.id);
+      }
+
+      castMembers.add(cm);
+    }
+
+    return castMembers;
+  }
+
+  protected List<Person> parseCrew(List<CrewMember> crew) {
+    List<Person> crewMembers = new ArrayList<>();
+
+    for (CrewMember crewMember : ListUtils.nullSafe(crew)) {
+      Person cm = new Person();
+      if ("Director".equals(crewMember.job)) {
+        cm.setType(DIRECTOR);
+      }
+      else if ("Writing".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Screenplay", "Writer", "Story")) {
+        // only take the screenplay writers, not the story writers
+        cm.setType(WRITER);
+      }
+      else if ("Production".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Producer")) {
+        // only take producers, not casting or similar jobs
+        cm.setType(PRODUCER);
+      }
+      else if ("Editing".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Editor")) {
+        // only take the editors, not the assistant editors
+        cm.setType(EDITOR);
+      }
+      else if ("Sound".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Original Music Composer")) {
+        // only take the original music composers, not the sound designers
+        cm.setType(COMPOSER);
+      }
+      else if ("Camera".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Director of Photography")) {
+        // only take the directors of photography, not the camera operators
+        cm.setType(CAMERA);
+      }
+      else {
+        continue;
+      }
+      cm.setRole(crewMember.job);
+      cm.setId(getProviderInfo().getId(), crewMember.id);
+      cm.setName(crewMember.name);
+
+      if (StringUtils.isNotBlank(crewMember.profile_path)) {
+        cm.setThumbUrl(artworkBaseUrl + "h632" + crewMember.profile_path);
+      }
+      if (crewMember.id != null) {
+        cm.setProfileUrl("https://www.themoviedb.org/person/" + crewMember.id);
+      }
+
+      crewMembers.add(cm);
+    }
+
+    return crewMembers;
+  }
+
+  protected void fetchPersonIds(List<Person> persons) {
+    for (Person person : persons) {
+      int tmdbId = person.getIdAsInt(getProviderInfo().getId());
+      if (tmdbId == 0) {
+        continue;
+      }
+
+      try {
+
+        Response<PersonExternalIds> response = api.peopleService().externalIds(tmdbId).execute();
+        if (response.isSuccessful() && response.body() != null) {
+          PersonExternalIds ids = response.body();
+          if (StringUtils.isNotBlank(ids.imdb_id)) {
+            person.setId(MediaMetadata.IMDB, ids.imdb_id);
+          }
+          if (StringUtils.isNotBlank(ids.facebook_id)) {
+            person.setId("facebook", ids.facebook_id);
+          }
+          if (StringUtils.isNotBlank(ids.instagram_id)) {
+            person.setId("instagram", ids.instagram_id);
+          }
+          if (StringUtils.isNotBlank(ids.twitter_id)) {
+            person.setId("twitter", ids.twitter_id);
+          }
+          if (StringUtils.isNotBlank(ids.tiktok_id)) {
+            person.setId("tiktok", ids.tiktok_id);
+          }
+          if (StringUtils.isNotBlank(ids.youtube_id)) {
+            person.setId("youtube", ids.youtube_id);
+          }
+          if (StringUtils.isNotBlank(ids.wikidata_id)) {
+            person.setId(MediaMetadata.WIKIDATA, ids.wikidata_id);
+          }
+          if (ids.tvrage_id > 0) {
+            person.setId("tvrage", ids.tvrage_id);
+          }
+        }
+      }
+      catch (Exception e) {
+        getLogger().debug("could not fetch external ids for person {}: {}", tmdbId, e.getMessage());
+      }
+    }
   }
 }

@@ -1,6 +1,8 @@
 Version 5.2.12
 =======================
-+ [UI] fixed sorting by rating in the TV show module
++ [TMDB] added support for fetching external IDs (IMDb, TVRage, ...) for cast and crew members #3255
+---
+x [UI] fixed sorting by rating in the TV show module
 
 
 Version 5.2.11
