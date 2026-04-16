@@ -41,7 +41,7 @@ import retrofit2.Response;
  *
  * @author Manuel Laggner
  */
-public class FanartTvMovieArtworkProvider extends FanartTvMetadataProvider implements IMovieArtworkProvider, IMovieSetArtworkProvider {
+public final class FanartTvMovieArtworkProvider extends FanartTvMetadataProvider implements IMovieArtworkProvider, IMovieSetArtworkProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(FanartTvMovieArtworkProvider.class);
 
   @Override

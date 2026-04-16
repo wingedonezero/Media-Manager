@@ -72,7 +72,7 @@ import retrofit2.Response;
  *
  * @author Manuel Laggner
  */
-public class TheTvDbMovieMetadataProvider extends TheTvDbMetadataProvider implements IMovieMetadataProvider, IMovieTrailerProvider {
+public final class TheTvDbMovieMetadataProvider extends TheTvDbMetadataProvider implements IMovieMetadataProvider, IMovieTrailerProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(TheTvDbMovieMetadataProvider.class);
 
   @Override

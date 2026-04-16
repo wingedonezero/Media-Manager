@@ -19,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.scraper.interfaces.IMovieSubtitleProvider;
 
-public class OpenSubtitlesComMovieSubtitleProvider extends OpenSubtitlesComSubtitleProvider implements IMovieSubtitleProvider {
+public final class OpenSubtitlesComMovieSubtitleProvider extends OpenSubtitlesComSubtitleProvider implements IMovieSubtitleProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(OpenSubtitlesComMovieSubtitleProvider.class);
 
   @Override

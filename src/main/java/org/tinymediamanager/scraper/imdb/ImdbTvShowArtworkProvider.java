@@ -29,7 +29,7 @@ import org.tinymediamanager.scraper.interfaces.ITvShowArtworkProvider;
  *
  * @author Manuel Laggner
  */
-public class ImdbTvShowArtworkProvider extends ImdbMetadataProvider implements ITvShowArtworkProvider {
+public final class ImdbTvShowArtworkProvider extends ImdbMetadataProvider implements ITvShowArtworkProvider {
 
   @Override
   protected String getSubId() {

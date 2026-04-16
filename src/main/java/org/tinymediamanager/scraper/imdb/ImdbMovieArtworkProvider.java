@@ -30,7 +30,7 @@ import org.tinymediamanager.scraper.interfaces.IMovieArtworkProvider;
  *
  * @author Manuel Laggner
  */
-public class ImdbMovieArtworkProvider extends ImdbMetadataProvider implements IMovieArtworkProvider {
+public final class ImdbMovieArtworkProvider extends ImdbMetadataProvider implements IMovieArtworkProvider {
 
   @Override
   protected String getSubId() {

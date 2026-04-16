@@ -52,7 +52,7 @@ import org.tinymediamanager.scraper.util.MetadataUtil;
  *
  * @author Manuel Laggner
  */
-public class ImdbMovieParser extends ImdbParser {
+class ImdbMovieParser extends ImdbParser {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImdbMovieParser.class);
 
   ImdbMovieParser(IMediaProvider mediaProvider, ExecutorService executor) {

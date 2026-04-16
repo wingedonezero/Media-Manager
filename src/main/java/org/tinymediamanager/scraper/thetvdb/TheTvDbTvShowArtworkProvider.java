@@ -47,7 +47,7 @@ import retrofit2.Response;
  *
  * @author Manuel Laggner
  */
-public class TheTvDbTvShowArtworkProvider extends TheTvDbArtworkProvider implements ITvShowArtworkProvider {
+public final class TheTvDbTvShowArtworkProvider extends TheTvDbArtworkProvider implements ITvShowArtworkProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(TheTvDbTvShowArtworkProvider.class);
 
   @Override

@@ -109,7 +109,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * @author Manuel Laggner
  */
-public abstract class ImdbParser {
+abstract class ImdbParser {
   private static final Logger            LOGGER                   = LoggerFactory.getLogger(ImdbParser.class);
 
   static final Pattern                   IMDB_ID_PATTERN          = Pattern.compile("/title/(tt[0-9]{6,})/");

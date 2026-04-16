@@ -28,7 +28,7 @@ import org.tinymediamanager.scraper.util.MetadataUtil;
  * @see AniDbMetadataParser
  * @see AniDbMetadataProvider
  */
-public class AniDbMovieMetadataProvider extends AniDbMetadataProvider implements IMovieMetadataProvider {
+public final class AniDbMovieMetadataProvider extends AniDbMetadataProvider implements IMovieMetadataProvider {
 
   public static final String  ID     = "anidb";
   private static final Logger LOGGER = LoggerFactory.getLogger(AniDbMovieMetadataProvider.class);

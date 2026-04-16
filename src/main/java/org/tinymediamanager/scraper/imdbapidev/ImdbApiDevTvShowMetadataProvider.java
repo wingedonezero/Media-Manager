@@ -57,7 +57,8 @@ import org.tinymediamanager.scraper.util.MetadataUtil;
  *
  * @author Manuel Laggner
  */
-public class ImdbApiDevTvShowMetadataProvider extends ImdbApiDevMetadataProvider implements ITvShowMetadataProvider, ITvShowImdbMetadataProvider {
+public final class ImdbApiDevTvShowMetadataProvider extends ImdbApiDevMetadataProvider
+    implements ITvShowMetadataProvider, ITvShowImdbMetadataProvider {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ImdbApiDevTvShowMetadataProvider.class);
 

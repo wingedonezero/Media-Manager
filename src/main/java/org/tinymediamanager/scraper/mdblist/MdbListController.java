@@ -37,7 +37,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  * 
  * @author Myron Boyle
  */
-public class MdbListController {
+class MdbListController {
   private static final String API_URL       = "https://api.mdblist.com";
   public static final String  PARAM_API_KEY = "apikey";
   private Retrofit            restAdapter;

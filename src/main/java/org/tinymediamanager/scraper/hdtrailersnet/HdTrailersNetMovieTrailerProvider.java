@@ -51,7 +51,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * @author Myron Boyle
  */
-public class HdTrailersNetMovieTrailerProvider implements IMovieTrailerProvider {
+public final class HdTrailersNetMovieTrailerProvider implements IMovieTrailerProvider {
   private static final String     ID        = "hd-trailers";
   private static final Logger     LOGGER    = LoggerFactory.getLogger(HdTrailersNetMovieTrailerProvider.class);
   public static final String      YAHOO_API = "https://video.media.yql.yahoo.com/v1/video/sapi";

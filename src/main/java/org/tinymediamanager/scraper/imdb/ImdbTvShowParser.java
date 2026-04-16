@@ -75,7 +75,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * @author Manuel Laggner
  */
-public class ImdbTvShowParser extends ImdbParser {
+class ImdbTvShowParser extends ImdbParser {
   private static final Logger                                LOGGER                 = LoggerFactory.getLogger(ImdbTvShowParser.class);
   private static final CacheMap<String, List<MediaMetadata>> EPISODE_LIST_CACHE_MAP = new CacheMap<>(60, 10);
 

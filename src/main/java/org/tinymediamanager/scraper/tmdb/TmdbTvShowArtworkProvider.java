@@ -38,7 +38,7 @@ import org.tinymediamanager.scraper.util.MediaIdUtil;
  *
  * @author Manuel Laggner
  */
-public class TmdbTvShowArtworkProvider extends TmdbMetadataProvider implements ITvShowArtworkProvider {
+public final class TmdbTvShowArtworkProvider extends TmdbMetadataProvider implements ITvShowArtworkProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(TmdbTvShowArtworkProvider.class);
 
   @Override

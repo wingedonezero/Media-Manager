@@ -48,7 +48,7 @@ import org.tinymediamanager.scraper.tvmaze.entities.SearchResult;
 import org.tinymediamanager.scraper.tvmaze.entities.Season;
 import org.tinymediamanager.scraper.tvmaze.entities.Show;
 
-public class TvMazeTvShowMetadataProvider extends TvMazeMetadataProvider
+public final class TvMazeTvShowMetadataProvider extends TvMazeMetadataProvider
     implements ITvShowMetadataProvider, ITvShowArtworkProvider, ITvShowImdbMetadataProvider, ITvShowTvdbMetadataProvider {
 
   private static final Logger LOGGER          = LoggerFactory.getLogger(TvMazeTvShowMetadataProvider.class);

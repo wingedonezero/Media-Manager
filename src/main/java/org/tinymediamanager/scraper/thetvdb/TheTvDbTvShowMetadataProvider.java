@@ -97,7 +97,7 @@ import retrofit2.Response;
  *
  * @author Manuel Laggner
  */
-public class TheTvDbTvShowMetadataProvider extends TheTvDbMetadataProvider
+public final class TheTvDbTvShowMetadataProvider extends TheTvDbMetadataProvider
     implements ITvShowMetadataProvider, ITvShowTvdbMetadataProvider, IMediaIdProvider, ITvShowTrailerProvider {
   private static final Logger                                LOGGER                 = LoggerFactory.getLogger(TheTvDbTvShowMetadataProvider.class);
 

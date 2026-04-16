@@ -43,7 +43,7 @@ import org.tinymediamanager.scraper.util.UrlUtil;
  * @see AniDbTvShowMetadataProvider
  * @see AniDbMovieMetadataProvider
  */
-public abstract class AniDbMetadataProvider implements TmmFeature {
+abstract class AniDbMetadataProvider implements TmmFeature {
 
   public static final String                        ID                = "anidb";
   private static final Logger                       LOGGER            = LoggerFactory.getLogger(AniDbMetadataProvider.class);

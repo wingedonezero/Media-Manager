@@ -38,7 +38,7 @@ import org.tinymediamanager.scraper.util.MediaIdUtil;
  * 
  * @author Wolfgang Janes
  */
-public class SubdlMovieSubtitleProvider extends SubdlSubtitleProvider implements IMovieSubtitleProvider {
+public final class SubdlMovieSubtitleProvider extends SubdlSubtitleProvider implements IMovieSubtitleProvider {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SubdlMovieSubtitleProvider.class);
 

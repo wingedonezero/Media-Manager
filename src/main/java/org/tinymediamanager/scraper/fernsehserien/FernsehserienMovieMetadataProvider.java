@@ -30,7 +30,7 @@ import org.tinymediamanager.scraper.interfaces.IMovieMetadataProvider;
  *
  * @author Manuel Laggner
  */
-public class FernsehserienMovieMetadataProvider extends FernsehserienMetadataProvider implements IMovieMetadataProvider {
+public final class FernsehserienMovieMetadataProvider extends FernsehserienMetadataProvider implements IMovieMetadataProvider {
 
   @Override
   protected String getSubId() {

@@ -42,7 +42,7 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class TheTvDbController {
+class TheTvDbController {
   private static final String API_BASE_URL = "https://api4.thetvdb.com/v4/";
 
   private Retrofit            restAdapter;

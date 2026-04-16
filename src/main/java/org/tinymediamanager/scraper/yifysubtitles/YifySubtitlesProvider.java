@@ -49,7 +49,7 @@ import org.tinymediamanager.scraper.util.MetadataUtil;
  * 
  * @author Myron Boyle
  */
-public class YifySubtitlesProvider implements IMovieSubtitleProvider {
+public final class YifySubtitlesProvider implements IMovieSubtitleProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(YifySubtitlesProvider.class);
   private static final String ID     = "yify";
 

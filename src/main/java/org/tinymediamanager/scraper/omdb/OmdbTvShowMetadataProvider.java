@@ -54,7 +54,7 @@ import org.tinymediamanager.scraper.util.MetadataUtil;
 import org.tinymediamanager.scraper.util.TvUtils;
 import org.tinymediamanager.scraper.util.UrlUtil;
 
-public class OmdbTvShowMetadataProvider extends OmdbMetadataProvider implements ITvShowMetadataProvider {
+public final class OmdbTvShowMetadataProvider extends OmdbMetadataProvider implements ITvShowMetadataProvider {
 
   private static final Logger                                LOGGER                 = LoggerFactory.getLogger(OmdbTvShowMetadataProvider.class);
   private static final CacheMap<String, List<MediaMetadata>> EPISODE_LIST_CACHE_MAP = new CacheMap<>(60, 10);

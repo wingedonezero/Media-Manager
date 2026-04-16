@@ -9,7 +9,7 @@ import org.tinymediamanager.scraper.exceptions.ScrapeException;
 import org.tinymediamanager.scraper.interfaces.IMediaProvider;
 import org.tinymediamanager.scraper.tmdb.entities.Configuration;
 
-public abstract class TheSportsDbMetadataProvider implements IMediaProvider {
+abstract class TheSportsDbMetadataProvider implements IMediaProvider {
   private final MediaProviderInfo providerInfo;
 
   protected TheSportsDbController api;

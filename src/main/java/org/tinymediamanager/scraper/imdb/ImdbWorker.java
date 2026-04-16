@@ -19,7 +19,7 @@ import org.tinymediamanager.scraper.http.InMemoryCachedUrl;
 import org.tinymediamanager.scraper.http.Url;
 import org.tinymediamanager.scraper.util.UrlUtil;
 
-public class ImdbWorker implements Callable<Document> {
+class ImdbWorker implements Callable<Document> {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImdbWorker.class);
 
   protected final String      pageUrl;

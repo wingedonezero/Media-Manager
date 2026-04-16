@@ -50,7 +50,8 @@ import org.tinymediamanager.scraper.interfaces.IRatingProvider;
  *
  * @author Manuel Laggner
  */
-public class ImdbMovieMetadataProvider extends ImdbMetadataProvider implements IMovieMetadataProvider, IMovieImdbMetadataProvider, IRatingProvider {
+public final class ImdbMovieMetadataProvider extends ImdbMetadataProvider
+    implements IMovieMetadataProvider, IMovieImdbMetadataProvider, IRatingProvider {
 
   @Override
   protected String getSubId() {

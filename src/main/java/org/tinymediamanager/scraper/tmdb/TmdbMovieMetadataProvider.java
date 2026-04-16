@@ -86,7 +86,7 @@ import retrofit2.Response;
  *
  * @author Manuel Laggner
  */
-public class TmdbMovieMetadataProvider extends TmdbMetadataProvider implements IMovieMetadataProvider, IMovieSetMetadataProvider,
+public final class TmdbMovieMetadataProvider extends TmdbMetadataProvider implements IMovieMetadataProvider, IMovieSetMetadataProvider,
     IMovieTmdbMetadataProvider, IMovieImdbMetadataProvider, IRatingProvider, IMediaIdProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(TmdbMovieMetadataProvider.class);
 

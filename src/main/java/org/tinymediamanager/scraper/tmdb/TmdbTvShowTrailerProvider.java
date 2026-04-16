@@ -32,7 +32,7 @@ import org.tinymediamanager.scraper.interfaces.ITvShowTrailerProvider;
  *
  * @author Manuel Laggner
  */
-public class TmdbTvShowTrailerProvider extends TmdbMetadataProvider implements ITvShowTrailerProvider {
+public final class TmdbTvShowTrailerProvider extends TmdbMetadataProvider implements ITvShowTrailerProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(TmdbTvShowTrailerProvider.class);
 
   @Override

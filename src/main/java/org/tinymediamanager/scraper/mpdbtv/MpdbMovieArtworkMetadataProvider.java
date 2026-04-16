@@ -37,7 +37,6 @@ import org.tinymediamanager.scraper.mpdbtv.entities.HDLogo;
 import org.tinymediamanager.scraper.mpdbtv.entities.Languages;
 import org.tinymediamanager.scraper.mpdbtv.entities.MovieEntity;
 import org.tinymediamanager.scraper.mpdbtv.entities.Poster;
-import org.tinymediamanager.scraper.mpdbtv.services.MpdbController;
 import org.tinymediamanager.scraper.util.LanguageUtils;
 import org.tinymediamanager.scraper.util.ListUtils;
 
@@ -48,7 +47,7 @@ import retrofit2.Response;
  *
  * @author Wolfgang Janes
  */
-public class MpdbMovieArtworkMetadataProvider extends MpdbMetadataProvider implements IMovieArtworkProvider {
+public final class MpdbMovieArtworkMetadataProvider extends MpdbMetadataProvider implements IMovieArtworkProvider {
   private static final Logger     LOGGER = LoggerFactory.getLogger(MpdbMovieArtworkMetadataProvider.class);
 
   private final MediaProviderInfo providerInfo;

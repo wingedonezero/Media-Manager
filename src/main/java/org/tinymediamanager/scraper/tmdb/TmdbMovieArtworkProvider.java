@@ -33,7 +33,7 @@ import org.tinymediamanager.scraper.interfaces.IMovieSetArtworkProvider;
  *
  * @author Manuel Laggner
  */
-public class TmdbMovieArtworkProvider extends TmdbMetadataProvider implements IMovieArtworkProvider, IMovieSetArtworkProvider {
+public final class TmdbMovieArtworkProvider extends TmdbMetadataProvider implements IMovieArtworkProvider, IMovieSetArtworkProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(TmdbMovieArtworkProvider.class);
 
   @Override
