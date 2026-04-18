@@ -672,8 +672,6 @@ public final class TmdbMovieMetadataProvider extends TmdbMetadataProvider implem
       if (tmdbId > 0) {
         scrapedIds.put(TMDB, tmdbId);
       }
-
-      return scrapedIds;
     }
 
     // scrape
@@ -697,7 +695,12 @@ public final class TmdbMovieMetadataProvider extends TmdbMetadataProvider implem
 
     scrapedIds.put(TMDB, movie.id);
     // external IDs
-    parseExternalIDs(movie.external_ids).forEach(scrapedIds::put);
+    scrapedIds.putAll(parseExternalIDs(movie.external_ids));
+
+    // movie set id
+    if (movie.belongs_to_collection != null) {
+      scrapedIds.put(TMDB_SET, movie.belongs_to_collection.id);
+    }
 
     return scrapedIds;
   }

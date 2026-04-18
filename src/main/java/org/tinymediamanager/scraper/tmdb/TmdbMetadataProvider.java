@@ -596,7 +596,7 @@ abstract class TmdbMetadataProvider implements IMediaProvider {
           if (StringUtils.isNotBlank(ids.wikidata_id)) {
             person.setId(MediaMetadata.WIKIDATA, ids.wikidata_id);
           }
-          if (ids.tvrage_id > 0) {
+          if (ids.tvrage_id != null && ids.tvrage_id > 0) {
             person.setId("tvrage", ids.tvrage_id);
           }
         }
