@@ -32,7 +32,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.Globals;
 import org.tinymediamanager.core.PostProcess;
 import org.tinymediamanager.core.Settings;
-import org.tinymediamanager.core.TmmCoreAccessGuard;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.MoviePostProcessExecutor;
@@ -179,20 +178,7 @@ public class MovieUIModule extends AbstractTmmUIModule {
     listPanel.init();
   }
 
-  /**
-   * Gets the single instance of {@link MovieUIModule}.
-   *
-   * <p>
-   * Access from SPI addon classes registered via {@link TmmCoreAccessGuard} is denied at runtime to prevent external scraper plugins from directly
-   * driving or reading the movie UI state.
-   * </p>
-   *
-   * @return single instance of {@link MovieUIModule}
-   * @throws SecurityException
-   *           if the caller is a registered SPI addon class
-   */
   public static MovieUIModule getInstance() {
-    TmmCoreAccessGuard.checkAccess();
     if (instance == null) {
       instance = new MovieUIModule();
     }

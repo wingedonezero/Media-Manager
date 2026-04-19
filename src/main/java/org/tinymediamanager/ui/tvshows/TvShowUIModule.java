@@ -32,7 +32,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.Globals;
 import org.tinymediamanager.core.PostProcess;
 import org.tinymediamanager.core.Settings;
-import org.tinymediamanager.core.TmmCoreAccessGuard;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.threading.TmmTaskManager;
 import org.tinymediamanager.core.tvshow.TvShowEpisodePostProcessExecutor;
@@ -228,20 +227,7 @@ public class TvShowUIModule extends AbstractTmmUIModule {
     }
   }
 
-  /**
-   * Gets the single instance of {@link TvShowUIModule}.
-   *
-   * <p>
-   * Access from SPI addon classes registered via {@link TmmCoreAccessGuard} is denied at runtime to prevent external scraper plugins from directly
-   * driving or reading the TV show UI state.
-   * </p>
-   *
-   * @return single instance of {@link TvShowUIModule}
-   * @throws SecurityException
-   *           if the caller is a registered SPI addon class
-   */
   public static TvShowUIModule getInstance() {
-    TmmCoreAccessGuard.checkAccess();
     if (instance == null) {
       instance = new TvShowUIModule();
     }
