@@ -4,6 +4,7 @@ Version 5.2.12
 ---
 x [UI] fixed sorting by rating in the TV show module
 x [OMDB] fixed parsing of episode lists
+x [Trakt.tv] added new pagination limits due to API changes
 
 
 Version 5.2.11

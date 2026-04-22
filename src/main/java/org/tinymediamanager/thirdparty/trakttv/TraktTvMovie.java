@@ -160,9 +160,9 @@ class TraktTvMovie {
     try {
       // Extended.DEFAULT adds url, poster, fanart, banner, genres
       // Extended.MAX adds certs, runtime, and other stuff (useful for scraper!)
-      // Fetch all pages using pagination with limit of 500
+      // Fetch all pages using pagination with limit of 250
       int page = 1;
-      int limit = 500;
+      int limit = 250;
       int maxPages = 500; // hard stop after this amount of pages
 
       while (true) {
@@ -404,9 +404,9 @@ class TraktTvMovie {
     try {
       // Extended.DEFAULT adds url, poster, fanart, banner, genres
       // Extended.MAX adds certs, runtime, and other stuff (useful for scraper!)
-      // Fetch all pages using pagination with limit of 500 (maximum according to Trakt API)
+      // Fetch all pages using pagination with limit of 250 (maximum according to Trakt API)
       int page = 1;
-      int limit = 500;
+      int limit = 250;
       int maxPages = 500;
       while (true) {
         List<RatedMovie> pageResults = executeCall(api.sync().ratingsMovies(RatingsFilter.ALL, null, page, limit));
@@ -588,9 +588,9 @@ class TraktTvMovie {
     List<BaseMovie> traktCollection = new ArrayList<>();
     List<BaseMovie> traktWatched = new ArrayList<>();
     try {
-      // Fetch all pages using pagination with limit of 500
+      // Fetch all pages using pagination with limit of 250
       int page = 1;
-      int limit = 500;
+      int limit = 250;
       int maxPages = 500; // hard stop after this amount of pages
 
       while (true) {
