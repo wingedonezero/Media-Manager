@@ -1062,11 +1062,11 @@ abstract class ImdbParser {
 
     Document doc = null;
     Callable<Document> fanarts = new ImdbWorker(constructUrl("title/", imdbId, decode("L21lZGlhaW5kZXgvP2NvbnRlbnRUeXBlcz1zdGlsbF9mcmFtZQ==")),
-        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), true);
+        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2());
     Future<Document> futureFanarts = executor.submit(fanarts);
 
     Callable<Document> posters = new ImdbWorker(constructUrl("title/", imdbId, decode("L21lZGlhaW5kZXgvP2NvbnRlbnRUeXBlcz1wb3N0ZXI=")),
-        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), true);
+        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2());
     Future<Document> futurePosters = executor.submit(posters);
 
     // add posters
@@ -1158,7 +1158,7 @@ abstract class ImdbParser {
    * @throws Exception
    */
   protected String getFreshUrlForTrailer(MediaTrailer trailer, String language, String country) throws Exception {
-    Callable<Document> worker = new ImdbWorker(constructUrl("video/", trailer.getId()), language, country, true);
+    Callable<Document> worker = new ImdbWorker(constructUrl("video/", trailer.getId()), language, country);
     Future<Document> futureVid = executor.submit(worker);
     Document doc = futureVid.get();
 
@@ -2339,7 +2339,7 @@ abstract class ImdbParser {
     Map<String, Integer> titles = new HashMap<>();
 
     try {
-      Callable<Document> worker = new ImdbWorker(constructUrl(url), "en", "US", true); // don't care about lang, since we only get IDs
+      Callable<Document> worker = new ImdbWorker(constructUrl(url), "en", "US"); // don't care about lang, since we only get IDs
       Future<Document> futureTop250 = executor.submit(worker);
       Document doc = futureTop250.get();
       String json = doc.getElementById("__NEXT_DATA__").data();
@@ -2364,10 +2364,6 @@ abstract class ImdbParser {
    ****************************************************************************/
   protected ImdbWorker createImdbWorker(String url, String language, String country) {
     return new ImdbWorker(url, language, country);
-  }
-
-  protected ImdbWorker createImdbWorker(String url, String language, String country, boolean useCachedUrl) {
-    return new ImdbWorker(url, language, country, useCachedUrl);
   }
 
   protected void processMediaArt(MediaMetadata md, MediaArtwork.MediaArtworkType type, String image) {

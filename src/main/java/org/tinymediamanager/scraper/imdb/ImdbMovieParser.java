@@ -103,7 +103,7 @@ class ImdbMovieParser extends ImdbParser {
     Document doc = null;
     boolean json = false;
     Callable<Document> worker = createImdbWorker(constructUrl("title/", imdbId), options.getLanguage().getLanguage(),
-        options.getCertificationCountry().getAlpha2(), true);
+        options.getCertificationCountry().getAlpha2());
     Future<Document> futureDetail = executor.submit(worker);
 
     // check if the detail page is scrapable
@@ -132,24 +132,24 @@ class ImdbMovieParser extends ImdbParser {
 
     // start other workers afterward
     worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3JlZmVyZW5jZQ==")), options.getLanguage().getLanguage(),
-        options.getCertificationCountry().getAlpha2(), true);
+        options.getCertificationCountry().getAlpha2());
     Future<Document> futureReference = executor.submit(worker);
 
     // we must parse this as fixed language, since the IDs seem not to be fixated yet...?
-    worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2Z1bGxjcmVkaXRz")), "en", "US", true);
+    worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2Z1bGxjcmVkaXRz")), "en", "US");
     Future<Document> futureCredits = executor.submit(worker);
 
     Future<Document> futureKeywords = null;
     if (isScrapeKeywordsPage() && getMaxKeywordCount() > 5) {
       worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2tleXdvcmRz")), options.getLanguage().getLanguage(),
-          options.getCertificationCountry().getAlpha2(), true);
+          options.getCertificationCountry().getAlpha2());
       futureKeywords = executor.submit(worker);
     }
 
     Future<Document> futureReleaseInfo = null;
     if (!isScrapeLocalReleaseDate()) {
       worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
-          options.getCertificationCountry().getAlpha2(), true);
+          options.getCertificationCountry().getAlpha2());
       futureReleaseInfo = executor.submit(worker);
     }
 
@@ -206,18 +206,18 @@ class ImdbMovieParser extends ImdbParser {
       // fallback old style, when json parsing was not ok
       Future<Document> futurePlotsummary;
       worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3Bsb3RzdW1tYXJ5")), options.getLanguage().getLanguage(),
-          options.getCertificationCountry().getAlpha2(), true);
+          options.getCertificationCountry().getAlpha2());
       futurePlotsummary = executor.submit(worker);
 
       Future<Document> futureReleaseinfo;
       worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
-          options.getCertificationCountry().getAlpha2(), true);
+          options.getCertificationCountry().getAlpha2());
       futureReleaseinfo = executor.submit(worker);
 
       Future<Document> futureCritics = null;
       if (Boolean.TRUE.equals(config.getValueAsBool("includeMetacritic"))) {
         worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2NyaXRpY3Jldmlld3M=")), options.getLanguage().getLanguage(),
-            options.getCertificationCountry().getAlpha2(), true);
+            options.getCertificationCountry().getAlpha2());
         futureCritics = executor.submit(worker);
       }
 
@@ -303,7 +303,7 @@ class ImdbMovieParser extends ImdbParser {
     MediaMetadata md = new MediaMetadata(ImdbMetadataProvider.ID);
 
     // get critics
-    Callable<Document> worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2NyaXRpY3Jldmlld3M=")), "en", "US", true);
+    Callable<Document> worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2NyaXRpY3Jldmlld3M=")), "en", "US");
     Future<Document> futureCritics = executor.submit(worker);
 
     try {

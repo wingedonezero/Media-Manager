@@ -2,6 +2,9 @@ package org.tinymediamanager.scraper.imdb;
 
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -13,8 +16,10 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tinymediamanager.Globals;
 import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
+import org.tinymediamanager.scraper.http.CookieFileParser;
 import org.tinymediamanager.scraper.http.InMemoryCachedUrl;
 import org.tinymediamanager.scraper.http.Url;
 import org.tinymediamanager.scraper.util.UrlUtil;
@@ -25,17 +30,11 @@ class ImdbWorker implements Callable<Document> {
   protected final String      pageUrl;
   protected final String      language;
   protected final String      country;
-  protected final boolean     useCachedUrl;
 
   ImdbWorker(String url, String language, String country) {
-    this(url, language, country, true);
-  }
-
-  ImdbWorker(String url, String language, String country, boolean useCachedUrl) {
     this.pageUrl = url;
     this.language = language;
     this.country = country;
-    this.useCachedUrl = useCachedUrl;
   }
 
   @Override
@@ -47,13 +46,15 @@ class ImdbWorker implements Callable<Document> {
     try {
       // inject language into the url for correct caching
       String urlWithHeader = this.pageUrl + "|Accept-Language=" + getAcceptLanguage(language, country);
-      if (useCachedUrl) {
-        url = new InMemoryCachedUrl(urlWithHeader);
+      url = new InMemoryCachedUrl(urlWithHeader);
+
+      Path cookieFile = Paths.get(Globals.DATA_FOLDER, "imdb-cookies.txt");
+      if (Files.exists(cookieFile)) {
+        String token = CookieFileParser.parseCookieValue(cookieFile, "aws-waf-token").orElse("");
+        if (StringUtils.isNotBlank(token)) {
+          url.addHeader("Cookie", "aws-waf-token=" + token);
+        }
       }
-      else {
-        url = new Url(urlWithHeader);
-      }
-      // url.addHeader("Accept-Language", getAcceptLanguage(language, country));
     }
     catch (Exception e) {
       LOGGER.debug("tried to fetch imdb page {} - {}", this.pageUrl, e.getMessage());

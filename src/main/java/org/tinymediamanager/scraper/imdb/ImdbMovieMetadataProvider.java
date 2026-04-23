@@ -46,7 +46,7 @@ import org.tinymediamanager.scraper.interfaces.IMovieMetadataProvider;
 import org.tinymediamanager.scraper.interfaces.IRatingProvider;
 
 /**
- * the class {@link ImdbMovieMetadataProvider} provides meta data for movies
+ * the class {@link ImdbMovieMetadataProvider} provides metadata for movies
  *
  * @author Manuel Laggner
  */
