@@ -17,6 +17,9 @@ package org.tinymediamanager.scraper.imdb;
 
 import static org.tinymediamanager.scraper.entities.MediaArtwork.MediaArtworkType.THUMB;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -2337,6 +2340,7 @@ abstract class ImdbParser {
 
   protected Map<String, Integer> parseTop250(String url) throws ScrapeException {
     Map<String, Integer> titles = new HashMap<>();
+    ScrapeException saved = null;
 
     try {
       Callable<Document> worker = new ImdbWorker(constructUrl(url), "en", "US"); // don't care about lang, since we only get IDs
@@ -2356,7 +2360,31 @@ abstract class ImdbParser {
       }
     }
     catch (Exception e) {
-      throw new ScrapeException("Could not get TOP250 listing - " + e.getMessage());
+      saved = new ScrapeException("Could not get TOP250 listing - " + e.getMessage());
+    }
+
+    // Fallback - read from CP
+    try {
+      InputStream csv = null;
+      if (url.endsWith("toptv/")) {
+        csv = getClass().getResourceAsStream("/org/tinymediamanager/scraper/T250shows.csv");
+      }
+      else {
+        csv = getClass().getResourceAsStream("/org/tinymediamanager/scraper/T250movies.csv");
+      }
+      if (csv == null) {
+        throw saved;
+      }
+      try (BufferedReader br = new BufferedReader(new InputStreamReader(csv))) {
+        br.lines().forEach(line -> {
+          String[] kv = line.split(",");
+          titles.put(kv[0], Integer.parseInt(kv[1]));
+        });
+      }
+    }
+    catch (Exception e) {
+      LOGGER.warn("Could not parse Top250 entries from cache: {}", e);
+      throw saved;
     }
 
     return titles;
