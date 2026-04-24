@@ -417,7 +417,7 @@ class ImdbMovieParser extends ImdbParser {
     }
   }
 
-  public Map<String, Integer> getMovieTop250() {
+  public Map<String, Integer> getMovieTop250() throws ScrapeException {
     return parseTop250("/chart/top/");
   }
 }

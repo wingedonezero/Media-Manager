@@ -3,6 +3,7 @@ Version 5.2.12
 + [TMDB] added support for fetching external IDs (IMDb, TVRage, ...) for cast and crew members #3255
 ---
 x [UI] fixed sorting by rating in the TV show module
+x [IMDB] do not overwrite Top250 on error
 x [IMDB] added an option to use cookies from the browser
 x [OMDB] fixed parsing of episode lists
 x [Trakt.tv] added new pagination limits due to API changes

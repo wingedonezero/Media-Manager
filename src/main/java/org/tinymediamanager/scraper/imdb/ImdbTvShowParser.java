@@ -985,7 +985,7 @@ class ImdbTvShowParser extends ImdbParser {
     }
   }
 
-  public Map<String, Integer> getTvShowTop250() {
+  public Map<String, Integer> getTvShowTop250() throws ScrapeException {
     return parseTop250("/chart/toptv/");
   }
 }

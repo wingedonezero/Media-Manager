@@ -2335,7 +2335,7 @@ abstract class ImdbParser {
     return null;
   }
 
-  protected Map<String, Integer> parseTop250(String url) {
+  protected Map<String, Integer> parseTop250(String url) throws ScrapeException {
     Map<String, Integer> titles = new HashMap<>();
 
     try {
@@ -2351,9 +2351,12 @@ abstract class ImdbParser {
           titles.put(ch.node.id, ch.currentRank);
         }
       }
+      if (titles.size() < 200) {
+        throw new ScrapeException("Did not receive the expected 250 entries");
+      }
     }
     catch (Exception e) {
-      LOGGER.debug("Could not get TOP250 listing - '{}'", e.getMessage());
+      throw new ScrapeException("Could not get TOP250 listing - " + e.getMessage());
     }
 
     return titles;
