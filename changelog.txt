@@ -6,6 +6,7 @@ x [UI] fixed sorting by rating in the TV show module
 x [IMDB] added an option to use cookies from the browser
 x [OMDB] fixed parsing of episode lists
 x [Trakt.tv] added new pagination limits due to API changes
+x [TvShows] further improve episode detection
 
 
 Version 5.2.11
