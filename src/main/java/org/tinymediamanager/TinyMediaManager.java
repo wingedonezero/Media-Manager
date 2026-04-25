@@ -186,6 +186,17 @@ public final class TinyMediaManager {
 
                 MainWindow window = MainWindow.getInstance();
 
+                // show the data disclaimer once again
+                if (!TmmProperties.getInstance().getPropertyAsBoolean("tmm.disclaimershown")) {
+                  SwingUtilities.invokeLater(() -> {
+                    MessageDialog dialog = new MessageDialog(window, TmmResourceBundle.getString("wizard.disclaimer"));
+                    dialog.setName("disclaimer");
+                    dialog.setDetails(TmmResourceBundle.getString("wizard.disclaimer.long"));
+                    dialog.setVisible(true);
+                    TmmProperties.getInstance().putProperty("tmm.disclaimershown", "true");
+                  });
+                }
+
                 // finished ////////////////////////////////////////////////////
                 updateProgress("finished starting :)", 100);
 

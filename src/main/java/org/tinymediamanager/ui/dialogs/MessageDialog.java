@@ -27,6 +27,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
+import javax.swing.text.DefaultCaret;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +64,7 @@ public class MessageDialog extends TmmDialog {
 
     {
       JPanel panelContent = new JPanel();
-      panelContent.setLayout(new MigLayout("hidemode 3", "[][600lp:800lp,grow]", "[][][][400lp:600lp,grow]"));
+      panelContent.setLayout(new MigLayout("hidemode 3", "[][400lp:600lp]", "[][][][200lp:400lp]"));
       getContentPane().add(panelContent, BorderLayout.CENTER);
       {
         lblImage = new JLabel("");
@@ -73,13 +74,13 @@ public class MessageDialog extends TmmDialog {
       {
         tpText = new ReadOnlyTextPane("");
         tpText.setVisible(false);
-        panelContent.add(tpText, "cell 1 0,growx");
+        panelContent.add(tpText, "cell 1 0,growx, wmin 0");
       }
       {
         tpDescription = new ReadOnlyTextPane("");
         tpDescription.setEditable(true);
         tpDescription.setVisible(false);
-        panelContent.add(tpDescription, "cell 1 1,growx");
+        panelContent.add(tpDescription, "cell 1 1,growx, wmin 0");
       }
       {
         lblLink = new LinkLabel();
@@ -100,12 +101,19 @@ public class MessageDialog extends TmmDialog {
       {
         scrollPane = new NoBorderScrollPane();
         scrollPane.setVisible(false);
-        scrollPane.setPreferredSize(new Dimension(600, 200));
+        scrollPane.setPreferredSize(new Dimension(400, 400));
         panelContent.add(scrollPane, "cell 0 3 2 1,grow");
         {
           textPane = new JTextPane();
           textPane.setVisible(false);
           textPane.setEditable(false);
+          textPane.setCaret(new DefaultCaret() {
+            @Override
+            public void setVisible(boolean visible) {
+              super.setVisible(false);
+            }
+          });
+          ((DefaultCaret) textPane.getCaret()).setSelectionVisible(true);
           scrollPane.setViewportView(textPane);
         }
       }
