@@ -8,6 +8,7 @@ x [IMDB] added an option to use cookies from the browser
 x [OMDB] fixed parsing of episode lists
 x [Trakt.tv] added new pagination limits due to API changes
 x [TvShows] further improve episode detection
+x [Launcher] fixed custom JVM home parsing for macOS
 
 
 Version 5.2.11
