@@ -18,15 +18,16 @@ package org.tinymediamanager.scraper.http;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
+import org.tinymediamanager.core.BasicITest;
 import org.tinymediamanager.scraper.util.UrlUtil;
 import org.tinymediamanager.scraper.util.UrlUtil.UrlImpl;
 
 /**
- * The class {@link BrowserUrlTest} validates browser-backed URL fetching.
+ * The class {@link ITBrowserUrlTest} validates browser-backed URL fetching.
  *
  * @author Manuel Laggner
  */
-public class BrowserUrlTest {
+public class ITBrowserUrlTest extends BasicITest {
 
   /**
    * Test parsing a JavaScript-capable URL implementation through {@link UrlUtil}.
