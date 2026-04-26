@@ -19,8 +19,6 @@ import static org.tinymediamanager.core.entities.Person.Type.ACTOR;
 import static org.tinymediamanager.core.entities.Person.Type.WRITER;
 import static org.tinymediamanager.scraper.entities.MediaArtwork.MediaArtworkType.THUMB;
 
-import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,12 +27,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -56,8 +52,6 @@ import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.exceptions.MissingIdException;
 import org.tinymediamanager.scraper.exceptions.NothingFoundException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
-import org.tinymediamanager.scraper.http.OnDiskCachedUrl;
-import org.tinymediamanager.scraper.http.Url;
 import org.tinymediamanager.scraper.imdb.entities.ImdbEpisodeList;
 import org.tinymediamanager.scraper.imdb.entities.ImdbIdValueType;
 import org.tinymediamanager.scraper.interfaces.IMediaProvider;
@@ -527,26 +521,12 @@ class ImdbTvShowParser extends ImdbParser {
     // get the page for the first season (this is available in 99,9% of all cases)
 
     Document doc;
-    Url url;
-    try {
-      // cache this on disk because that may be called multiple times
-      url = new OnDiskCachedUrl(constructUrl("/title/", imdbId, "/episodes?season=1"), 1, TimeUnit.DAYS);
-      url.addHeader("Accept-Language", getAcceptLanguage(options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2()));
-    }
-    catch (Exception e) {
-      LOGGER.debug("problem scraping: {}", e.getMessage());
-      throw new ScrapeException(e);
-    }
-
     List<String> availableSeasons = new ArrayList<>();
 
-    try (InputStream is = url.getInputStream()) {
-      if (url.getStatusCode() == 202) {
-        // 202 indicates that the WAF is active
-        throw new ScrapeException(new HttpException(202, "Request blocked - WAF active"));
-      }
-
-      doc = Jsoup.parse(is, "UTF-8", "");
+    try {
+      Callable<Document> worker = createImdbWorker(constructUrl("/title/", imdbId, "/episodes?season=1"), options.getLanguage().getLanguage(),
+          options.getCertificationCountry().getAlpha2());
+      doc = worker.call();
       if (doc != null) {
         ImdbEpisodeList epList = parseEpisodeListJSON(doc);
         if (epList != null) {
@@ -575,7 +555,7 @@ class ImdbTvShowParser extends ImdbParser {
         }
       }
     }
-    catch (InterruptedException | InterruptedIOException e) {
+    catch (InterruptedException e) {
       // do not swallow these Exceptions
       Thread.currentThread().interrupt();
     }
@@ -595,18 +575,13 @@ class ImdbTvShowParser extends ImdbParser {
         continue;
       }
 
-      Url seasonUrl;
       try {
-        seasonUrl = new OnDiskCachedUrl(constructUrl("/title/", imdbId, "/epdate?season=" + season), 1, TimeUnit.DAYS);
-        seasonUrl.addHeader("Accept-Language", getAcceptLanguage(options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2()));
-      }
-      catch (Exception e) {
-        LOGGER.debug("problem scraping: {}", e.getMessage());
-        throw new ScrapeException(e);
-      }
-
-      try (InputStream is = seasonUrl.getInputStream()) {
-        doc = Jsoup.parse(is, "UTF-8", "");
+        Callable<Document> worker = createImdbWorker(constructUrl("/title/", imdbId, "/epdate?season=" + season), options.getLanguage().getLanguage(),
+            options.getCertificationCountry().getAlpha2());
+        doc = worker.call();
+        if (doc == null) {
+          continue;
+        }
 
         ImdbEpisodeList epList = parseEpisodeListJSON(doc);
         if (epList != null && !epList.getEpisodes().isEmpty()) {
@@ -619,7 +594,7 @@ class ImdbTvShowParser extends ImdbParser {
           }
         }
       }
-      catch (InterruptedException | InterruptedIOException e) {
+      catch (InterruptedException e) {
         // do not swallow these Exceptions
         Thread.currentThread().interrupt();
       }

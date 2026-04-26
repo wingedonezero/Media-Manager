@@ -130,6 +130,7 @@ abstract class ImdbParser {
   static final String                    LOCAL_RELEASE_DATE       = "localReleaseDate";
   static final String                    INCLUDE_PREMIERE_DATE    = "includePremiereDate";
   static final String                    MAX_KEYWORD_COUNT        = "maxKeywordCount";
+  static final String                    BROWSER_FALLBACK         = "browserFallback";
 
   protected final IMediaProvider         metadataProvider;
   protected final MediaType              type;
@@ -277,6 +278,15 @@ abstract class ImdbParser {
   }
 
   /**
+   * should we use the browser fallback
+   * 
+   * @return true/false
+   */
+  protected boolean isUseBrowserFallback() {
+    return config.getValueAsBool(BROWSER_FALLBACK, false);
+  }
+
+  /**
    * get the maximum amount of keywords we should get from the keywords page
    *
    * @return the configured numer or {@link Integer}.MAX_VALUE
@@ -298,7 +308,7 @@ abstract class ImdbParser {
     }
   }
 
-  protected String decode(String source) {
+  static String decode(String source) {
     return new String(Base64.getDecoder().decode(source), StandardCharsets.UTF_8);
   }
 
@@ -338,7 +348,7 @@ abstract class ImdbParser {
 
     LOGGER.debug("========= BEGIN IMDB Scraper Search for: {}", searchTerm);
 
-    // advanced search is blocked behind WAF - skip it for now
+    // advanced search is blocked - skip it for now
     // try {
     // results.addAll(getSearchResultsAdvanced(searchTerm, options));
     // }
@@ -1062,11 +1072,11 @@ abstract class ImdbParser {
 
     Document doc = null;
     Callable<Document> fanarts = new ImdbWorker(constructUrl("title/", imdbId, decode("L21lZGlhaW5kZXgvP2NvbnRlbnRUeXBlcz1zdGlsbF9mcmFtZQ==")),
-        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2());
+        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), isUseBrowserFallback());
     Future<Document> futureFanarts = executor.submit(fanarts);
 
     Callable<Document> posters = new ImdbWorker(constructUrl("title/", imdbId, decode("L21lZGlhaW5kZXgvP2NvbnRlbnRUeXBlcz1wb3N0ZXI=")),
-        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2());
+        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), isUseBrowserFallback());
     Future<Document> futurePosters = executor.submit(posters);
 
     // add posters
@@ -1158,7 +1168,7 @@ abstract class ImdbParser {
    * @throws Exception
    */
   protected String getFreshUrlForTrailer(MediaTrailer trailer, String language, String country) throws Exception {
-    Callable<Document> worker = new ImdbWorker(constructUrl("video/", trailer.getId()), language, country);
+    Callable<Document> worker = new ImdbWorker(constructUrl("video/", trailer.getId()), language, country, isUseBrowserFallback());
     Future<Document> futureVid = executor.submit(worker);
     Document doc = futureVid.get();
 
@@ -2339,7 +2349,8 @@ abstract class ImdbParser {
     Map<String, Integer> titles = new HashMap<>();
 
     try {
-      Callable<Document> worker = new ImdbWorker(constructUrl(url), "en", "US"); // don't care about lang, since we only get IDs
+      Callable<Document> worker = new ImdbWorker(constructUrl(url), "en", "US", isUseBrowserFallback()); // don't care about lang, since we only get
+                                                                                                         // IDs
       Future<Document> futureTop250 = executor.submit(worker);
       Document doc = futureTop250.get();
       String json = doc.getElementById("__NEXT_DATA__").data();
@@ -2363,7 +2374,7 @@ abstract class ImdbParser {
    * local helper classes
    ****************************************************************************/
   protected ImdbWorker createImdbWorker(String url, String language, String country) {
-    return new ImdbWorker(url, language, country);
+    return new ImdbWorker(url, language, country, isUseBrowserFallback());
   }
 
   protected void processMediaArt(MediaMetadata md, MediaArtwork.MediaArtworkType type, String image) {
