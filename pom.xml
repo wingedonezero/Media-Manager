@@ -327,6 +327,19 @@
             <artifactId>commons-csv</artifactId>
             <version>1.14.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-chrome-driver</artifactId>
+            <version>4.41.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.bytebuddy</groupId>
+                    <artifactId>byte-buddy</artifactId>
+                </exclusion>
+            </exclusions>
+
+            <scope>compile</scope>
+        </dependency>
         <!-- testing -->
         <dependency>
             <groupId>junit</groupId>
@@ -562,6 +575,7 @@
                         <include>**/*IT.java</include>
                         <include>**/*ITCase.java</include>
                         <include>**/integrationtest/**/*.java</include>
+                        <include>**/integration-test/**/*.java</include>
                         <include>**/integrationtests/**/*.java</include>
                     </includes>
                 </configuration>

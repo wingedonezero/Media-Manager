@@ -117,6 +117,7 @@
     <logger name="org.jupnp" level="INFO"/>
     <logger name="org.jupnp.transport.impl.DatagramIOImpl" level="WARN"/>
     <logger name="org.jupnp.transport.spi.MulticastReceiver" level="WARN"/>
+    <logger name="org.openqa.selenium" level="ERROR"/>
 
     <!-- appender activation -->
     <root>

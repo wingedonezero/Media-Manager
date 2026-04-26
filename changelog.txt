@@ -1,6 +1,9 @@
 Version 5.2.12
 =======================
 + [TMDB] added support for fetching external IDs (IMDb, TVRage, ...) for cast and crew members #3255
++ [IMDB] added support for using cookies from the browser
++ [IMDB] added experimental support for calling IMDB via browser engine
+  HINT: you need to enable this in the scraper settings of the IMDB scraper
 ---
 x [UI] fixed sorting by rating in the TV show module
 x [IMDB] do not overwrite Top250 on error

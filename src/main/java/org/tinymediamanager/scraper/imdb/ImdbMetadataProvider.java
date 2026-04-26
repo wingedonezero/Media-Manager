@@ -32,7 +32,9 @@ import org.tinymediamanager.scraper.interfaces.IMediaProvider;
  */
 abstract class ImdbMetadataProvider implements IMediaProvider {
   protected static final ExecutorService EXECUTOR = new ThreadPoolExecutor(5, 10, 5, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+
   static final String                    ID       = "imdb";
+
   private final MediaProviderInfo        providerInfo;
 
   ImdbMetadataProvider() {
@@ -47,9 +49,13 @@ abstract class ImdbMetadataProvider implements IMediaProvider {
   protected abstract String getSubId();
 
   protected MediaProviderInfo createMediaProviderInfo() {
-    return new MediaProviderInfo(ID, getSubId(), "IMDb.com",
+    MediaProviderInfo info = new MediaProviderInfo(ID, getSubId(), "IMDb.com",
         "<html><h3>Internet Movie Database (IMDb)</h3><br />The most used database for movies all over the world.<br />Does not contain plot/title/tagline in every language. You may choose to download these texts from other scrapers<br /><br />Available languages: multiple</html>",
         ImdbMetadataProvider.class.getResource("/org/tinymediamanager/scraper/imdb_com.svg"), 10);
+
+    info.getConfig().addBoolean(ImdbParser.BROWSER_FALLBACK, Boolean.FALSE);
+
+    return info;
   }
 
   public MediaProviderInfo getProviderInfo() {
