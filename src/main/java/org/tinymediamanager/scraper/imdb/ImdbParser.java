@@ -69,14 +69,17 @@ import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
 import org.tinymediamanager.scraper.imdb.entities.ImdbAdvancedSearchResult;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCast;
+import org.tinymediamanager.scraper.imdb.entities.ImdbCastV2;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCategory;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCertificate;
+import org.tinymediamanager.scraper.imdb.entities.ImdbCharacter;
 import org.tinymediamanager.scraper.imdb.entities.ImdbChartTitleEdge;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCountry;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCredits;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCreditsCategory;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCreditsCategoryPerson;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCrew;
+import org.tinymediamanager.scraper.imdb.entities.ImdbCrewV2;
 import org.tinymediamanager.scraper.imdb.entities.ImdbEpisodeNumber;
 import org.tinymediamanager.scraper.imdb.entities.ImdbGenre;
 import org.tinymediamanager.scraper.imdb.entities.ImdbIdTextType;
@@ -979,28 +982,94 @@ abstract class ImdbParser {
       // }
       // }
 
-      JsonNode directorsNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/directors");
-      for (ImdbCredits directors : JsonUtils.parseList(mapper, directorsNode, ImdbCredits.class)) {
-        for (ImdbCrew crew : directors.credits) {
-          Person p = crew.toTmm(Person.Type.DIRECTOR);
-          p.setRole(directors.category.text);
-          md.addCastMember(p);
+      JsonNode directorsNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/crewV2");
+      if (!directorsNode.isEmpty()) {
+        // new cast & crew style
+        for (ImdbCrewV2 crewV2 : JsonUtils.parseList(mapper, directorsNode, ImdbCrewV2.class)) {
+          Person.Type personType = null;
+          if (crewV2.grouping != null) {
+            if ("amzn1.imdb.concept.name_credit_category.ace5cb4c-8708-4238-9542-04641e7c8171".equalsIgnoreCase(crewV2.grouping.groupingId)) {
+              personType = Type.DIRECTOR;
+            }
+            else if ("amzn1.imdb.concept.name_credit_category.c84ecaff-add5-4f2e-81db-102a41881fe3".equalsIgnoreCase(crewV2.grouping.groupingId)) {
+              personType = Type.WRITER;
+            }
+          }
+
+          if (personType != null) {
+            for (ImdbCrew credits : crewV2.credits) {
+              Person p = credits.toTmm(Person.Type.DIRECTOR);
+              p.setRole(crewV2.grouping.text);
+              md.addCastMember(p);
+            }
+          }
+        }
+      }
+      else {
+        // old style
+        directorsNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/directors");
+        for (ImdbCredits directors : JsonUtils.parseList(mapper, directorsNode, ImdbCredits.class)) {
+          for (ImdbCrew crew : directors.credits) {
+            Person p = crew.toTmm(Person.Type.DIRECTOR);
+            p.setRole(directors.category.text);
+            md.addCastMember(p);
+          }
+        }
+
+        JsonNode writersNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/writers");
+        for (ImdbCredits writers : JsonUtils.parseList(mapper, writersNode, ImdbCredits.class)) {
+          for (ImdbCrew crew : writers.credits) {
+            Person p = crew.toTmm(Person.Type.WRITER);
+            p.setRole(writers.category.text);
+            md.addCastMember(p);
+          }
         }
       }
 
-      JsonNode writersNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/writers");
-      for (ImdbCredits writers : JsonUtils.parseList(mapper, writersNode, ImdbCredits.class)) {
-        for (ImdbCrew crew : writers.credits) {
-          Person p = crew.toTmm(Person.Type.WRITER);
-          p.setRole(writers.category.text);
-          md.addCastMember(p);
+      JsonNode arr = JsonUtils.at(node, "/props/pageProps/mainColumnData/castV2");
+      if (arr.isArray()) {
+        // new style
+        for (JsonNode grouping : arr) {
+          JsonNode credits = grouping.path("credits");
+          for (JsonNode credit : credits) {
+            ImdbCast cast = JsonUtils.parseObject(mapper, credit, ImdbCast.class);
+            if (cast == null || cast.name == null || cast.name.nameText == null || StringUtils.isBlank(cast.name.nameText.text)) {
+              continue;
+            }
+
+            StringBuilder role = new StringBuilder();
+
+            JsonNode characters = JsonUtils.at(credit, "/creditedRoles/edges/0/node/characters/edges");
+            if (characters.isArray()) {
+              for (JsonNode character : characters) {
+                ImdbCharacter ch = JsonUtils.parseObject(mapper, JsonUtils.at(character, "/node"), ImdbCharacter.class);
+                if (ch == null) {
+                  continue;
+                }
+
+                if (!role.isEmpty()) {
+                  role.append(", ");
+                }
+                role.append(ch.name);
+              }
+            }
+            Person person = cast.toTmm(Person.Type.ACTOR);
+            person.setRole(role.toString());
+            md.addCastMember(person);
+          }
+        }
+
+        for (ImdbCastV2 castV2 : JsonUtils.parseList(mapper, arr, ImdbCastV2.class)) {
+          System.out.println(castV2);
         }
       }
-
-      JsonNode arr = JsonUtils.at(node, "/props/pageProps/mainColumnData/cast/edges");
-      for (JsonNode actors : ListUtils.nullSafe(arr)) {
-        ImdbCast c = JsonUtils.parseObject(mapper, actors.get("node"), ImdbCast.class);
-        md.addCastMember(c.toTmm(Person.Type.ACTOR));
+      else {
+        // old style
+        arr = JsonUtils.at(node, "/props/pageProps/mainColumnData/cast/edges");
+        for (JsonNode actors : ListUtils.nullSafe(arr)) {
+          ImdbCast c = JsonUtils.parseObject(mapper, actors.get("node"), ImdbCast.class);
+          md.addCastMember(c.toTmm(Person.Type.ACTOR));
+        }
       }
 
       JsonNode spokenNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/spokenLanguages/spokenLanguages");
