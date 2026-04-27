@@ -53,6 +53,7 @@ import org.tinymediamanager.cli.TinyMediaManagerCLI;
 import org.tinymediamanager.core.ImageCache;
 import org.tinymediamanager.core.MessageManager;
 import org.tinymediamanager.core.Settings;
+import org.tinymediamanager.core.SettingsAccessException;
 import org.tinymediamanager.core.TmmDateFormat;
 import org.tinymediamanager.core.TmmModuleManager;
 import org.tinymediamanager.core.TmmProperties;
@@ -127,9 +128,15 @@ public final class TinyMediaManager {
     }
 
     // load settings and set default locale
-    Locale.setDefault(Utils.getLocaleFromLanguage(Settings.getInstance().getLanguage()));
-    TmmResourceBundle.clearCache(); // to reinitialize correct langu, see #3053
-    newVersion = !Settings.getInstance().isCurrentVersion(); // same snapshots/git considered as "new", for upgrades
+    try {
+      Settings settings = Settings.getInstance();
+      Locale.setDefault(Utils.getLocaleFromLanguage(settings.getLanguage()));
+      TmmResourceBundle.clearCache(); // to reinitialize correct langu, see #3053
+      newVersion = !settings.isCurrentVersion(); // same snapshots/git considered as "new", for upgrades
+    }
+    catch (SettingsAccessException e) {
+      handleFatalSettingsAccessError(e);
+    }
 
     printLogHeader();
 
@@ -270,6 +277,9 @@ public final class TinyMediaManager {
               shutdownLogger();
               System.exit(1);
             }
+            catch (SettingsAccessException e) {
+              handleFatalSettingsAccessError(e);
+            }
             catch (Exception e) {
               LOGGER.error("Exception while starting tmm", e);
               MessageDialog.showExceptionWindow(e);
@@ -293,6 +303,9 @@ public final class TinyMediaManager {
 
       try {
         startup();
+      }
+      catch (SettingsAccessException e) {
+        handleFatalSettingsAccessError(e);
       }
       catch (IllegalStateException | MVStoreException e) {
         LOGGER.error("MVStoreException", e);
@@ -330,6 +343,24 @@ public final class TinyMediaManager {
       }
       System.exit(0);
     }
+  }
+
+  /**
+   * Handles fatal startup errors when settings storage cannot be written.
+   *
+   * @param e
+   *          the underlying startup exception
+   */
+  private void handleFatalSettingsAccessError(SettingsAccessException e) {
+    String message = TmmResourceBundle.getString("tmm.settings.error") + "\n\n" + e.getMessage();
+    LOGGER.error(message, e);
+
+    if (!headless) {
+      JOptionPane.showMessageDialog(null, message, "tinyMediaManager - Fatal startup error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    shutdownLogger();
+    System.exit(1);
   }
 
   private void systemUiInit() {
