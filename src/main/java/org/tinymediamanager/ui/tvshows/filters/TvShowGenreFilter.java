@@ -15,10 +15,10 @@
  */
 package org.tinymediamanager.ui.tvshows.filters;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
@@ -26,6 +26,7 @@ import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.entities.MediaGenres;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
+import org.tinymediamanager.scraper.util.ListUtils;
 import org.tinymediamanager.ui.components.label.TmmLabel;
 
 /**
@@ -49,21 +50,29 @@ public class TvShowGenreFilter extends AbstractCheckComboBoxTvShowUIFilter<Media
   }
 
   @Override
+  protected JComboBox<FilterOption> createOptionComboBox() {
+    JComboBox<FilterOption> comboBox = new JComboBox<>(new FilterOption[] { FilterOption.ANY, FilterOption.ALL });
+    comboBox.setSelectedItem(FilterOption.ANY);
+
+    return comboBox;
+  }
+
+  @Override
   protected boolean accept(TvShow tvShow, List<TvShowEpisode> episodes, boolean invert) {
     List<MediaGenres> selectedItems = checkComboBox.getSelectedItems();
 
     // check for explicit empty search
-    if (!invert && (selectedItems.isEmpty() && tvShow.getGenres().isEmpty())) {
-      return true;
-    }
-    else if (invert && (selectedItems.isEmpty() && !tvShow.getGenres().isEmpty())) {
-      return true;
+    if (selectedItems.isEmpty() && tvShow.getGenres().isEmpty()) {
+      return !invert;
     }
 
-    // n:m match is kinda hard
-    // if we want a "direct" search, the TV show entries must contain any of the given list
-    // if we want a negative search, the TV show entries must not contain all of the given list
-    return invert == Collections.disjoint(selectedItems, tvShow.getGenres());
+    // check for all values
+    if (getFilterOption() == FilterOption.ALL) {
+      return invert ^ ListUtils.containsAll(tvShow.getGenres(), selectedItems);
+    }
+    else {
+      return invert ^ ListUtils.containsAny(tvShow.getGenres(), selectedItems);
+    }
   }
 
   @Override

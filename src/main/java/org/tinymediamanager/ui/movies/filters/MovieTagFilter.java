@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
@@ -55,21 +56,29 @@ public class MovieTagFilter extends AbstractCheckComboBoxMovieUIFilter<String> {
   }
 
   @Override
+  protected JComboBox<FilterOption> createOptionComboBox() {
+    JComboBox<FilterOption> comboBox = new JComboBox<>(new FilterOption[] { FilterOption.ANY, FilterOption.ALL });
+    comboBox.setSelectedItem(FilterOption.ANY);
+
+    return comboBox;
+  }
+
+  @Override
   public boolean accept(Movie movie) {
-    List<String> tags = checkComboBox.getSelectedItems();
+    List<String> selectedItems = checkComboBox.getSelectedItems();
 
     // check for explicit empty search
-    if (tags.isEmpty() && movie.getTags().isEmpty()) {
+    if (selectedItems.isEmpty() && movie.getTags().isEmpty()) {
       return true;
     }
 
     // check for all values
-    for (String tag : movie.getTags()) {
-      if (tags.contains(tag)) {
-        return true;
-      }
+    if (getFilterOption() == FilterOption.ALL) {
+      return ListUtils.containsAll(movie.getTags(), selectedItems);
     }
-    return false;
+    else {
+      return ListUtils.containsAny(movie.getTags(), selectedItems);
+    }
   }
 
   @Override

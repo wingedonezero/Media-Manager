@@ -66,7 +66,7 @@ import org.tinymediamanager.ui.panels.ModalPopupPanel;
 import net.miginfocom.swing.MigLayout;
 
 public class MovieSetFilterDialog extends TmmDialog {
-  private static final String                          PANEL_COL_CONSTRAINTS = "[][][][200lp:250lp,grow]";
+  private static final String                          PANEL_COL_CONSTRAINTS = "[][][fill][200lp:250lp,grow]";
 
   private final TmmTreeTable                           treeTable;
 

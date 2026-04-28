@@ -80,6 +80,7 @@ import org.tinymediamanager.ui.tvshows.filters.TvShowEmptyFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowEpisodeCountFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowEpisodeCrc32Filter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowEpisodeNoteFilter;
+import org.tinymediamanager.ui.tvshows.filters.TvShowEpisodeTagFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowFanartSizeFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowFilenameFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowFirstAiredFilter;
@@ -123,7 +124,7 @@ import org.tinymediamanager.ui.tvshows.filters.TvShowYearFilter;
 import net.miginfocom.swing.MigLayout;
 
 public class TvShowFilterDialog extends TmmDialog {
-  private static final String                        PANEL_COL_CONSTRAINTS = "[][][][200lp:250lp,grow]";
+  private static final String                        PANEL_COL_CONSTRAINTS = "[][][fill][200lp:250lp,grow]";
 
   private final TmmTreeTable                         treeTable;
 
@@ -188,6 +189,7 @@ public class TvShowFilterDialog extends TmmDialog {
         addFilter(new TvShowCountryFilter(), panelMetadata);
         addFilter(new TvShowStudioFilter(), panelMetadata);
         addFilter(new TvShowTagFilter(), panelMetadata);
+        addFilter(new TvShowEpisodeTagFilter(), panelMetadata);
         addFilter(new TvShowNoteFilter(), panelMetadata);
         addFilter(new TvShowSeasonNoteFilter(), panelMetadata);
         addFilter(new TvShowEpisodeNoteFilter(), panelMetadata);

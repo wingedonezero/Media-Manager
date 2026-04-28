@@ -1,5 +1,7 @@
 Version 5.2.12
 =======================
++ [UI] added a new filter option to filter via AND/OR logic for genres and tags
++ [UI] split the tag filter in the TV show module into dedicated TV show and episode filters
 + [TMDB] added support for fetching external IDs (IMDb, TVRage, ...) for cast and crew members #3255
 + [IMDB] added support for using cookies from the browser
 + [IMDB] added experimental support for calling IMDB via browser engine

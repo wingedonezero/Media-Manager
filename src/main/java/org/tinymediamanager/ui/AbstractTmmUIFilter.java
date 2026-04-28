@@ -15,16 +15,19 @@
  */
 package org.tinymediamanager.ui;
 
+import java.awt.Component;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 import javax.swing.AbstractButton;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeListener;
@@ -81,6 +84,7 @@ public abstract class AbstractTmmUIFilter<E> implements ITmmUIFilter<E> {
     this.filterComponent = createFilterComponent();
     this.cbOption = createOptionComboBox();
     if (this.cbOption != null) {
+      installFilterOptionTooltips();
       this.cbOption.addActionListener(filterComponentActionListener);
     }
     this.checkBox.addActionListener(checkBoxActionListener);
@@ -145,6 +149,67 @@ public abstract class AbstractTmmUIFilter<E> implements ITmmUIFilter<E> {
   protected JComboBox<FilterOption> createOptionComboBox() {
     // when there is _no_ filter component or only EQ, we don't need a combo box
     return null;
+  }
+
+  /**
+   * Installs tooltips for filter option comboboxes (popup entries + selected value tooltip).
+   */
+  private void installFilterOptionTooltips() {
+    cbOption.setRenderer(new FilterOptionRenderer());
+    updateFilterOptionToolTip();
+    cbOption.addActionListener(e -> updateFilterOptionToolTip());
+  }
+
+  /**
+   * Updates the tooltip of the selected filter option.
+   */
+  private void updateFilterOptionToolTip() {
+    cbOption.setToolTipText(getFilterOptionToolTip(getFilterOption()));
+  }
+
+  /**
+   * Gets the tooltip text for the given filter option.
+   *
+   * @param filterOption
+   *          the filter option
+   * @return the localized tooltip text
+   */
+  private String getFilterOptionToolTip(FilterOption filterOption) {
+    return switch (filterOption) {
+      case LT -> TmmResourceBundle.getString("filteroption.lt");
+      case LE -> TmmResourceBundle.getString("filteroption.le");
+      case EQ -> TmmResourceBundle.getString("filteroption.eq");
+      case GE -> TmmResourceBundle.getString("filteroption.ge");
+      case GT -> TmmResourceBundle.getString("filteroption.gt");
+      case BT -> TmmResourceBundle.getString("filteroption.bt");
+      case ANY -> TmmResourceBundle.getString("filteroption.any");
+      case ALL -> TmmResourceBundle.getString("filteroption.all");
+    };
+  }
+
+  /**
+   * Renderer for displaying tooltip texts for filter options in the combobox popup.
+   */
+  private class FilterOptionRenderer extends DefaultListCellRenderer {
+    @Override
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+      if (index >= 0) {
+        if (isSelected && value instanceof FilterOption filterOption) {
+          list.setToolTipText(getFilterOptionToolTip(filterOption));
+        }
+        else {
+          list.setToolTipText(null);
+        }
+      }
+
+      if (component instanceof JComponent jComponent && value instanceof FilterOption filterOption) {
+        jComponent.setToolTipText(getFilterOptionToolTip(filterOption));
+      }
+
+      return component;
+    }
   }
 
   @Override

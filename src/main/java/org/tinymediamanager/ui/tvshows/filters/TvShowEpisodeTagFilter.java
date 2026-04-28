@@ -35,14 +35,14 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.table.TmmTableFormat;
 
 /**
- * This class implements a TV show tag filter for the TV show tree
+ * This class implements a TV show episode tag filter for the TV show tree
  * 
  * @author Manuel Laggner
  */
-public class TvShowTagFilter extends AbstractCheckComboBoxTvShowUIFilter<String> {
+public class TvShowEpisodeTagFilter extends AbstractCheckComboBoxTvShowUIFilter<String> {
   private final TmmTableFormat.StringComparator comparator;
 
-  public TvShowTagFilter() {
+  public TvShowEpisodeTagFilter() {
     super();
     checkComboBox.enableFilter((s, s2) -> s.toLowerCase(Locale.ROOT).contains(s2.toLowerCase(Locale.ROOT)));
     comparator = new TmmTableFormat.StringComparator();
@@ -53,7 +53,7 @@ public class TvShowTagFilter extends AbstractCheckComboBoxTvShowUIFilter<String>
 
   @Override
   public String getId() {
-    return "tvShowTag";
+    return "tvShowEpisodeTag";
   }
 
   @Override
@@ -73,18 +73,32 @@ public class TvShowTagFilter extends AbstractCheckComboBoxTvShowUIFilter<String>
       return !invert;
     }
 
-    // search tags of the show
-    if (getFilterOption() == FilterOption.ALL) {
-      return invert ^ ListUtils.containsAll(tvShow.getTags(), selectedItems);
+    for (TvShowEpisode episode : episodes) {
+      boolean containsTags;
+
+      // check for explicit empty search
+      if (selectedItems.isEmpty() && episode.getTags().isEmpty()) {
+        return !invert;
+      }
+
+      if (getFilterOption() == FilterOption.ALL) {
+        containsTags = ListUtils.containsAll(episode.getTags(), selectedItems);
+      }
+      else {
+        containsTags = ListUtils.containsAny(episode.getTags(), selectedItems);
+      }
+
+      if (invert ^ containsTags) {
+        return true;
+      }
     }
-    else {
-      return invert ^ ListUtils.containsAny(tvShow.getTags(), selectedItems);
-    }
+
+    return false;
   }
 
   @Override
   protected JLabel createLabel() {
-    return new TmmLabel(TmmResourceBundle.getString("movieextendedsearch.tag") + " (" + TmmResourceBundle.getString("metatag.tvshow") + ")");
+    return new TmmLabel(TmmResourceBundle.getString("movieextendedsearch.tag") + " (" + TmmResourceBundle.getString("metatag.episode") + ")");
   }
 
   private void buildAndInstallTagsArray() {
