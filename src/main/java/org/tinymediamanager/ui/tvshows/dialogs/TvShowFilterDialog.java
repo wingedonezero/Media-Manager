@@ -76,6 +76,7 @@ import org.tinymediamanager.ui.tvshows.filters.TvShowDateAddedFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowDecadeFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowDiscArtSizeFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowDuplicateEpisodesFilter;
+import org.tinymediamanager.ui.tvshows.filters.TvShowEditionFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowEmptyFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowEpisodeCountFilter;
 import org.tinymediamanager.ui.tvshows.filters.TvShowEpisodeCrc32Filter;
@@ -247,6 +248,7 @@ public class TvShowFilterDialog extends TmmDialog {
         tabbedPane.addTab(TmmResourceBundle.getString("filter.others"), createTabPanel(panelOthers));
 
         addFilter(new TvShowMediaSourceFilter(), panelOthers);
+        addFilter(new TvShowEditionFilter(), panelOthers);
         addFilter(new TvShowMediaFilesFilter(), panelOthers);
         addFilter(new TvShowFilenameFilter(), panelOthers);
         addFilter(new TvShowVideoFilenameFilter(), panelOthers);
