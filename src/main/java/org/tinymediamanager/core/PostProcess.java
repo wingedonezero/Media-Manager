@@ -18,12 +18,13 @@ package org.tinymediamanager.core;
 /**
  * The class {@link PostProcess} - to represent a Postprocess
  *
- * @Author Wolfgang Janes
+ * @author Wolfgang Janes
  */
 public class PostProcess extends AbstractModelObject {
-  private String name;
-  private String path;
-  private String command;
+  private String  name;
+  private String  path;
+  private String  command;
+  private boolean showOutput;
 
   public String getName() {
     return name;
@@ -53,6 +54,16 @@ public class PostProcess extends AbstractModelObject {
     String oldValue = this.command;
     this.command = newValue;
     firePropertyChange("command", oldValue, newValue);
+  }
+
+  public boolean isShowOutput() {
+    return showOutput;
+  }
+
+  public void setShowOutput(boolean newValue) {
+    boolean oldValue = this.showOutput;
+    this.showOutput = newValue;
+    firePropertyChange("showOutput", oldValue, newValue);
   }
 
   @Override

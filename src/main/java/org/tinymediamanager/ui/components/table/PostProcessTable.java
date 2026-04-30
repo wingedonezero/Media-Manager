@@ -71,6 +71,14 @@ public abstract class PostProcessTable extends TmmEditorTable {
       addColumn(col);
 
       /*
+       * show result
+       */
+      col = new Column(TmmResourceBundle.getString("Settings.showoutput"), "showoutput", PostProcess::isShowOutput, Boolean.class);
+      col.setColumnResizeable(false);
+      col.setHeaderIcon(IconManager.NFO);
+      addColumn(col);
+
+      /*
        * edit
        */
       col = new Column(TmmResourceBundle.getString("Button.edit"), "edit", postProcess -> IconManager.EDIT, ImageIcon.class);

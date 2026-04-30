@@ -21,6 +21,7 @@ import java.nio.file.Path;
 
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -49,6 +50,7 @@ public abstract class PostProcessDialog extends TmmDialog {
   protected final JTextField tfProcessName;
   protected final JTextField tfPath;
   protected final JTextArea  tfCommand;
+  protected final JCheckBox  chkbxShowOutput;
 
   public PostProcessDialog() {
     super(TmmResourceBundle.getString("Settings.addpostprocess"), "addPostProcess");
@@ -57,7 +59,7 @@ public abstract class PostProcessDialog extends TmmDialog {
     {
       JPanel panelContent = new JPanel();
       getContentPane().add(panelContent, BorderLayout.CENTER);
-      panelContent.setLayout(new MigLayout("", "[][grow][]", "[][][100lp:n]"));
+      panelContent.setLayout(new MigLayout("", "[][grow][]", "[][][100lp:n][]"));
 
       // Name
       JLabel lblProcessName = new JLabel(TmmResourceBundle.getString("Settings.processname"));
@@ -98,6 +100,13 @@ public abstract class PostProcessDialog extends TmmDialog {
       scrollPane.setViewportView(tfCommand);
       tfCommand.setColumns(30);
       tfCommand.setLineWrap(true);
+
+      // show result
+      JLabel showResultLabel = new JLabel(TmmResourceBundle.getString("Settings.showoutput"));
+      panelContent.add(showResultLabel, "cell 0 3,alignx right");
+
+      chkbxShowOutput = new JCheckBox();
+      panelContent.add(chkbxShowOutput, "cell 1 3");
     }
     {
       JButton btnCancel = new JButton(TmmResourceBundle.getString("Button.cancel"));
@@ -117,6 +126,7 @@ public abstract class PostProcessDialog extends TmmDialog {
       this.tfProcessName.setText(process.getName());
       this.tfPath.setText(process.getPath());
       this.tfCommand.setText(process.getCommand());
+      this.chkbxShowOutput.setSelected(process.isShowOutput());
     }
   }
 

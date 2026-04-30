@@ -451,7 +451,9 @@ public class MovieUIModule extends AbstractTmmUIModule {
                 return;
               }
 
-              SwingUtilities.invokeLater(() -> new PostProcessResultDialog(process.getName(), getExecutionResults()).setVisible(true));
+              if (process.isShowOutput()) {
+                SwingUtilities.invokeLater(() -> new PostProcessResultDialog(process.getName(), getExecutionResults()).setVisible(true));
+              }
             }
           };
           JMenuItem menuItem = new JMenuItem(process.getName(), IconManager.APPLY);
