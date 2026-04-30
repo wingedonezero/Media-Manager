@@ -16,6 +16,7 @@
 package org.tinymediamanager.ui.movies.filters;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -60,11 +61,7 @@ public class MovieEditionFilter extends AbstractCheckComboBoxMovieUIFilter<Movie
   }
 
   private void buildAndInstallEditionArray() {
-    List<MovieEdition> editions = new ArrayList<>();
-
-    for (MovieEdition movieEdition : MovieEdition.values()) {
-      editions.add(movieEdition);
-    }
+    List<MovieEdition> editions = new ArrayList<>(Arrays.asList(MovieEdition.values()));
 
     editions.sort(comparator);
     setValues(editions);

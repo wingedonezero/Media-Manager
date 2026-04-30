@@ -68,11 +68,6 @@ public class TvShowEpisodeTagFilter extends AbstractCheckComboBoxTvShowUIFilter<
   protected boolean accept(TvShow tvShow, List<TvShowEpisode> episodes, boolean invert) {
     List<String> selectedItems = checkComboBox.getSelectedItems();
 
-    // check for explicit empty search
-    if (selectedItems.isEmpty() && tvShow.getTags().isEmpty()) {
-      return !invert;
-    }
-
     for (TvShowEpisode episode : episodes) {
       boolean containsTags;
 
