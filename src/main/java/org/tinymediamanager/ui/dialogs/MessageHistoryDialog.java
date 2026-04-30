@@ -93,6 +93,7 @@ public class MessageHistoryDialog extends TmmDialog implements ListEventListener
 
     lblClearAll.addActionListener(arg0 -> {
       messageMap.clear();
+      TmmUIMessageCollector.instance.clearMessages();
       messagesPanel.removeAll();
       messagesPanel.revalidate();
       messagesPanel.repaint();

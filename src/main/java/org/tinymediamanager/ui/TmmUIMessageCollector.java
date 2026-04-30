@@ -118,4 +118,11 @@ public class TmmUIMessageCollector extends AbstractModelObject implements IMessa
   public EventList<Message> getMessages() {
     return messages;
   }
+
+  /**
+   * clear all messages
+   */
+  public void clearMessages() {
+    messages.clear();
+  }
 }

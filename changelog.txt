@@ -11,6 +11,7 @@ Version 5.2.12
 ---
 x [Settings] startup-check if settings are read-/writeable #3271
 x [UI] fixed sorting by rating in the TV show module
+x [UI] fixed deleting old messages in the message dialog
 x [IMDB] do not overwrite Top250 on error
 x [IMDB] added an option to use cookies from the browser
 x [OMDB] fixed parsing of episode lists
