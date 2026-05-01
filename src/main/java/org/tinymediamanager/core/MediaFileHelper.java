@@ -296,16 +296,8 @@ public class MediaFileHelper {
       }
     }
 
-    // check EXTRAS first
-    if (filename.contains(".EXTRAS.") // scene file naming (need to check first! upper case!)
-        || basename.matches("(?i).*[_.-]+extra[s]?\\d?$") // end with "-extra[s]"
-        || basename.matches("(?i).*[-]+extra[s]?[-].*") // extra[s] just with surrounding dash (other delims problem)
-        || foldername.equalsIgnoreCase("extras") // preferred folder name
-        || foldername.equalsIgnoreCase("extra") // preferred folder name
-        || basename.matches("(?i).*[-](behindthescenes|deleted|featurette|interview|scene|short|other|bloopers)\\d?$")
-        // Plex (w/o trailer)
-        || EXTRA_FOLDERS.stream().anyMatch(relativePathJunks::contains)) // extra folders
-    {
+    // files inside extra folders are always treated as EXTRA (regardless of extension)
+    if (EXTRA_FOLDERS.stream().anyMatch(relativePathJunks::contains)) {
       return MediaFileType.EXTRA;
     }
 
@@ -335,6 +327,13 @@ public class MediaFileHelper {
 
     if (Settings.getInstance().getSubtitleFileType().contains("." + ext)) {
       return MediaFileType.SUBTITLE;
+    }
+
+    // when there is an "extra" keyword in the filename, it's most likely an extra - even if the extension would be a video filetype
+    if (basename.contains(".EXTRAS.") // scene file naming (need to check first! upper case!)
+        || basename.matches("(?i).*[_.-](extras?|behindthescenes?|deleted|featurettes?|interviews?|scenes?|shorts?|others?|bloopers?)\\d*$")
+        || basename.matches("(?i).*[\\[(](extras?|behindthescenes?|deleted|featurettes?|interviews?|scenes?|shorts?|others?|bloopers?)[)\\]].*")) {
+      return MediaFileType.EXTRA;
     }
 
     if (Settings.getInstance().getVideoFileType().contains("." + ext)) {
@@ -755,7 +754,7 @@ public class MediaFileHelper {
 
   /**
    * gather basic file information like file size, creation date and last modified date<BR>
-   * 
+   * <p>
    * also returns <b>true</b> is there has been a change in the file size!
    *
    * @param mediaFile
