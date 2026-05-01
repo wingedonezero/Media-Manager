@@ -24,7 +24,7 @@ import org.tinymediamanager.scraper.interfaces.ITvShowSubtitleProvider;
  *
  * @author Manuel Laggner
  */
-public class OpenSubtitlesComTvShowSubtitleProvider extends OpenSubtitlesComSubtitleProvider implements ITvShowSubtitleProvider {
+public final class OpenSubtitlesComTvShowSubtitleProvider extends OpenSubtitlesComSubtitleProvider implements ITvShowSubtitleProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(OpenSubtitlesComTvShowSubtitleProvider.class);
 
   @Override

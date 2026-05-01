@@ -688,23 +688,23 @@ public class TvShowTableFormat extends TmmTreeTableFormat<TmmTreeNode> {
     return null;
   }
 
-  private String getUserRating(TmmTreeNode node) {
+  private Float getUserRating(TmmTreeNode node) {
     Object userObject = node.getUserObject();
     if (userObject instanceof TvShow || userObject instanceof TvShowEpisode) {
       MediaRating mediaRating = ((MediaEntity) userObject).getUserRating();
       if (mediaRating != null && mediaRating.getRating() > 0) {
-        return String.valueOf(mediaRating.getRating());
+        return mediaRating.getRating();
       }
     }
     return null;
   }
 
-  private String getImdbRating(TmmTreeNode node) {
+  private Float getImdbRating(TmmTreeNode node) {
     Object userObject = node.getUserObject();
     if (userObject instanceof TvShow || userObject instanceof TvShowEpisode) {
       MediaRating mediaRating = ((MediaEntity) userObject).getRating(MediaMetadata.IMDB);
       if (mediaRating != null && mediaRating.getRating() > 0) {
-        return String.valueOf(mediaRating.getRating());
+        return mediaRating.getRating();
       }
     }
     return null;

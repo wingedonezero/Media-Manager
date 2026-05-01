@@ -15,12 +15,6 @@
  */
 package org.tinymediamanager.scraper.tmdb;
 
-import static org.tinymediamanager.core.entities.Person.Type.CAMERA;
-import static org.tinymediamanager.core.entities.Person.Type.COMPOSER;
-import static org.tinymediamanager.core.entities.Person.Type.DIRECTOR;
-import static org.tinymediamanager.core.entities.Person.Type.EDITOR;
-import static org.tinymediamanager.core.entities.Person.Type.PRODUCER;
-import static org.tinymediamanager.core.entities.Person.Type.WRITER;
 import static org.tinymediamanager.scraper.MediaMetadata.IMDB;
 import static org.tinymediamanager.scraper.MediaMetadata.TMDB;
 import static org.tinymediamanager.scraper.MediaMetadata.TMDB_SET;
@@ -36,7 +30,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.Utils;
@@ -68,12 +61,10 @@ import org.tinymediamanager.scraper.tmdb.entities.BaseCollection;
 import org.tinymediamanager.scraper.tmdb.entities.BaseCompany;
 import org.tinymediamanager.scraper.tmdb.entities.BaseKeyword;
 import org.tinymediamanager.scraper.tmdb.entities.BaseMovie;
-import org.tinymediamanager.scraper.tmdb.entities.CastMember;
 import org.tinymediamanager.scraper.tmdb.entities.Certifications;
 import org.tinymediamanager.scraper.tmdb.entities.Collection;
 import org.tinymediamanager.scraper.tmdb.entities.CollectionResultsPage;
 import org.tinymediamanager.scraper.tmdb.entities.Country;
-import org.tinymediamanager.scraper.tmdb.entities.CrewMember;
 import org.tinymediamanager.scraper.tmdb.entities.FindResults;
 import org.tinymediamanager.scraper.tmdb.entities.Genre;
 import org.tinymediamanager.scraper.tmdb.entities.Movie;
@@ -95,7 +86,7 @@ import retrofit2.Response;
  *
  * @author Manuel Laggner
  */
-public class TmdbMovieMetadataProvider extends TmdbMetadataProvider implements IMovieMetadataProvider, IMovieSetMetadataProvider,
+public final class TmdbMovieMetadataProvider extends TmdbMetadataProvider implements IMovieMetadataProvider, IMovieSetMetadataProvider,
     IMovieTmdbMetadataProvider, IMovieImdbMetadataProvider, IRatingProvider, IMediaIdProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(TmdbMovieMetadataProvider.class);
 
@@ -109,6 +100,7 @@ public class TmdbMovieMetadataProvider extends TmdbMetadataProvider implements I
     info.getConfig().addSelect("titleFallbackLanguage", PT, "en-US");
     info.getConfig().addBoolean("localReleaseDate", true);
     info.getConfig().addBoolean("includePremiereDate", true);
+    info.getConfig().addBoolean("fetchPersonIds", false);
     info.getConfig().load();
 
     return info;
@@ -680,8 +672,6 @@ public class TmdbMovieMetadataProvider extends TmdbMetadataProvider implements I
       if (tmdbId > 0) {
         scrapedIds.put(TMDB, tmdbId);
       }
-
-      return scrapedIds;
     }
 
     // scrape
@@ -705,7 +695,12 @@ public class TmdbMovieMetadataProvider extends TmdbMetadataProvider implements I
 
     scrapedIds.put(TMDB, movie.id);
     // external IDs
-    parseExternalIDs(movie.external_ids).forEach(scrapedIds::put);
+    scrapedIds.putAll(parseExternalIDs(movie.external_ids));
+
+    // movie set id
+    if (movie.belongs_to_collection != null) {
+      scrapedIds.put(TMDB_SET, movie.belongs_to_collection.id);
+    }
 
     return scrapedIds;
   }
@@ -899,64 +894,15 @@ public class TmdbMovieMetadataProvider extends TmdbMetadataProvider implements I
 
     // cast & crew
     if (movie.credits != null) {
-      for (CastMember castMember : ListUtils.nullSafe(movie.credits.cast)) {
-        Person cm = new Person(Person.Type.ACTOR);
+      List<Person> creditsList = new ArrayList<>();
+      creditsList.addAll(parseCast(movie.credits.cast));
+      creditsList.addAll(parseCrew(movie.credits.crew));
 
-        cm.setId(getProviderInfo().getId(), castMember.id);
-        cm.setName(castMember.name);
-        cm.setRole(castMember.character);
-
-        if (StringUtils.isNotBlank(castMember.profile_path)) {
-          cm.setThumbUrl(artworkBaseUrl + "h632" + castMember.profile_path);
-        }
-        if (castMember.id != null) {
-          cm.setProfileUrl("https://www.themoviedb.org/person/" + castMember.id);
-        }
-        md.addCastMember(cm);
+      if (getProviderInfo().getConfig().getValueAsBool("fetchPersonIds")) {
+        fetchPersonIds(creditsList);
       }
 
-      // crew
-      for (CrewMember crewMember : ListUtils.nullSafe(movie.credits.crew)) {
-        Person cm = new Person();
-        if ("Director".equals(crewMember.job)) {
-          cm.setType(DIRECTOR);
-        }
-        else if ("Writing".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Screenplay", "Writer", "Story")) {
-          // only take the screenplay writers, not the story writers
-          cm.setType(WRITER);
-        }
-        else if ("Production".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Producer")) {
-          // only take producers, not casting or similar jobs
-          cm.setType(PRODUCER);
-        }
-        else if ("Editing".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Editor")) {
-          // only take the editors, not the assistant editors
-          cm.setType(EDITOR);
-        }
-        else if ("Sound".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Original Music Composer")) {
-          // only take the original music composers, not the sound designers
-          cm.setType(COMPOSER);
-        }
-        else if ("Camera".equals(crewMember.department) && Strings.CS.containsAny(crewMember.job, "Director of Photography")) {
-          // only take the directors of photography, not the camera operators
-          cm.setType(CAMERA);
-        }
-        else {
-          continue;
-        }
-        cm.setRole(crewMember.job);
-        cm.setId(getProviderInfo().getId(), crewMember.id);
-        cm.setName(crewMember.name);
-
-        if (StringUtils.isNotBlank(crewMember.profile_path)) {
-          cm.setThumbUrl(artworkBaseUrl + "h632" + crewMember.profile_path);
-        }
-        if (crewMember.id != null) {
-          cm.setProfileUrl("https://www.themoviedb.org/person/" + crewMember.id);
-        }
-
-        md.addCastMember(cm);
-      }
+      md.setCastMembers(creditsList);
     }
 
     // Genres

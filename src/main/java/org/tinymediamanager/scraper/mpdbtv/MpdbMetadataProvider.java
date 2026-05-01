@@ -23,7 +23,6 @@ import org.tinymediamanager.core.FeatureNotEnabledException;
 import org.tinymediamanager.scraper.MediaProviderInfo;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
 import org.tinymediamanager.scraper.interfaces.IMediaProvider;
-import org.tinymediamanager.scraper.mpdbtv.services.MpdbController;
 
 abstract class MpdbMetadataProvider implements IMediaProvider {
 

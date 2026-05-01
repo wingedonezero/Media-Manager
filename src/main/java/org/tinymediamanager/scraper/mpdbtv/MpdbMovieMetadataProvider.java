@@ -62,7 +62,7 @@ import retrofit2.Response;
  * 
  * @author Wolfgang Janes
  */
-public class MpdbMovieMetadataProvider extends MpdbMetadataProvider implements IMovieMetadataProvider {
+public final class MpdbMovieMetadataProvider extends MpdbMetadataProvider implements IMovieMetadataProvider {
   private static final Logger     LOGGER = LoggerFactory.getLogger(MpdbMovieMetadataProvider.class);
 
   private final MediaProviderInfo providerInfo;

@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
@@ -34,7 +35,7 @@ import org.tinymediamanager.ui.components.label.TmmLabel;
 import org.tinymediamanager.ui.components.table.TmmTableFormat;
 
 /**
- * This class implements a tag filter for the TV show tree
+ * This class implements a TV show tag filter for the TV show tree
  * 
  * @author Manuel Laggner
  */
@@ -56,49 +57,34 @@ public class TvShowTagFilter extends AbstractCheckComboBoxTvShowUIFilter<String>
   }
 
   @Override
+  protected JComboBox<FilterOption> createOptionComboBox() {
+    JComboBox<FilterOption> comboBox = new JComboBox<>(new FilterOption[] { FilterOption.ANY, FilterOption.ALL });
+    comboBox.setSelectedItem(FilterOption.ANY);
+
+    return comboBox;
+  }
+
+  @Override
   protected boolean accept(TvShow tvShow, List<TvShowEpisode> episodes, boolean invert) {
-    List<String> tags = checkComboBox.getSelectedItems();
+    List<String> selectedItems = checkComboBox.getSelectedItems();
 
     // check for explicit empty search
-    if (!invert && (tags.isEmpty() && tvShow.getTags().isEmpty())) {
-      return true;
-    }
-    else if (invert && (tags.isEmpty() && !tvShow.getTags().isEmpty())) {
-      return true;
-    }
-
-    for (TvShowEpisode episode : episodes) {
-      if (!invert && (tags.isEmpty() && episode.getTags().isEmpty())) {
-        return true;
-      }
-      else if (invert && (tags.isEmpty() && !episode.getTags().isEmpty())) {
-        return true;
-      }
+    if (selectedItems.isEmpty() && tvShow.getTags().isEmpty()) {
+      return !invert;
     }
 
     // search tags of the show
-    for (String tag : tags) {
-      boolean containsTags = tvShow.getTags().contains(tag);
-      if (!invert && containsTags) {
-        return true;
-      }
-      else if (invert && containsTags) {
-        return false;
-      }
-
-      for (TvShowEpisode episode : episodes) {
-        if (invert ^ episode.getTags().contains(tag)) {
-          return true;
-        }
-      }
+    if (getFilterOption() == FilterOption.ALL) {
+      return invert ^ ListUtils.containsAll(tvShow.getTags(), selectedItems);
     }
-
-    return false;
+    else {
+      return invert ^ ListUtils.containsAny(tvShow.getTags(), selectedItems);
+    }
   }
 
   @Override
   protected JLabel createLabel() {
-    return new TmmLabel(TmmResourceBundle.getString("movieextendedsearch.tag"));
+    return new TmmLabel(TmmResourceBundle.getString("movieextendedsearch.tag") + " (" + TmmResourceBundle.getString("metatag.tvshow") + ")");
   }
 
   private void buildAndInstallTagsArray() {

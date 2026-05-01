@@ -38,7 +38,7 @@ import retrofit2.Response;
  *
  * @author Manuel Laggner
  */
-public class FanartTvTvShowArtworkProvider extends FanartTvMetadataProvider implements ITvShowArtworkProvider {
+public final class FanartTvTvShowArtworkProvider extends FanartTvMetadataProvider implements ITvShowArtworkProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(FanartTvTvShowArtworkProvider.class);
 
   @Override

@@ -562,7 +562,9 @@ public class TvShowUIModule extends AbstractTmmUIModule {
                   return;
                 }
 
-                SwingUtilities.invokeLater(() -> new PostProcessResultDialog(process.getName(), getExecutionResults()).setVisible(true));
+                if (process.isShowOutput()) {
+                  SwingUtilities.invokeLater(() -> new PostProcessResultDialog(process.getName(), getExecutionResults()).setVisible(true));
+                }
               }
             };
             JMenuItem menuItem = new JMenuItem(TmmResourceBundle.getString("metatag.tvshow") + " - " + process.getName(), IconManager.APPLY_INV);

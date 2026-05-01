@@ -71,7 +71,17 @@ public interface ITmmUIFilter<E> {
     /**
      * BT - between
      */
-    BT;
+    BT,
+
+    /**
+     * any of the values
+     */
+    ANY,
+
+    /**
+     * all the values
+     */
+    ALL;
 
     @Override
     public String toString() {
@@ -84,6 +94,8 @@ public interface ITmmUIFilter<E> {
         case GE -> string = "≥";
         case GT -> string = ">";
         case BT -> string = "[ ]";
+        case ANY -> string = "-X-";
+        case ALL -> string = "XXX";
       }
 
       return string;

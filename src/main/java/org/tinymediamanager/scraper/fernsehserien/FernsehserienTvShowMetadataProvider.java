@@ -32,7 +32,7 @@ import org.tinymediamanager.scraper.interfaces.ITvShowMetadataProvider;
  *
  * @author Manuel Laggner
  */
-public class FernsehserienTvShowMetadataProvider extends FernsehserienMetadataProvider implements ITvShowMetadataProvider {
+public final class FernsehserienTvShowMetadataProvider extends FernsehserienMetadataProvider implements ITvShowMetadataProvider {
 
   @Override
   protected MediaProviderInfo createMediaProviderInfo() {

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
 
@@ -52,6 +53,14 @@ public class MovieGenreFilter extends AbstractCheckComboBoxMovieUIFilter<MediaGe
   }
 
   @Override
+  protected JComboBox<FilterOption> createOptionComboBox() {
+    JComboBox<FilterOption> comboBox = new JComboBox<>(new FilterOption[] { FilterOption.ANY, FilterOption.ALL });
+    comboBox.setSelectedItem(FilterOption.ANY);
+
+    return comboBox;
+  }
+
+  @Override
   public boolean accept(Movie movie) {
     List<MediaGenres> selectedItems = checkComboBox.getSelectedItems();
 
@@ -61,13 +70,12 @@ public class MovieGenreFilter extends AbstractCheckComboBoxMovieUIFilter<MediaGe
     }
 
     // check for all values
-    for (MediaGenres genre : movie.getGenres()) {
-      if (selectedItems.contains(genre)) {
-        return true;
-      }
+    if (getFilterOption() == FilterOption.ALL) {
+      return ListUtils.containsAll(movie.getGenres(), selectedItems);
     }
-
-    return false;
+    else {
+      return ListUtils.containsAny(movie.getGenres(), selectedItems);
+    }
   }
 
   @Override

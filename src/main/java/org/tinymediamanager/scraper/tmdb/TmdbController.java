@@ -39,6 +39,7 @@ import org.tinymediamanager.scraper.tmdb.services.CollectionsService;
 import org.tinymediamanager.scraper.tmdb.services.ConfigurationService;
 import org.tinymediamanager.scraper.tmdb.services.FindService;
 import org.tinymediamanager.scraper.tmdb.services.MoviesService;
+import org.tinymediamanager.scraper.tmdb.services.PersonService;
 import org.tinymediamanager.scraper.tmdb.services.SearchService;
 import org.tinymediamanager.scraper.tmdb.services.TvEpisodeGroupsService;
 import org.tinymediamanager.scraper.tmdb.services.TvEpisodesService;
@@ -249,5 +250,9 @@ class TmdbController {
 
   TvEpisodeGroupsService tvEpisodeGroupsService() {
     return getRetrofit().create(TvEpisodeGroupsService.class);
+  }
+
+  PersonService peopleService() {
+    return getRetrofit().create(PersonService.class);
   }
 }

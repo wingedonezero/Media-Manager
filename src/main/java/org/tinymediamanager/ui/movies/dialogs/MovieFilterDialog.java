@@ -129,7 +129,7 @@ import net.miginfocom.swing.MigLayout;
  * @author Manuel Laggner
  */
 public class MovieFilterDialog extends TmmDialog {
-  private static final String                    PANEL_COL_CONSTRAINTS = "[][][][200lp:250lp,grow]";
+  private static final String                    PANEL_COL_CONSTRAINTS = "[][][fill][200lp:250lp,grow]";
 
   private final MovieSelectionModel              selectionModel;
 

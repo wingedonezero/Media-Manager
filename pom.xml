@@ -81,7 +81,7 @@
         <slf4j.version>2.0.9</slf4j.version>
         <release.version>3.1.1</release.version>
         <jre.version>21.0.10-b1163</jre.version>
-        <launcher.version>5.0.13</launcher.version>
+        <launcher.version>5.0.15</launcher.version>
         <flatlaf.version>3.7.1</flatlaf.version>
         <jackson.version>2.21.2</jackson.version>
         <sonar.java.source>17</sonar.java.source>
@@ -326,6 +326,19 @@
             <artifactId>commons-csv</artifactId>
             <version>1.14.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-chrome-driver</artifactId>
+            <version>4.41.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.bytebuddy</groupId>
+                    <artifactId>byte-buddy</artifactId>
+                </exclusion>
+            </exclusions>
+
+            <scope>compile</scope>
+        </dependency>
         <!-- testing -->
         <dependency>
             <groupId>junit</groupId>
@@ -561,6 +574,7 @@
                         <include>**/*IT.java</include>
                         <include>**/*ITCase.java</include>
                         <include>**/integrationtest/**/*.java</include>
+                        <include>**/integration-test/**/*.java</include>
                         <include>**/integrationtests/**/*.java</include>
                     </includes>
                 </configuration>

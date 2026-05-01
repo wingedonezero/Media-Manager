@@ -45,7 +45,8 @@ import org.tinymediamanager.scraper.util.UrlUtil;
  *
  * @author Manuel Laggner
  */
-public class OmdbMovieMetadataProvider extends OmdbMetadataProvider implements IMovieMetadataProvider, IMovieImdbMetadataProvider, IRatingProvider {
+public final class OmdbMovieMetadataProvider extends OmdbMetadataProvider
+    implements IMovieMetadataProvider, IMovieImdbMetadataProvider, IRatingProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(OmdbMovieMetadataProvider.class);
 
   @Override

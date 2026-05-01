@@ -24,7 +24,7 @@ import org.tinymediamanager.scraper.interfaces.IMovieSubtitleProvider;
  *
  * @author Manuel Laggner
  */
-public class OpenSubtitlesMovieSubtitleProvider extends OpenSubtitlesSubtitleProvider implements IMovieSubtitleProvider {
+public final class OpenSubtitlesMovieSubtitleProvider extends OpenSubtitlesSubtitleProvider implements IMovieSubtitleProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(OpenSubtitlesMovieSubtitleProvider.class);
 
   @Override

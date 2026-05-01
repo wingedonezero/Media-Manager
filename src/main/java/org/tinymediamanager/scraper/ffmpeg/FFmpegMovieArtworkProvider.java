@@ -31,7 +31,7 @@ import org.tinymediamanager.scraper.interfaces.IMovieArtworkProvider;
  * 
  * @author Manuel Laggner
  */
-public class FFmpegMovieArtworkProvider extends FFmpegArtworkProvider implements IMovieArtworkProvider {
+public final class FFmpegMovieArtworkProvider extends FFmpegArtworkProvider implements IMovieArtworkProvider {
 
   @Override
   protected MediaProviderInfo createMediaProviderInfo() {

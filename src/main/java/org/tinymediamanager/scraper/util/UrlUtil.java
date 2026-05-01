@@ -43,6 +43,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tinymediamanager.scraper.http.BrowserUrl;
 import org.tinymediamanager.scraper.http.InMemoryCachedUrl;
 import org.tinymediamanager.scraper.http.OnDiskCachedUrl;
 import org.tinymediamanager.scraper.http.Url;
@@ -62,7 +63,8 @@ public class UrlUtil {
   public enum UrlImpl {
     DIRECT,
     IN_MEMORY,
-    ON_DISK
+    ON_DISK,
+    BROWSER
   }
 
   private UrlUtil() {
@@ -491,6 +493,9 @@ public class UrlUtil {
 
       case ON_DISK:
         return new OnDiskCachedUrl(urlAsString);
+
+      case BROWSER:
+        return new BrowserUrl(urlAsString);
 
       default:
         return new Url(urlAsString);

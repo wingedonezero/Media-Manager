@@ -34,7 +34,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 /**
  * The class FanartTv is the abstraction of the Fanart.tv API
  */
-public class FanartTv {
+class FanartTv {
   // the base API url
   public static final String API_URL = "https://webservice.fanart.tv/v3.2/";
 

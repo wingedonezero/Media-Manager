@@ -38,11 +38,11 @@ import org.tinymediamanager.scraper.interfaces.IMovieMetadataProvider;
 import org.w3c.dom.Document;
 
 /**
- * This is the real Kodi meta data provider for movies
+ * This is the real Kodi metadata provider for movies
  *
  * @author Manuel Laggner
  */
-public class KodiMovieMetadataProvider extends AbstractKodiMetadataProvider implements IMovieMetadataProvider, IMovieArtworkProvider {
+public final class KodiMovieMetadataProvider extends AbstractKodiMetadataProvider implements IMovieMetadataProvider, IMovieArtworkProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(KodiMovieMetadataProvider.class);
 
   public KodiMovieMetadataProvider(KodiScraper scraper) {

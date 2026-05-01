@@ -36,7 +36,7 @@ import org.tinymediamanager.scraper.util.MediaIdUtil;
  *
  * @author Manuel Laggner
  */
-public class ImdbTvShowTrailerProvider extends ImdbMetadataProvider implements ITvShowTrailerProvider {
+public final class ImdbTvShowTrailerProvider extends ImdbMetadataProvider implements ITvShowTrailerProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImdbTvShowTrailerProvider.class);
 
   @Override

@@ -186,6 +186,48 @@ public class ListUtils {
   }
 
   /**
+   * checks if the given {@link List} at least contains one of the given arguments
+   *
+   * @param list
+   *          the {@link List} to check
+   * @param values
+   *          value values to compare
+   * @param <E>
+   *          the type of the value
+   * @return true if at least one value is found inside the list - false otherwise
+   */
+  public static <E> boolean containsAny(List<E> list, List<E> values) {
+    for (E value : values) {
+      if (list.contains(value)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * checks if the given {@link List} contains all values in the given {@link List}
+   *
+   * @param list
+   *          the {@link List} to check
+   * @param values
+   *          value values to compare
+   * @param <E>
+   *          the type of the value
+   * @return true if all values are found inside the list - false otherwise
+   */
+  public static <E> boolean containsAll(List<E> list, List<E> values) {
+    for (E value : values) {
+      if (!list.contains(value)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
    * Gets the first entry of the given {@link List} or null otherwise
    * 
    * @param list

@@ -58,7 +58,7 @@ import org.tinymediamanager.scraper.util.MetadataUtil;
  * @see AniDbMetadataProvider
  * @author Manuel Laggner
  */
-public class AniDbTvShowMetadataProvider extends AniDbMetadataProvider implements ITvShowMetadataProvider, ITvShowArtworkProvider {
+public final class AniDbTvShowMetadataProvider extends AniDbMetadataProvider implements ITvShowMetadataProvider, ITvShowArtworkProvider {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AniDbTvShowMetadataProvider.class);
 

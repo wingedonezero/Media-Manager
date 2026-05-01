@@ -17,6 +17,9 @@ package org.tinymediamanager.scraper.imdb;
 
 import static org.tinymediamanager.scraper.entities.MediaArtwork.MediaArtworkType.THUMB;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -69,14 +72,17 @@ import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
 import org.tinymediamanager.scraper.imdb.entities.ImdbAdvancedSearchResult;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCast;
+import org.tinymediamanager.scraper.imdb.entities.ImdbCastV2;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCategory;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCertificate;
+import org.tinymediamanager.scraper.imdb.entities.ImdbCharacter;
 import org.tinymediamanager.scraper.imdb.entities.ImdbChartTitleEdge;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCountry;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCredits;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCreditsCategory;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCreditsCategoryPerson;
 import org.tinymediamanager.scraper.imdb.entities.ImdbCrew;
+import org.tinymediamanager.scraper.imdb.entities.ImdbCrewV2;
 import org.tinymediamanager.scraper.imdb.entities.ImdbEpisodeNumber;
 import org.tinymediamanager.scraper.imdb.entities.ImdbGenre;
 import org.tinymediamanager.scraper.imdb.entities.ImdbIdTextType;
@@ -109,7 +115,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * @author Manuel Laggner
  */
-public abstract class ImdbParser {
+abstract class ImdbParser {
   private static final Logger            LOGGER                   = LoggerFactory.getLogger(ImdbParser.class);
 
   static final Pattern                   IMDB_ID_PATTERN          = Pattern.compile("/title/(tt[0-9]{6,})/");
@@ -130,6 +136,7 @@ public abstract class ImdbParser {
   static final String                    LOCAL_RELEASE_DATE       = "localReleaseDate";
   static final String                    INCLUDE_PREMIERE_DATE    = "includePremiereDate";
   static final String                    MAX_KEYWORD_COUNT        = "maxKeywordCount";
+  static final String                    BROWSER_FALLBACK         = "browserFallback";
 
   protected final IMediaProvider         metadataProvider;
   protected final MediaType              type;
@@ -277,6 +284,15 @@ public abstract class ImdbParser {
   }
 
   /**
+   * should we use the browser fallback
+   * 
+   * @return true/false
+   */
+  protected boolean isUseBrowserFallback() {
+    return config.getValueAsBool(BROWSER_FALLBACK, false);
+  }
+
+  /**
    * get the maximum amount of keywords we should get from the keywords page
    *
    * @return the configured numer or {@link Integer}.MAX_VALUE
@@ -298,7 +314,7 @@ public abstract class ImdbParser {
     }
   }
 
-  protected String decode(String source) {
+  static String decode(String source) {
     return new String(Base64.getDecoder().decode(source), StandardCharsets.UTF_8);
   }
 
@@ -338,7 +354,7 @@ public abstract class ImdbParser {
 
     LOGGER.debug("========= BEGIN IMDB Scraper Search for: {}", searchTerm);
 
-    // advanced search is blocked behind WAF - skip it for now
+    // advanced search is blocked - skip it for now
     // try {
     // results.addAll(getSearchResultsAdvanced(searchTerm, options));
     // }
@@ -969,28 +985,94 @@ public abstract class ImdbParser {
       // }
       // }
 
-      JsonNode directorsNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/directors");
-      for (ImdbCredits directors : JsonUtils.parseList(mapper, directorsNode, ImdbCredits.class)) {
-        for (ImdbCrew crew : directors.credits) {
-          Person p = crew.toTmm(Person.Type.DIRECTOR);
-          p.setRole(directors.category.text);
-          md.addCastMember(p);
+      JsonNode directorsNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/crewV2");
+      if (!directorsNode.isEmpty()) {
+        // new cast & crew style
+        for (ImdbCrewV2 crewV2 : JsonUtils.parseList(mapper, directorsNode, ImdbCrewV2.class)) {
+          Person.Type personType = null;
+          if (crewV2.grouping != null) {
+            if ("amzn1.imdb.concept.name_credit_category.ace5cb4c-8708-4238-9542-04641e7c8171".equalsIgnoreCase(crewV2.grouping.groupingId)) {
+              personType = Type.DIRECTOR;
+            }
+            else if ("amzn1.imdb.concept.name_credit_category.c84ecaff-add5-4f2e-81db-102a41881fe3".equalsIgnoreCase(crewV2.grouping.groupingId)) {
+              personType = Type.WRITER;
+            }
+          }
+
+          if (personType != null) {
+            for (ImdbCrew credits : crewV2.credits) {
+              Person p = credits.toTmm(Person.Type.DIRECTOR);
+              p.setRole(crewV2.grouping.text);
+              md.addCastMember(p);
+            }
+          }
+        }
+      }
+      else {
+        // old style
+        directorsNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/directors");
+        for (ImdbCredits directors : JsonUtils.parseList(mapper, directorsNode, ImdbCredits.class)) {
+          for (ImdbCrew crew : directors.credits) {
+            Person p = crew.toTmm(Person.Type.DIRECTOR);
+            p.setRole(directors.category.text);
+            md.addCastMember(p);
+          }
+        }
+
+        JsonNode writersNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/writers");
+        for (ImdbCredits writers : JsonUtils.parseList(mapper, writersNode, ImdbCredits.class)) {
+          for (ImdbCrew crew : writers.credits) {
+            Person p = crew.toTmm(Person.Type.WRITER);
+            p.setRole(writers.category.text);
+            md.addCastMember(p);
+          }
         }
       }
 
-      JsonNode writersNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/writers");
-      for (ImdbCredits writers : JsonUtils.parseList(mapper, writersNode, ImdbCredits.class)) {
-        for (ImdbCrew crew : writers.credits) {
-          Person p = crew.toTmm(Person.Type.WRITER);
-          p.setRole(writers.category.text);
-          md.addCastMember(p);
+      JsonNode arr = JsonUtils.at(node, "/props/pageProps/mainColumnData/castV2");
+      if (arr.isArray()) {
+        // new style
+        for (JsonNode grouping : arr) {
+          JsonNode credits = grouping.path("credits");
+          for (JsonNode credit : credits) {
+            ImdbCast cast = JsonUtils.parseObject(mapper, credit, ImdbCast.class);
+            if (cast == null || cast.name == null || cast.name.nameText == null || StringUtils.isBlank(cast.name.nameText.text)) {
+              continue;
+            }
+
+            StringBuilder role = new StringBuilder();
+
+            JsonNode characters = JsonUtils.at(credit, "/creditedRoles/edges/0/node/characters/edges");
+            if (characters.isArray()) {
+              for (JsonNode character : characters) {
+                ImdbCharacter ch = JsonUtils.parseObject(mapper, JsonUtils.at(character, "/node"), ImdbCharacter.class);
+                if (ch == null) {
+                  continue;
+                }
+
+                if (!role.isEmpty()) {
+                  role.append(", ");
+                }
+                role.append(ch.name);
+              }
+            }
+            Person person = cast.toTmm(Person.Type.ACTOR);
+            person.setRole(role.toString());
+            md.addCastMember(person);
+          }
+        }
+
+        for (ImdbCastV2 castV2 : JsonUtils.parseList(mapper, arr, ImdbCastV2.class)) {
+          System.out.println(castV2);
         }
       }
-
-      JsonNode arr = JsonUtils.at(node, "/props/pageProps/mainColumnData/cast/edges");
-      for (JsonNode actors : ListUtils.nullSafe(arr)) {
-        ImdbCast c = JsonUtils.parseObject(mapper, actors.get("node"), ImdbCast.class);
-        md.addCastMember(c.toTmm(Person.Type.ACTOR));
+      else {
+        // old style
+        arr = JsonUtils.at(node, "/props/pageProps/mainColumnData/cast/edges");
+        for (JsonNode actors : ListUtils.nullSafe(arr)) {
+          ImdbCast c = JsonUtils.parseObject(mapper, actors.get("node"), ImdbCast.class);
+          md.addCastMember(c.toTmm(Person.Type.ACTOR));
+        }
       }
 
       JsonNode spokenNode = JsonUtils.at(node, "/props/pageProps/mainColumnData/spokenLanguages/spokenLanguages");
@@ -1062,11 +1144,11 @@ public abstract class ImdbParser {
 
     Document doc = null;
     Callable<Document> fanarts = new ImdbWorker(constructUrl("title/", imdbId, decode("L21lZGlhaW5kZXgvP2NvbnRlbnRUeXBlcz1zdGlsbF9mcmFtZQ==")),
-        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), true);
+        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), isUseBrowserFallback());
     Future<Document> futureFanarts = executor.submit(fanarts);
 
     Callable<Document> posters = new ImdbWorker(constructUrl("title/", imdbId, decode("L21lZGlhaW5kZXgvP2NvbnRlbnRUeXBlcz1wb3N0ZXI=")),
-        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), true);
+        options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2(), isUseBrowserFallback());
     Future<Document> futurePosters = executor.submit(posters);
 
     // add posters
@@ -1158,7 +1240,7 @@ public abstract class ImdbParser {
    * @throws Exception
    */
   protected String getFreshUrlForTrailer(MediaTrailer trailer, String language, String country) throws Exception {
-    Callable<Document> worker = new ImdbWorker(constructUrl("video/", trailer.getId()), language, country, true);
+    Callable<Document> worker = new ImdbWorker(constructUrl("video/", trailer.getId()), language, country, isUseBrowserFallback());
     Future<Document> futureVid = executor.submit(worker);
     Document doc = futureVid.get();
 
@@ -2335,11 +2417,13 @@ public abstract class ImdbParser {
     return null;
   }
 
-  protected Map<String, Integer> parseTop250(String url) {
+  protected Map<String, Integer> parseTop250(String url) throws ScrapeException {
     Map<String, Integer> titles = new HashMap<>();
+    ScrapeException saved = null;
 
     try {
-      Callable<Document> worker = new ImdbWorker(constructUrl(url), "en", "US", true); // don't care about lang, since we only get IDs
+      Callable<Document> worker = new ImdbWorker(constructUrl(url), "en", "US", isUseBrowserFallback()); // don't care about lang, since we only get
+                                                                                                         // IDs
       Future<Document> futureTop250 = executor.submit(worker);
       Document doc = futureTop250.get();
       String json = doc.getElementById("__NEXT_DATA__").data();
@@ -2351,9 +2435,36 @@ public abstract class ImdbParser {
           titles.put(ch.node.id, ch.currentRank);
         }
       }
+      if (titles.size() < 200) {
+        throw new ScrapeException("Did not receive the expected 250 entries");
+      }
     }
     catch (Exception e) {
-      LOGGER.debug("Could not get TOP250 listing - '{}'", e.getMessage());
+      saved = new ScrapeException("Could not get TOP250 listing - " + e.getMessage());
+    }
+
+    // Fallback - read from CP
+    try {
+      InputStream csv = null;
+      if (url.endsWith("toptv/")) {
+        csv = getClass().getResourceAsStream("/org/tinymediamanager/scraper/T250shows.csv");
+      }
+      else {
+        csv = getClass().getResourceAsStream("/org/tinymediamanager/scraper/T250movies.csv");
+      }
+      if (csv == null) {
+        throw saved;
+      }
+      try (BufferedReader br = new BufferedReader(new InputStreamReader(csv))) {
+        br.lines().forEach(line -> {
+          String[] kv = line.split(",");
+          titles.put(kv[0], Integer.parseInt(kv[1]));
+        });
+      }
+    }
+    catch (Exception e) {
+      LOGGER.warn("Could not parse Top250 entries from cache: {}", e);
+      throw saved;
     }
 
     return titles;
@@ -2363,11 +2474,7 @@ public abstract class ImdbParser {
    * local helper classes
    ****************************************************************************/
   protected ImdbWorker createImdbWorker(String url, String language, String country) {
-    return new ImdbWorker(url, language, country);
-  }
-
-  protected ImdbWorker createImdbWorker(String url, String language, String country, boolean useCachedUrl) {
-    return new ImdbWorker(url, language, country, useCachedUrl);
+    return new ImdbWorker(url, language, country, isUseBrowserFallback());
   }
 
   protected void processMediaArt(MediaMetadata md, MediaArtwork.MediaArtworkType type, String image) {

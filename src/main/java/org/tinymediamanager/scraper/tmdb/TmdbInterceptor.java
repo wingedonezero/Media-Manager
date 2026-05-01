@@ -29,7 +29,7 @@ import okhttp3.Response;
  * {@link Interceptor} to add the API key query parameter and if available session information. As it modifies the URL and may retry requests, ensure
  * this is added as an application interceptor (never a network interceptor), otherwise caching will be broken and requests will fail.
  */
-public class TmdbInterceptor implements Interceptor {
+class TmdbInterceptor implements Interceptor {
 
   private final TmdbController tmdbController;
 

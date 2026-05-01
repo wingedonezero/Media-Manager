@@ -18,7 +18,6 @@ package org.tinymediamanager.core;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
@@ -86,7 +85,7 @@ public abstract class AbstractSettings extends AbstractModelObject {
         .configure(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE, true)
         .enable(SerializationFeature.INDENT_OUTPUT)
         .defaultTimeZone(TimeZone.getDefault())
-        .serializationInclusion(JsonInclude.Include.ALWAYS)
+        .defaultPropertyInclusion(JsonInclude.Value.ALL_ALWAYS)
         .build();
     objectMapper.getSerializerProvider().setNullKeySerializer(new NullKeySerializer());
 
@@ -228,20 +227,25 @@ public abstract class AbstractSettings extends AbstractModelObject {
     AbstractSettings instance = null;
 
     Path cfgFolder = Paths.get(folder);
+    Path cfgFile = cfgFolder.resolve(filename);
     if (!Files.exists(cfgFolder)) {
       try {
         Files.createDirectories(cfgFolder);
       }
       catch (IOException e) {
-        LOGGER.error("Could not create config folder '{}' - '{}'", cfgFolder, e.getMessage());
+        throw new SettingsAccessException("Could not create config folder '" + cfgFolder + "'", e);
       }
     }
+
+    validateSettingsAccess(cfgFolder, cfgFile);
 
     // unmarshall the JSON
     try {
       LOGGER.debug("Loading settings ({}) from {}", filename, folder);
-      Reader reader = new FileReader(new File(folder, filename));
-      String settingsAsJson = IOUtils.toString(reader);
+      String settingsAsJson;
+      try (Reader reader = Files.newBufferedReader(cfgFile)) {
+        settingsAsJson = IOUtils.toString(reader);
+      }
 
       ObjectReader objectReader = objectMapper.readerFor(clazz);
       instance = objectReader.readValue(settingsAsJson);
@@ -271,6 +275,38 @@ public abstract class AbstractSettings extends AbstractModelObject {
     }
 
     return instance;
+  }
+
+  /**
+   * Validates read/write access for the settings folder and file.
+   *
+   * @param cfgFolder
+   *          the settings folder
+   * @param cfgFile
+   *          the settings file
+   */
+  private static void validateSettingsAccess(Path cfgFolder, Path cfgFile) {
+    if (!Files.isDirectory(cfgFolder)) {
+      throw new SettingsAccessException("Settings folder does not exist or is not a directory: " + cfgFolder);
+    }
+
+    if (!Files.isWritable(cfgFolder)) {
+      throw new SettingsAccessException("Settings folder is not writable: " + cfgFolder);
+    }
+
+    if (Files.exists(cfgFile)) {
+      if (!Files.isRegularFile(cfgFile)) {
+        throw new SettingsAccessException("Settings file is not a regular file: " + cfgFile);
+      }
+
+      if (!Files.isReadable(cfgFile)) {
+        throw new SettingsAccessException("Settings file is not readable: " + cfgFile);
+      }
+
+      if (!Files.isWritable(cfgFile)) {
+        throw new SettingsAccessException("Settings file is not writable: " + cfgFile);
+      }
+    }
   }
 
   public static class UIFilters {

@@ -19,8 +19,6 @@ import static org.tinymediamanager.core.entities.Person.Type.ACTOR;
 import static org.tinymediamanager.core.entities.Person.Type.WRITER;
 import static org.tinymediamanager.scraper.entities.MediaArtwork.MediaArtworkType.THUMB;
 
-import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,12 +27,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -56,8 +52,6 @@ import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.exceptions.MissingIdException;
 import org.tinymediamanager.scraper.exceptions.NothingFoundException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
-import org.tinymediamanager.scraper.http.OnDiskCachedUrl;
-import org.tinymediamanager.scraper.http.Url;
 import org.tinymediamanager.scraper.imdb.entities.ImdbEpisodeList;
 import org.tinymediamanager.scraper.imdb.entities.ImdbIdValueType;
 import org.tinymediamanager.scraper.interfaces.IMediaProvider;
@@ -75,7 +69,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * @author Manuel Laggner
  */
-public class ImdbTvShowParser extends ImdbParser {
+class ImdbTvShowParser extends ImdbParser {
   private static final Logger                                LOGGER                 = LoggerFactory.getLogger(ImdbTvShowParser.class);
   private static final CacheMap<String, List<MediaMetadata>> EPISODE_LIST_CACHE_MAP = new CacheMap<>(60, 10);
 
@@ -123,7 +117,7 @@ public class ImdbTvShowParser extends ImdbParser {
     Document doc = null;
     boolean json = false;
     Callable<Document> worker = createImdbWorker(constructUrl("title/", imdbId), options.getLanguage().getLanguage(),
-        options.getCertificationCountry().getAlpha2(), true);
+        options.getCertificationCountry().getAlpha2());
     Future<Document> futureDetail = executor.submit(worker);
 
     // check if the detail page is scrapable
@@ -152,24 +146,24 @@ public class ImdbTvShowParser extends ImdbParser {
 
     // start other workers afterward
     worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3JlZmVyZW5jZQ==")), options.getLanguage().getLanguage(),
-        options.getCertificationCountry().getAlpha2(), true);
+        options.getCertificationCountry().getAlpha2());
     Future<Document> futureReference = executor.submit(worker);
 
     // we must parse this as fixed language, since the IDs seem not to be fixated yet...?
-    worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2Z1bGxjcmVkaXRz")), "en", "US", true);
+    worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2Z1bGxjcmVkaXRz")), "en", "US");
     Future<Document> futureCredits = executor.submit(worker);
 
     Future<Document> futureKeywords = null;
     if (isScrapeKeywordsPage() && getMaxKeywordCount() > 5) {
       worker = createImdbWorker(constructUrl("title/", imdbId, decode("L2tleXdvcmRz")), options.getLanguage().getLanguage(),
-          options.getCertificationCountry().getAlpha2(), true);
+          options.getCertificationCountry().getAlpha2());
       futureKeywords = executor.submit(worker);
     }
 
     Future<Document> futureReleaseInfo = null;
     if (!isScrapeLocalReleaseDate()) {
       worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
-          options.getCertificationCountry().getAlpha2(), true);
+          options.getCertificationCountry().getAlpha2());
       futureReleaseInfo = executor.submit(worker);
     }
 
@@ -224,12 +218,12 @@ public class ImdbTvShowParser extends ImdbParser {
       // fallback old style, when json parsing was not ok
       Future<Document> futurePlotsummary;
       worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3Bsb3RzdW1tYXJ5")), options.getLanguage().getLanguage(),
-          options.getCertificationCountry().getAlpha2(), true);
+          options.getCertificationCountry().getAlpha2());
       futurePlotsummary = executor.submit(worker);
 
       Future<Document> futureReleaseinfo;
       worker = createImdbWorker(constructUrl("title/", imdbId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
-          options.getCertificationCountry().getAlpha2(), true);
+          options.getCertificationCountry().getAlpha2());
       futureReleaseinfo = executor.submit(worker);
 
       try {
@@ -369,28 +363,28 @@ public class ImdbTvShowParser extends ImdbParser {
       Document doc = null;
       boolean json = false;
       Callable<Document> worker = createImdbWorker(constructUrl("title/", episodeId), options.getLanguage().getLanguage(),
-          options.getCertificationCountry().getAlpha2(), true);
+          options.getCertificationCountry().getAlpha2());
       Future<Document> futureDetail = executor.submit(worker);
 
       worker = createImdbWorker(constructUrl("title/", episodeId, decode("L3JlZmVyZW5jZQ==")), options.getLanguage().getLanguage(),
-          options.getCertificationCountry().getAlpha2(), true);
+          options.getCertificationCountry().getAlpha2());
       Future<Document> futureReference = executor.submit(worker);
 
       // we must parse this as fixed language, since the IDs seem not to be fixated yet...?
-      worker = createImdbWorker(constructUrl("title/", episodeId, decode("L2Z1bGxjcmVkaXRz")), "en", "US", true);
+      worker = createImdbWorker(constructUrl("title/", episodeId, decode("L2Z1bGxjcmVkaXRz")), "en", "US");
       Future<Document> futureCredits = executor.submit(worker);
 
       Future<Document> futureKeywords = null;
       if (isScrapeKeywordsPage() && getMaxKeywordCount() > 5) {
         worker = createImdbWorker(constructUrl("title/", episodeId, decode("L2tleXdvcmRz")), options.getLanguage().getLanguage(),
-            options.getCertificationCountry().getAlpha2(), true);
+            options.getCertificationCountry().getAlpha2());
         futureKeywords = executor.submit(worker);
       }
 
       Future<Document> futureReleaseInfo = null;
       if (!isScrapeLocalReleaseDate()) {
         worker = createImdbWorker(constructUrl("title/", episodeId, decode("L3JlbGVhc2VpbmZv")), options.getLanguage().getLanguage(),
-            options.getCertificationCountry().getAlpha2(), true);
+            options.getCertificationCountry().getAlpha2());
         futureReleaseInfo = executor.submit(worker);
       }
 
@@ -527,26 +521,12 @@ public class ImdbTvShowParser extends ImdbParser {
     // get the page for the first season (this is available in 99,9% of all cases)
 
     Document doc;
-    Url url;
-    try {
-      // cache this on disk because that may be called multiple times
-      url = new OnDiskCachedUrl(constructUrl("/title/", imdbId, "/episodes?season=1"), 1, TimeUnit.DAYS);
-      url.addHeader("Accept-Language", getAcceptLanguage(options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2()));
-    }
-    catch (Exception e) {
-      LOGGER.debug("problem scraping: {}", e.getMessage());
-      throw new ScrapeException(e);
-    }
-
     List<String> availableSeasons = new ArrayList<>();
 
-    try (InputStream is = url.getInputStream()) {
-      if (url.getStatusCode() == 202) {
-        // 202 indicates that the WAF is active
-        throw new ScrapeException(new HttpException(202, "Request blocked - WAF active"));
-      }
-
-      doc = Jsoup.parse(is, "UTF-8", "");
+    try {
+      Callable<Document> worker = createImdbWorker(constructUrl("/title/", imdbId, "/episodes?season=1"), options.getLanguage().getLanguage(),
+          options.getCertificationCountry().getAlpha2());
+      doc = worker.call();
       if (doc != null) {
         ImdbEpisodeList epList = parseEpisodeListJSON(doc);
         if (epList != null) {
@@ -575,7 +555,7 @@ public class ImdbTvShowParser extends ImdbParser {
         }
       }
     }
-    catch (InterruptedException | InterruptedIOException e) {
+    catch (InterruptedException e) {
       // do not swallow these Exceptions
       Thread.currentThread().interrupt();
     }
@@ -595,18 +575,13 @@ public class ImdbTvShowParser extends ImdbParser {
         continue;
       }
 
-      Url seasonUrl;
       try {
-        seasonUrl = new OnDiskCachedUrl(constructUrl("/title/", imdbId, "/epdate?season=" + season), 1, TimeUnit.DAYS);
-        seasonUrl.addHeader("Accept-Language", getAcceptLanguage(options.getLanguage().getLanguage(), options.getCertificationCountry().getAlpha2()));
-      }
-      catch (Exception e) {
-        LOGGER.debug("problem scraping: {}", e.getMessage());
-        throw new ScrapeException(e);
-      }
-
-      try (InputStream is = seasonUrl.getInputStream()) {
-        doc = Jsoup.parse(is, "UTF-8", "");
+        Callable<Document> worker = createImdbWorker(constructUrl("/title/", imdbId, "/epdate?season=" + season), options.getLanguage().getLanguage(),
+            options.getCertificationCountry().getAlpha2());
+        doc = worker.call();
+        if (doc == null) {
+          continue;
+        }
 
         ImdbEpisodeList epList = parseEpisodeListJSON(doc);
         if (epList != null && !epList.getEpisodes().isEmpty()) {
@@ -619,7 +594,7 @@ public class ImdbTvShowParser extends ImdbParser {
           }
         }
       }
-      catch (InterruptedException | InterruptedIOException e) {
+      catch (InterruptedException e) {
         // do not swallow these Exceptions
         Thread.currentThread().interrupt();
       }
@@ -985,7 +960,7 @@ public class ImdbTvShowParser extends ImdbParser {
     }
   }
 
-  public Map<String, Integer> getTvShowTop250() {
+  public Map<String, Integer> getTvShowTop250() throws ScrapeException {
     return parseTop250("/chart/toptv/");
   }
 }

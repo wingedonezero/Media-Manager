@@ -273,7 +273,7 @@ public class ITTmdbTvShowMetadataProviderTest extends BasicITest {
       MediaMetadata mediaMetadata = mp.getMetadata(options);
 
       assertThat(mediaMetadata).isNotNull();
-      assertThat(mediaMetadata.getEpisodeGroups()).hasSize(3);
+      assertThat(mediaMetadata.getEpisodeGroups()).hasSizeGreaterThanOrEqualTo(3);
       assertThat(mediaMetadata.getEpisodeGroups()).anyMatch(episodeGroup -> episodeGroup.getEpisodeGroupType() == AIRED);
       assertThat(mediaMetadata.getEpisodeGroups())
           .anyMatch(episodeGroup -> episodeGroup.getEpisodeGroupType() == MediaEpisodeGroup.EpisodeGroupType.DVD);

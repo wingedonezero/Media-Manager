@@ -62,7 +62,7 @@ import org.tinymediamanager.scraper.util.StrgUtils;
  * 
  * @author Manuel Laggner, Myron Boyle
  */
-public class OfdbMovieMetadataProvider extends OfdbMetadataProvider
+public final class OfdbMovieMetadataProvider extends OfdbMetadataProvider
     implements IMovieMetadataProvider, IMovieImdbMetadataProvider, IMovieArtworkProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(OfdbMovieMetadataProvider.class);
 

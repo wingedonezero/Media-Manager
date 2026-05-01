@@ -52,7 +52,7 @@ import retrofit2.Response;
  *
  * @author Myron Boyle (myron0815@gmx.net)
  */
-public class MovieMeterMovieMetadataProvider implements IMovieMetadataProvider, IMovieImdbMetadataProvider {
+public final class MovieMeterMovieMetadataProvider implements IMovieMetadataProvider, IMovieImdbMetadataProvider {
   private static final String     ID     = "moviemeter";
   private static final Logger     LOGGER = LoggerFactory.getLogger(MovieMeterMovieMetadataProvider.class);
 

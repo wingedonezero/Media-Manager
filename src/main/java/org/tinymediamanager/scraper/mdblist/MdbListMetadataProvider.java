@@ -44,7 +44,7 @@ import retrofit2.Response;
  * 
  * @author Myron Boyle
  */
-public class MdbListMetadataProvider implements IMediaProvider, IRatingProvider {
+public final class MdbListMetadataProvider implements IMediaProvider, IRatingProvider {
   public static final String        ID     = "mdblist";
   private static final Logger       LOGGER = LoggerFactory.getLogger(MdbListMetadataProvider.class);
 

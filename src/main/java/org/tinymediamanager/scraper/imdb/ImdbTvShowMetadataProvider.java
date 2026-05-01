@@ -42,7 +42,7 @@ import org.tinymediamanager.scraper.interfaces.ITvShowMetadataProvider;
  *
  * @author Manuel Laggner
  */
-public class ImdbTvShowMetadataProvider extends ImdbMetadataProvider implements ITvShowMetadataProvider, ITvShowImdbMetadataProvider {
+public final class ImdbTvShowMetadataProvider extends ImdbMetadataProvider implements ITvShowMetadataProvider, ITvShowImdbMetadataProvider {
 
   @Override
   protected MediaProviderInfo createMediaProviderInfo() {

@@ -66,7 +66,7 @@ import com.google.gson.Gson;
  *
  * @author Manuel Laggner
  */
-public class UniversalTvShowMetadataProvider implements ITvShowMetadataProvider {
+public final class UniversalTvShowMetadataProvider implements ITvShowMetadataProvider {
   public static final String                                ID                  = "universal_tvshow";
 
   private static final String                               UNDEFINED           = "-";

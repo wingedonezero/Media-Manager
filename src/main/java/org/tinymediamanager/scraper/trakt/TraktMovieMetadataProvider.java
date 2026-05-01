@@ -66,7 +66,7 @@ import com.uwetrottmann.trakt5.enums.Extended;
  * The class TraktMovieMetadataProvider is used to provide metadata for movies from trakt.tv
  */
 
-public class TraktMovieMetadataProvider extends TraktMetadataProvider
+public final class TraktMovieMetadataProvider extends TraktMetadataProvider
     implements IMovieMetadataProvider, IMovieImdbMetadataProvider, IRatingProvider, IMediaIdProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(TraktMovieMetadataProvider.class);
 

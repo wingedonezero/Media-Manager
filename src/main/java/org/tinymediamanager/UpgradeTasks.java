@@ -115,7 +115,7 @@ public abstract class UpgradeTasks {
 
     // ****************************************************
     // PLEASE MAKE THIS TO RUN MULTIPLE TIMES WITHOUT ERROR
-    // NEEDED FOR NIGHTLY SNAPSHOTS ET ALL
+    // NEEDED FOR NIGHTLY SNAPSHOTS ET AL.
     // SVN BUILD IS ALSO CONSIDERED AS LOWER !!!
     // ****************************************************
 

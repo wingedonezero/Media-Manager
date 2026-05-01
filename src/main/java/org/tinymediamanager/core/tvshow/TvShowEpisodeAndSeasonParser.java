@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.Utils;
 import org.tinymediamanager.core.entities.MediaFile;
+import org.tinymediamanager.scraper.util.DateUtils;
 import org.tinymediamanager.scraper.util.MediaIdUtil;
 import org.tinymediamanager.scraper.util.ParserUtils;
 import org.tinymediamanager.scraper.util.StrgUtils;
@@ -76,7 +77,7 @@ public class TvShowEpisodeAndSeasonParser {
   private static final Pattern EPISODE_PATTERN    = Pattern.compile("[epx_-]+(\\d{1,4})", Pattern.CASE_INSENSITIVE);
   private static final Pattern EPISODE_PATTERN_2  = Pattern.compile("(?:episode|ep)[\\. _-]*(\\d{1,4})", Pattern.CASE_INSENSITIVE);
   // (1/6) with normal or unicode slash!
-  private static final Pattern EPISODE_PATTERN_NR = Pattern.compile("(\\d{1,2})[⧸/](\\d{1,2})", Pattern.CASE_INSENSITIVE);
+  private static final Pattern EPISODE_PATTERN_NR = Pattern.compile("(\\d{1,2})[⧸/⁄](\\d{1,2})", Pattern.CASE_INSENSITIVE);
   private static final Pattern ROMAN_PATTERN      = Pattern.compile("(part|pt)[\\._\\s]+([MDCLXVI]+)", Pattern.CASE_INSENSITIVE);
   private static final Pattern SEASON_MULTI_EP    = Pattern.compile("s(\\d{1,4})[ _]?((?:([epx.-]+\\d{1,4})+))", Pattern.CASE_INSENSITIVE);
   private static final Pattern SEASON_MULTI_EP_2  = Pattern.compile("(\\d{1,4})(?=x)((?:([epx]+\\d{1,4})+))", Pattern.CASE_INSENSITIVE);
@@ -200,20 +201,18 @@ public class TvShowEpisodeAndSeasonParser {
    * @return result the calculated result
    */
   public static EpisodeMatchingResult detectEpisodeFromFilename(String name, String showname) {
+    EpisodeMatchingResult result = new EpisodeMatchingResult();
+
+    // remember, since it gets overwritten
+    EpisodeMatchingResult aired = parseDatePattern(result, name); // result also has date set!
+    if (aired.date != null) {
+      name = aired.name; // all further parsing with removed year pattern.
+    }
 
     // parse ANIME exclusively in front, unmodified
-    EpisodeMatchingResult result = new EpisodeMatchingResult();
     String nameNoExt = name.replaceFirst("\\.\\w{1,4}$", ""); // remove extension if 1-4 chars
     result = parseAnimeExclusive(result, nameNoExt);
     if (!result.episodes.isEmpty()) {
-      // ALWAYS parse date if we have none (but do not use year as season in this case)
-      if (result.date == null) {
-        EpisodeMatchingResult add = new EpisodeMatchingResult();
-        parseDatePattern(add, name);
-        if (add.date != null) {
-          result.date = add.date;
-        }
-      }
       return result;
     }
 
@@ -234,6 +233,9 @@ public class TvShowEpisodeAndSeasonParser {
         result.season = result2.season; // could also be -1, so here's a good point for checking Anime2
         // parse ANIME in workflow - w/o hashes regex
         result = parseAnimeNoHash(result, name);
+        if (result.season >= 0) {
+          return result; // anime matching found something
+        }
       }
     }
     else if (result.episodes.isEmpty() && result.date == null) {
@@ -241,18 +243,17 @@ public class TvShowEpisodeAndSeasonParser {
       result = detect(name, showname);
     }
 
-    // ALWAYS parse date if we have none (but do not use year as season in this case)
-    if (result.date == null) {
-      EpisodeMatchingResult add = new EpisodeMatchingResult();
-      parseDatePattern(add, name);
-      if (add.date != null) {
-        result.date = add.date;
-      }
-    }
-
     // we have found some valid episodes, but w/o season -> upgrade them for season 1
     if (!result.episodes.isEmpty() && !result.episodes.contains(-1) && result.season == -1) {
       result.season = 1;
+    }
+
+    if (aired.date != null) {
+      result.date = aired.date; // pop
+      if (result.season == -1) {
+        // STILL -1? take year as season
+        result.season = DateUtils.toLocalD(aired.date).getYear();
+      }
     }
 
     return result;
@@ -521,8 +522,9 @@ public class TvShowEpisodeAndSeasonParser {
     if (m.find()) {
       int s = result.season;
       try {
-        s = Integer.parseInt(m.group(1));
+        // s = Integer.parseInt(m.group(1)); // nah, ONLY do that if everything else fails...
         result.date = new SimpleDateFormat("yyyy-MM-dd").parse(m.group(1) + "-" + m.group(2) + "-" + m.group(3));
+        result.name = name.replace(m.group(1) + "-" + m.group(2) + "-" + m.group(3), ""); // remove from name
       }
       catch (NumberFormatException | ParseException nfe) {
         // can not happen from regex since we only come here with max 2 numeric chars
@@ -536,8 +538,9 @@ public class TvShowEpisodeAndSeasonParser {
     if (m.find()) {
       int s = result.season;
       try {
-        s = Integer.parseInt(m.group(3));
+        // s = Integer.parseInt(m.group(3)); // nah, ONLY do that if everything else fails...
         result.date = new SimpleDateFormat("dd-MM-yyyy").parse(m.group(1) + "-" + m.group(2) + "-" + m.group(3));
+        result.name = name.replace(m.group(1) + "-" + m.group(2) + "-" + m.group(3), ""); // remove from name
       }
       catch (NumberFormatException | ParseException nfe) {
         // can not happen from regex since we only come here with max 2 numeric chars

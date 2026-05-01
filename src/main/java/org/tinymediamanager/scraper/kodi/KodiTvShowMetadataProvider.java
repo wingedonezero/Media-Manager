@@ -49,7 +49,7 @@ import org.w3c.dom.NodeList;
  *
  * @author Manuel Laggner
  */
-public class KodiTvShowMetadataProvider extends AbstractKodiMetadataProvider implements ITvShowMetadataProvider, ITvShowArtworkProvider {
+public final class KodiTvShowMetadataProvider extends AbstractKodiMetadataProvider implements ITvShowMetadataProvider, ITvShowArtworkProvider {
   private static final Logger LOGGER       = LoggerFactory.getLogger(KodiTvShowMetadataProvider.class);
   private static final String EPISODEGUIDE = "episodeguide";
 

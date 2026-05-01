@@ -53,7 +53,7 @@ import org.tinymediamanager.scraper.util.ParserUtils;
 import org.tinymediamanager.scraper.util.StrgUtils;
 import org.tinymediamanager.scraper.util.UrlUtil;
 
-public class FernsehserienParser {
+class FernsehserienParser {
   private static final Logger                                LOGGER                 = LoggerFactory.getLogger(FernsehserienParser.class);
   private static final Pattern                               IMDB_ID_PATTERN        = Pattern.compile("imdb\\.com/title/(tt[0-9]{6,})");
   private static final Pattern                               TVDB_ID_PATTERN        = Pattern.compile("thetvdb\\.com/series/([0-9]+)");

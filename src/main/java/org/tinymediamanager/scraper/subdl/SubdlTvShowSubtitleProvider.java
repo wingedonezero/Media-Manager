@@ -44,7 +44,7 @@ import org.tinymediamanager.scraper.util.MetadataUtil;
  *
  * @author Wolfgang Janes
  */
-public class SubdlTvShowSubtitleProvider extends SubdlSubtitleProvider implements ITvShowSubtitleProvider {
+public final class SubdlTvShowSubtitleProvider extends SubdlSubtitleProvider implements ITvShowSubtitleProvider {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SubdlTvShowSubtitleProvider.class);
 

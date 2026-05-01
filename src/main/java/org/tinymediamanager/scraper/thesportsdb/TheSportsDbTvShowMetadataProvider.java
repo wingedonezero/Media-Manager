@@ -53,7 +53,7 @@ import org.tinymediamanager.scraper.util.MetadataUtil;
 
 import retrofit2.Response;
 
-public class TheSportsDbTvShowMetadataProvider extends TheSportsDbMetadataProvider implements ITvShowMetadataProvider, ITvShowArtworkProvider {
+public final class TheSportsDbTvShowMetadataProvider extends TheSportsDbMetadataProvider implements ITvShowMetadataProvider, ITvShowArtworkProvider {
 
   private static final Logger                                LOGGER                 = LoggerFactory
       .getLogger(TheSportsDbTvShowMetadataProvider.class);

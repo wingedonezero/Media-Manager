@@ -37,7 +37,7 @@ import org.tinymediamanager.scraper.util.MediaIdUtil;
  *
  * @author Manuel Laggner
  */
-public abstract class TheTvDbArtworkProvider extends TheTvDbMetadataProvider implements IMediaArtworkProvider {
+abstract class TheTvDbArtworkProvider extends TheTvDbMetadataProvider implements IMediaArtworkProvider {
 
   @Override
   protected MediaProviderInfo createMediaProviderInfo() {

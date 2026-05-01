@@ -62,7 +62,7 @@ import com.google.gson.Gson;
  *
  * @author Manuel Laggner
  */
-public class UniversalMovieMetadataProvider implements IMovieMetadataProvider {
+public final class UniversalMovieMetadataProvider implements IMovieMetadataProvider {
   public static final String                               ID                  = "universal_movie";
 
   private static final String                              UNDEFINED           = "-";

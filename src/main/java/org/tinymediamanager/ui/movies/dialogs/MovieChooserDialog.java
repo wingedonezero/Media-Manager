@@ -562,6 +562,11 @@ public class MovieChooserDialog extends TmmDialog implements ActionListener {
             });
           }
 
+          // remove movie set ID if not wanted
+          if (!scraperConfig.contains(MovieScraperMetadataConfig.COLLECTION)) {
+            md.removeId(MediaMetadata.TMDB_SET);
+          }
+
           movieToScrape.setMetadata(md, scraperConfig, overwrite);
           movieToScrape.setLastScraperId(model.getMetadataProvider().getId());
           movieToScrape.setLastScrapeLanguage(model.getLanguage().name());

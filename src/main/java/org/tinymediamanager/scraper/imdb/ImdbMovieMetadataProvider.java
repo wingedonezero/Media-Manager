@@ -46,11 +46,12 @@ import org.tinymediamanager.scraper.interfaces.IMovieMetadataProvider;
 import org.tinymediamanager.scraper.interfaces.IRatingProvider;
 
 /**
- * the class {@link ImdbMovieMetadataProvider} provides meta data for movies
+ * the class {@link ImdbMovieMetadataProvider} provides metadata for movies
  *
  * @author Manuel Laggner
  */
-public class ImdbMovieMetadataProvider extends ImdbMetadataProvider implements IMovieMetadataProvider, IMovieImdbMetadataProvider, IRatingProvider {
+public final class ImdbMovieMetadataProvider extends ImdbMetadataProvider
+    implements IMovieMetadataProvider, IMovieImdbMetadataProvider, IRatingProvider {
 
   @Override
   protected String getSubId() {

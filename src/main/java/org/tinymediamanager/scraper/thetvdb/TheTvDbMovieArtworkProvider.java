@@ -35,7 +35,7 @@ import retrofit2.Response;
  *
  * @author Manuel Laggner
  */
-public class TheTvDbMovieArtworkProvider extends TheTvDbArtworkProvider implements IMovieArtworkProvider {
+public final class TheTvDbMovieArtworkProvider extends TheTvDbArtworkProvider implements IMovieArtworkProvider {
   private static final Logger LOGGER = LoggerFactory.getLogger(TheTvDbMovieArtworkProvider.class);
 
   @Override

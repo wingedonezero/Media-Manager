@@ -10,5 +10,8 @@ public class PersonExternalIds {
   public Integer tvrage_id;
   public String  instagram_id;
   public String  twitter_id;
+  public String  wikidata_id;
+  public String  tiktok_id;
+  public String  youtube_id;
 
 }

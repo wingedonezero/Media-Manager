@@ -31,7 +31,7 @@ import org.tinymediamanager.scraper.interfaces.ITvShowArtworkProvider;
  * 
  * @author Manuel Laggner
  */
-public class FFmpegTvShowArtworkProvider extends FFmpegArtworkProvider implements ITvShowArtworkProvider {
+public final class FFmpegTvShowArtworkProvider extends FFmpegArtworkProvider implements ITvShowArtworkProvider {
 
   @Override
   protected MediaProviderInfo createMediaProviderInfo() {

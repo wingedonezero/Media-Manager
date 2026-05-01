@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tinymediamanager.scraper.mpdbtv.services;
+package org.tinymediamanager.scraper.mpdbtv;
 
 import java.io.IOException;
 import java.util.Date;
@@ -23,6 +23,7 @@ import java.util.Locale;
 import org.tinymediamanager.scraper.http.TmmHttpClient;
 import org.tinymediamanager.scraper.mpdbtv.entities.MovieEntity;
 import org.tinymediamanager.scraper.mpdbtv.entities.SearchEntity;
+import org.tinymediamanager.scraper.mpdbtv.services.MpdbService;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
@@ -34,7 +35,7 @@ import okhttp3.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MpdbController {
+class MpdbController {
 
   private final Retrofit retrofit;
   private String         apiKey;

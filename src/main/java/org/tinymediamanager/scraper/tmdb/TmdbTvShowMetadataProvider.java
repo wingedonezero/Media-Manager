@@ -15,7 +15,6 @@
  */
 package org.tinymediamanager.scraper.tmdb;
 
-import static org.tinymediamanager.core.entities.Person.Type.ACTOR;
 import static org.tinymediamanager.core.entities.Person.Type.DIRECTOR;
 import static org.tinymediamanager.core.entities.Person.Type.PRODUCER;
 import static org.tinymediamanager.core.entities.Person.Type.WRITER;
@@ -103,7 +102,7 @@ import org.tinymediamanager.scraper.util.MetadataUtil;
 
 import retrofit2.Response;
 
-public class TmdbTvShowMetadataProvider extends TmdbMetadataProvider implements ITvShowMetadataProvider, ITvShowTmdbMetadataProvider,
+public final class TmdbTvShowMetadataProvider extends TmdbMetadataProvider implements ITvShowMetadataProvider, ITvShowTmdbMetadataProvider,
     ITvShowImdbMetadataProvider, ITvShowTvdbMetadataProvider, IRatingProvider, IMediaIdProvider {
   private static final Logger                                LOGGER                 = LoggerFactory.getLogger(TmdbTvShowMetadataProvider.class);
   private static final CacheMap<String, List<MediaMetadata>> EPISODE_LIST_CACHE_MAP = new CacheMap<>(600, 5);
@@ -117,6 +116,7 @@ public class TmdbTvShowMetadataProvider extends TmdbMetadataProvider implements 
     info.getConfig().addBoolean("titleFallback", false);
     info.getConfig().addSelect("titleFallbackLanguage", PT, "en-US");
     info.getConfig().addSelect("titleFallbackLanguage2", FALLBACK_LANGUAGE.values(), FALLBACK_LANGUAGE.ORIGINAL);
+    info.getConfig().addBoolean("fetchPersonIds", false);
     info.getConfig().load();
 
     return info;
@@ -693,21 +693,15 @@ public class TmdbTvShowMetadataProvider extends TmdbMetadataProvider implements 
     }
 
     if (complete.credits != null) {
-      for (CastMember castMember : ListUtils.nullSafe(complete.credits.cast)) {
-        Person cm = new Person(ACTOR);
-        cm.setId(getProviderInfo().getId(), castMember.id);
-        cm.setName(castMember.name);
-        cm.setRole(castMember.character);
-        if (castMember.id != null) {
-          cm.setProfileUrl("https://www.themoviedb.org/person/" + castMember.id);
-        }
+      List<Person> creditsList = new ArrayList<>();
+      creditsList.addAll(parseCast(complete.credits.cast));
+      creditsList.addAll(parseCrew(complete.credits.crew));
 
-        if (StringUtils.isNotBlank(castMember.profile_path)) {
-          cm.setThumbUrl(artworkBaseUrl + "h632" + castMember.profile_path);
-        }
-
-        md.addCastMember(cm);
+      if (getProviderInfo().getConfig().getValueAsBool("fetchPersonIds")) {
+        fetchPersonIds(creditsList);
       }
+
+      md.setCastMembers(creditsList);
     }
 
     // external IDs
@@ -1539,51 +1533,15 @@ public class TmdbTvShowMetadataProvider extends TmdbMetadataProvider implements 
 
     // credits
     if (tvSeason != null && tvSeason.credits != null) {
-      // season cast
-      for (CastMember castMember : ListUtils.nullSafe(tvSeason.credits.cast)) {
-        Person cm = new Person(ACTOR);
-        cm.setId(getProviderInfo().getId(), castMember.id);
-        cm.setName(castMember.name);
-        cm.setRole(castMember.character);
-        if (castMember.id != null) {
-          cm.setProfileUrl("https://www.themoviedb.org/person/" + castMember.id);
-        }
+      List<Person> creditsList = new ArrayList<>();
+      creditsList.addAll(parseCast(tvSeason.credits.cast));
+      creditsList.addAll(parseCrew(tvSeason.credits.crew));
 
-        if (StringUtils.isNotBlank(castMember.profile_path)) {
-          cm.setThumbUrl(artworkBaseUrl + "h632" + castMember.profile_path);
-        }
-
-        ep.addCastMember(cm);
+      if (getProviderInfo().getConfig().getValueAsBool("fetchPersonIds")) {
+        fetchPersonIds(creditsList);
       }
 
-      // season crew
-      for (CrewMember crewMember : ListUtils.nullSafe(tvSeason.credits.crew)) {
-        Person cm = new Person();
-        if ("Director".equals(crewMember.job)) {
-          cm.setType(DIRECTOR);
-        }
-        else if ("Writing".equals(crewMember.department)) {
-          cm.setType(WRITER);
-        }
-        else if ("Production".equals(crewMember.department)) {
-          cm.setType(PRODUCER);
-        }
-        else {
-          continue;
-        }
-        cm.setRole(crewMember.job);
-        cm.setId(getProviderInfo().getId(), crewMember.id);
-        cm.setName(crewMember.name);
-
-        if (StringUtils.isNotBlank(crewMember.profile_path)) {
-          cm.setThumbUrl(artworkBaseUrl + "h632" + crewMember.profile_path);
-        }
-        if (crewMember.id != null) {
-          cm.setProfileUrl("https://www.themoviedb.org/person/" + crewMember.id);
-        }
-
-        ep.addCastMember(cm);
-      }
+      ep.setCastMembers(creditsList);
     }
 
     return ep;
