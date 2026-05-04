@@ -3236,6 +3236,11 @@ public class MediaFileHelper {
         // found trailing language code - just need to remove it from the title
         language = languWoHiCC; // LanguageUtils.getIso3LanguageFromLocalizedString(foundToken);
         // no title, since we parsed the whole string with langu at end!
+
+        // we found a language even w/o HI/CC tokens - since we do have them, and the langu is another one, we can now safely add the flag.
+        if (hicc && !language.equals("hi")) {
+          flags.add(Flags.FLAG_HEARING_IMPAIRED);
+        }
       }
       else {
         // split the shortname into chunks

@@ -32,6 +32,7 @@ import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaFileAudioStream;
 import org.tinymediamanager.core.entities.MediaFileSubtitle;
 import org.tinymediamanager.core.entities.MediaStreamInfo;
+import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.thirdparty.MediaInfo;
 
 public class MediaInfoTest extends BasicTest {
@@ -587,6 +588,75 @@ public class MediaInfoTest extends BasicTest {
     else {
       assertThat(mf.getSubtitles().get(0).getLanguage()).isEqualTo(expectedLanguage);
     }
+  }
+
+  @Test
+  public void testSubtitleDetectionFromEntity() throws Exception {
+    // calling per file
+    // - MediaFileHelper.gatherMediaInformation(mf);
+    // or per entity
+    // - entity.gatherMediaInformation();
+    // DOES make a difference!!!
+    //
+    // the latter does consider the "common part" of the entity (like title) and re moves this prior language/flag detection.
+    // This was added to prevent false-positives like "The Danish Girl.srt" to be NOT detected as danish language.
+    // see more examples in /src/test/resources/testmovies/LanguageInTitle/
+
+    Movie m = checkAsEntity("The Danish Girl.srt", "The Danish Girl"); // a language in title, which is NOT the subtitle language
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getFlags()).isEmpty(); // no flags
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getLanguage()).isEmpty();
+
+    m = checkAsEntity("The Danish Girl - danish.srt", "The Danish Girl"); // now with langu
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getFlags()).isEmpty(); // no flags
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getLanguage()).isEqualTo("danish");
+
+    m = checkAsEntity("The Danish Girl - en-sdh.srt", "The Danish Girl"); // other langu + hearingImpaired flag
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getFlags()).contains(MediaStreamInfo.Flags.FLAG_HEARING_IMPAIRED);
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getLanguage()).isEqualTo("en");
+
+    m = checkAsEntity("The Danish Girl.en.hi.srt", "The Danish Girl"); // same, but other delims
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getFlags()).contains(MediaStreamInfo.Flags.FLAG_HEARING_IMPAIRED);
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getLanguage()).isEqualTo("en");
+
+    m = checkAsEntity("The Danish Girl.hi.srt", "The Danish Girl"); // hindi as language (but not hearing impaired!)
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getFlags()).isEmpty(); // no flags
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getLanguage()).isEqualTo("hi");
+
+    m = checkAsEntity("The Danish Girl.en.cc.srt", "The Danish Girl"); // same with CocosIsland
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getFlags()).contains(MediaStreamInfo.Flags.FLAG_HEARING_IMPAIRED);
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getLanguage()).isEqualTo("en");
+
+    m = checkAsEntity("The Danish Girl.cc.srt", "The Danish Girl"); // CC alone? Is country, so no langu - must be flag!
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getFlags()).contains(MediaStreamInfo.Flags.FLAG_HEARING_IMPAIRED);
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getLanguage()).isEmpty();
+
+    m = checkAsEntity("The Danish Girl - en_hi.srt", "The Danish Girl"); // underscore is not a delimiter per-se
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getFlags()).contains(MediaStreamInfo.Flags.FLAG_HEARING_IMPAIRED);
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getLanguage()).isEqualTo("en");
+
+    // use real files
+    m = checkAsEntity("multi.not.eng.sub", "multi.not.eng"); // langu in IDX
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getFlags()).isEmpty(); // no flags
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getLanguage()).isEqualTo("de");
+
+    m = checkAsEntity("movietitle.year.NLPS.XviD.DTS.3CD-WAF.German.waf.com.cn.hk.srt", "movietitle.year.NLPS.XviD.DTS.3CD-WAF.German.waf.com.cn.hk");
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getFlags()).isEmpty(); // no flags
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getLanguage()).isEmpty();
+
+    m = checkAsEntity("moviename.german-director.srt", "moviename");
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getFlags()).isEmpty(); // no flags
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getLanguage()).isEqualTo("german");
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getTitle()).isEqualTo("director");
+  }
+
+  private Movie checkAsEntity(String subtitleFilename, String commonVideoBaseName) {
+    Movie m = new Movie();
+    MediaFile mf = new MediaFile(Path.of("src/test/resources/subtitles", commonVideoBaseName + ".mp4")); // just reading is ok
+    m.addToMediaFiles(mf);
+    mf = new MediaFile(Path.of("src/test/resources/subtitles", subtitleFilename));
+    m.addToMediaFiles(mf);
+    m.gatherMediaFileInformation(false);
+    return m;
   }
 
   // @Test
