@@ -83,7 +83,7 @@ public class TmmHttpClient {
     builder.readTimeout(60, TimeUnit.SECONDS);
 
     // proxy
-    if ((ProxySettings.INSTANCE.useProxy())) {
+    if ((ProxySettings.useProxy())) {
       setProxy(builder);
     }
 

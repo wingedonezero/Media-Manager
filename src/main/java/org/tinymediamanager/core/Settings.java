@@ -690,6 +690,7 @@ public final class Settings extends AbstractSettings {
     try {
       int port = MetadataUtil.parseInt(getProxyPort(), 0);
       ProxySettings.setProxySettings(getProxyHost(), port, getProxyUsername(), getProxyPassword());
+      TmmHttpClient.recreateHttpClient();
     }
     catch (NumberFormatException e) {
       LOGGER.debug("Could not parse proxy port - {}", e.getMessage());

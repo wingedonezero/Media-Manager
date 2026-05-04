@@ -246,10 +246,15 @@ public abstract class AbstractSettings extends AbstractModelObject {
       try (Reader reader = Files.newBufferedReader(cfgFile)) {
         settingsAsJson = IOUtils.toString(reader);
       }
+      LOGGER.trace("Loaded settings file '{}'", filename);
 
       ObjectReader objectReader = objectMapper.readerFor(clazz);
+
       instance = objectReader.readValue(settingsAsJson);
+      LOGGER.trace("Created settings instance for '{}'", clazz.getSimpleName());
+
       instance.afterLoading();
+      LOGGER.trace("Called afterLoading for '{}'", clazz.getSimpleName());
 
       instance.settingsFolder = folder;
       instance.dirty = false;
