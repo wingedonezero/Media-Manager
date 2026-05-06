@@ -25,6 +25,14 @@ zip -r ../jna.jar *
 cd ..
 cp jna.jar tinyMediaManager/tinyMediaManager.app/Contents/Resources/Java/lib/jna.jar
 
+echo "signing Selenium binaries"
+unzip tinyMediaManager/tinyMediaManager.app/Contents/Resources/Java/lib/selenium-manager.jar -d selenium-manager
+codesign --force --options=runtime --deep --timestamp --entitlements ../AppBundler/macos/hardened_runtime_entitlements.plist --sign "${MAC_SIGN_CERT}" selenium-manager/org/openqa/selenium/manager/macos/selenium-manager
+cd selenium-manager
+zip -r ../selenium-manager.jar *
+cd ..
+cp selenium-manager.jar tinyMediaManager/tinyMediaManager.app/Contents/Resources/Java/lib/selenium-manager.jar
+
 echo "signing app"
 codesign --force --options=runtime --deep --timestamp --entitlements ../AppBundler/macos/hardened_runtime_entitlements.plist --sign "${MAC_SIGN_CERT}" tinyMediaManager/tinyMediaManager.app
 
@@ -83,6 +91,14 @@ cd jna
 zip -r ../jna.jar *
 cd ..
 cp jna.jar tinyMediaManager/tinyMediaManager.app/Contents/Resources/Java/lib/jna.jar
+
+echo "signing Selenium binaries"
+unzip tinyMediaManager/tinyMediaManager.app/Contents/Resources/Java/lib/selenium-manager.jar -d selenium-manager
+codesign --force --options=runtime --deep --timestamp --entitlements ../AppBundler/macos/hardened_runtime_entitlements.plist --sign "${MAC_SIGN_CERT}" selenium-manager/org/openqa/selenium/manager/macos/selenium-manager
+cd selenium-manager
+zip -r ../selenium-manager.jar *
+cd ..
+cp selenium-manager.jar tinyMediaManager/tinyMediaManager.app/Contents/Resources/Java/lib/selenium-manager.jar
 
 echo "signing app"
 codesign --force --options=runtime --deep --timestamp --entitlements ../AppBundler/macos/hardened_runtime_entitlements.plist --sign "${MAC_SIGN_CERT}" tinyMediaManager/tinyMediaManager.app
