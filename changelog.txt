@@ -4,6 +4,7 @@ Version 5.2.12
 + [UI] added a new filter for TV show episode editions #3263
 + [UI] split the tag filter in the TV show module into dedicated TV show and episode filters
 + [UI] added on option to show/hide the result of the post-processing commands
++ [UI] added an action to remove all rating to the TV show bulk editor
 + [TMDB] added support for fetching external IDs (IMDb, TVRage, ...) for cast and crew members #3255
 + [IMDB] added support for using cookies from the browser
 + [IMDB] added experimental support for calling IMDB via browser engine
