@@ -1,5 +1,6 @@
 Version 5.2.12
 =======================
++ [Core] rewrote the launcher to Rust for better support of old OS versions #3271
 + [UI] added a new filter option to filter via AND/OR logic for genres and tags
 + [UI] added a new filter for TV show episode editions #3263
 + [UI] split the tag filter in the TV show module into dedicated TV show and episode filters
