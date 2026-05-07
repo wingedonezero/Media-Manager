@@ -9,6 +9,7 @@ Version 5.2.12
 + [IMDB] added support for using cookies from the browser
 + [IMDB] added experimental support for calling IMDB via browser engine
   HINT: you need to enable this in the scraper settings of the IMDB scraper
++ [Template] added a new export template for movies and TV shows (PBDarkTemplate). thx @ppoilbarbe
 ---
 x [Settings] startup-check if settings are read-/writeable #3271
 x [UI] fixed sorting by rating in the TV show module
