@@ -77,6 +77,7 @@ import org.tinymediamanager.scraper.util.MetadataUtil;
 import org.tinymediamanager.scraper.util.ParserUtils;
 import org.tinymediamanager.scraper.util.StrgUtils;
 import org.tinymediamanager.thirdparty.MediaInfo;
+import org.tinymediamanager.thirdparty.MediaInfoTimeoutWrapper;
 
 import com.github.stephenc.javaisotools.loopfs.iso9660.Iso9660FileEntry;
 import com.github.stephenc.javaisotools.loopfs.iso9660.Iso9660FileSystem;
@@ -1273,46 +1274,55 @@ public class MediaFileHelper {
         MediaFile mf = new MediaFile(Paths.get(mediaFile.getFileAsPath().toString(), entry.getPath())); // set ISO as MF path
         if (mf.isDiscFile()) { // count all known DVD/BR/HDDVD files!
 
-          try (MediaInfo fileMI = new MediaInfo()) {
-            byte[] fromBuffer = new byte[bufferSize];
-            int fromBufferSize; // The size of the read file buffer
-            long fileSize = entry.getSize();
+          try {
+            // Wrap the entire buffer processing with timeout protection
+            Map<MediaInfo.StreamKind, List<Map<String, String>>> snapshot = MediaInfoTimeoutWrapper.executeBufferOperation(() -> {
+              try (MediaInfo fileMI = new MediaInfo()) {
+                byte[] fromBuffer = new byte[bufferSize];
+                int fromBufferSize; // The size of the read file buffer
+                long fileSize = entry.getSize();
 
-            // Preparing to fill MediaInfo with a buffer
-            fileMI.openBufferInit(fileSize, 0);
+                // Preparing to fill MediaInfo with a buffer
+                fileMI.openBufferInit(fileSize, 0);
 
-            long pos = 0L;
-            // The parsing loop
-            do {
-              // limit read to maxBuffer, or to end of file size (cannot determine file end in stream!!)
-              long toread = pos + bufferSize > fileSize ? fileSize - pos : bufferSize;
+                long pos = 0L;
+                // The parsing loop
+                do {
+                  // limit read to maxBuffer, or to end of file size (cannot determine file end in stream!!)
+                  long toread = pos + bufferSize > fileSize ? fileSize - pos : bufferSize;
 
-              // Reading data somewhere, do what you want for this.
-              fromBufferSize = image.readBytes(entry, pos, fromBuffer, 0, (int) toread);
-              if (fromBufferSize > 0) {
-                pos += fromBufferSize; // add bytes read to file position
+                  // Reading data somewhere, do what you want for this.
+                  fromBufferSize = image.readBytes(entry, pos, fromBuffer, 0, (int) toread);
+                  if (fromBufferSize > 0) {
+                    pos += fromBufferSize; // add bytes read to file position
 
-                // Sending the buffer to MediaInfo
-                int result = fileMI.openBufferContinue(fromBuffer, fromBufferSize);
-                if ((result & 8) == 8) { // Status.Finalized
-                  break;
-                }
+                    // Sending the buffer to MediaInfo
+                    int result = fileMI.openBufferContinue(fromBuffer, fromBufferSize);
+                    if ((result & 8) == 8) { // Status.Finalized
+                      break;
+                    }
 
-                // Testing if MediaInfo request to go elsewhere
-                if (fileMI.openBufferContinueGoToGet() != -1) {
-                  pos = fileMI.openBufferContinueGoToGet();
-                  LOGGER.trace("ISO: Seek to {}", pos);
-                  fileMI.openBufferInit(fileSize, pos); // Informing MediaInfo we have seek
-                }
+                    // Testing if MediaInfo request to go elsewhere
+                    if (fileMI.openBufferContinueGoToGet() != -1) {
+                      pos = fileMI.openBufferContinueGoToGet();
+                      LOGGER.trace("ISO: Seek to {}", pos);
+                      fileMI.openBufferInit(fileSize, pos); // Informing MediaInfo we have seek
+                    }
+                  }
+                } while (fromBufferSize > 0);
+
+                // Finalizing
+                LOGGER.trace("ISO: finalize entry");
+                fileMI.openBufferFinalize(); // This is the end of the stream, MediaInfo must finish some work
+
+                return fileMI.snapshot();
               }
-            } while (fromBufferSize > 0);
+            });
 
-            // Finalizing
-            LOGGER.trace("ISO: finalize entry");
-            fileMI.openBufferFinalize(); // This is the end of the stream, MediaInfo must finish some work
-
-            mif.setSnapshot(fileMI.snapshot());
-            miFiles.add(mif);
+            if (!snapshot.isEmpty()) {
+              mif.setSnapshot(snapshot);
+              miFiles.add(mif);
+            }
           }
           // sometimes also an error is thrown
           catch (Exception | Error e) {
@@ -1374,46 +1384,55 @@ public class MediaFileHelper {
 
         LOGGER.trace("ISO: got entry {}, size : {}", entry.getPath(), entry.getSize());
 
-        try (MediaInfo fileMI = new MediaInfo()) {
-          byte[] fromBuffer = new byte[bufferSize];
-          int fromBufferSize; // The size of the read file buffer
-          long fileSize = entry.getSize();
+        try {
+          // Wrap the entire buffer processing with timeout protection
+          Map<MediaInfo.StreamKind, List<Map<String, String>>> snapshot = MediaInfoTimeoutWrapper.executeBufferOperation(() -> {
+            try (MediaInfo fileMI = new MediaInfo()) {
+              byte[] fromBuffer = new byte[bufferSize];
+              int fromBufferSize; // The size of the read file buffer
+              long fileSize = entry.getSize();
 
-          // Preparing to fill MediaInfo with a buffer
-          fileMI.openBufferInit(fileSize, 0);
+              // Preparing to fill MediaInfo with a buffer
+              fileMI.openBufferInit(fileSize, 0);
 
-          long pos = 0L;
-          // The parsing loop
-          do {
-            // limit read to maxBuffer, or to end of file size (cannot determine file end in stream!!)
-            long toread = pos + bufferSize > fileSize ? fileSize - pos : bufferSize;
+              long pos = 0L;
+              // The parsing loop
+              do {
+                // limit read to maxBuffer, or to end of file size (cannot determine file end in stream!!)
+                long toread = pos + bufferSize > fileSize ? fileSize - pos : bufferSize;
 
-            // Reading data somewhere, do what you want for this.
-            fromBufferSize = image.readFileContent(entry, pos, fromBuffer, 0, (int) toread);
-            if (fromBufferSize > 0) {
-              pos += fromBufferSize; // add bytes read to file position
+                // Reading data somewhere, do what you want for this.
+                fromBufferSize = image.readFileContent(entry, pos, fromBuffer, 0, (int) toread);
+                if (fromBufferSize > 0) {
+                  pos += fromBufferSize; // add bytes read to file position
 
-              // Sending the buffer to MediaInfo
-              int result = fileMI.openBufferContinue(fromBuffer, fromBufferSize);
-              if ((result & 8) == 8) { // Status.Finalized
-                break;
-              }
+                  // Sending the buffer to MediaInfo
+                  int result = fileMI.openBufferContinue(fromBuffer, fromBufferSize);
+                  if ((result & 8) == 8) { // Status.Finalized
+                    break;
+                  }
 
-              // Testing if MediaInfo request to go elsewhere
-              if (fileMI.openBufferContinueGoToGet() != -1) {
-                pos = fileMI.openBufferContinueGoToGet();
-                LOGGER.trace("ISO: Seek to {}", pos);
-                fileMI.openBufferInit(fileSize, pos); // Informing MediaInfo we have seek
-              }
+                  // Testing if MediaInfo request to go elsewhere
+                  if (fileMI.openBufferContinueGoToGet() != -1) {
+                    pos = fileMI.openBufferContinueGoToGet();
+                    LOGGER.trace("ISO: Seek to {}", pos);
+                    fileMI.openBufferInit(fileSize, pos); // Informing MediaInfo we have seek
+                  }
+                }
+              } while (fromBufferSize > 0);
+
+              // Finalizing
+              LOGGER.trace("ISO: finalize entry");
+              fileMI.openBufferFinalize(); // This is the end of the stream, MediaInfo must finish some work
+
+              return fileMI.snapshot();
             }
-          } while (fromBufferSize > 0);
+          });
 
-          // Finalizing
-          LOGGER.trace("ISO: finalize entry");
-          fileMI.openBufferFinalize(); // This is the end of the stream, MediaInfo must finish some work
-
-          mif.setSnapshot(fileMI.snapshot());
-          miFiles.add(mif);
+          if (!snapshot.isEmpty()) {
+            mif.setSnapshot(snapshot);
+            miFiles.add(mif);
+          }
         }
         // sometimes also an error is thrown
         catch (Exception | Error e) {

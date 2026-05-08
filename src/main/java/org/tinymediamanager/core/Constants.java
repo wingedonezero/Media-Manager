@@ -125,6 +125,9 @@ public final class Constants {
   public static final String HDR_FORMAT             = "hdrFormat";
   public static final String AUDIO_TITLE            = "audioTitle";
 
+  /** Timeout for MediaInfo operations in seconds (prevents hangs on problematic files) */
+  public static final int    MI_TIMEOUT_SECONDS     = 120;
+
   private Constants() {
     throw new IllegalAccessError();
   }
