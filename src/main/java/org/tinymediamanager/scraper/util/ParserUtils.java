@@ -135,6 +135,14 @@ public class ParserUtils {
     }
     LOGGER.trace("ARR: {}", opt);
 
+    // remove {someId=1234} patterns
+    p = Pattern.compile("\\{(.*?)\\}");
+    m = p.matcher(fname);
+    while (m.find()) {
+      LOGGER.trace("CURLY: {}", m.group(1));
+      fname = fname.replace(m.group(), ""); // remove complete group from name
+    }
+
     // detect OTR recordings - at least with that special pattern
     p = Pattern.compile(".*?(_\\d{2}\\.\\d{2}\\.\\d{2}[_ ]+\\d{2}\\-\\d{2}\\_).*"); // like _12.11.17_20-15_
     m = p.matcher(fname);
