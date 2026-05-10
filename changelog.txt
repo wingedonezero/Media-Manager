@@ -22,7 +22,7 @@ x [OMDB] fixed parsing of episode lists
 x [Trakt.tv] added new pagination limits due to API changes
 x [TvShows] further improve episode detection
 x [Launcher] fixed custom JVM home parsing for macOS
-x [subtitles] improve detection for hearing impaired
+x [Subtitles] improve detection for hearing impaired
 
 
 Version 5.2.11
