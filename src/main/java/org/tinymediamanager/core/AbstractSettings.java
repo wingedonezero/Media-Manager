@@ -186,26 +186,13 @@ public abstract class AbstractSettings extends AbstractModelObject {
     }
 
     // write as JSON
-    Writer writer = null;
-    try {
+    try (Writer writer = new FileWriter(new File(getSettingsFolder(), getConfigFilename()))) {
       String settings = objectWriter.writeValueAsString(this);
-      writer = new FileWriter(new File(getSettingsFolder(), getConfigFilename()));
       IOUtils.write(settings, writer);
     }
     catch (Exception e) {
       getLogger().error("saveSettings", e);
       MessageManager.getInstance().pushMessage(new Message(Message.MessageLevel.ERROR, "tmm.settings", "message.config.savesettingserror"));
-    }
-    finally {
-      if (writer != null) {
-        try {
-          writer.close();
-        }
-        catch (Exception e) {
-          getLogger().error("saveSettings", e);
-          MessageManager.getInstance().pushMessage(new Message(Message.MessageLevel.ERROR, "tmm.settings", "message.config.savesettingserror"));
-        }
-      }
     }
 
     // clear dirty flag
@@ -246,10 +233,15 @@ public abstract class AbstractSettings extends AbstractModelObject {
       try (Reader reader = Files.newBufferedReader(cfgFile)) {
         settingsAsJson = IOUtils.toString(reader);
       }
+      LOGGER.trace("Loaded settings file '{}'", filename);
 
       ObjectReader objectReader = objectMapper.readerFor(clazz);
+
       instance = objectReader.readValue(settingsAsJson);
+      LOGGER.trace("Created settings instance for '{}'", clazz.getSimpleName());
+
       instance.afterLoading();
+      LOGGER.trace("Called afterLoading for '{}'", clazz.getSimpleName());
 
       instance.settingsFolder = folder;
       instance.dirty = false;

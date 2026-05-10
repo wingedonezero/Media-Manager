@@ -37,6 +37,7 @@ import org.tinymediamanager.core.MediaFileHelper;
 import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.thirdparty.MediaInfo;
 import org.tinymediamanager.thirdparty.MediaInfo.StreamKind;
+import org.tinymediamanager.thirdparty.MediaInfoTimeoutWrapper;
 
 /**
  * convenience class to ease the file<->mediainfo mapping
@@ -201,12 +202,10 @@ public class MediaInfoFile implements Comparable<MediaInfoFile> {
       file = dereferenceStreamFile(file);
     }
 
-    try (MediaInfo mediaInfo = new MediaInfo()) {
-      if (!mediaInfo.open(file)) {
-        LOGGER.error("MediaInfo could not open file  '{}'", file);
-      }
-      else {
-        setSnapshot(mediaInfo.snapshot());
+    try {
+      Map<StreamKind, List<Map<String, String>>> mediaInfoSnapshot = MediaInfoTimeoutWrapper.getSnapshot(file);
+      if (!mediaInfoSnapshot.isEmpty()) {
+        setSnapshot(mediaInfoSnapshot);
       }
     }
     // sometimes also an error is thrown

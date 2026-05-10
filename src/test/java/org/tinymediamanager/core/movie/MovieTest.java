@@ -37,6 +37,10 @@ public class MovieTest extends BasicMovieTest {
     String longest = StrgUtils.getLongestString(new String[] { "exq-theequalizer-720p.mkv", "The.Equalizer.German.720p.BluRay.x264-EXQUiSiTE" });
     String[] video = ParserUtils.detectCleanTitleAndYear(longest, Collections.emptyList());
     System.out.println(video[0]);
+
+    video = ParserUtils.detectCleanTitleAndYear("Superman 2002 {tvdbid=12345} [optional] (2003)", null);
+    assertEqual("Superman 2002", video[0]);
+    assertEqual("2003", video[1]);
   }
 
   @Test

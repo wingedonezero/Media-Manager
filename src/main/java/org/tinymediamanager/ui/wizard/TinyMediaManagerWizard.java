@@ -32,6 +32,7 @@ import javax.swing.JPanel;
 
 import org.tinymediamanager.Globals;
 import org.tinymediamanager.core.TmmModuleManager;
+import org.tinymediamanager.core.TmmProperties;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.Utils;
 import org.tinymediamanager.core.movie.MovieModuleManager;
@@ -175,6 +176,7 @@ public class TinyMediaManagerWizard extends TmmDialog {
         // fire events, that the wizard finished
         MovieModuleManager.getInstance().getSettings().firePropertyChange("wizard", false, true);
         TvShowModuleManager.getInstance().getSettings().firePropertyChange("wizard", false, true);
+        TmmProperties.getInstance().putProperty("tmm.disclaimershown", "true");
 
         // close the wizard
         TinyMediaManagerWizard.this.setVisible(false);
@@ -189,5 +191,4 @@ public class TinyMediaManagerWizard extends TmmDialog {
       }
     }
   }
-
 }

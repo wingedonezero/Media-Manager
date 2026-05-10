@@ -48,8 +48,6 @@ public class ProxySettings {
     INSTANCE.port = port;
     INSTANCE.username = username == null ? "" : username;
     INSTANCE.password = password == null ? "" : password;
-
-    TmmHttpClient.recreateHttpClient();
   }
 
   public String getHost() {
@@ -68,7 +66,7 @@ public class ProxySettings {
     return password;
   }
 
-  public boolean useProxy() {
+  public static boolean useProxy() {
     return StringUtils.isNotBlank(INSTANCE.host);
   }
 }

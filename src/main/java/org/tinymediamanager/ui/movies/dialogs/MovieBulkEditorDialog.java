@@ -51,6 +51,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.core.AbstractModelObject;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.entities.MediaGenres;
+import org.tinymediamanager.core.entities.MediaRating;
 import org.tinymediamanager.core.entities.MediaSource;
 import org.tinymediamanager.core.jmte.JmteUtils;
 import org.tinymediamanager.core.movie.MovieEdition;
@@ -117,7 +118,7 @@ public class MovieBulkEditorDialog extends TmmDialog {
     getContentPane().add(tabbedPane, BorderLayout.CENTER);
     {
       JPanel panelContent = new JPanel();
-      panelContent.setLayout(new MigLayout("", "[20lp:n][200lp:350lp,grow][][][]", "[][][][][][][][][][][][][][][][]"));
+      panelContent.setLayout(new MigLayout("", "[20lp:n][200lp:350lp,grow][][][]", "[][][][][][][][][][][][][][][][][]"));
 
       {
         JLabel lblYearT = new TmmLabel(TmmResourceBundle.getString("metatag.year"));
@@ -209,7 +210,7 @@ public class MovieBulkEditorDialog extends TmmDialog {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
           }
         });
-        panelContent.add(btnRemoveAllGenres, "cell 4 1");
+        panelContent.add(btnRemoveAllGenres, "cell 4 1,growy");
       }
       {
         JLabel lblTagsT = new TmmLabel(TmmResourceBundle.getString("metatag.tags"));
@@ -266,7 +267,7 @@ public class MovieBulkEditorDialog extends TmmDialog {
             setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
           }
         });
-        panelContent.add(btnRemoveAllTags, "cell 4 2");
+        panelContent.add(btnRemoveAllTags, "cell 4 2,growy");
       }
       {
         JLabel lblEditionT = new TmmLabel(TmmResourceBundle.getString("metatag.edition"));
@@ -524,8 +525,34 @@ public class MovieBulkEditorDialog extends TmmDialog {
         panelContent.add(btnSetSorttitle, "flowx,cell 1 13 4 1");
       }
       {
+        JLabel lblRatingsT = new TmmLabel(TmmResourceBundle.getString("metatag.ratings"));
+        panelContent.add(lblRatingsT, "cell 0 14,alignx right");
+
+        JButton btnRemoveExternalRatings = new JButton(TmmResourceBundle.getString("edit.removeexternalratings"));
+        btnRemoveExternalRatings.addActionListener(e -> {
+          changed = true;
+          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+          for (Movie movie : moviesToEdit) {
+            movie.setRatings(Collections.emptyMap());
+          }
+          setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
+        panelContent.add(btnRemoveExternalRatings, "flowx,cell 1 14");
+
+        JButton btnRemovePersonalRating = new JButton(TmmResourceBundle.getString("edit.removepersonalrating"));
+        btnRemovePersonalRating.addActionListener(e -> {
+          changed = true;
+          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+          for (Movie movie : moviesToEdit) {
+            movie.removeRating(MediaRating.USER);
+          }
+          setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
+        panelContent.add(btnRemovePersonalRating, "cell 1 14");
+      }
+      {
         JLabel lblSpokenLanguages = new TmmLabel(TmmResourceBundle.getString("metatag.spokenlanguages"));
-        panelContent.add(lblSpokenLanguages, "cell 0 14,alignx right");
+        panelContent.add(lblSpokenLanguages, "cell 0 15,alignx right");
 
         JButton btnFirstAudioStream = new JButton(TmmResourceBundle.getString("edit.audio.first"));
         btnFirstAudioStream.setToolTipText(TmmResourceBundle.getString("edit.audio.first.desc"));
@@ -537,7 +564,7 @@ public class MovieBulkEditorDialog extends TmmDialog {
           }
           setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
-        panelContent.add(btnFirstAudioStream, "flowx,cell 1 14 4 1");
+        panelContent.add(btnFirstAudioStream, "flowx,cell 1 15 4 1");
 
         JButton btnBestAudioStream = new JButton(TmmResourceBundle.getString("edit.audio.best"));
         btnBestAudioStream.setToolTipText(TmmResourceBundle.getString("edit.audio.best.desc"));
@@ -549,7 +576,7 @@ public class MovieBulkEditorDialog extends TmmDialog {
           }
           setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
-        panelContent.add(btnBestAudioStream, "cell 1 14 4 1");
+        panelContent.add(btnBestAudioStream, "cell 1 15 4 1");
 
         JButton btnAllAudioStreams = new JButton(TmmResourceBundle.getString("edit.audio.all"));
         btnAllAudioStreams.setToolTipText(TmmResourceBundle.getString("edit.audio.all.desc"));
@@ -561,7 +588,7 @@ public class MovieBulkEditorDialog extends TmmDialog {
           }
           setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
-        panelContent.add(btnAllAudioStreams, "cell 1 14 4 1");
+        panelContent.add(btnAllAudioStreams, "cell 1 15 4 1");
       }
 
       {
@@ -579,7 +606,7 @@ public class MovieBulkEditorDialog extends TmmDialog {
 
       {
         JLabel lblOriginalFilename = new TmmLabel(TmmResourceBundle.getString("metatag.originalfile"));
-        panelContent.add(lblOriginalFilename, "cell 0 15,alignx right");
+        panelContent.add(lblOriginalFilename, "cell 0 16,alignx right");
 
         JButton btnDeleteOriginalFilename = new JButton(TmmResourceBundle.getString("edit.deleteoriginalfilename"));
         btnDeleteOriginalFilename.addActionListener(e -> {
@@ -590,7 +617,7 @@ public class MovieBulkEditorDialog extends TmmDialog {
           }
           setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         });
-        panelContent.add(btnDeleteOriginalFilename, "cell 1 15");
+        panelContent.add(btnDeleteOriginalFilename, "cell 1 16");
       }
     }
 

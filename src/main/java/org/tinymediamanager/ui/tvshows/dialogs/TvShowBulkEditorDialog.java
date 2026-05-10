@@ -402,8 +402,11 @@ public class TvShowBulkEditorDialog extends TmmDialog {
         panelContent.add(btnDateAdded, "cell 2 7");
       }
       {
+        JLabel lblRatingsT = new TmmLabel(TmmResourceBundle.getString("metatag.ratings"));
+        panelContent.add(lblRatingsT, "cell 0 8,alignx right");
+
         JButton btnAddRating = new JButton(TmmResourceBundle.getString("rating.add"));
-        panelContent.add(btnAddRating, "cell 1 8");
+        panelContent.add(btnAddRating, "flowx,cell 1 8");
         btnAddRating.addActionListener(e -> {
           // Open Rating Dialog
           MediaRatingTable.Rating rating = new MediaRatingTable.Rating("");
@@ -433,6 +436,29 @@ public class TvShowBulkEditorDialog extends TmmDialog {
           popupPanel.setContent(ratingEditorPanel);
           showModalPopupPanel(popupPanel);
         });
+
+        JButton btnRemoveExternalRatings = new JButton(TmmResourceBundle.getString("edit.removeexternalratings"));
+        btnRemoveExternalRatings.addActionListener(e -> {
+          tvShowsChanged = true;
+          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+          for (TvShow tvShow : tvShowsToEdit) {
+            tvShow.setRatings(Collections.emptyMap());
+          }
+          setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
+        panelContent.add(btnRemoveExternalRatings, "cell 1 8");
+
+        JButton btnRemovePersonalRating = new JButton(TmmResourceBundle.getString("edit.removepersonalrating"));
+        btnRemovePersonalRating.addActionListener(e -> {
+          tvShowsChanged = true;
+          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+          for (TvShow tvShow : tvShowsToEdit) {
+            tvShow.removeRating(MediaRating.USER);
+          }
+          setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
+        panelContent.add(btnRemovePersonalRating, "cell 1 8");
+
       }
     }
 
@@ -538,7 +564,7 @@ public class TvShowBulkEditorDialog extends TmmDialog {
      ********************/
     {
       JPanel panelContent = new JPanel();
-      panelContent.setLayout(new MigLayout("", "[][200lp:350lp,grow][][]", "[][][][][][][][][][][][][]"));
+      panelContent.setLayout(new MigLayout("", "[][200lp:350lp,grow][][]", "[][][][][][][][][][][][][][]"));
       tabbedPane.add(TmmResourceBundle.getString("metatag.episode"), panelContent);
 
       JTextArea textArea = new ReadOnlyTextArea(TmmResourceBundle.getString("tvshow.bulkedit.episodesfromshows"));
@@ -856,8 +882,11 @@ public class TvShowBulkEditorDialog extends TmmDialog {
       }
 
       {
+        JLabel lblRatingsT = new TmmLabel(TmmResourceBundle.getString("metatag.ratings"));
+        panelContent.add(lblRatingsT, "cell 0 12,alignx right");
+
         JButton btnAddRating = new JButton(TmmResourceBundle.getString("rating.add"));
-        panelContent.add(btnAddRating, "cell 1 12");
+        panelContent.add(btnAddRating, "flowx,cell 1 12");
         btnAddRating.addActionListener(e -> {
           // Open Rating Dialog
           MediaRatingTable.Rating rating = new MediaRatingTable.Rating("");
@@ -887,10 +916,33 @@ public class TvShowBulkEditorDialog extends TmmDialog {
           popupPanel.setContent(ratingEditorPanel);
           showModalPopupPanel(popupPanel);
         });
+
+        JButton btnRemoveExternalRatings = new JButton(TmmResourceBundle.getString("edit.removeexternalratings"));
+        btnRemoveExternalRatings.addActionListener(e -> {
+          episodesChanged = true;
+          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+          for (TvShowEpisode episode : tvShowEpisodesToEdit) {
+            episode.setRatings(Collections.emptyMap());
+          }
+          setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
+        panelContent.add(btnRemoveExternalRatings, "cell 1 12");
+
+        JButton btnRemovePersonalRating = new JButton(TmmResourceBundle.getString("edit.removepersonalrating"));
+        btnRemovePersonalRating.addActionListener(e -> {
+          episodesChanged = true;
+          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+          for (TvShowEpisode episode : tvShowEpisodesToEdit) {
+            episode.removeRating(MediaRating.USER);
+          }
+          setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+        });
+        panelContent.add(btnRemovePersonalRating, "cell 1 12");
       }
       {
         JButton btnAddSubtitle = new JButton(TmmResourceBundle.getString("subtitle.add"));
-        panelContent.add(btnAddSubtitle, "cell 1 12");
+        panelContent.add(btnAddSubtitle, "cell 1 13");
+
         btnAddSubtitle.addActionListener(e -> {
           MediaFileSubtitle subtitle = new MediaFileSubtitle();
 
