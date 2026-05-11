@@ -647,6 +647,11 @@ public class MediaInfoTest extends BasicTest {
     assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getFlags()).isEmpty(); // no flags
     assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getLanguage()).isEqualTo("german");
     assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getTitle()).isEqualTo("director");
+
+    m = checkAsEntity("movie.en.sdh.default.srt", "movie");
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getFlags()).contains(MediaStreamInfo.Flags.FLAG_HEARING_IMPAIRED);
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getLanguage()).isEqualTo("en");
+    assertThat(m.getMediaFilesContainingSubtitles().get(0).getSubtitles().get(0).getTitle()).isEqualTo("default"); // well...
   }
 
   private Movie checkAsEntity(String subtitleFilename, String commonVideoBaseName) {
