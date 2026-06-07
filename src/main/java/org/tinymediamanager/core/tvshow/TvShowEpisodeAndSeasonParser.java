@@ -209,9 +209,16 @@ public class TvShowEpisodeAndSeasonParser {
       name = aired.name; // all further parsing with removed year pattern.
     }
 
-    // parse ANIME exclusively in front, unmodified
+    // parse ANIME exclusively in front, unmodified.
+    // BUT: when the filename carries an explicit SxxExx marker, restrict the anime detector to the
+    // filename itself and never let the folder PATH drive it. Otherwise a "Season N" folder plus a
+    // trailing CRC hash (e.g. FileBot's "(6CE2027C)") makes the catch-all anime pattern latch onto
+    // the season-folder number and collapse a whole season to a single episode, ignoring the real
+    // SxxExx. Genuine anime numbering inside the filename (e.g. absolute "133-134") still wins.
     String nameNoExt = name.replaceFirst("\\.\\w{1,4}$", ""); // remove extension if 1-4 chars
-    result = parseAnimeExclusive(result, nameNoExt);
+    String fileOnly = FilenameUtils.getName(nameNoExt);
+    boolean hasExplicitSeasonEpisode = SEASON_MULTI_EP.matcher(fileOnly).find() || SEASON_EP_RANGE.matcher(fileOnly).find();
+    result = parseAnimeExclusive(result, hasExplicitSeasonEpisode ? fileOnly : nameNoExt);
     if (!result.episodes.isEmpty()) {
       return result;
     }

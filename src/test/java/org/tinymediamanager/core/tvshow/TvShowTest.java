@@ -129,6 +129,18 @@ public class TvShowTest extends BasicTvShowTest {
     assertEqual("S:2 E:2 Split", detectEpisode("S2/Totenfrau： whatever(2⧸6).mkv")); // ShortSeason
     assertEqual("S:2 E:5 Split", detectEpisode("Season 2/Totenfrau： Bis ans Ende (5⧸6).mkv"));
     assertEqual("S:1 E:133 E:134", detectEpisode("InuYasha [tmdbid-35610]/S06E07-E08 [a-S] 133-134 [03A48078].mkv")); // Anime multi abs
+    // FileBot-style names: SxxExx + technical tags + trailing 8-char CRC hash, inside a "Season N"
+    // folder. The CRC must NOT trigger the anime detector and collapse the whole season to episode 1.
+    assertEqual("S:1 E:1", detectEpisode(
+        "Cowboy Bebop (2021)/Season 1/S01E01 - Cowboy Gospel - (ABBiE) (3840x2160) (10bit) (HEVC) (HDR10) (Dolby Digital Plus with Dolby Atmos) (5.1) (6CE2027C).mkv"));
+    assertEqual("S:1 E:2", detectEpisode(
+        "Cowboy Bebop (2021)/Season 1/S01E02 - Venus Pop - (ABBiE) (3840x2160) (10bit) (HEVC) (HDR10) (Dolby Digital Plus with Dolby Atmos) (5.1) (A3D84D3E).mkv"));
+    assertEqual("S:1 E:10", detectEpisode(
+        "Cowboy Bebop (2021)/Season 1/S01E10 - Supernova Symphony - (ABBiE) (3840x2160) (10bit) (HEVC) (HDR10) (Dolby Digital Plus with Dolby Atmos) (5.1) (797FD9AD).mkv"));
+    assertEqual("S:1 E:5", detectEpisode(
+        "Doctor Elise (2024)/Season 1/S01E05 - Ordeal - (SubsPlease) (1920x1080) (8bit) (x264) (AAC) (2.0) (2F3805DB).mkv"));
+    assertEqual("S:1 E:12", detectEpisode(
+        "Doctor Elise (2024)/Season 1/S01E12 - A Path - (SubsPlease) (1920x1080) (8bit) (x264) (AAC) (2.0) (6E9CF5D2).mkv"));
     assertEqual("S:4 E:12", detectEpisode("Die Heiland – Wir sind Anwalt - Folge 37_ Kompromisslos (S04_E12) - 20241121 - 220000.mkv"));
     assertEqual("S:2024", detectEpisode("The.Daily.Show.2024.04.23.Stephanie.Kelton.1080p.HEVC.x265"));
     assertEqual("S:4 E:11", detectEpisode("TV French\\Unite 9\\Season 04\\S04E11 - Episode 84.mkv"));
