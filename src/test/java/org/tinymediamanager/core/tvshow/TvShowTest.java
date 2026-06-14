@@ -128,7 +128,10 @@ public class TvShowTest extends BasicTvShowTest {
     assertEqual("S:1 E:6 Split", detectEpisode("Totenfrau： Bis ans Ende (6⧸6).mkv")); // Unicode slash; Split... yes, because of "stacking marker"
     assertEqual("S:2 E:2 Split", detectEpisode("S2/Totenfrau： whatever(2⧸6).mkv")); // ShortSeason
     assertEqual("S:2 E:5 Split", detectEpisode("Season 2/Totenfrau： Bis ans Ende (5⧸6).mkv"));
-    assertEqual("S:1 E:133 E:134", detectEpisode("InuYasha [tmdbid-35610]/S06E07-E08 [a-S] 133-134 [03A48078].mkv")); // Anime multi abs
+    assertEqual("S:6 E:7 E:8", detectEpisode("InuYasha [tmdbid-35610]/S06E07-E08 [a-S] 133-134 [03A48078].mkv")); // explicit SxxExx wins over anime absolute numbering (fork policy)
+    // a number inside the episode TITLE (here "140% Scarier") must not be grabbed as the episode when an explicit SxxExx is present
+    assertEqual("S:1 E:7", detectEpisode(
+        "S01E07 - First Experiences Are Scary and Fun All in One... Pardon the Rhyme Occult Movies You Watch as a Kid Are 140% Scarier - (1920x1080) (10bit) (x265) (Dolby Digital) (5.1) (Dual) (CE6A79AC).mkv"));
     // FileBot-style names: SxxExx + technical tags + trailing 8-char CRC hash, inside a "Season N"
     // folder. The CRC must NOT trigger the anime detector and collapse the whole season to episode 1.
     assertEqual("S:1 E:1", detectEpisode(
