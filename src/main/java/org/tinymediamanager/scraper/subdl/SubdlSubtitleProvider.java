@@ -62,7 +62,7 @@ abstract class SubdlSubtitleProvider implements IMediaProvider {
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled() && StringUtils.isNotBlank(getUserApiKey()) && isApiKeyAvailable(null);
+    return StringUtils.isNotBlank(getUserApiKey());
   }
 
   // thread safe initialization of the API

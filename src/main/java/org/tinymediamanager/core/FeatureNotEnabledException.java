@@ -15,17 +15,17 @@
  */
 package org.tinymediamanager.core;
 
-import org.tinymediamanager.license.TmmFeature;
+import org.tinymediamanager.scraper.interfaces.IMediaProvider;
 
 /**
- * this exception is used to indicate that the feature is not enabled
- * 
+ * this exception is used to indicate that the scraper is not ready (e.g. no API key configured)
+ *
  * @author Manuel Laggner
  */
 public class FeatureNotEnabledException extends Exception {
 
-  public FeatureNotEnabledException(TmmFeature feature) {
-    super(feature.getFeatureName());
+  public FeatureNotEnabledException(IMediaProvider feature) {
+    super(feature.getProviderInfo().getName());
   }
 
 }

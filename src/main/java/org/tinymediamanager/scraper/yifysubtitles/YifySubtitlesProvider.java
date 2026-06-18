@@ -62,7 +62,7 @@ public final class YifySubtitlesProvider implements IMovieSubtitleProvider {
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled();
+    return true;
   }
 
   /**

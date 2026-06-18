@@ -59,7 +59,7 @@ public final class KodiTvShowMetadataProvider extends AbstractKodiMetadataProvid
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled();
+    return true;
   }
 
   @Override

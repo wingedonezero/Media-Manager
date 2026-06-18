@@ -175,6 +175,7 @@ public class TvShowSettingsDefaults {
     tvShowSettings.setCertificationStyle(CertificationStyle.LARGE);
     tvShowSettings.setNfoWriteEpisodeguide(false);
     tvShowSettings.setNfoWriteNewEpisodeguideStyle(true);
+    tvShowSettings.setNfoWriteArtworkUrls(false); // local filename-convention artwork; no URLs in the NFO (Kodi+Jellyfin read by name)
 
     tvShowSettings.firePropertyChange("preset", false, true);
   }

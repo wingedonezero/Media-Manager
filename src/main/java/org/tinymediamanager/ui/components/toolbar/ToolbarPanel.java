@@ -35,7 +35,6 @@ import org.tinymediamanager.core.Constants;
 import org.tinymediamanager.core.Settings;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.threading.TmmTaskManager;
-import org.tinymediamanager.license.License;
 import org.tinymediamanager.ui.HintManager;
 import org.tinymediamanager.ui.ITmmUIModule;
 import org.tinymediamanager.ui.IconManager;
@@ -43,7 +42,6 @@ import org.tinymediamanager.ui.TmmFontHelper;
 import org.tinymediamanager.ui.TmmUIHelper;
 import org.tinymediamanager.ui.TmmUIMessageCollector;
 import org.tinymediamanager.ui.actions.CheckForUpdateAction;
-import org.tinymediamanager.ui.actions.UnlockAction;
 import org.tinymediamanager.ui.dialogs.MessageHistoryDialog;
 import org.tinymediamanager.ui.dialogs.WhatsNewDialog;
 import org.tinymediamanager.updater.UpdateCheck;
@@ -62,8 +60,6 @@ public class ToolbarPanel extends JPanel {
   private final ToolbarButton btnEdit;
   private final ToolbarButton btnUpdate;
   private final ToolbarButton btnRename;
-  private final ToolbarButton btnUnlock;
-  private final ToolbarButton btnRenewLicense;
   private final ToolbarButton btnUpdateFound;
 
   private final ToolbarMenu   menuUpdate;
@@ -96,17 +92,6 @@ public class ToolbarPanel extends JPanel {
 
     btnRename = new ToolbarButton(IconManager.TOOLBAR_RENAME, IconManager.TOOLBAR_RENAME_HOVER);
     panelCenter.add(btnRename, "cell 5 0,grow, alignx center, aligny bottom");
-
-    btnUnlock = new ToolbarButton(IconManager.TOOLBAR_UPGRADE, IconManager.TOOLBAR_UPGRADE);
-    Action unlockAction = new UnlockAction();
-    btnUnlock.setAction(unlockAction);
-    btnUnlock.setToolTipText(TmmResourceBundle.getString("Toolbar.upgrade.desc"));
-    panelCenter.add(btnUnlock, "cell 11 0 1 2, center");
-
-    btnRenewLicense = new ToolbarButton(IconManager.TOOLBAR_RENEW, IconManager.TOOLBAR_RENEW);
-    btnRenewLicense.setAction(unlockAction);
-    btnRenewLicense.setToolTipText(TmmResourceBundle.getString("Toolbar.renewlicense.desc"));
-    panelCenter.add(btnRenewLicense, "cell 12 0 1 2, center, gap 10lp");
 
     btnUpdateFound = new ToolbarButton(IconManager.TOOLBAR_DOWNLOAD, IconManager.TOOLBAR_DOWNLOAD);
     btnUpdateFound.setAction(new CheckForUpdateAction());
@@ -148,10 +133,6 @@ public class ToolbarPanel extends JPanel {
       }
     });
 
-    License.getInstance().addEventListener(this::showHideUnlock);
-
-    showHideUnlock();
-
     initUpgradeCheck();
 
     // add the hint for the buttons
@@ -159,24 +140,6 @@ public class ToolbarPanel extends JPanel {
     HintManager.getInstance().addHint(TmmResourceBundle.getString("hintmanager.scrape"), btnSearch, SwingConstants.BOTTOM);
     HintManager.getInstance().addHint(TmmResourceBundle.getString("hintmanager.edit"), btnEdit, SwingConstants.BOTTOM);
     HintManager.getInstance().addHint(TmmResourceBundle.getString("hintmanager.rename"), btnRename, SwingConstants.BOTTOM);
-  }
-
-  private void showHideUnlock() {
-    if (License.getInstance().isValidLicense()) {
-      btnUnlock.setVisible(false);
-
-      LocalDate validUntil = License.getInstance().validUntil();
-      if (validUntil != null && validUntil.minus(14, ChronoUnit.DAYS).isBefore(LocalDate.now())) {
-        btnRenewLicense.setVisible(true);
-      }
-      else {
-        btnRenewLicense.setVisible(false);
-      }
-    }
-    else {
-      btnUnlock.setVisible(true);
-      btnRenewLicense.setVisible(false);
-    }
   }
 
   private void initUpgradeCheck() {

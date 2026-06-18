@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import org.tinymediamanager.ReleaseInfo;
 import org.tinymediamanager.core.TmmProperties;
 import org.tinymediamanager.core.Utils;
-import org.tinymediamanager.license.License;
 import org.tinymediamanager.scraper.http.Url;
 import org.tinymediamanager.scraper.util.UrlUtil;
 
@@ -94,7 +93,7 @@ public class UpdateCheck {
             url = new Url(urlAsString);
           }
           else {
-            url = new Url(urlAsString + "?z=" + System.nanoTime() + "&clientver=" + License.getInstance().ref());
+            url = new Url(urlAsString + "?z=" + System.nanoTime());
           }
 
           remoteDigest = UrlUtil.getStringFromUrl(url);

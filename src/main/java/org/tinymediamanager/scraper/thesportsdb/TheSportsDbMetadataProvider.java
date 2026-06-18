@@ -79,7 +79,7 @@ abstract class TheSportsDbMetadataProvider implements IMediaProvider {
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled() && isApiKeyAvailable(providerInfo.getUserApiKey());
+    return isApiKeyAvailable(providerInfo.getUserApiKey());
   }
 
 }

@@ -107,7 +107,7 @@ abstract class ImdbApiDevMetadataProvider implements IMediaProvider {
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled();
+    return true;
   }
 
   /**
@@ -122,7 +122,7 @@ abstract class ImdbApiDevMetadataProvider implements IMediaProvider {
         throw new ScrapeException(new FeatureNotEnabledException(this));
       }
       try {
-        api = new ImdbApiDevController(getApiKey());
+        api = new ImdbApiDevController("https://api.imdbapi.dev/");
       }
       catch (Exception e) {
         getLogger().error("could not initialize the imdbapi.dev API: {}", e.getMessage());

@@ -43,6 +43,7 @@ public final class AniDbMovieMetadataProvider extends AniDbMetadataProvider impl
     // configure/load settings
     info.getConfig().addInteger("numberOfTags", 20);
     info.getConfig().addInteger("minimumTagsWeight", 200);
+    info.getConfig().addText(MediaProviderInfo.API_KEY, "", true);
     info.getConfig().load();
 
     return info;

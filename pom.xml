@@ -88,11 +88,6 @@
     </properties>
     <dependencies>
         <dependency>
-            <groupId>org.tinymediamanager</groupId>
-            <artifactId>license</artifactId>
-            <version>5.2.5</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.20.0</version>

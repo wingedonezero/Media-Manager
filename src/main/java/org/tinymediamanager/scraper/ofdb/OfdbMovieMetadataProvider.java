@@ -100,7 +100,7 @@ public final class OfdbMovieMetadataProvider extends OfdbMetadataProvider
     String ofdbId = options.getIdAsString(getId());
     if (detailUrl.isBlank() && StringUtils.isNotBlank(ofdbId)) {
       try {
-        detailUrl = getApiKey() + "film/" + ofdbId;
+        detailUrl = "https://www.ofdb.de/" + "film/" + ofdbId;
       }
       catch (Exception e) {
         throw new ScrapeException(e);
@@ -187,7 +187,7 @@ public final class OfdbMovieMetadataProvider extends OfdbMetadataProvider
     if (el != null) {
       String imgUrl = el.attr("src").replace("./", "");
       if (!imgUrl.isBlank()) {
-        imgUrl = getApiKey() + imgUrl;
+        imgUrl = "https://www.ofdb.de/" + imgUrl;
         MediaArtwork ma = new MediaArtwork(ID, MediaArtworkType.POSTER);
         int width = MetadataUtil.parseInt(StrgUtils.substr(imgUrl, "\\.(\\d+)px/"), 370);// usually 370px
         ma.setOriginalUrl(imgUrl.replace("." + width + "px", "")); // w/o px seems to be biggest
@@ -202,7 +202,7 @@ public final class OfdbMovieMetadataProvider extends OfdbMetadataProvider
     el = doc.getElementById("HeaderFilmBild");
     if (el != null) {
       String style = el.attr("style").replace("./", "");
-      String imgUrl = getApiKey() + StrgUtils.substr(style, "\\((.*?)\\)"); // everything between CSS url parentheses
+      String imgUrl = "https://www.ofdb.de/" + StrgUtils.substr(style, "\\((.*?)\\)"); // everything between CSS url parentheses
       MediaArtwork ma = new MediaArtwork(ID, MediaArtworkType.BACKGROUND);
       int width = MetadataUtil.parseInt(StrgUtils.substr(imgUrl, "\\.(\\d+)px/"), 870); // usually 870px
       ma.setOriginalUrl(imgUrl.replace("." + width + "px", ""));
@@ -393,7 +393,7 @@ public final class OfdbMovieMetadataProvider extends OfdbMetadataProvider
 
           el = tag.getElementsByTag("img").first();
           if (el != null && !el.attr("src").contains("platzhalter")) {
-            String imgUrl = getApiKey() + el.attr("src").replace("./", "");
+            String imgUrl = "https://www.ofdb.de/" + el.attr("src").replace("./", "");
             p.setThumbUrl(imgUrl);
           }
 
@@ -437,7 +437,7 @@ public final class OfdbMovieMetadataProvider extends OfdbMetadataProvider
     if (StringUtils.isNotEmpty(options.getImdbId())) {
       try {
         LOGGER.debug("search with imdbId: {}", imdb);
-        Url u = new OnDiskCachedUrl(getApiKey() + "suchergebnis/?" + imdb, 1, TimeUnit.DAYS); // we need a forced cache here
+        Url u = new OnDiskCachedUrl("https://www.ofdb.de/" + "suchergebnis/?" + imdb, 1, TimeUnit.DAYS); // we need a forced cache here
         Document doc = Jsoup.parse(u.getInputStream(), "UTF-8", "");
         tbody = doc.getElementById("TabelleBody");
         count = tbody == null ? 0 : tbody.getElementsByTag("tr").size();
@@ -457,7 +457,7 @@ public final class OfdbMovieMetadataProvider extends OfdbMetadataProvider
     if (count == 0 && StringUtils.isNotBlank(options.getSearchQuery())) {
       try {
         LOGGER.debug("search for: {}", searchQuery);
-        Url u = new OnDiskCachedUrl(getApiKey() + "suchergebnis/?" + URLEncoder.encode(cleanSearch(searchQuery), StandardCharsets.UTF_8), 1,
+        Url u = new OnDiskCachedUrl("https://www.ofdb.de/" + "suchergebnis/?" + URLEncoder.encode(cleanSearch(searchQuery), StandardCharsets.UTF_8), 1,
             TimeUnit.DAYS); // we need a forced cache here
         Document doc = Jsoup.parse(u.getInputStream(), "UTF-8", "");
         tbody = doc.getElementById("TabelleBody");
@@ -518,7 +518,7 @@ public final class OfdbMovieMetadataProvider extends OfdbMetadataProvider
           String img = span.attr("title");
           String imgUrl = StrgUtils.substr(img, "src='\\.\\/(.*?)\\'");
           if (imgUrl != null && !imgUrl.isBlank()) {
-            sr.setPosterUrl(getApiKey() + imgUrl);
+            sr.setPosterUrl("https://www.ofdb.de/" + imgUrl);
           }
 
           // use scraper score: 87% -> 0.87

@@ -171,7 +171,7 @@ public final class TvShowSettings extends AbstractSettings {
   boolean                                        nfoWriteLockdata                       = false;
   boolean                                        nfoWriteTrailer                        = true;
   boolean                                        nfoWriteFileinfo                       = true;
-  boolean                                        nfoWriteArtworkUrls                    = true;
+  boolean                                        nfoWriteArtworkUrls                    = false;
 
   // renamer
   boolean                                        renameAfterScrape                      = false;

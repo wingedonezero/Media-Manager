@@ -72,6 +72,7 @@ public final class AniDbTvShowMetadataProvider extends AniDbMetadataProvider imp
     info.getConfig().addInteger("numberOfTags", 10);
     info.getConfig().addInteger("minimumTagsWeight", 200);
     info.getConfig().addBoolean("characterImage", false);
+    info.getConfig().addText(MediaProviderInfo.API_KEY, "", true);
     info.getConfig().load();
 
     return info;

@@ -32,7 +32,6 @@ import org.tinymediamanager.core.entities.MediaFile;
 import org.tinymediamanager.core.entities.MediaSource;
 import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
-import org.tinymediamanager.license.TmmFeature;
 import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
 import org.tinymediamanager.scraper.http.TmmHttpClient;
@@ -68,9 +67,14 @@ import retrofit2.Response;
  * 
  */
 
-public class TraktTv implements TmmFeature {
+public class TraktTv {
   private static final Logger LOGGER = LoggerFactory.getLogger(TraktTv.class);
   private static TraktTv      instance;
+
+  private String[] getApiKeys() {
+    // TODO licensing removed — wire the user's own Trakt.tv app client-id/secret here if Trakt support is kept
+    return new String[] { "", "" };
+  }
 
   private TraktV2             api;
 
@@ -172,11 +176,6 @@ public class TraktTv implements TmmFeature {
    * @return true/false if trakt could be called
    */
   private boolean isEnabled() {
-    if (!isFeatureEnabled()) {
-      LOGGER.warn("Trakt.tv feature not enabled!");
-      return false;
-    }
-
     if (StringUtils.isNoneBlank(Settings.getInstance().getTraktAccessToken(), Settings.getInstance().getTraktRefreshToken())) {
       // everything seems fine; also set the access token
       api.accessToken(Settings.getInstance().getTraktAccessToken());

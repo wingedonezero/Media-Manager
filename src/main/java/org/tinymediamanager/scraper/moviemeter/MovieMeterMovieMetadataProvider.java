@@ -84,7 +84,7 @@ public final class MovieMeterMovieMetadataProvider implements IMovieMetadataProv
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled() && isApiKeyAvailable(providerInfo.getUserApiKey());
+    return isApiKeyAvailable(providerInfo.getUserApiKey());
   }
 
   // thread safe initialization of the API

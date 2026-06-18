@@ -48,7 +48,6 @@ import org.tinymediamanager.core.Settings;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.Utils;
 import org.tinymediamanager.core.WolDevice;
-import org.tinymediamanager.license.License;
 import org.tinymediamanager.thirdparty.KodiRPC;
 import org.tinymediamanager.ui.actions.AboutAction;
 import org.tinymediamanager.ui.actions.BugReportAction;
@@ -68,7 +67,6 @@ import org.tinymediamanager.ui.actions.HomepageAction;
 import org.tinymediamanager.ui.actions.ImportV4DataAction;
 import org.tinymediamanager.ui.actions.RebuildImageCacheAction;
 import org.tinymediamanager.ui.actions.ShowChangelogAction;
-import org.tinymediamanager.ui.actions.UnlockAction;
 import org.tinymediamanager.ui.components.toolbar.ToolbarButton;
 import org.tinymediamanager.ui.dialogs.ActivityLogDialog;
 import org.tinymediamanager.ui.dialogs.FullLogDialog;
@@ -348,9 +346,6 @@ public class MainMenuPanel extends JPanel {
     menu.add(new BugReportAction());
 
     menu.addSeparator();
-    if (!License.getInstance().isValidLicense()) {
-      menu.add(new UnlockAction());
-    }
     menu.add(new HomepageAction());
     menu.add(new AboutAction());
 

@@ -44,10 +44,6 @@ public abstract class TrailerDownloadTask extends DownloadTask {
 
   @Override
   protected void doInBackground() {
-    if (!isFeatureEnabled()) {
-      return;
-    }
-
     String url = mediaTrailer.getUrl();
 
     // we cannot download from Apple Trailer anymore (closed on 01.09.2023)

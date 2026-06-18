@@ -63,7 +63,7 @@ public final class MdbListMetadataProvider implements IMediaProvider, IRatingPro
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled() && isApiKeyAvailable(Settings.getInstance().getMdbListApiKey());
+    return isApiKeyAvailable(Settings.getInstance().getMdbListApiKey());
   }
 
   protected synchronized void initAPI() throws ScrapeException {

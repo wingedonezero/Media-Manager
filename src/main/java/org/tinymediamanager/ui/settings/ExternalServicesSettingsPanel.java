@@ -37,7 +37,6 @@ import org.jdesktop.beansbinding.Property;
 import org.tinymediamanager.core.DateField;
 import org.tinymediamanager.core.Settings;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.license.License;
 import org.tinymediamanager.thirdparty.trakttv.TraktTv;
 import org.tinymediamanager.ui.MainWindow;
 import org.tinymediamanager.ui.TmmFontHelper;
@@ -70,7 +69,7 @@ class ExternalServicesSettingsPanel extends JPanel {
     initComponents();
 
     // data init
-    if (License.getInstance().isValidLicense()
+    if (true
         && StringUtils.isNoneBlank(Settings.getInstance().getTraktAccessToken(), Settings.getInstance().getTraktRefreshToken())) {
       lblTraktStatus.setText(TmmResourceBundle.getString("Settings.trakt.status.good"));
     }
@@ -79,7 +78,7 @@ class ExternalServicesSettingsPanel extends JPanel {
     }
 
     btnGetTraktPin.addActionListener(e -> getTraktPin());
-    btnGetTraktPin.setEnabled(License.getInstance().isValidLicense());
+    btnGetTraktPin.setEnabled(true);
     btnTestTraktConnection.addActionListener(e -> {
       try {
         TraktTv.getInstance().refreshAccessToken();
@@ -91,7 +90,7 @@ class ExternalServicesSettingsPanel extends JPanel {
             TmmResourceBundle.getString("Settings.trakt.testconnection.bad"));
       }
     });
-    btnTestTraktConnection.setEnabled(License.getInstance().isValidLicense());
+    btnTestTraktConnection.setEnabled(true);
   }
 
   private void getTraktPin() {
@@ -151,10 +150,6 @@ class ExternalServicesSettingsPanel extends JPanel {
       panelTrakt.setLayout(new MigLayout("hidemode 1, insets 0", "[20lp!][16lp!][grow]", "[][][10lp!][]")); // 16lp ~ width of the
 
       JLabel lblTraktT = new TmmLabel(TmmResourceBundle.getString("Settings.trakt"), H3);
-
-      if (!License.getInstance().isValidLicense()) {
-        lblTraktT.setText("*PRO* " + lblTraktT.getText());
-      }
 
       CollapsiblePanel collapsiblePanel = new CollapsiblePanel(panelTrakt, lblTraktT, true);
       collapsiblePanel.addExtraTitleComponent(new DocsButton("/settings#trakttv"));

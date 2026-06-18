@@ -206,7 +206,7 @@ class MovieScraperNfoSettingsPanel extends JPanel {
         JLabel lblNfoFormat = new JLabel(TmmResourceBundle.getString("Settings.nfoFormat"));
         panelNfo.add(lblNfoFormat, "cell 1 0 2 1");
 
-        cbNfoFormat = new JComboBox(MovieConnectors.values());
+        cbNfoFormat = new JComboBox(new MovieConnectors[] { MovieConnectors.KODI });
         panelNfo.add(cbNfoFormat, "cell 1 0 2 1");
 
         JButton docsButton = new DocsButton("/movies/nfo-formats");

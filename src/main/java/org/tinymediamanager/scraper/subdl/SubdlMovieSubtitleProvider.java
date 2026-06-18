@@ -59,7 +59,7 @@ public final class SubdlMovieSubtitleProvider extends SubdlSubtitleProvider impl
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled() && StringUtils.isNotBlank(providerInfo.getConfig().getValue(SubdlSubtitleProvider.API_KEY));
+    return StringUtils.isNotBlank(providerInfo.getConfig().getValue(SubdlSubtitleProvider.API_KEY));
   }
 
   public List<SubtitleSearchResult> search(SubtitleSearchAndScrapeOptions options) throws ScrapeException {

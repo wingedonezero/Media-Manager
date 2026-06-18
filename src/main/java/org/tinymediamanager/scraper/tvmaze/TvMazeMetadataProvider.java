@@ -56,7 +56,7 @@ abstract class TvMazeMetadataProvider implements IMediaProvider {
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled() && isApiKeyAvailable(null);
+    return true;
   }
 
   protected synchronized void initAPI() throws ScrapeException {
@@ -67,7 +67,7 @@ abstract class TvMazeMetadataProvider implements IMediaProvider {
       }
 
       try {
-        controller = new TvMazeController(getApiKey());
+        controller = new TvMazeController("https://api.tvmaze.com/");
       }
       catch (Exception e) {
         getLogger().error("could not initialize the API: {}", e.getMessage());

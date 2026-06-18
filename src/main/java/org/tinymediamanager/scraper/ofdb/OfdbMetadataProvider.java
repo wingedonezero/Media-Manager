@@ -42,7 +42,7 @@ abstract class OfdbMetadataProvider implements IMediaProvider {
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled() && isApiKeyAvailable(null);
+    return true;
   }
 
   private MediaProviderInfo createMediaProviderInfo() {

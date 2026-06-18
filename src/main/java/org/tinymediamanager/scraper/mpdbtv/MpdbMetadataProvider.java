@@ -52,7 +52,7 @@ abstract class MpdbMetadataProvider implements IMediaProvider {
   }
 
   public boolean isActive() {
-    return isFeatureEnabled() && StringUtils.isNoneBlank(getAboKey(), getUserName()) && isApiKeyAvailable(null);
+    return StringUtils.isNoneBlank(getAboKey(), getUserName());
   }
 
   public MediaProviderInfo getProviderInfo() {

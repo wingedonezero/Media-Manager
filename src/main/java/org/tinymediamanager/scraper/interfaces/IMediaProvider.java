@@ -15,7 +15,7 @@
  */
 package org.tinymediamanager.scraper.interfaces;
 
-import org.tinymediamanager.license.TmmFeature;
+import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.scraper.MediaProviderInfo;
 
 /**
@@ -25,13 +25,33 @@ import org.tinymediamanager.scraper.MediaProviderInfo;
  * @author Manuel Laggner
  * @since 1.0
  */
-public interface IMediaProvider extends TmmFeature {
+public interface IMediaProvider {
   /**
    * Gets general information about the metadata provider
-   * 
+   *
    * @return the provider info containing metadata of the provider
    */
   MediaProviderInfo getProviderInfo();
+
+  /**
+   * Gets the user-configured API key for this scraper. Replaces the former license-provided key: scrapers now run entirely on the user's own keys.
+   *
+   * @return the configured API key, or an empty string if none is set
+   */
+  default String getApiKey() {
+    return getProviderInfo().getUserApiKey();
+  }
+
+  /**
+   * Checks whether an API key is configured/available for this scraper.
+   *
+   * @param key
+   *          the key to check (typically {@link MediaProviderInfo#getUserApiKey()})
+   * @return true if a non-blank key is present
+   */
+  default boolean isApiKeyAvailable(String key) {
+    return StringUtils.isNotBlank(key);
+  }
 
   /**
    * get the id from this scraper

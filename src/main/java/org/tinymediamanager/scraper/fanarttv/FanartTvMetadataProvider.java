@@ -58,10 +58,11 @@ abstract class FanartTvMetadataProvider implements IMediaProvider {
 
   private MediaProviderInfo createMediaProviderInfo() {
     MediaProviderInfo info = new MediaProviderInfo(ID, getSubId(), "fanart.tv",
-        "<html><h3>Fanart.tv</h3><br />Fanart.tv provides a huge library of artwork for movies, TV shows and music. This service can be consumed with the API key tinyMediaManager offers, but if you want to have faster access to the artwork, you should become a VIP at fanart.tv (https://fanart.tv/vip/).</html>",
+        "<html><h3>Fanart.tv</h3><br />Fanart.tv provides a huge library of artwork for movies, TV shows and music. Enter your own fanart.tv project API key below. If you want faster access to the artwork, become a VIP at fanart.tv (https://fanart.tv/vip/) and also enter your VIP client key.</html>",
         FanartTvMetadataProvider.class.getResource("/org/tinymediamanager/scraper/fanart_tv.png"));
 
     // configure/load settings
+    info.getConfig().addText(MediaProviderInfo.API_KEY, "", true);
     info.getConfig().addText("clientKey", "", true);
     info.getConfig().addBoolean("fetcholdclearlogo", false);
     info.getConfig().load();
@@ -105,7 +106,7 @@ abstract class FanartTvMetadataProvider implements IMediaProvider {
   }
 
   public boolean isActive() {
-    return isFeatureEnabled() && isApiKeyAvailable(null);
+    return isApiKeyAvailable(getProviderInfo().getUserApiKey());
   }
 
   abstract Logger getLogger();

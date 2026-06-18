@@ -89,7 +89,7 @@ public final class UniversalMovieMetadataProvider implements IMovieMetadataProvi
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled();
+    return true;
   }
 
   public static void addProvider(IMovieMetadataProvider provider) {

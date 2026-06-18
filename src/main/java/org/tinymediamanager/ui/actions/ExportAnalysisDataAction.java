@@ -45,7 +45,6 @@ import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.entities.Movie;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
-import org.tinymediamanager.license.ZipArchiveHelper;
 import org.tinymediamanager.ui.MainWindow;
 import org.tinymediamanager.ui.TmmUIHelper;
 
@@ -102,7 +101,7 @@ public class ExportAnalysisDataAction extends TmmAction {
     // create zip
     ZipParameters zipParameters = createZipParameters();
 
-    try (FileOutputStream os = new FileOutputStream(file); ZipOutputStream zos = ZipArchiveHelper.getInstance().createEncryptedZipOutputStream(os)) {
+    try (FileOutputStream os = new FileOutputStream(file); ZipOutputStream zos = new ZipOutputStream(os)) {
       // attach logs
       List<Path> logs = Utils.listFiles(Paths.get(Globals.LOG_FOLDER));
       for (Path logFile : logs) {

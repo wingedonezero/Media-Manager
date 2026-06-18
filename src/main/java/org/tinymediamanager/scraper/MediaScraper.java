@@ -235,10 +235,7 @@ public class MediaScraper {
    * @return true if the scraper's features are enabled, false otherwise
    */
   public boolean isEnabled() {
-    if (mediaProvider == null) {
-      return false;
-    }
-    return mediaProvider.isFeatureEnabled();
+    return mediaProvider != null;
   }
 
   /**

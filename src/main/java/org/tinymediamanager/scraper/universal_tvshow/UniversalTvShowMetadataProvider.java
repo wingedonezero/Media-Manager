@@ -93,7 +93,7 @@ public final class UniversalTvShowMetadataProvider implements ITvShowMetadataPro
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled();
+    return true;
   }
 
   public static void addProvider(ITvShowMetadataProvider provider) {
