@@ -240,7 +240,7 @@ public class MovieSettingsDefaults {
     movieSettings.setNfoDiscFolderInside(true);
     movieSettings.setTrailerDiscFolderInside(true);
     movieSettings.setNfoWriteFileinfo(true);
-    movieSettings.setNfoWriteArtworkUrls(true);
+    movieSettings.setNfoWriteArtworkUrls(false); // local filename-convention artwork; no URLs in the NFO (Kodi+Jellyfin read by name)
     movieSettings.setNfoWriteLockdata(false);
     movieSettings.setNfoWriteTrailer(true);
     movieSettings.setNfoWriteSingleStudio(false);

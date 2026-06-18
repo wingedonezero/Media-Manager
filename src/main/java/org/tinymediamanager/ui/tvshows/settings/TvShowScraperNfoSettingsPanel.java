@@ -154,7 +154,7 @@ class TvShowScraperNfoSettingsPanel extends JPanel {
         JLabel lblNfoFormatT = new JLabel(TmmResourceBundle.getString("Settings.nfoFormat"));
         panelNfo.add(lblNfoFormatT, "cell 1 0 2 1");
 
-        cbNfoFormat = new JComboBox(TvShowConnectors.values());
+        cbNfoFormat = new JComboBox(new TvShowConnectors[] { TvShowConnectors.KODI });
         panelNfo.add(cbNfoFormat, "cell 1 0 2 1");
 
         JButton docsButton = new DocsButton("/tvshows/nfo-formats");
