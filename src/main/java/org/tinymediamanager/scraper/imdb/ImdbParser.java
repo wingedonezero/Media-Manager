@@ -307,7 +307,7 @@ abstract class ImdbParser {
 
   protected String constructUrl(String... parts) throws ScrapeException {
     try {
-      return metadataProvider.getApiKey() + String.join("", parts);
+      return "https://www.imdb.com" + String.join("", parts);
     }
     catch (Exception e) {
       throw new ScrapeException(e);
@@ -454,7 +454,7 @@ abstract class ImdbParser {
       }
       throw new ScrapeException(futureEx);
     }
-    doc.setBaseUri(metadataProvider.getApiKey());
+    doc.setBaseUri("https://www.imdb.com");
 
     try {
       String json = doc.getElementById("__NEXT_DATA__").data();
@@ -628,7 +628,7 @@ abstract class ImdbParser {
       }
       throw new ScrapeException(futureEx);
     }
-    doc.setBaseUri(metadataProvider.getApiKey());
+    doc.setBaseUri("https://www.imdb.com");
 
     try {
       String json = doc.getElementById("__NEXT_DATA__").data();

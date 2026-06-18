@@ -22,10 +22,10 @@ import org.jsoup.parser.ParseSettings;
 import org.jsoup.parser.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tinymediamanager.license.TmmFeature;
 import org.tinymediamanager.scraper.MediaMetadata;
 import org.tinymediamanager.scraper.MediaProviderInfo;
 import org.tinymediamanager.scraper.MediaSearchAndScrapeOptions;
+import org.tinymediamanager.scraper.interfaces.IMediaProvider;
 import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.exceptions.MissingIdException;
 import org.tinymediamanager.scraper.exceptions.ScrapeException;
@@ -43,7 +43,7 @@ import org.tinymediamanager.scraper.util.UrlUtil;
  * @see AniDbTvShowMetadataProvider
  * @see AniDbMovieMetadataProvider
  */
-abstract class AniDbMetadataProvider implements TmmFeature {
+abstract class AniDbMetadataProvider implements IMediaProvider {
 
   public static final String                        ID                = "anidb";
   private static final Logger                       LOGGER            = LoggerFactory.getLogger(AniDbMetadataProvider.class);
@@ -209,7 +209,7 @@ abstract class AniDbMetadataProvider implements TmmFeature {
    * @return true/false
    */
   public boolean isActive() {
-    return isFeatureEnabled() && isApiKeyAvailable(null);
+    return isApiKeyAvailable(getProviderInfo().getUserApiKey());
   }
 
   /****************************************************************************

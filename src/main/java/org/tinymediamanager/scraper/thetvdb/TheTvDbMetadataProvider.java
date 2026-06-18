@@ -107,7 +107,7 @@ abstract class TheTvDbMetadataProvider implements IMediaProvider {
   }
 
   public boolean isActive() {
-    return isFeatureEnabled() && isApiKeyAvailable(providerInfo.getUserApiKey());
+    return isApiKeyAvailable(providerInfo.getUserApiKey());
   }
 
   String getAuthToken() throws Exception {

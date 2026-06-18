@@ -143,7 +143,7 @@ public final class SubdlTvShowSubtitleProvider extends SubdlSubtitleProvider imp
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled() && StringUtils.isNotBlank(providerInfo.getConfig().getValue(SubdlSubtitleProvider.API_KEY));
+    return StringUtils.isNotBlank(providerInfo.getConfig().getValue(SubdlSubtitleProvider.API_KEY));
   }
 
   @Override

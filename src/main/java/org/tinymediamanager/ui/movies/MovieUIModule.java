@@ -37,7 +37,6 @@ import org.tinymediamanager.core.movie.MovieModuleManager;
 import org.tinymediamanager.core.movie.MoviePostProcessExecutor;
 import org.tinymediamanager.core.threading.NullTasksMenu;
 import org.tinymediamanager.core.threading.TmmTaskManager;
-import org.tinymediamanager.license.License;
 import org.tinymediamanager.thirdparty.KodiRPC;
 import org.tinymediamanager.ui.AbstractTmmUIModule;
 import org.tinymediamanager.ui.IconManager;
@@ -431,7 +430,7 @@ public class MovieUIModule extends AbstractTmmUIModule {
           kodiRPCMenu.setEnabled(false);
         }
 
-        if (License.getInstance().isValidLicense() && StringUtils.isNotBlank(Settings.getInstance().getTraktAccessToken())) {
+        if (StringUtils.isNotBlank(Settings.getInstance().getTraktAccessToken())) {
           traktMenu.setEnabled(true);
         }
         else {

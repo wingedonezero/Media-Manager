@@ -68,10 +68,6 @@ public class MovieSyncTraktTvTask extends TmmTask {
 
   @Override
   protected void doInBackground() {
-    if (!isFeatureEnabled()) {
-      return;
-    }
-
     // check if there is a need to sync
     // without _any_ scraped movies no sync is needed
     if (!syncNeeded(movies)) {

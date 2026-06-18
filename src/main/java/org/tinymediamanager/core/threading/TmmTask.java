@@ -22,7 +22,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.commons.lang3.time.StopWatch;
 import org.tinymediamanager.core.TmmModuleManager;
-import org.tinymediamanager.license.TmmFeature;
 
 /**
  * The class TmmTask. The main class representing tasks in tinyMediaManager. Provides basic task lifecycle management, progress tracking, and listener
@@ -30,7 +29,7 @@ import org.tinymediamanager.license.TmmFeature;
  *
  * @author Manuel Laggner
  */
-public abstract class TmmTask implements Runnable, TmmTaskHandle, TmmFeature {
+public abstract class TmmTask implements Runnable, TmmTaskHandle {
   private final Set<TmmTaskListener> listeners = new CopyOnWriteArraySet<>();
   private final TaskType             type;
   private final long                 uniqueId;
@@ -213,11 +212,6 @@ public abstract class TmmTask implements Runnable, TmmTaskHandle, TmmFeature {
    */
   @Override
   public final void run() {
-    // is this task active at all?
-    if (!isFeatureEnabled()) {
-      return;
-    }
-
     // the task has been cancelled before it is being executed
     if (cancel) {
       finish();

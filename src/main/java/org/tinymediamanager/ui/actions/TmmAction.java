@@ -23,12 +23,11 @@ import javax.swing.AbstractAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tinymediamanager.core.TmmModuleManager;
-import org.tinymediamanager.license.TmmFeature;
 
 /**
  * The class TmmAction is an abstract action-wrapper to provide base logging
  */
-public abstract class TmmAction extends AbstractAction implements TmmFeature {
+public abstract class TmmAction extends AbstractAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(TmmAction.class);
 
   @Override
@@ -64,7 +63,8 @@ public abstract class TmmAction extends AbstractAction implements TmmFeature {
 
   @Override
   public final boolean isEnabled() {
-    return isFeatureEnabled();
+    // licensing removed: all actions are always available
+    return true;
   }
 
   /**

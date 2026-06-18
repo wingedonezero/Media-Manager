@@ -40,7 +40,6 @@ import org.tinymediamanager.core.tvshow.TvShowPostProcessExecutor;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
 import org.tinymediamanager.core.tvshow.entities.TvShowSeason;
-import org.tinymediamanager.license.License;
 import org.tinymediamanager.thirdparty.KodiRPC;
 import org.tinymediamanager.ui.AbstractTmmUIModule;
 import org.tinymediamanager.ui.IconManager;
@@ -536,7 +535,7 @@ public class TvShowUIModule extends AbstractTmmUIModule {
           kodiRPCMenu.setEnabled(false);
         }
 
-        if (License.getInstance().isValidLicense() && StringUtils.isNotBlank(Settings.getInstance().getTraktAccessToken())) {
+        if (StringUtils.isNotBlank(Settings.getInstance().getTraktAccessToken())) {
           traktMenu.setEnabled(true);
         }
         else {

@@ -51,7 +51,7 @@ public final class KodiMovieMetadataProvider extends AbstractKodiMetadataProvide
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled();
+    return true;
   }
 
   @Override

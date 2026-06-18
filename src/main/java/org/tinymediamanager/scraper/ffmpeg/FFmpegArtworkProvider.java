@@ -98,7 +98,7 @@ abstract class FFmpegArtworkProvider implements IMediaProvider {
   }
 
   public boolean isActive() {
-    return isFeatureEnabled() && (StringUtils.isNotBlank(Settings.getInstance().getMediaFramework()) || new FFmpegAddon().isAvailable());
+    return (StringUtils.isNotBlank(Settings.getInstance().getMediaFramework()) || new FFmpegAddon().isAvailable());
   }
 
   public List<MediaArtwork> getArtwork(ArtworkSearchAndScrapeOptions options) throws ScrapeException {

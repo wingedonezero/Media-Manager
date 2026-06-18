@@ -21,7 +21,6 @@ import java.util.regex.Matcher;
 
 import org.apache.commons.lang3.StringUtils;
 import org.tinymediamanager.core.Utils;
-import org.tinymediamanager.license.TmmFeature;
 import org.tinymediamanager.scraper.exceptions.HttpException;
 import org.tinymediamanager.scraper.http.TmmHttpClient;
 import org.tinymediamanager.scraper.http.Url;
@@ -38,13 +37,18 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 
 /**
- * The {@link YtDownloader} class is used to pass the YT download operations through our HTTP client. It extends {@link YoutubeDownloader} and
- * implements {@link TmmFeature} to provide YT download functionality with tinyMediaManager's HTTP client implementation.
+ * The {@link YtDownloader} class is used to pass the YT download operations through our HTTP client. It extends {@link YoutubeDownloader} to provide
+ * YT download functionality with tinyMediaManager's HTTP client implementation.
  *
  * @author Manuel Laggner
  */
-public class YtDownloader extends YoutubeDownloader implements TmmFeature {
+public class YtDownloader extends YoutubeDownloader {
   private static YtDownloader instance;
+
+  private String getApiKey() {
+    // licensing removed; the YT downloader runs without a tinyMediaManager API key
+    return "";
+  }
 
   /**
    * Initializes the YtDownloader singleton instance. Creates the instance eagerly to avoid overhead in subsequent calls.

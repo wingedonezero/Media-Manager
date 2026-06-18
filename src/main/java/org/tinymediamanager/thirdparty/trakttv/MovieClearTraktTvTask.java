@@ -34,10 +34,6 @@ public class MovieClearTraktTvTask extends TmmTask {
 
   @Override
   protected void doInBackground() {
-    if (!isFeatureEnabled()) {
-      return;
-    }
-
     TraktTv traktTV = TraktTv.getInstance();
 
     publishState(TmmResourceBundle.getString("trakt.clear.movies"), 0);

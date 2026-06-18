@@ -29,7 +29,6 @@ import org.tinymediamanager.core.MessageManager;
 import org.tinymediamanager.core.Settings;
 import org.tinymediamanager.core.TmmResourceBundle;
 import org.tinymediamanager.core.entities.MediaTrailer;
-import org.tinymediamanager.license.License;
 import org.tinymediamanager.scraper.util.UrlUtil;
 import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.TmmUIHelper;
@@ -62,7 +61,7 @@ public class MediaTrailerTable extends TmmEditorTable {
     this.editable = editable;
 
     setModel(new TmmTableModel<>(GlazedListsSwing.swingThreadProxyList(trailerEventList),
-        new TrailerTableFormat(editable, License.getInstance().isValidLicense())));
+        new TrailerTableFormat(editable, true)));
 
     adjustColumnPreferredWidths(3);
   }

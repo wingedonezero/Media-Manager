@@ -119,7 +119,7 @@ abstract class TmdbMetadataProvider implements IMediaProvider {
   }
 
   public boolean isActive() {
-    return isFeatureEnabled() && isApiKeyAvailable(providerInfo.getUserApiKey());
+    return isApiKeyAvailable(providerInfo.getUserApiKey());
   }
 
   // thread safe initialization of the API

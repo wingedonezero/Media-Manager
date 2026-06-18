@@ -72,7 +72,6 @@ import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.TvShowSettingsDefaults;
 import org.tinymediamanager.core.tvshow.TvShowUpgradeTasks;
 import org.tinymediamanager.core.tvshow.tasks.TvShowUpdateDatasourceTask;
-import org.tinymediamanager.license.License;
 import org.tinymediamanager.logging.Log4jBackstop;
 import org.tinymediamanager.logging.TmmLoggingUtils;
 import org.tinymediamanager.scraper.MediaProviders;
@@ -115,17 +114,6 @@ public final class TinyMediaManager {
 
   private void launch(String[] args) {
     LOGGER.trace("entered launch");
-
-    // read the license code
-    Path license = Paths.get(Globals.DATA_FOLDER, "tmm.lic");
-    if (Files.exists(license)) {
-      try {
-        License.getInstance().setLicenseCode(Utils.readFileToString(license));
-      }
-      catch (Exception e) {
-        LOGGER.debug("unable to decode license file - {}", e.getMessage());
-      }
-    }
 
     // load settings and set default locale
     try {
@@ -243,15 +231,6 @@ public final class TinyMediaManager {
                 if (newVersion && !ReleaseInfo.getVersion().equals(UpgradeTasks.getOldVersion())) {
                   // special case nightly/git: if same snapshot version, do not display changelog
                   SwingUtilities.invokeLater(WhatsNewDialog::showChangelog);
-                }
-
-                // is the license about to running out?
-                if (License.getInstance().isValidLicense()) {
-                  LocalDate validUntil = License.getInstance().validUntil();
-                  if (validUntil != null && validUntil.minusDays(7).isBefore(LocalDate.now())) {
-                    SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(window, TmmResourceBundle.getString("tmm.renewlicense")
-                        .replace("{}", TmmDateFormat.getDateFormat().format(Date.valueOf(validUntil)))));
-                  }
                 }
 
                 // If auto update on start for movies data sources is enable, execute it
@@ -499,12 +478,6 @@ public final class TinyMediaManager {
 
     TmmOsUtils.loadNativeLibs();
 
-    // some infos from lic
-    if (License.getInstance().validUntil() != null) {
-      LOGGER.debug("{}", License.getInstance().sig());
-      LOGGER.debug("{}", License.getInstance().dat());
-    }
-
     // various initializations of classes
     MediaGenres.init();
     LanguageUtils.init();
@@ -649,14 +622,6 @@ public final class TinyMediaManager {
     SLF4JBridgeHandler.install();
 
     Thread.setDefaultUncaughtExceptionHandler(new Log4jBackstop());
-
-    try {
-      License.getInstance().init525();
-    }
-    catch (Exception e) {
-      LOGGER.error("Could not initialize license module!");
-      LOGGER.debug(e.getMessage());
-    }
 
     ReleaseInfo.init();
 

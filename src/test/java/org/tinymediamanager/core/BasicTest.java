@@ -49,7 +49,6 @@ import org.tinymediamanager.core.movie.entities.MovieSet;
 import org.tinymediamanager.core.tvshow.TvShowModuleManager;
 import org.tinymediamanager.core.tvshow.entities.TvShow;
 import org.tinymediamanager.core.tvshow.entities.TvShowEpisode;
-import org.tinymediamanager.license.License;
 import org.tinymediamanager.scraper.entities.MediaCertification;
 import org.tinymediamanager.scraper.entities.MediaEpisodeGroup;
 import org.tinymediamanager.scraper.entities.MediaEpisodeNumber;
@@ -77,35 +76,6 @@ public abstract class BasicTest {
     ReleaseInfo.init();
     TmmModuleManager.clearInstances();
     Settings.getInstance(settingsFolder.toString());
-
-    try {
-      setLicenseKey();
-    }
-    catch (Exception e) {
-      System.out.println("COULD NOT SET LICENSE KEY");
-    }
-  }
-
-  private void setLicenseKey() throws Exception {
-    String key = "";
-    // take the env variable for the license key (offered in CI)
-    if (StringUtils.isNotBlank(System.getenv("TMM_BUILD_LICENSE"))) {
-      key = System.getenv("TMM_BUILD_LICENSE");
-    }
-    else {
-      // try to read it from a local file
-      try {
-        key = Utils.readFileToString(Paths.get("target/test-classes/tmm_build_license"));
-      }
-      catch (Exception e) {
-        // just not crashing
-      }
-    }
-
-    if (StringUtils.isNotBlank(key)) {
-      License.getInstance().init525();
-      License.getInstance().setLicenseCode(key);
-    }
   }
 
   protected Path getSettingsFolder() {

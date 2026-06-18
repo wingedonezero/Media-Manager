@@ -76,7 +76,7 @@ public final class HdTrailersNetMovieTrailerProvider implements IMovieTrailerPro
 
   @Override
   public boolean isActive() {
-    return isFeatureEnabled() && isApiKeyAvailable(null);
+    return true;
   }
 
   @Override
@@ -106,7 +106,7 @@ public final class HdTrailersNetMovieTrailerProvider implements IMovieTrailerPro
 
     try {
       // best guess
-      String search = getApiKey() + ot.replaceAll("[^a-zA-Z0-9]", "-").replace("--", "-").toLowerCase(Locale.ROOT) + "/";
+      String search = "https://www.hd-trailers.net/movie/" + ot.replaceAll("[^a-zA-Z0-9]", "-").replace("--", "-").toLowerCase(Locale.ROOT) + "/";
       LOGGER.debug("Guessed HD-Trailers Url: {}", search);
 
       Document doc = UrlUtil.parseDocumentFromUrl(search);

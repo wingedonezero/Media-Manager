@@ -35,11 +35,9 @@ import org.tinymediamanager.core.Message.MessageLevel;
 import org.tinymediamanager.core.MessageManager;
 import org.tinymediamanager.core.TmmDateFormat;
 import org.tinymediamanager.core.TmmResourceBundle;
-import org.tinymediamanager.license.License;
 import org.tinymediamanager.ui.IconManager;
 import org.tinymediamanager.ui.TmmFontHelper;
 import org.tinymediamanager.ui.TmmUIHelper;
-import org.tinymediamanager.ui.actions.UnlockAction;
 import org.tinymediamanager.ui.components.button.FlatButton;
 import org.tinymediamanager.ui.components.label.LinkLabel;
 import org.tinymediamanager.ui.components.label.TmmLabel;
@@ -57,8 +55,6 @@ public class AboutDialog extends TmmDialog {
 
   public AboutDialog() {
     super(TmmResourceBundle.getString("tmm.about"), "aboutDialog");
-
-    LocalDate validUntil = License.getInstance().validUntil();
 
     JPanel contentPanel = new JPanel();
     getContentPane().add(contentPanel, BorderLayout.CENTER);
@@ -80,35 +76,12 @@ public class AboutDialog extends TmmDialog {
     {
       String version = TmmResourceBundle.getString("tmm.version") + ": " + ReleaseInfo.getRealVersion();
 
-      if (validUntil != null) {
-        version += " / " + License.getInstance().ref();
-      }
-
       JLabel lblVersion = new JLabel(version);
       contentPanel.add(lblVersion, "cell 2 4");
     }
     {
       JLabel lblBuild = new JLabel(TmmResourceBundle.getString("tmm.builddate") + ": " + ReleaseInfo.getRealBuildDate());
       contentPanel.add(lblBuild, "cell 2 5");
-    }
-    {
-      JLabel lblLicense = new JLabel("");
-      TmmFontHelper.changeFont(lblLicense, Font.BOLD);
-      contentPanel.add(lblLicense, "cell 2 6");
-
-      if (validUntil != null) {
-        lblLicense
-            .setText(TmmResourceBundle.getString("tmm.license.validuntil") + ": " + TmmDateFormat.getDateFormat().format(Date.valueOf(validUntil)));
-        JButton btnLicenseInfo = new FlatButton("");
-        btnLicenseInfo.setAction(new UnlockAction());
-        btnLicenseInfo.setText(null);
-        btnLicenseInfo.setIcon(IconManager.INFO);
-        btnLicenseInfo.setToolTipText(TmmResourceBundle.getString("tmm.license.view"));
-        contentPanel.add(btnLicenseInfo, "cell 2 6");
-      }
-      else {
-        lblLicense.setText(TmmResourceBundle.getString("tmm.license.unregistered"));
-      }
     }
     {
       JLabel lblHomepage = new TmmLabel(TmmResourceBundle.getString("tmm.homepage"));

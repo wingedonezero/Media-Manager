@@ -80,10 +80,10 @@ class FernsehserienParser {
     LOGGER.debug("========= BEGIN Fernsehserien Scraper Search for: {}", searchTerm);
     try {
       Document doc = null;
-      Url url = new InMemoryCachedUrl(mediaProvider.getApiKey() + "suche/" + URLEncoder.encode(searchTerm, StandardCharsets.UTF_8));
+      Url url = new InMemoryCachedUrl("https://www.fernsehserien.de/" + "suche/" + URLEncoder.encode(searchTerm, StandardCharsets.UTF_8));
       InputStream is = url.getInputStream();
       doc = Jsoup.parse(is, UrlUtil.UTF_8, "");
-      doc.setBaseUri(mediaProvider.getApiKey());
+      doc.setBaseUri("https://www.fernsehserien.de/");
 
       Element ul = doc.getElementsByClass("suchergebnisse").first(); // there should be one, else nothing found
       if (ul != null) {
@@ -144,7 +144,7 @@ class FernsehserienParser {
         Element ogurl = doc.getElementsByAttributeValue("property", "og:url").first();
         if (ogurl != null) {
           String id = ogurl.attr("content");
-          id = id.replace(mediaProvider.getApiKey(), "");
+          id = id.replace("https://www.fernsehserien.de/", "");
           if (!id.startsWith("suche")) {
             options.setId(FernsehserienMetadataProvider.ID, id);
             MediaMetadata md = getMetadata(options);
@@ -226,7 +226,7 @@ class FernsehserienParser {
     Url url;
     try {
       // cache this on disk because that will be called multiple times
-      url = new OnDiskCachedUrl(mediaProvider.getApiKey() + showUrl + "/episodenguide/staffel-" + seasonNr + "/" + SeasonID, 1, TimeUnit.DAYS);
+      url = new OnDiskCachedUrl("https://www.fernsehserien.de/" + showUrl + "/episodenguide/staffel-" + seasonNr + "/" + SeasonID, 1, TimeUnit.DAYS);
     }
     catch (Exception e) {
       LOGGER.debug("problem scraping: {}", e.getMessage());
@@ -314,7 +314,7 @@ class FernsehserienParser {
     Url url;
     try {
       // cache this on disk because that may be called multiple times
-      url = new OnDiskCachedUrl(mediaProvider.getApiKey() + id, 1, TimeUnit.DAYS);
+      url = new OnDiskCachedUrl("https://www.fernsehserien.de/" + id, 1, TimeUnit.DAYS);
     }
     catch (Exception e) {
       LOGGER.debug("problem scraping: {}", e.getMessage());
@@ -500,7 +500,7 @@ class FernsehserienParser {
       if (type == MediaType.MOVIE) {
         postfix = ""; // cast is on same page
       }
-      url = new OnDiskCachedUrl(mediaProvider.getApiKey() + id + postfix, 1, TimeUnit.DAYS);
+      url = new OnDiskCachedUrl("https://www.fernsehserien.de/" + id + postfix, 1, TimeUnit.DAYS);
     }
     catch (Exception e) {
       LOGGER.debug("problem scraping: {}", e.getMessage());
@@ -581,7 +581,7 @@ class FernsehserienParser {
       Element profile = p.getElementsByAttributeValue("itemprop", "url").first();
       if (profile != null) {
         String href = profile.attr("href");
-        cm.setProfileUrl(mediaProvider.getApiKey() + href);
+        cm.setProfileUrl("https://www.fernsehserien.de/" + href);
       }
       Element role = p.getElementsByTag("dd").first();
       if (role != null) {
@@ -618,7 +618,7 @@ class FernsehserienParser {
     Url url;
     try {
       // cache this on disk because that may be called multiple times
-      url = new OnDiskCachedUrl(mediaProvider.getApiKey() + id + "/episodenguide", 1, TimeUnit.DAYS);
+      url = new OnDiskCachedUrl("https://www.fernsehserien.de/" + id + "/episodenguide", 1, TimeUnit.DAYS);
     }
     catch (Exception e) {
       LOGGER.debug("problem scraping: {}", e.getMessage());

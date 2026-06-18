@@ -104,7 +104,7 @@ abstract class OpenSubtitlesComSubtitleProvider implements IMediaProvider {
   }
 
   public boolean isActive() {
-    return isFeatureEnabled() && StringUtils.isNoneBlank(getUserName(), getPassword()) && isApiKeyAvailable(null);
+    return StringUtils.isNoneBlank(getUserName(), getPassword());
   }
 
   private synchronized void initAPI() throws ScrapeException {

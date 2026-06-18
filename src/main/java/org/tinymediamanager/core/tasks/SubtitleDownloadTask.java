@@ -58,9 +58,6 @@ public class SubtitleDownloadTask extends DownloadTask {
 
   @Override
   protected void doInBackground() {
-    if (!isFeatureEnabled()) {
-      return;
-    }
     super.doInBackground();
   }
 
